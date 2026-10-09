@@ -376,7 +376,7 @@ export default function SolutionExplorer() {
           <div className="fixed inset-0 z-40" onClick={() => setTreeCtxMenu(null)} />
           <div
             ref={treePlacement.ref} style={treePlacement.style}
-            className="fixed z-50 min-w-[220px] bg-zinc-900 border border-zinc-700 rounded shadow-2xl py-1 text-xs"
+            className="fixed z-50 min-w-[220px] w-max max-w-[20rem] bg-zinc-900 border border-zinc-700 rounded shadow-2xl py-1 text-xs"
           >
             <PathActions path={buildAbsFromNode(treeCtxMenu.basePath, treeCtxMenu.node)} isFile={treeCtxMenu.node.kind !== "folder"}
               onDone={() => setTreeCtxMenu(null)}
@@ -431,7 +431,7 @@ export default function SolutionExplorer() {
         <>
           <div className="fixed inset-0 z-40" onClick={() => setCtxMenu(null)} />
           <div ref={ctxPlacement.ref} style={ctxPlacement.style}
-               className="fixed z-50 min-w-[240px] bg-zinc-900 border border-zinc-700 rounded shadow-2xl py-1 text-xs">
+               className="fixed z-50 min-w-[240px] w-max max-w-[20rem] bg-zinc-900 border border-zinc-700 rounded shadow-2xl py-1 text-xs">
             {ctxMenu.projectId && ctxMenu.projectMissing ? (
               // ── Stale project (not declared) ──
               <>

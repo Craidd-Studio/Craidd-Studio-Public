@@ -92,3 +92,27 @@ export async function launch(scenario, { port = 4444 } = {}) {
   };
   return app;
 }
+
+/** Open a lab solution in a new window, wait until it registers, and drive it. Returns its label. */
+export async function openLab(app, name) {
+  const label = await app.invoke("open_workspace_window", { entry: { path: lab(name), kind: "solution", name, windowLabel: "" } });
+  await app.waitFor(`${label} registered`, async () => {
+    const title = await app.invoke("plugin:window|title", { label });
+    return { done: / - Craidd Studio - /.test(title) && /CS\d+/.test(title), value: title };
+  }, 30_000);
+  await switchToLabel(app, label);
+  await app.waitFor(`${label} explorer ready`, async () => ({
+    done: await app.wd.execute("return !!document.querySelector('[class*=\"uppercase\"]') && document.body.innerText.includes('File Discovery');"),
+    value: true,
+  }));
+  return label;
+}
+
+/** Point WebDriver at the window with this Tauri label. */
+export async function switchToLabel(app, label) {
+  for (const handle of await app.wd.windowHandles()) {
+    await app.wd.switchTo(handle);
+    if (await app.wd.execute("return window.__TAURI_INTERNALS__.metadata.currentWindow.label;") === label) return handle;
+  }
+  throw new Error(`No WebDriver handle for ${label}`);
+}

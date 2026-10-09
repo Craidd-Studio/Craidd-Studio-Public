@@ -74,7 +74,7 @@ export default function FileDiscovery() {
         <>
           <div className="fixed inset-0 z-40" onClick={() => setCtxMenu(null)} />
           <div ref={ctxPlacement.ref} style={ctxPlacement.style}
-               className="fixed z-50 min-w-[220px] bg-zinc-900 border border-zinc-700 rounded shadow-2xl py-1 text-xs">
+               className="fixed z-50 min-w-[220px] w-max max-w-[20rem] bg-zinc-900 border border-zinc-700 rounded shadow-2xl py-1 text-xs">
             <PathActions path={absPathFor(ctxMenu.node)} isFile={ctxMenu.node.kind !== "folder"} onDone={() => setCtxMenu(null)}
               onOpenToSide={() => openInSideGroup(absPathFor(ctxMenu.node))} />
             <div className="my-1 h-px bg-zinc-800" />
