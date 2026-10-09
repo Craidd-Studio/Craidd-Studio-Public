@@ -14,6 +14,8 @@
     "test:exit": "node --test tests/exitBlockers.test.mjs",
     "test:debug-hover": "node --test tests/hoverExpression.test.mjs",
     "test:menus": "node --test tests/menuPlacement.test.mjs",
+    "test:ui:build": "tauri build --debug --no-bundle",
+    "test:ui": "node --test --test-concurrency=1 \"tests/ui/*.test.mjs\"",
     "preview": "vite preview",
     "tauri": "tauri"
   },
