@@ -12,6 +12,8 @@
     "test:native-debug": "node --test tests/nativeDebug.test.mjs",
     "test:shortcuts": "node --test tests/shortcuts.test.mjs tests/pathActions.test.mjs",
     "test:exit": "node --test tests/exitBlockers.test.mjs",
+    "test:debug-hover": "node --test tests/hoverExpression.test.mjs",
+    "test:menus": "node --test tests/menuPlacement.test.mjs",
     "preview": "vite preview",
     "tauri": "tauri"
   },

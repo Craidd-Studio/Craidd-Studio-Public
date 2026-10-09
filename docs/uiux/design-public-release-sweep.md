@@ -436,6 +436,35 @@ sending `disconnect`. The exit itself succeeded. The message is noise from
 an expected race. Fix: the transport stays silent once its session is
 stopping, and it still reports broken pipes at any other time.
 
+**Delivered (round 2):**
+
+- **R1:** `src/lib/debugHover.ts` registers one Monaco hover provider for
+  every language, in the main and side editors.
+  - While paused, it evaluates the identifier and its member chain (`a.b`,
+    `a->b`, `a::b`; see `hoverExpression.ts`) with `context: "hover"` against
+    the displayed top frame.
+  - It shows the value, type, and the first 20 members.
+  - Results are cached per stop. Monaco's own 300 ms hover delay does the
+    debouncing.
+  - Adapter errors show no hover rather than an error.
+  - Change from the design above: members are a plain list, not expandable,
+    because Monaco hovers are Markdown. Watch remains the place to expand.
+- **R3:** `placeMenu` and `useMenuPlacement` flip and clamp click-positioned
+  menus. They re-place on resize, so items that load late (Open in VS Code)
+  can't push the menu off-screen. Applied to the File Discovery, Solution
+  Explorer (tree, project and background) and breakpoint menus.
+- **R4:** a session marks its transport quiet when its stop is scheduled. A
+  broken pipe after that is not printed or emitted. Any other broken pipe is
+  still reported.
+- **R2 (partial):**
+  - A failed title apply is now reported on stderr and retried on the next
+    update, instead of being skipped as unchanged.
+  - `CRAIDD_TRACE_TITLES=1` traces every canonical title and apply.
+  - **The root cause is still unknown.** Reading the code shows the canonical
+    title being computed and applied on each registration. The next step is
+    one traced run. It is the first harness scenario, or the user can run
+    `CRAIDD_TRACE_TITLES=1 npm run tauri dev`.
+
 ---
 
 ## Delivery slices

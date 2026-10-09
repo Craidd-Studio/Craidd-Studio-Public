@@ -6,6 +6,7 @@ import { useSolution } from "../../store/solutionStore";
 import { usePreferences } from "../../store/preferencesStore";
 import { useSplit } from "../../store/splitStore";
 import { setActiveEditor, getActiveEditor } from "../../lib/activeEditor";
+import { registerDebugHover } from "../../lib/debugHover";
 import { CRAIDD_DARK_THEME, defineCraiddDarkTheme } from "../../lib/editorThemes";
 
 /**
@@ -60,6 +61,7 @@ export default function SideEditor() {
         onMount={(instance, monaco) => {
           instanceRef.current = instance;
           monacoRef.current = monaco;
+          registerDebugHover(monaco);
           instance.onDidFocusEditorText(() => { useSplit.getState().setSideFocused(true); setActiveEditor(instance, () => fileId); });
           instance.onDidDispose(() => { if (getActiveEditor() === instance) setActiveEditor(null); });
         }}

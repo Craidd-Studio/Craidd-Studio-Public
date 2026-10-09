@@ -11,7 +11,7 @@ pub const APP_NAME: &str = "Craidd Studio";
 const BADGE: &str = "● ";
 
 #[derive(Default)]
-struct TitleEntry { canonical: String, badge: bool }
+struct TitleEntry { canonical: String, badge: bool, applied: Option<String> }
 
 static TITLES: LazyLock<Mutex<HashMap<String, TitleEntry>>> = LazyLock::new(Default::default);
 
@@ -44,9 +44,21 @@ pub fn solution_display_name(solution_path: &str) -> String {
         .map(|stem| stem.to_string_lossy().into_owned()).unwrap_or_else(|| "Solution".into()))
 }
 
-fn apply(app: &AppHandle, label: &str, entry: &TitleEntry) {
-    if let Some(window) = app.get_webview_window(label) {
-        let _ = window.set_title(&displayed(&entry.canonical, entry.badge));
+fn trace(message: impl FnOnce() -> String) {
+    if std::env::var_os("CRAIDD_TRACE_TITLES").is_some() { eprintln!("[craidd-title] {}", message()); }
+}
+
+/// Apply the derived title. A failed apply is reported and left unrecorded,
+/// so the next update tries again instead of being skipped as unchanged.
+fn apply(app: &AppHandle, label: &str, entry: &mut TitleEntry) {
+    let title = displayed(&entry.canonical, entry.badge);
+    let Some(window) = app.get_webview_window(label) else {
+        eprintln!("[craidd-title] {label}: no window to title \"{title}\"");
+        return;
+    };
+    match window.set_title(&title) {
+        Ok(()) => { trace(|| format!("{label}: \"{title}\"")); entry.applied = Some(title); }
+        Err(error) => eprintln!("[craidd-title] {label}: could not set \"{title}\": {error}"),
     }
 }
 
@@ -54,7 +66,8 @@ fn apply(app: &AppHandle, label: &str, entry: &TitleEntry) {
 pub fn set_canonical(app: &AppHandle, label: &str, canonical: String) {
     let Ok(mut titles) = TITLES.lock() else { return; };
     let entry = titles.entry(label.to_string()).or_default();
-    if entry.canonical == canonical { return; }
+    trace(|| format!("{label}: canonical \"{canonical}\" (was \"{}\")", entry.canonical));
+    if entry.canonical == canonical && entry.applied.as_deref() == Some(displayed(&canonical, entry.badge).as_str()) { return; }
     entry.canonical = canonical;
     apply(app, label, entry);
 }
@@ -62,7 +75,8 @@ pub fn set_canonical(app: &AppHandle, label: &str, canonical: String) {
 /// Record the title a window is being created with, before it exists.
 pub fn remember_initial(label: &str, canonical: String) {
     if let Ok(mut titles) = TITLES.lock() {
-        titles.insert(label.to_string(), TitleEntry { canonical, badge: false });
+        // Applied by the window builder; recorded as applied only once a set_title succeeds.
+        titles.insert(label.to_string(), TitleEntry { canonical, badge: false, applied: None });
     }
 }
 
@@ -74,11 +88,14 @@ pub fn forget(label: &str) {
 pub fn set_title_badge(window: WebviewWindow, badge: bool) -> Result<(), String> {
     let mut titles = TITLES.lock().map_err(|error| error.to_string())?;
     let entry = titles.entry(window.label().to_string()).or_insert_with(|| TitleEntry {
-        canonical: window.title().unwrap_or_else(|_| APP_NAME.into()), badge: false,
+        canonical: window.title().unwrap_or_else(|_| APP_NAME.into()), badge: false, applied: None,
     });
     if entry.badge == badge { return Ok(()); }
     entry.badge = badge;
-    window.set_title(&displayed(&entry.canonical, entry.badge)).map_err(|error| error.to_string())
+    let title = displayed(&entry.canonical, entry.badge);
+    window.set_title(&title).map_err(|error| error.to_string())?;
+    entry.applied = Some(title);
+    Ok(())
 }
 
 #[cfg(test)]
@@ -107,7 +124,7 @@ mod tests {
 
     #[test]
     fn canonical_change_while_badged_keeps_the_new_title() {
-        let mut entry = TitleEntry { canonical: "A: CS1 - Craidd Studio - Lab".into(), badge: true };
+        let mut entry = TitleEntry { canonical: "A: CS1 - Craidd Studio - Lab".into(), badge: true, applied: None };
         entry.canonical = "B: CS1 - Craidd Studio - Lab".into();
         assert_eq!(displayed(&entry.canonical, entry.badge), "● B: CS1 - Craidd Studio - Lab");
         entry.badge = false;

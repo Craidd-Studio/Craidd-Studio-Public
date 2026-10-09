@@ -49,6 +49,8 @@ struct Session {
     pgid: i32,
     birth: u64,
     stopping: AtomicBool,
+    /// Set with `stopping`; a broken pipe after Stop or exit is expected, not reported.
+    transport_quiet: Arc<AtomicBool>,
     breakpoint_files: Mutex<HashSet<String>>,
     breakpoints_ready: AtomicBool,
     solution_path: String,
@@ -355,6 +357,7 @@ fn request_selection(session: &Session, command: &str, arguments: Value,
 }
 
 fn schedule_debug_stop(session: &Session) {
+    session.transport_quiet.store(true, Ordering::Release);
     if session.stopping.swap(true, Ordering::AcqRel) { return; }
     if let Some(cancel) = crate::process_supervisor::capture_cancel_tree(session.pgid, session.birth) {
         thread::spawn(move || {
@@ -1016,7 +1019,10 @@ pub(crate) fn launch_prepared(
     let input = child.stdin.take().ok_or("Debugger input unavailable")?;
     let transport_app = app.clone();
     let transport_label = label.clone();
+    let transport_quiet = Arc::new(AtomicBool::new(false));
+    let quiet_reader = transport_quiet.clone();
     let writer = super::debug_transport::DapWriter::spawn(input, move |error| {
+        if quiet_reader.load(Ordering::Acquire) { return; }
         eprintln!("[craidd-debug] {transport_label}: {error}");
         if let Some(cancel) = crate::process_supervisor::capture_cancel_tree(pgid, birth) { cancel(); }
         emit(&transport_app, &transport_label, json!({"status":"output", "text":error}));
@@ -1029,7 +1035,7 @@ pub(crate) fn launch_prepared(
         threads: Mutex::new(ThreadBook::default()),
         inspection_requests: Mutex::new(HashMap::new()),
         client_requests: Mutex::new(HashMap::new()),
-        transport_busy: AtomicBool::new(false), pgid, birth, stopping: AtomicBool::new(false),
+        transport_busy: AtomicBool::new(false), pgid, birth, stopping: AtomicBool::new(false), transport_quiet,
         breakpoint_files: Mutex::new(HashSet::new()),
         breakpoints_ready: AtomicBool::new(false),
         solution_path,
