@@ -390,6 +390,52 @@ recorded here so the D9 behaviour can be revisited when it exists.
 **Not done:** 7.4. Replacing `alert()` across the app is a separate pass, and
 needs a shared notice/toast component designed first.
 
+## 8. Test round 1 (user, 9 October 2026)
+
+Run on GNOME Wayland against `uiux/exit-and-profiler`.
+
+| Area | Result | Follow-up |
+| --- | --- | --- |
+| Shortcuts (§5) | Work | none |
+| Context menus (§4) | All items work | **R3** |
+| Side window (§4, slice F) | Works | none |
+| Watch and variables (§2) | Work for native (Rust/C/C++) and C# | none |
+| Profiler layout (§3) | Accepted as the base for Phase 3.5 work | none |
+| Exit (§6) | Exited from Get Started, hidden and open windows, and during Gold Run. The crash reproduction was not reproduced this round. | **R4** |
+| Titles (§1) | Format looks right, but titles **do not update** | **R2** |
+| Hover in the editor | No value is shown on hover, for native or C# | **R1** |
+
+**R1. Hover evaluation.** This is §2 item 3, which was not started. While a
+session is paused, hovering an identifier evaluates it (`context: "hover"`)
+against the displayed top frame through `debug_inspect`. Monaco shows the
+value and type, with an expandable child list when the value has members.
+It must not evaluate while running, and it must not send a request for
+every mouse move: debounce at 300 ms and cache the result per stop.
+
+**R2. Titles do not update.** Windows keep the opening title
+`Craidd Studio - {Solution}`. In the screenshot this is true for CS2 and CS4
+alike, so the canonical title is never applied. The cause is not yet known:
+`update_linked_window` does call `window_title::set_canonical`. One candidate
+is that `set_canonical` records the canonical title before applying it, so
+if the first apply fails, every later identical title is skipped. Diagnose
+this at runtime with the UI harness's first scenario (see the
+[UI test harness design](design-ui-test-harness.md)), then fix it. A Rust
+test should cover the failure that the diagnosis finds.
+
+**R3. Context menus leave the window.** Menus open at the click point with
+`position: fixed` and are not kept inside the viewport, so near the bottom
+or right edge they are clipped unless the window is maximised. Fix: one
+shared `useMenuPlacement` that measures the menu after render and flips it
+up or left to stay inside the viewport. Apply it to the File Discovery,
+Solution Explorer (tree, project and background), editor breakpoint and
+window tray menus.
+
+**R4. "Debugger transport failed: Broken pipe" on exit.** During Exit with a
+Gold run active, the adapter is killed while its writer thread is still
+sending `disconnect`. The exit itself succeeded. The message is noise from
+an expected race. Fix: the transport stays silent once its session is
+stopping, and it still reports broken pipes at any other time.
+
 ---
 
 ## Delivery slices
