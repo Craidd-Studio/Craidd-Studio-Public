@@ -78,19 +78,19 @@ title text and makes no claim about how the shell displays it.
   slice, not a tight edit loop.
 - **Flakiness:** debugger timing varies. Steps wait on observable state (a
   paused line, a status label) with timeouts, never on fixed sleeps.
-- **Disturbance:** windows open on the user's screen during a run. Runs
-  start only when the user has asked, or has agreed that the agent may run
-  them.
+- **Disturbance:** windows open on the user's screen during a run, so runs
+  start only as H2 allows.
 
-## Open decisions
+## Decisions
 
-- **H1.** May the agent install `tauri-driver` with `cargo install
-  tauri-driver` (crates.io, published by the Tauri project) into the user's
-  Cargo bin directory?
-- **H2.** May harness runs open windows on the user's desktop while they
-  work? The alternative is to run only when asked.
-- **H3.** Should the harness live in this repository (`tests/ui/`) for all
-  contributors, as proposed, or stay as a local, Claude-only tool?
+Settled by the user on 9 October 2026.
+
+- **H1.** The agent may install `tauri-driver` with `cargo install tauri-driver`.
+- **H2.** Runs happen only when the user asks, or when the work has reached
+  its testing stage. The user still checks results with their own eyes. No
+  background or routine runs.
+- **H3.** The harness lives in `tests/ui/` for all contributors. The
+  reference environment is Arch Linux with GNOME on Wayland.
 
 ---
 
