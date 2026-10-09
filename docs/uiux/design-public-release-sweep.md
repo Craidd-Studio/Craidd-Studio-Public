@@ -460,10 +460,13 @@ stopping, and it still reports broken pipes at any other time.
   - A failed title apply is now reported on stderr and retried on the next
     update, instead of being skipped as unchanged.
   - `CRAIDD_TRACE_TITLES=1` traces every canonical title and apply.
-  - **The root cause is still unknown.** Reading the code shows the canonical
-    title being computed and applied on each registration. The next step is
-    one traced run. It is the first harness scenario, or the user can run
-    `CRAIDD_TRACE_TITLES=1 npm run tauri dev`.
+  - **Harness result:** with this branch, titles reach the canonical form at
+    registration, on duplicate and after hide/show. Both the window API and
+    the trace confirm it. The round 1 build lacked the retry, so the most
+    likely cause was a first apply that failed and was never retried. That
+    is not proven.
+  - **Still to check by eye:** that the GNOME title bar, Alt+Tab and the
+    ChromeOS shelf show the same text. WebDriver can't see these.
 
 ---
 

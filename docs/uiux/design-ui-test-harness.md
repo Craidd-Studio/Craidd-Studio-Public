@@ -2,7 +2,7 @@
 
 **Roadmap track:** Phase 3.x tooling, supporting the UI/UX sweep and the wider Linux IDE gate. See the [current roadmap](../roadmaps/Roadmap-v0.0.4A.md).
 
-**Status:** Proposal, 9 October 2026. Not implemented.
+**Status:** Implemented, 9 October 2026. Four scenarios pass against the embedded debug build. See [tests/ui/README.md](../../tests/ui/README.md).
 
 **Purpose:** Let an agent, or a contributor, run Craidd Studio, drive its UI
 and collect evidence: screenshots, window titles and state. It covers the
@@ -70,6 +70,29 @@ title text and makes no claim about how the shell displays it.
 5. **Exit (§6):** with a hidden window and a Gold run active, run Exit → This
    Application. Check that the app process ends and that no supervised child
    process is left.
+
+## First results (9 October 2026)
+
+`npm run test:ui` runs the four scenarios in about 19 seconds after the first
+build:
+
+| Scenario | Result |
+| --- | --- |
+| `titles` | Windows reach `C# Console · Basic: CS1 - Craidd Studio - Multi-Thread Lab` at registration. A duplicate reaches CS2. Hide/show restores CS1. The `CRAIDD_TRACE_TITLES` trace shows one successful apply per change. |
+| `menus` | At every corner of a 900×600 window, explorer menus stay inside the viewport. **It found** menus stretching to about 680 px, regardless of their content (the user's screenshot showed this too). They are now capped at 20rem. |
+| `debug` | C# console with `netcoredbg`: F9 sets line 21, F5 builds and pauses there, Ctrl+Shift+F5 does nothing, Watch `number * 10` evaluates, hover shows `number : int = 2`, F10 stops again, Shift+F5 terminates. Two workers share the breakpoint, so F10 often stops on the other worker at the same line. This matches the adapter behaviour the MT contract documents. |
+| `exit` | With a hidden window, Exit → This Application ends the app process. |
+
+**Harness lessons:**
+
+- Monaco's line DOM reports positions that don't match what is painted under
+  WebDriver: stale copies of lines appear near the top of the editor. The
+  `debug` scenario therefore drives the editor by keyboard (Ctrl+G to a line
+  and column, Ctrl+K Ctrl+I for hover). Pointer coordinates are not used.
+- Linked-window commands must be sent from a window in the solution. The
+  harness switches WebDriver handles by Tauri label (`switchToLabel`).
+- WebKitWebDriver exposes every Tauri window as a handle, so multi-window
+  scenarios work.
 
 ## Trade-offs
 
