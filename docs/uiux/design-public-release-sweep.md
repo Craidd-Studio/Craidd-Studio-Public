@@ -465,8 +465,21 @@ stopping, and it still reports broken pipes at any other time.
     the trace confirm it. The round 1 build lacked the retry, so the most
     likely cause was a first apply that failed and was never retried. That
     is not proven.
-  - **Still to check by eye:** that the GNOME title bar, Alt+Tab and the
-    ChromeOS shelf show the same text. WebDriver can't see these.
+  - **Test round 2 (user, GNOME 51 Wayland):** the visible title bars still
+    show `Craidd Studio - {Solution}`.
+  - **Harness evidence, same day:** on both `71ffff5` (the user's build) and
+    this branch, in both embedded and dev (`devUrl`) builds, GTK's own window
+    title (`gtk_window_get_title`, read through `plugin:window|title`) becomes
+    the canonical title. Under XWayland, the window manager's
+    `_NET_WM_NAME` (read with `xprop`) becomes the canonical title too.
+  - **Conclusion so far:** Craidd sets the title, and GTK and the X11 window
+    manager receive it. On native Wayland, what is drawn in the title bar does
+    not follow. The suspect is now the GTK3 / GNOME 51 decoration layer, not
+    Craidd's title logic. Next evidence, by eye:
+    1. Does Alt+Tab or the Activities overview show the canonical title? If so,
+       only the decoration is stale.
+    2. Does the title bar update after a resize or maximise?
+    3. Run with `GDK_BACKEND=x11`: does the title bar update there?
 
 ---
 
