@@ -57,10 +57,41 @@ fn apply(app: &AppHandle, label: &str, entry: &mut TitleEntry) {
         return;
     };
     match window.set_title(&title) {
-        Ok(()) => { trace(|| format!("{label}: \"{title}\"")); entry.applied = Some(title); }
+        Ok(()) => {
+            trace(|| format!("{label}: \"{title}\""));
+            sync_wayland_header(&window, label, &title);
+            entry.applied = Some(title);
+        }
         Err(error) => eprintln!("[craidd-title] {label}: could not set \"{title}\": {error}"),
     }
 }
+
+/// tao 0.35 on Wayland draws its own `HeaderBar` (inside an `EventBox` title bar)
+/// with the creation title, and `set_title` never updates it. Set the header's
+/// title as well, so the visible title bar follows. Harmless where GTK draws its
+/// own header (no custom title bar) and on X11. Remove after upgrading to a tao
+/// without `WlHeader` (0.37+).
+#[cfg(target_os = "linux")]
+fn sync_wayland_header(window: &tauri::WebviewWindow, label: &str, title: &str) {
+    let window = window.clone();
+    let label = label.to_string();
+    let title = title.to_string();
+    let _ = window.clone().run_on_main_thread(move || {
+        use gtk::prelude::*;
+        let Ok(gtk_window) = window.gtk_window() else { return; };
+        let titlebar = gtk_window.titlebar();
+        let header = titlebar.as_ref().and_then(|widget| widget.clone().downcast::<gtk::HeaderBar>().ok()
+            .or_else(|| widget.clone().downcast::<gtk::Bin>().ok().and_then(|bin| bin.child())
+                .and_then(|child| child.downcast::<gtk::HeaderBar>().ok())));
+        if let Some(header) = &header { header.set_title(Some(&title)); }
+        trace(|| format!("{label}: titlebar {}, header title {:?}",
+            titlebar.map(|widget| widget.type_().name().to_string()).unwrap_or_else(|| "GTK default".into()),
+            header.and_then(|header| header.title())));
+    });
+}
+
+#[cfg(not(target_os = "linux"))]
+fn sync_wayland_header(_window: &tauri::WebviewWindow, _label: &str, _title: &str) {}
 
 /// Record the canonical title for a window and apply it with the current badge.
 pub fn set_canonical(app: &AppHandle, label: &str, canonical: String) {
@@ -94,6 +125,7 @@ pub fn set_title_badge(window: WebviewWindow, badge: bool) -> Result<(), String>
     entry.badge = badge;
     let title = displayed(&entry.canonical, entry.badge);
     window.set_title(&title).map_err(|error| error.to_string())?;
+    sync_wayland_header(&window, window.label(), &title);
     entry.applied = Some(title);
     Ok(())
 }

@@ -472,14 +472,22 @@ stopping, and it still reports broken pipes at any other time.
     title (`gtk_window_get_title`, read through `plugin:window|title`) becomes
     the canonical title. Under XWayland, the window manager's
     `_NET_WM_NAME` (read with `xprop`) becomes the canonical title too.
-  - **Conclusion so far:** Craidd sets the title, and GTK and the X11 window
-    manager receive it. On native Wayland, what is drawn in the title bar does
-    not follow. The suspect is now the GTK3 / GNOME 51 decoration layer, not
-    Craidd's title logic. Next evidence, by eye:
-    1. Does Alt+Tab or the Activities overview show the canonical title? If so,
-       only the decoration is stale.
-    2. Does the title bar update after a resize or maximise?
-    3. Run with `GDK_BACKEND=x11`: does the title bar update there?
+  - **User check:** Alt+Tab and the overview show the full title. A
+    resize doesn't refresh the title bar. With `GDK_BACKEND=x11` the title
+    bar updates. So the problem is specific to Wayland.
+  - **Root cause:** on Wayland, the locked tao (0.35.3,
+    `platform_impl/linux/wayland/header.rs`) installs its own `HeaderBar`
+    inside an `EventBox` title bar, built once with the creation title.
+    `set_title` updates the window title, which the shell shows, but never
+    that header, which is what is drawn. tao 0.37 removes `WlHeader`.
+  - **Fix:** `window_title::sync_wayland_header` also sets the header's title
+    on the GTK main thread. That happens on every canonical change and on
+    every badge change. It is a workaround, to be removed once Tauri is
+    upgraded to a tao without `WlHeader`.
+  - **Verified by the harness:** with `CRAIDD_TRACE_TITLES`, the
+    drawn header reports the canonical title for CS1, CS2 and after
+    hide/show. `tests/ui/titles.test.mjs` now asserts this on Wayland.
+    Still to confirm by eye.
 
 ---
 

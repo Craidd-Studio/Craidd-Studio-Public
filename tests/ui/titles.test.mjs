@@ -56,4 +56,13 @@ test("solution windows reach the canonical title after registering", { timeout: 
   const ids = [firstTitle, secondTitle].map((title) => Number(LINKED.exec(title)[1]));
   assert.notEqual(ids[0], ids[1], "each window has its own CS number");
   assert.equal(await titleOf(first), firstTitle, "opening a second window leaves the first title unchanged");
+
+  // On Wayland, tao draws its own header with the creation title; the drawn header must follow (R2).
+  // The header is only visible to the app's trace (CRAIDD_TRACE_TITLES), not to WebDriver.
+  if (process.env.WAYLAND_DISPLAY && !process.env.GDK_BACKEND) {
+    for (const [label, title] of [[first, firstTitle], [second, secondTitle]]) {
+      const drawn = app.log.filter((line) => line.includes(`${label}: titlebar`) && line.includes("header title")).at(-1);
+      assert.ok(drawn?.includes(JSON.stringify(title)), `${label}'s drawn header shows "${title}" (trace: ${drawn})`);
+    }
+  }
 });

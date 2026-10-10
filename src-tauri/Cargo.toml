@@ -29,6 +29,10 @@ tauri-plugin-dialog = "2.7.3"
 libc = "0.2"
 regex = "1"
 
+[target.'cfg(target_os = "linux")'.dependencies]
+# Same gtk-rs version Tauri uses; window_title.rs reaches the GTK title bar on Wayland.
+gtk = "0.18"
+
 
 # Read the optimization guideline for more details: https://tauri.app/concept/size/#cargo-configuration
 [profile.release]
