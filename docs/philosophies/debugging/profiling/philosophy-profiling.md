@@ -2,8 +2,12 @@
 
 **Roadmap track:** Phase 3.5 profiling proposal. See the [current roadmap](../../../roadmaps/Roadmap-v0.0.4A.md).
 
-**Status:** Proposal. Profiling is not established by the MT elapsed-time
-counter. The old Phase 2.7 sequence is now local stages within the Phase 3.5
+**Status:** Proposal, reconciled 14 October 2026. The
+[Gold capture contract](../../../feats/profiling/design-gold-capture.md) and
+[attached profiling delivery](../../../feats/profiling/design-attach-profiling.md)
+govern the current UX, scope and delivery gates. Earlier orchestration sketches
+below remain proposals, not implementations. Profiling is not established by
+the MT elapsed-time counter. The old Phase 2.7 sequence is now local stages within the Phase 3.5
 profiling track; Python-specific stages remain gated on future Python support.
 
 **Applies to:** Phase 3.5 profiling track (proposed).
@@ -79,7 +83,9 @@ group:
   client's profile shows 780ms of wait. Today, those two records live
   in two process trees, in two `ptrace` sessions, in two output
   streams, and no tool correlates them. Craidd has both sessions. It
-  can correlate by time and by identity.
+  can place their events on a timeline. Causal correlation still requires
+  verified request/resource identities and compatible clocks; two nearby
+  durations are not proof of one shared cause.
 
 - **The compound profile.** One gesture — Gold Profile — starts
   profiling on every participant. One Stop ends it. One artifact
@@ -214,8 +220,11 @@ panel is the aggregate, same as it is for build errors.
 
 ### Display
 
-A new tab in the bottom panel: **Profiler**. Sits beside Output,
-Problems, Terminal.
+A **Profiler** tab in the right panel beside Debugger, per
+[the layout decision](../../../uiux/design-public-release-sweep.md#3-profiling-layout-only).
+Gold results use collapsible groups and automatic Debug arming; external PID
+sampling retains an explicit capture action. Output remains the bounded raw
+collector stream and Problems can show actionable diagnostics.
 
 Content depends on state:
 
@@ -241,29 +250,33 @@ separate design.
 
 ## What Craidd deliberately does not build
 
-**Not a profiler.** Craidd does not implement sampling, allocation
-tracking, or race detection. Every measurement comes from a tool the
-user already has. Craidd's job is orchestration, not instrumentation.
+**Not a profiler.** Craidd delegates sampling, allocation
+tracking and race detection to qualified collectors/providers. Every
+measurement has an identified provider. Craidd orchestrates providers and may
+need lightweight, explicit source-event hooks for Gold binding. Those hooks do not replace the underlying profilers.
 
 **Not a GPU profiler.** Nsight, rocprof, and RenderDoc are decades of
 specialized work. Craidd discovers what is installed, invokes it, and
 shows its output. It does not reimplement any of it. If the user has no
 GPU profiler, Craidd says so.
 
-**Not real-time.** Continuous profiling is a research direction, not a
-feature. Profiling is a deliberate act with a start and a stop.
+**Bounded live recording.** The solo may keep recording across a long debug
+session. Event/output storage remains bounded and coverage loss is visible.
+This does not promise permanent, always-on background collection.
 
-**Not a persistent profile history.** Profiles are session-scoped.
-Files can be exported, and the user can compare two of them, but
-Craidd is not a build artifact store. The build log is the Output
-panel; the profile is the Profiler panel.
+**Bounded result retention.** Snapshots and completed batches remain available
+for inspection without growing unbounded. The final persistence limits are
+open; pinned/exported results need explicit lifecycle rules. Raw tool output
+and capture records are distinct. See
+[Snapshot and Record again](../../../feats/profiling/design-gold-capture.md#snapshot-and-record-again).
 
 **Not a debugger replacement.** Profiling tells you *where* to look.
 The debugger tells you *why*. Craidd has both, and they share a
 group, but they are separate tools. The Profiler panel does not become
 a debugger view.
 
-**Not the marker system.** `docs/feats/profiling/design-profile-markers.md` describes
+**Provider orchestration and marker events compose.**
+[Profile infrastructure](../../../feats/profiling/design-profile-markers.md) describes
 a *future* capability: source-resident markers, per-region measurement,
 cross-run comparison, and integration with the AI panel. That design
 depends on the marker infrastructure. The first profiler slice does
@@ -273,6 +286,12 @@ separate delivery stages. External-tool profiling does not require markers.
 ---
 
 ## Delivery order
+
+The attached perf checkpoint and Gold CPU/memory gates in
+[attached profiling](../../../feats/profiling/design-attach-profiling.md#delivery-and-evidence)
+supersede the sequence below for this Unity/attach proposal. The earlier
+Valgrind-first stages remain alternative external-tool expansion sketches.
+They do not certify automatic Gold recording.
 
 **Profiling stage 1 — Memcheck on C++.**
 
@@ -352,5 +371,5 @@ Everything above is a consequence of that sentence.
 
 ---
 
-*Last updated: Phase 3.x. Author: ShinkuKira21.*
+*Last updated: Phase 3.5, 14 October 2026. Author(s): ShinkuKira21.*
 *This document is a philosophy.*

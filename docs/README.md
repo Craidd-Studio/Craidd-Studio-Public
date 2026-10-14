@@ -12,6 +12,12 @@ Start here for the project model and working conventions:
 - [Documentation conventions](../AGENT.md) — reading order, document footers and contributor attribution.
 - [Roadmap archive](roadmaps/archive/README.md) — original historical phase snapshots.
 
+The [Unity, attach and profiling collection](unity/README.md) distinguishes
+native attach, future Unity C# / LDI qualification, non-stopping Gold capture
+and runtime lifecycle. Start with the [Gold capture contract](feats/profiling/design-gold-capture.md)
+for the single solo, paired ranges and Profiler result rules. These are designs;
+the current Profiler is layout only.
+
 The rest of the docs are grouped by purpose:
 
 | Folder | Contents |
@@ -33,5 +39,5 @@ The [Docs viewer design collection](feats/editor/docs-viewer/README.md) records 
 
 ---
 
-*Last updated: Phase 3.x, 13 October 2026. Author(s): ShinkuKira21.*
+*Last updated: Phase 3.x / 3.5, 14 October 2026. Author(s): ShinkuKira21.*
 *This document is a record.*
