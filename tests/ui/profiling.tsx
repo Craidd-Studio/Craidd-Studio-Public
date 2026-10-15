@@ -15,4 +15,6 @@ Object.assign(window,{__TAURI_INTERNALS__:{invoke:async(command:string)=>{
  if(command==="stop_profiling"){const p=useProfiling.getState().profile!;useProfiling.setState({profile:{...p,active:false,reason:"Profiling stopped; target left running"}});}
 }}});
 function Fixture(){const[attach,setAttach]=useState(false);const[wide,setWide]=useState(false);useEffect(()=>{const open=()=>setAttach(true);window.addEventListener("craidd:attach-process",open);return()=>window.removeEventListener("craidd:attach-process",open);},[]);return <main className="h-screen bg-zinc-950 text-zinc-300 flex flex-col"><header className="p-3 border-b border-zinc-800 text-xs">Profiler UI test fixture · synthetic data / mocked IPC <button className="ml-4 border rounded px-2" onClick={()=>setWide(!wide)}>Toggle panel width</button></header><div className="flex-1 min-h-0 flex justify-end"><aside style={{width:wide?420:288}} className="bg-zinc-900 border-l border-zinc-800"><ProfilerPanel/></aside></div>{attach&&<AttachProcessDialog onClose={()=>setAttach(false)}/>}</main>;}
-createRoot(document.getElementById("root")!).render(<Fixture/>);
+const root=createRoot(document.getElementById("root")!);
+root.render(<Fixture/>);
+if(import.meta.hot) import.meta.hot.dispose(()=>root.unmount());
