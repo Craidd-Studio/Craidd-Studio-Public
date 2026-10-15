@@ -281,3 +281,8 @@ select {
 @media (prefers-reduced-motion: reduce) {
   .craidd-attention-warning, .craidd-attention-error { animation: none; }
 }
+
+/* Gold source intent uses a small right-aligned diamond beside existing red/blue glyphs. */
+.craidd-gold-marker::after { content: "◆"; color: #dbb75b; position:absolute; right:0; font-size:10px; line-height:20px; }
+.craidd-gold-end::after { content: "◇"; }
+.craidd-gold-stale::after { opacity:.45; }

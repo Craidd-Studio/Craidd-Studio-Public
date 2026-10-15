@@ -4,8 +4,7 @@
 attach. See the [current roadmap](../../roadmaps/Roadmap-v0.0.4A.md).
 
 **Status:** Target design agreed during the 14 October 2026 discussion.
-Recording is not implemented. The existing Profiler is layout only; HTML
-concepts demonstrate appearance and selected interactions, not collectors.
+An experimental Linux native slice now exists; see the [implementation record](implementation-attach-gold.md) for measured capabilities and remaining gates. This document remains the broader target contract; HTML concepts are references.
 
 **Companions:** [Attached profiling](design-attach-profiling.md),
 [profile marker infrastructure](design-profile-markers.md),
@@ -243,5 +242,5 @@ unbounded memory use by the IDE.
 
 ---
 
-*Last updated: Phase 3.5, 14 October 2026. Author(s): ShinkuKira21.*
+*Last updated: Phase 3.5, 15 October 2026. Author(s): ShinkuKira21.*
 *This document is a design.*

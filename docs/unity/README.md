@@ -19,9 +19,7 @@
 
 ## Implementation boundary
 
-The existing Profiler panel is layout only. This collection does not deliver
-Unity attach, a profiling bridge, Gold event instrumentation, CPU/memory
-collectors, a Unity C# adapter or Unity-specific LDI qualification.
+The [experimental implementation record](../feats/profiling/implementation-attach-gold.md) describes native attach routing, process gauges, prepared C++ Gold hooks and grouped Profiler results. The [tracked Unity fixture](../../workspaces/unity/README.md) provides a real C#↔C++ bridge and development player tests. Unity C# adapter and Unity LDI qualification remain open.
 
 Native attach, C# attach, exact Gold capture and Play lifecycle have separate
 acceptance gates. A PID sample or instrumented native reproduction is not
@@ -41,5 +39,5 @@ establish runtime support.
 
 ---
 
-*Last updated: Phase 3.x / 3.5, 14 October 2026. Author(s): ShinkuKira21.*
+*Last updated: Phase 3.x / 3.5, 15 October 2026. Author(s): ShinkuKira21.*
 *This document is a record.*

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import DebugSidebar from "./DebugSidebar";
 import ProfilerPanel from "./ProfilerPanel";
 
@@ -16,6 +16,7 @@ export default function RightPanel() {
     setTab(next);
     try { localStorage.setItem(TAB_KEY, next); } catch { /* Best effort. */ }
   };
+  useEffect(() => { const show = () => choose("profiler"); window.addEventListener("craidd:show-profiler",show); return () => window.removeEventListener("craidd:show-profiler",show); }, []);
   return <div className="h-full min-h-0 w-full bg-zinc-900 border-l border-zinc-800 flex flex-col overflow-hidden text-xs">
     <div role="tablist" aria-label="Right panel" className="h-9 shrink-0 flex items-end gap-1 px-2 border-b border-zinc-800">
       {(["debugger", "profiler"] as const).map((id) => <button key={id} role="tab" type="button" aria-selected={tab === id}

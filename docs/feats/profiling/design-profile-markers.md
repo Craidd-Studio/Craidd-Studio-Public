@@ -3,8 +3,7 @@
 **Roadmap track:** Phase 3.5 profiling proposal; DAP timing belongs to Phase 3.x. See the [current roadmap](../../roadmaps/Roadmap-v0.0.4A.md).
 
 **Status:** Infrastructure and future-extension design, recorded 22 September
-2026 and reconciled 14 October 2026. No recording implementation is established
-here. The [Gold capture contract](design-gold-capture.md) governs the current
+2026 and reconciled 14 October 2026. The [experimental native implementation](implementation-attach-gold.md) is recorded separately; the sketches below remain future infrastructure. The [Gold capture contract](design-gold-capture.md) governs the current
 UX: automatic Debug arming, one explicit solo per context, all other ranges
 paired, collapsible results, Snapshot and Record again. Its provider, identity,
 metric and lifecycle rules supersede conflicting sketches below.
@@ -647,5 +646,5 @@ Everything above is a consequence of that sentence.
 
 ---
 
-*Last updated: Phase 3.5, 14 October 2026. Author(s): ShinkuKira21.*
+*Last updated: Phase 3.5, 15 October 2026. Author(s): ShinkuKira21.*
 *This document is a design.*

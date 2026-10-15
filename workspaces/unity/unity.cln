@@ -1,0 +1,19 @@
+[solution]
+name = "Unity debugging probe"
+version = "1.0"
+projects = ["Assets/Scripts/Managed.craidd", "Assets/Editor/Editor.craidd", "Native/Native.craidd"]
+default_project = "Native/Native.craidd"
+default_config = "Native plugin · Build"
+
+# Unity owns Editor/player launch. Use Run → Attach to Process for native debugging.
+# C# files are compiled by Unity, never by a fabricated dotnet run configuration.
+[[config]]
+name = "Native plugin · Build"
+kind = "build"
+method = "cmake"
+target = "Native/Native.craidd"
+default_profile = "Debug"
+
+[[config.profile]]
+name = "Debug"
+args = ["--config", "Debug", "--target", "craidd_unity_probe"]

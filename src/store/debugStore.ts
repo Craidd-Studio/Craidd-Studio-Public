@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import type { ProcessInfo } from "../components/dialogs/AttachProcessDialog";
 import { revealDebugSource } from "../lib/debugSource";
 import { useBreakpoints } from "./breakpointStore";
 import { useSolution } from "./solutionStore";
@@ -13,7 +14,8 @@ export interface DebugVariable { name: string; value: string; type?: string; var
 export interface DebugThread { id: number; name: string; state: "running" | "paused" | "unknown"; reason?: string | null; incarnation: number; observedMs: number; ranMs: number; runObserved: boolean; receivedAt?: number }
 export interface CompletedDebugThread { id: number; name: string; incarnation: number; observedMs: number; ranMs: number; runObserved: boolean }
 interface DebugEvent {
-  status: DebugStatus | "output" | "scopes" | "variables" | "threads" | "threadSelected" | "inspection" | "capabilities"
+  target?: ProcessInfo; attached?: boolean; module?: { reason?: string; module?: DebugModule };
+  status: DebugStatus | "target" | "module" | "output" | "scopes" | "variables" | "threads" | "threadSelected" | "inspection" | "capabilities"
     | "nativeStepRejected" | "nativeHoldsReleased" | "nativeReleaseFailed" | "exclusiveStepRejected" | "exclusiveReleaseResult";
   text?: string;
   reason?: string;
@@ -38,9 +40,14 @@ interface DebugEvent {
   success?: boolean;
 }
 
+export interface DebugModule { id: string | number; name?: string; path?: string; symbolStatus?: string; symbolFilePath?: string }
+
 interface ExclusiveStepTarget { sessionKey: string; id: number; name: string }
 
 interface DebugState {
+  target: ProcessInfo | null; attached: boolean; modules: DebugModule[];
+  attach: (target: ProcessInfo, adapter: string) => Promise<void>;
+  refreshModules: () => Promise<void>;
   status: DebugStatus;
   output: string;
   reason: string | null;
@@ -77,6 +84,26 @@ interface DebugState {
 }
 
 export const useDebug = create<DebugState>((set, get) => ({
+  target: null, attached: false, modules: [],
+  attach: async (target, adapter) => {
+    if (["building", "starting", "running", "paused"].includes(get().status)) throw new Error("End the existing debugger session before attaching");
+    set({ status: "starting", target, attached: true, modules: [], output: `Attaching to ${target.name} · PID ${target.pid}…\n`,
+      frames: [], variables: [], threads: [], completedThreads: [], file: null, line: null, threadSessionKey: null,
+      threadsStale:false,allThreadsStopped:false,nativeSingleStepSessionKey:null,nativeStepTarget:null,nativeStepOutcome:null,nativeReleaseFailed:false,nativeCanRetryRelease:false,
+      selectedThreadId:null,selectionEpoch:0,inspectionError:null,exclusiveNextSessionKey:null,exclusiveMethod:null,threadLanguage:null,exclusiveStepTarget:null,exclusiveStepOutcome:null });
+    try {
+      const { invoke } = await import("@tauri-apps/api/core");
+      await invoke("attach_to_process", { requestSpec: { target: {pid:target.pid,birth:target.birth}, adapter,
+        solutionPath: useSolution.getState().clnPath ?? "", breakpoints: useBreakpoints.getState().points } });
+    } catch (error) { set({status:"error", output:appendOutput(get().output,String(error))}); throw error; }
+  },
+  refreshModules: async () => {
+    const target=get().target;if(!target)return;
+    try { const { invoke }=await import("@tauri-apps/api/core");const paths=await invoke<string[]>("process_modules",{target:{pid:target.pid,birth:target.birth}});
+      if(get().target?.pid!==target.pid||get().target?.birth!==target.birth)return;
+      const reported=get().modules;set({modules:paths.map(path=>reported.find(m=>m.path===path)??{id:path,path,name:path.split("/").pop(),symbolStatus:"Mapped module · symbols not verified"})});
+    } catch(e){set({output:appendOutput(get().output,`Modules: ${String(e)}`)});}
+  },
   status: "idle", output: "", reason: null, file: null, line: null, frames: [], variables: [],
   threads: [], completedThreads: [], threadsStale: false, allThreadsStopped: false, threadSessionKey: null, nativeSingleStepSessionKey: null,
   nativeStepTarget: null, nativeStepOutcome: null, nativeReleaseFailed: false, nativeCanRetryRelease: false,
@@ -85,7 +112,7 @@ export const useDebug = create<DebugState>((set, get) => ({
   start: async (method, cwd, profile, commandArgs = [], env = {}, order) => {
     if (["building", "starting", "running", "paused"].includes(get().status)) return;
     const language = method === "cargo" ? "Rust" : method === "dotnet" ? "C#" : "C++";
-    set({ status: "building", output: `Building a debuggable ${language} executable…\n`, frames: [], variables: [], file: null, line: null,
+    set({ target: null, attached: false, modules: [], status: "building", output: `Building a debuggable ${language} executable…\n`, frames: [], variables: [], file: null, line: null,
       threads: [], completedThreads: [], threadsStale: false, allThreadsStopped: false, threadSessionKey: null,
       nativeSingleStepSessionKey: null, nativeStepTarget: null, nativeStepOutcome: null, nativeReleaseFailed: false, nativeCanRetryRelease: false,
       selectedThreadId: null, selectionEpoch: 0, inspectionError: null,
@@ -180,6 +207,18 @@ export async function listenToDebug(): Promise<() => void> {
   let stopSerial = 0;
   const unlisten = await getCurrentWebviewWindow().listen<DebugEvent>("craidd:debug-state", (event) => {
     const message = event.payload;
+    if (message.status === "target") {
+      if (message.target) useDebug.setState({ target: message.target, attached: message.attached === true });
+      return;
+    }
+    if (message.status === "module") {
+      const item = message.module?.module;
+      if (item) useDebug.setState((state) => ({ modules: [
+        ...state.modules.filter((m) => String(m.id) !== String(item.id)),
+        ...(message.module?.reason === "removed" ? [] : [item]),
+      ].slice(-512) }));
+      return;
+    }
     if (message.status === "output") {
       useDebug.setState((state) => ({ output: appendOutput(state.output, message.text ?? "") }));
       return;

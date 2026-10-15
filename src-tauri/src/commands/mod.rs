@@ -22,3 +22,8 @@ mod debug_transport;
 pub mod build_order;
 pub mod ldi;
 pub mod native_debug;
+
+pub mod processes;
+
+pub mod profiling;
+pub mod gold;

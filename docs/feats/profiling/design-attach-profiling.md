@@ -14,6 +14,8 @@ the current layout-only Profiler.
 [attach to process](../debugging/design-attach-to-process.md),
 [Unity workflow](../../unity/feats/design-unity-native-plugin.md).
 
+The [experimental implementation](implementation-attach-gold.md) supplies Linux process gauges and opt-in C++ source events. These are separate from the proposed perf stack/module checkpoint below.
+
 ## Target ownership and capture mechanism are separate
 
 A profile targets either a process Craidd launched or a foreign process the
@@ -183,5 +185,5 @@ Unity acceptance is recorded separately against an actual Editor/player.
 
 ---
 
-*Last updated: Phase 3.5, 14 October 2026. Author(s): ShinkuKira21.*
+*Last updated: Phase 3.5, 15 October 2026. Author(s): ShinkuKira21.*
 *This document is a design.*

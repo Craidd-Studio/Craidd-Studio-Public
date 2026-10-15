@@ -1,0 +1,5 @@
+[project]
+name = "Unity native plugin"
+language = "cpp"
+root = "."
+kind = "library"

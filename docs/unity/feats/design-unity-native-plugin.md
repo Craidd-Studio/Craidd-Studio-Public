@@ -5,8 +5,7 @@ See the [current roadmap](../../roadmaps/Roadmap-v0.0.4A.md).
 
 **Status:** Proposal tightened 14 October 2026. Attach, Unity adapter
 qualification and Gold collectors are not established by this document.
-Existing managed LDI is a separate bounded implementation. No Unity bridge
-or boundary-capture plugin is delivered here.
+Existing managed LDI is a separate bounded implementation. A [small C#↔C++ fixture](../../../workspaces/unity/README.md) and experimental source profiler now exist; see the [implementation evidence](../../feats/profiling/implementation-attach-gold.md). A general Unity adapter or LDI boundary interposer is not established by those tests.
 
 **Companions:** [Attach to process](../../feats/debugging/design-attach-to-process.md),
 [Gold capture contract](../../feats/profiling/design-gold-capture.md),
@@ -210,5 +209,5 @@ Record which gates passed; no acceptance is implied by this design commit.
 
 ---
 
-*Last updated: Phase 3.x / 3.5, 14 October 2026. Author(s): ShinkuKira21.*
+*Last updated: Phase 3.x / 3.5, 15 October 2026. Author(s): ShinkuKira21.*
 *This document is a design.*

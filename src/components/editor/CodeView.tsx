@@ -10,6 +10,7 @@ import { useSplit } from "../../store/splitStore";
 import { useLinkedWindows } from "../../store/linkedWindowsStore";
 import type { Breakpoint } from "../../store/breakpointStore";
 import { useDebug } from "../../store/debugStore";
+import { useGold } from "../../store/goldStore";
 import BreakpointMenu from "./BreakpointMenu";
 import { CRAIDD_DARK_THEME, defineCraiddDarkTheme } from "../../lib/editorThemes";
 import { listLdiCallSites, removeLdiBlue, setLdiBlue, setupLdiBlue, useLdi } from "../../store/ldiStore";
@@ -98,6 +99,8 @@ export default function CodeView() {
   const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
   const monacoRef = useRef<Monaco | null>(null);
   const decorationsRef = useRef<editor.IEditorDecorationsCollection | null>(null);
+  const goldDecorationsRef = useRef<editor.IEditorDecorationsCollection | null>(null);
+  const goldPoints = useGold(s => s.points);
   const trackedPointsRef = useRef<Breakpoint[]>([]);
   const trackedBluesRef = useRef<LdiBlue[]>([]);
   const callSitesRef = useRef<LdiCallSite[]>([]);
@@ -230,6 +233,17 @@ export default function CodeView() {
     decorations.set(breakpointDecorations(monaco, currentPoints, file, currentPausedLine, callSitesRef.current, dirty, liveBlueLines, liveRedLines));
   }, []);
 
+  const refreshGold = useCallback(() => {
+    const monaco=monacoRef.current;const instance=editorRef.current;if(!monaco||!instance)return;
+    const file=useSolution.getState().activeFileId;
+    const dirty=useSolution.getState().tabs.find(t=>t.fileId===file)?.dirty;
+    goldDecorationsRef.current?.set(useGold.getState().points.filter(p=>p.file===file).flatMap(p=>[
+      {range:new monaco.Range(p.start,1,p.start,1),options:{glyphMarginClassName:"craidd-gold-marker"+(dirty?" craidd-gold-stale":""),glyphMarginHoverMessage:{value:`Gold ${p.solo?"Solo":p.end?`Start → ${p.end}`:"Start · Awaiting End"} · prepared build required${dirty?" · unsaved edits: review lines":""}${p.condition?` · if ${p.condition}`:""}`}}},
+      ...(p.end?[{range:new monaco.Range(p.end,1,p.end,1),options:{glyphMarginClassName:"craidd-gold-marker craidd-gold-end"+(dirty?" craidd-gold-stale":""),glyphMarginHoverMessage:{value:`Gold End ← ${p.start} · prepared build required`}}}]:[])
+    ]));
+  },[]);
+  useEffect(()=>{refreshGold();},[refreshGold,goldPoints,activeDirty,activeFileId]);
+
   useEffect(() => { refreshBreakpoints(); }, [refreshBreakpoints, points, blues, callSites, activeDirty, activeFileId, remoteEditContext?.windowLabel, pausedLine]);
 
   useEffect(() => {
@@ -275,6 +289,8 @@ export default function CodeView() {
           instance.onDidDispose(() => { if (getActiveEditor() === instance) setActiveEditor(null); });
           monacoRef.current = monaco;
           decorationsRef.current = instance.createDecorationsCollection();
+          goldDecorationsRef.current = instance.createDecorationsCollection();
+          refreshGold();
           refreshBreakpoints();
           revealCurrentNavigation(instance);
           instance.onDidChangeModel(() => { revealCurrentNavigation(instance); refreshBreakpoints(); });
@@ -291,6 +307,7 @@ export default function CodeView() {
             if (event.target.type !== monaco.editor.MouseTargetType.GUTTER_GLYPH_MARGIN || !event.event.leftButton) return;
             const file = useSolution.getState().activeFileId;
             const line = event.target.position?.lineNumber;
+            if (line && useGold.getState().points.some(p=>p.file===useSolution.getState().activeFileId&&(p.start===line||p.end===line))) { setBreakpointMenu({x:event.event.posx,y:event.event.posy,line}); return; }
             if (!file || !line) return;
             setBreakpointError(null);
             const { blue, red } = markersAtLine(file, line);

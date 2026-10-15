@@ -1,3 +1,4 @@
+import { useGold } from "../../store/goldStore";
 import { useState } from "react";
 import { useBreakpoints } from "../../store/breakpointStore";
 import { useLinkedWindows } from "../../store/linkedWindowsStore";
@@ -9,15 +10,20 @@ export default function BreakpointMenu({ file, line, x, y, callSite, onClose }: 
 }) {
   const red = useBreakpoints((state) => state.points.find((point) => point.file === file && point.line === line));
   const active = !!red;
+  const gold = useGold(s => s.points);
+  const atGold = gold.find(p => p.file === file && (p.start === line || p.end === line));
+  const pendingGold = gold.filter(p => p.file === file && !p.solo && p.end === null && p.start < line);
+  const goldEdit = (operation: "start"|"end"|"solo"|"remove"|"condition", id?:string, value?:string) => { void useGold.getState().edit(operation,file,line,id,value).then(onClose).catch(e=>setMenuError(String(e))); };
   const linked = useLinkedWindows();
   const blue = useLdi((state) => state.blues.find((point) => point.file === file && point.line === line && point.originLabel === linked.ownWindowLabel));
   const partners = linked.windows.filter((item) => item.ldiRole === "native-library"
     && (callSite?.partnerLabels.includes(item.windowLabel)
       || (item.selectedConfigName !== null && callSite?.configNames.includes(item.selectedConfigName))));
-  const [editingCondition, setEditingCondition] = useState<"red" | "blue" | null>(null);
+  const [editingCondition, setEditingCondition] = useState<"red" | "blue" | "gold" | null>(null);
   const [condition, setCondition] = useState("");
   const [menuError, setMenuError] = useState<string | null>(null);
   const saveCondition = () => {
+    if (editingCondition === "gold" && atGold) { goldEdit("condition",atGold.id,condition); return; }
     const save = editingCondition === "blue" && blue
       ? setLdiBlue(file, line, blue.partnerLabel, condition)
       : editingCondition === "red" && red
@@ -66,8 +72,21 @@ export default function BreakpointMenu({ file, line, x, y, callSite, onClose }: 
       {blue && blue.mode !== "live-native" && <button role="menuitem" className="block w-full px-3 py-1.5 text-left text-blue-300 hover:bg-blue-900"
         onClick={() => { setCondition(blue.condition ?? ""); setEditingCondition("blue"); }}>
         {blue.condition ? "Edit blue condition…" : "Set blue condition…"}</button>}
+      <details className="border-t border-zinc-700 mt-1 text-amber-200">
+        <summary className="px-3 py-1.5 cursor-pointer hover:bg-zinc-800">Profiling</summary>
+        <p className="px-3 py-1 text-zinc-500 max-w-64">Gold records without pausing. Requires a prepared source provider.</p>
+        {atGold ? <>
+          {atGold.start === line && <button role="menuitem" className="block w-full px-3 py-1.5 text-left hover:bg-zinc-800" onClick={()=>{setCondition(atGold.condition);setEditingCondition("gold");}}>Add / edit Gold condition…</button>}
+          <button role="menuitem" className="block w-full px-3 py-1.5 text-left hover:bg-zinc-800" onClick={()=>goldEdit("remove",atGold.id)}>Remove {atGold.solo?"Solo":atGold.end?"Gold pair (Start + End)":"awaiting Start"}</button>
+        </> : <>
+          <button role="menuitem" className="block w-full px-3 py-1.5 text-left hover:bg-zinc-800" onClick={()=>goldEdit("start")}>◆ Start range</button>
+          {pendingGold.map(p=><button key={p.id} role="menuitem" className="block w-full px-3 py-1.5 text-left hover:bg-zinc-800" onClick={()=>goldEdit("end",p.id)}>◇ End range from line {p.start}</button>)}
+          {!pendingGold.length&&<p className="px-3 py-1.5 text-zinc-500">◇ End · place a Start first</p>}
+          <button role="menuitem" className="block w-full px-3 py-1.5 text-left hover:bg-zinc-800" onClick={()=>goldEdit("solo")}>◆ {gold.some(p=>p.solo)?"Move Solo here":"Solo · record until session ends"}</button>
+        </>}
+      </details>
       {editingCondition && <div className="px-3 py-2 space-y-2 text-zinc-200">
-        <label className="block" htmlFor="breakpoint-condition">{editingCondition === "red" ? "Red" : "Blue"} condition (blank: every hit)</label>
+        <label className="block" htmlFor="breakpoint-condition">{editingCondition === "red" ? "Red" : editingCondition === "gold" ? "Gold scalar" : "Blue"} condition (blank: every hit)</label>
         <input id="breakpoint-condition" autoFocus value={condition} maxLength={256}
           onChange={(event) => setCondition(event.target.value)}
           onKeyDown={(event) => { if (event.key === "Enter") saveCondition(); if (event.key === "Escape") onClose(); }}

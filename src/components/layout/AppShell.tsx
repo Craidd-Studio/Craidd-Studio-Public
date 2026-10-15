@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import MenuBar from "../menu/MenuBar";
+import AttachProcessDialog from "../dialogs/AttachProcessDialog";
 import Toolbar from "./Toolbar";
 import StatusBar from "./StatusBar";
 import ActivityBar from "./ActivityBar";
@@ -28,6 +29,8 @@ import { listenForBreakpointFocus } from "../../lib/breakpointFocus";
 import { RemoteEditorPane } from "./RemoteContext";
 import { listenForBreakpointChanges, useBreakpoints } from "../../store/breakpointStore";
 import { listenToDebug, useDebug } from "../../store/debugStore";
+import { listenToProfiling } from "../../store/profilingStore";
+import { listenToGold, useGold } from "../../store/goldStore";
 import { listenToLdi } from "../../store/ldiStore";
 
 interface ProjectToolchainCheck {
@@ -43,6 +46,7 @@ const LANGUAGE_LABELS: Record<string, string> = {
 };
 
 export default function AppShell({ startProjectDialog = false, onCloseStartProjectDialog }: { startProjectDialog?: boolean; onCloseStartProjectDialog?: () => void }) {
+  const [attachOpen, setAttachOpen] = useState(false);
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [prefsOpen, setPrefsOpen] = useState(false);
   const [prefsArea, setPrefsArea] = useState<"editor" | "toolchains">("editor");
@@ -89,6 +93,17 @@ export default function AppShell({ startProjectDialog = false, onCloseStartProje
     setPrefsLanguage(language);
     setPrefsOpen(true);
   };
+  useEffect(() => {
+    const subscriptions = [listenToProfiling(), listenToGold()];
+    return () => { for (const subscription of subscriptions) void subscription.then(off => off()); };
+  }, []);
+  useEffect(() => { void useGold.getState().load(clnPath).catch(console.error); }, [clnPath]);
+  useEffect(() => {
+    const open = () => setAttachOpen(true);
+    window.addEventListener("craidd:attach-process", open);
+    return () => window.removeEventListener("craidd:attach-process", open);
+  }, []);
+
   useEffect(() => {
     let disposed = false;
     let unlisten: (() => void) | undefined;
@@ -256,6 +271,7 @@ export default function AppShell({ startProjectDialog = false, onCloseStartProje
 
   return (
     <div className="h-screen w-screen flex flex-col bg-zinc-950 text-zinc-300 text-[13px] overflow-hidden">
+      {attachOpen && <AttachProcessDialog onClose={() => setAttachOpen(false)} />}
       <MenuBar openCommandPalette={() => setPaletteOpen(true)} openPreferences={() => openPreferences()} />
       <Toolbar />
       {successVisible && (

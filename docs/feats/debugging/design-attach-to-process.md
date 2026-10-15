@@ -16,6 +16,8 @@ that session can do, and what it must not do.
 
 ---
 
+Experimental attach routing and ownership handling now exist. See the [implementation evidence](../profiling/implementation-attach-gold.md) for adapter probes and the outstanding desktop lifecycle gates.
+
 ## The decision
 
 Craidd offers **attach** as a first-class debugger capability, alongside
@@ -325,5 +327,5 @@ but do not establish that every adapter has identical behaviour.
 
 ---
 
-*Last updated: Phase 3.x, 14 October 2026. Author(s): ShinkuKira21.*
+*Last updated: Phase 3.x, 15 October 2026. Author(s): ShinkuKira21.*
 *This document is a design.*

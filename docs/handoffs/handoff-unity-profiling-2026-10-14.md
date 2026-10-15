@@ -28,7 +28,9 @@ linked process contexts; it does not claim ownership of Unity's execution.
 
 ## Current implementation and open work
 
-Profiler is currently layout only. The HTML showcase used sample data and
+At the `65171c3` design checkpoint Profiler was layout only. The subsequent [implementation record](../feats/profiling/implementation-attach-gold.md) and [Unity fixture](../../workspaces/unity/README.md) supersede this section as current status.
+
+At that checkpoint: The HTML showcase used sample data and
 preset markers; it did not implement gutter placement/pairing or collectors.
 Attach, Unity C# adapter qualification, Gold source-event providers and Unity
 Play/frame/memory integration are not delivered by this documentation commit.
@@ -66,5 +68,5 @@ and [attach design](../feats/debugging/design-attach-to-process.md).
 
 ---
 
-*Last updated: Phase 3.x / 3.5, 14 October 2026. Author(s): ShinkuKira21.*
+*Last updated: Phase 3.x / 3.5, 15 October 2026. Author(s): ShinkuKira21.*
 *This document is a record.*
