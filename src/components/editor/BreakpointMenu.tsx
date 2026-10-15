@@ -5,8 +5,8 @@ import { useLinkedWindows } from "../../store/linkedWindowsStore";
 import { removeLdiBlue, setLdiBlue, setupLdiBlue, useLdi } from "../../store/ldiStore";
 import type { LdiCallSite } from "../../store/ldiStore";
 
-export default function BreakpointMenu({ file, line, x, y, callSite, onClose }: {
-  file: string; line: number; x: number; y: number; callSite?: LdiCallSite; onClose: () => void;
+export default function BreakpointMenu({ file, line, x, y, callSite, markerKind, onClose }: {
+  file: string; line: number; x: number; y: number; callSite?: LdiCallSite; markerKind?: "gold" | "debug"; onClose: () => void;
 }) {
   const red = useBreakpoints((state) => state.points.find((point) => point.file === file && point.line === line));
   const active = !!red;
@@ -38,10 +38,15 @@ export default function BreakpointMenu({ file, line, x, y, callSite, onClose }: 
       .then(onClose)
       .catch((error) => setMenuError(String(error)));
   };
-  return <>
-    <button className="fixed inset-0 z-40 cursor-default" aria-label="Close breakpoint menu" onClick={onClose} />
-    <div role="menu" className="fixed z-50 min-w-44 max-h-[min(24rem,calc(100vh-1rem))] overflow-y-auto bg-zinc-900 border border-zinc-700 rounded shadow-2xl py-1 text-xs"
-      style={{ left: Math.max(4, Math.min(x, window.innerWidth - 300)), top: Math.max(4, Math.min(y, window.innerHeight - (editingCondition ? 240 : 160))) }}>
+  const goldActions = atGold && <>
+    <button role="menuitem" className="block w-full px-3 py-1.5 text-left text-zinc-200 hover:bg-blue-700 hover:text-white" onClick={() => goldEdit("remove", atGold.id)}>
+      {atGold.end ? "Remove breakpoints (Start + End)" : "Remove breakpoint"}
+    </button>
+    <button role="menuitem" title={atGold.end === line ? `Condition is evaluated at Start, line ${atGold.start}` : undefined} className="block w-full px-3 py-1.5 text-left text-zinc-200 hover:bg-blue-700 hover:text-white" onClick={() => { setCondition(atGold.condition); setEditingCondition("gold"); }}>
+      {atGold.condition ? "Edit Condition on Profile Breakpoint…" : "Add Condition to Profile Breakpoint…"}
+    </button>
+  </>;
+  const debugActions = <>
       <button role="menuitem" className="block w-full px-3 py-1.5 text-left text-zinc-200 hover:bg-blue-700 hover:text-white"
         onClick={toggle}>{active ? "Remove Red Breakpoint" : "Set Red Breakpoint"}</button>
       {red && <button role="menuitem" className="block w-full px-3 py-1.5 text-left text-red-300 hover:bg-red-900"
@@ -72,19 +77,30 @@ export default function BreakpointMenu({ file, line, x, y, callSite, onClose }: 
       {blue && blue.mode !== "live-native" && <button role="menuitem" className="block w-full px-3 py-1.5 text-left text-blue-300 hover:bg-blue-900"
         onClick={() => { setCondition(blue.condition ?? ""); setEditingCondition("blue"); }}>
         {blue.condition ? "Edit blue condition…" : "Set blue condition…"}</button>}
-      <details className="border-t border-zinc-700 mt-1 text-amber-200">
+  </>;
+  return <>
+    <button className="fixed inset-0 z-40 cursor-default" aria-label="Close breakpoint menu" onClick={onClose} />
+    <div role="menu" className="fixed z-50 min-w-44 max-h-[min(24rem,calc(100vh-1rem))] overflow-y-auto bg-zinc-900 border border-zinc-700 rounded shadow-2xl py-1 text-xs"
+      style={{ left: Math.max(4, Math.min(x, window.innerWidth - 300)), top: Math.max(4, Math.min(y, window.innerHeight - (editingCondition ? 240 : 160))) }}>
+      {atGold && markerKind !== "debug" ? <>
+        {goldActions}
+        <details className="border-t border-zinc-700 mt-1">
+          <summary className="px-3 py-1.5 cursor-pointer text-zinc-400 hover:bg-zinc-800">Debugging</summary>
+          {debugActions}
+        </details>
+      </> : <>
+        {debugActions}
+      <details open={markerKind === "gold" ? true : undefined} className="border-t border-zinc-700 mt-1 text-amber-200">
         <summary className="px-3 py-1.5 cursor-pointer hover:bg-zinc-800">Profiling</summary>
         <p className="px-3 py-1 text-zinc-500 max-w-64">Gold records without pausing. Requires a prepared source provider.</p>
-        {atGold ? <>
-          {atGold.start === line && <button role="menuitem" className="block w-full px-3 py-1.5 text-left hover:bg-zinc-800" onClick={()=>{setCondition(atGold.condition);setEditingCondition("gold");}}>Add / edit Gold condition…</button>}
-          <button role="menuitem" className="block w-full px-3 py-1.5 text-left hover:bg-zinc-800" onClick={()=>goldEdit("remove",atGold.id)}>Remove {atGold.solo?"Solo":atGold.end?"Gold pair (Start + End)":"awaiting Start"}</button>
-        </> : <>
+        {atGold ? goldActions : <>
           <button role="menuitem" className="block w-full px-3 py-1.5 text-left hover:bg-zinc-800" onClick={()=>goldEdit("start")}>◆ Start range</button>
           {pendingGold.map(p=><button key={p.id} role="menuitem" className="block w-full px-3 py-1.5 text-left hover:bg-zinc-800" onClick={()=>goldEdit("end",p.id)}>◇ End range from line {p.start}</button>)}
           {!pendingGold.length&&<p className="px-3 py-1.5 text-zinc-500">◇ End · place a Start first</p>}
           <button role="menuitem" className="block w-full px-3 py-1.5 text-left hover:bg-zinc-800" onClick={()=>goldEdit("solo")}>◆ {gold.some(p=>p.solo)?"Move Solo here":"Solo · record until session ends"}</button>
         </>}
       </details>
+      </>}
       {editingCondition && <div className="px-3 py-2 space-y-2 text-zinc-200">
         <label className="block" htmlFor="breakpoint-condition">{editingCondition === "red" ? "Red" : editingCondition === "gold" ? "Gold scalar" : "Blue"} condition (blank: every hit)</label>
         <input id="breakpoint-condition" autoFocus value={condition} maxLength={256}

@@ -105,7 +105,7 @@ export default function CodeView() {
   const trackedBluesRef = useRef<LdiBlue[]>([]);
   const callSitesRef = useRef<LdiCallSite[]>([]);
   const callSiteCacheRef = useRef(new Map<string, CallSiteCacheEntry>());
-  const [breakpointMenu, setBreakpointMenu] = useState<{ x: number; y: number; line: number } | null>(null);
+  const [breakpointMenu, setBreakpointMenu] = useState<{ x: number; y: number; line: number; markerKind?: "gold" | "debug" } | null>(null);
   const [callSites, setCallSites] = useState<LdiCallSite[]>([]);
   const [breakpointError, setBreakpointError] = useState<string | null>(null);
   const activeFileId = useSolution((s) => s.activeFileId);
@@ -237,10 +237,19 @@ export default function CodeView() {
     const monaco=monacoRef.current;const instance=editorRef.current;if(!monaco||!instance)return;
     const file=useSolution.getState().activeFileId;
     const dirty=useSolution.getState().tabs.find(t=>t.fileId===file)?.dirty;
-    goldDecorationsRef.current?.set(useGold.getState().points.filter(p=>p.file===file).flatMap(p=>[
-      {range:new monaco.Range(p.start,1,p.start,1),options:{glyphMarginClassName:"craidd-gold-marker"+(dirty?" craidd-gold-stale":""),glyphMarginHoverMessage:{value:`Gold ${p.solo?"Solo":p.end?`Start → ${p.end}`:"Start · Awaiting End"} · prepared build required${dirty?" · unsaved edits: review lines":""}${p.condition?` · if ${p.condition}`:""}`}}},
-      ...(p.end?[{range:new monaco.Range(p.end,1,p.end,1),options:{glyphMarginClassName:"craidd-gold-marker craidd-gold-end"+(dirty?" craidd-gold-stale":""),glyphMarginHoverMessage:{value:`Gold End ← ${p.start} · prepared build required`}}}]:[])
-    ]));
+    const points = useGold.getState().points.filter(p => p.file === file);
+    // Reserve both lanes for the whole model so diamonds do not change sides
+    // on lines without a red marker. Removing Gold also releases the extra lane.
+    const lanes: editor.IModelDeltaDecoration[] = points.length
+      ? [monaco.editor.GlyphMarginLane.Center, monaco.editor.GlyphMarginLane.Right].map(position => ({
+        range: new monaco.Range(1, 1, instance.getModel()?.getLineCount() ?? 1, 1),
+        options: { glyphMargin: { position }, glyphMarginClassName: "craidd-profile-lane" },
+      })) : [];
+    const glyphMargin = { position: monaco.editor.GlyphMarginLane.Right };
+    goldDecorationsRef.current?.set([...lanes, ...points.flatMap(p => [
+      {range:new monaco.Range(p.start,1,p.start,1),options:{glyphMargin,glyphMarginClassName:"craidd-gold-marker"+(dirty?" craidd-gold-stale":""),glyphMarginHoverMessage:{value:`Gold ${p.solo?"Solo":p.end?`Start → ${p.end}`:"Start · Awaiting End"} · prepared build required${dirty?" · unsaved edits: review lines":""}${p.condition?` · if ${p.condition}`:""}`}}},
+      ...(p.end?[{range:new monaco.Range(p.end,1,p.end,1),options:{glyphMargin,glyphMarginClassName:"craidd-gold-marker craidd-gold-end"+(dirty?" craidd-gold-stale":""),glyphMarginHoverMessage:{value:`Gold End ← ${p.start} · prepared build required`}}}]:[])
+    ])]);
   },[]);
   useEffect(()=>{refreshGold();},[refreshGold,goldPoints,activeDirty,activeFileId]);
 
@@ -293,7 +302,7 @@ export default function CodeView() {
           refreshGold();
           refreshBreakpoints();
           revealCurrentNavigation(instance);
-          instance.onDidChangeModel(() => { revealCurrentNavigation(instance); refreshBreakpoints(); });
+          instance.onDidChangeModel(() => { revealCurrentNavigation(instance); refreshBreakpoints(); refreshGold(); });
           const markersAtLine = (file: string, line: number) => {
             const decorations = decorationsRef.current;
             return {
@@ -307,19 +316,19 @@ export default function CodeView() {
             if (event.target.type !== monaco.editor.MouseTargetType.GUTTER_GLYPH_MARGIN || !event.event.leftButton) return;
             const file = useSolution.getState().activeFileId;
             const line = event.target.position?.lineNumber;
-            if (line && useGold.getState().points.some(p=>p.file===useSolution.getState().activeFileId&&(p.start===line||p.end===line))) { setBreakpointMenu({x:event.event.posx,y:event.event.posy,line}); return; }
+            if (line && (event.target as editor.IMouseTargetMargin).detail.glyphMarginLane === monaco.editor.GlyphMarginLane.Right) { setBreakpointMenu({x:event.event.posx,y:event.event.posy,line,markerKind:"gold"}); return; }
             if (!file || !line) return;
             setBreakpointError(null);
             const { blue, red } = markersAtLine(file, line);
             const site = callSitesRef.current.find((item) => item.line === line);
-            if (blue && (red || blue.unreachable || blue.warning)) setBreakpointMenu({ x: event.event.posx, y: event.event.posy, line: blue.line });
+            if (blue && (red || blue.unreachable || blue.warning)) setBreakpointMenu({ x: event.event.posx, y: event.event.posy, line: blue.line, markerKind: "debug" });
             else if (blue) void removeLdiBlue(file, blue.line).catch((error) => setBreakpointError(String(error)));
             else if (!red && site?.partnerLabels.length === 1) {
               void setLdiBlue(file, line, site.partnerLabels[0]).catch((error) => setBreakpointError(String(error)));
             } else if (!red && site?.partnerLabels.length === 0 && site.configNames.length === 1) {
               void setupLdiBlue(file, line, site.configNames[0], true).catch((error) => setBreakpointError(String(error)));
             } else if (!red && site && (site.partnerLabels.length > 1 || site.configNames.length > 1)) {
-              setBreakpointMenu({ x: event.event.posx, y: event.event.posy, line });
+              setBreakpointMenu({ x: event.event.posx, y: event.event.posy, line, markerKind: "debug" });
             } else void useBreakpoints.getState().toggle(file, red?.line ?? line).catch((error) => setBreakpointError(String(error)));
           });
           instance.onContextMenu((event) => {
@@ -330,7 +339,10 @@ export default function CodeView() {
             event.event.preventDefault();
             const file = useSolution.getState().activeFileId;
             const markers = file ? markersAtLine(file, line) : null;
-            setBreakpointMenu({ x: event.event.posx, y: event.event.posy, line: markers?.blue?.line ?? markers?.red?.line ?? line });
+            const markerKind = event.target.type === monaco.editor.MouseTargetType.GUTTER_GLYPH_MARGIN
+              ? (event.target as editor.IMouseTargetMargin).detail.glyphMarginLane === monaco.editor.GlyphMarginLane.Right ? "gold" : "debug"
+              : file && useGold.getState().points.some(p => p.file === file && (p.start === line || p.end === line)) ? "gold" : "debug";
+            setBreakpointMenu({ x: event.event.posx, y: event.event.posy, markerKind, line: markerKind === "gold" ? line : markers?.blue?.line ?? markers?.red?.line ?? line });
           });
         }}
         options={options}
@@ -340,7 +352,7 @@ export default function CodeView() {
         <button type="button" className="ml-3 text-zinc-400 hover:text-white" onClick={() => setBreakpointError(null)}>Dismiss</button>
       </div>}
       {breakpointMenu && activeFileId && <BreakpointMenu file={activeFileId}
-        line={breakpointMenu.line} x={breakpointMenu.x} y={breakpointMenu.y}
+        markerKind={breakpointMenu.markerKind} line={breakpointMenu.line} x={breakpointMenu.x} y={breakpointMenu.y}
         callSite={callSites.find((site) => site.line === breakpointMenu.line)}
         onClose={() => setBreakpointMenu(null)} />}
     </div>

@@ -17,6 +17,53 @@ automated checks and real adapter/desktop acceptance.
   before configurationDone. LLDB reports the location pending at that stage;
   qualification must await completed attach/configuration and a real hit.
 
+## Gutter regression observed on 15 October 2026
+
+User screenshots showed an existing Gold marker opening a menu with Set Red
+Breakpoint first and its own Remove/Condition actions hidden inside Profiling.
+The Gold lookup existed, but those actions were always nested in a collapsed
+section instead of being the selected marker's primary actions.
+
+A second screenshot showed Gold diamonds drawn inside red breakpoint circles.
+Both decorations used Monaco's default glyph lane, so Monaco combined their
+CSS classes on one element. The Gold pseudo-element was consequently painted
+on the red circle. Correct this with an independent Gold lane and lane-specific
+hit testing; CSS offsets within the shared glyph are insufficient.
+
+## Diagnostic tool window correction
+
+The initial panel stacked setup explanations, graphs, filters and expanded
+results in one long scroll. User screenshots established that memory capture
+was hard to discover and the tool window was too bulky compared with the
+Visual Studio 2019 Diagnostic Tools reference.
+
+The corrected panel keeps a compact toolbar, process identity, shared time
+ruler, process RSS and CPU-time graphs above one tabbed results pane. Summary,
+Gold, Memory and Events share the selected process and time interval. Dragging
+a graph or using the keyboard-accessible range controls filters overlapping
+Gold captures; thread and batch filters affect Gold results, not process gauges.
+Gold groups and individual hits start collapsed. Expanded groups retain CPU
+and native-live graphs. CPU summaries use per-capture means rather than sums
+that would double-count nested invocations. Collector setup moves to Settings.
+
+Memory exposes immutable observation snapshots, a same-session RSS difference
+table and recorded allocation cohorts, including subsequent frees. Snapshot
+and record again preserves the current view before starting another batch.
+These snapshots copy collected observations; they are not heap object dumps.
+Managed heap/GC and heap object capture remain explicitly unavailable.
+
+Gold now has a separate Monaco glyph lane reserved alongside red/blue for
+files with Gold markers. Lane-specific hit testing preserves each marker's
+menu. Existing Gold offers Remove and Add/Edit Condition directly; pair
+removal names both endpoints. Editing from End changes the Start condition.
+
+Validation for this correction: production build and the five focused profiling
+tests pass. The synthetic browser fixture exercises the real editor and panel:
+separate red/Gold geometry, direct condition editing, red-menu preservation,
+frozen snapshots followed by a simulated free, RSS differences, keyboard time
+selection and thread filtering. The fixture has mocked IPC; it does not qualify
+a heap collector or production desktop lifecycle.
+
 ## Delivered experimental slice
 
 - Run → Attach to Process and Command Palette entry; searchable same-user PID
@@ -142,8 +189,8 @@ This is a foundation for working on the feature, not completion of every
   module attribution, hardware CPU cycles and GPU collectors are absent. Solo
   CPU time is unavailable; paired CPU is measured on the triggering native
   thread. RSS and explicit allocation cohorts are shown separately.
-- Result retention is bounded and in memory. Persistent export/import, full
-  timeline navigation, thread-incarnation/reload provenance and complete
+- Result retention is bounded and in memory. Persistent export/import, persistent
+  timeline history, thread-incarnation/reload provenance and complete
   dropped-event sequence accounting remain work. Fork during multithreaded
   provider calls and arbitrary plugin reloads are not qualified.
 - CoreCLR attach is a routed candidate, not Unity C# support. Unity Mono/IL2CPP
