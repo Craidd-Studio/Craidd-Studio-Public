@@ -139,15 +139,28 @@ unobserved pauses. A linked participant can still run while another is held.
 Profiler lives in the **right panel beside Debugger**, per
 [the public-release layout](../../uiux/design-public-release-sweep.md#3-profiling-layout-only).
 It identifies the selected process/session, loaded module and capture state.
-One collapsible group belongs to each solo or paired range; repeated hits live
-inside the group rather than generating an unbounded list of top-level rows.
+A **Gold benchmark dropdown** selects one recorded solo or paired range for
+CPU/memory detail. Solo is the automatic default when recorded. Without Solo,
+the initial view is Process overview. An explicit range or Process overview
+choice takes precedence and survives new hits, batches and snapshot switching
+within that process session. New hits never override an explicit choice. A
+Solo shortcut returns to its overview; a different process gets its own default.
+
+The selected benchmark's graphs are visible directly. Repeated hits or Solo
+batch segments live in a collapsible list with expandable per-hit details.
+All Gold markers continue recording independently of this view selection.
+Benchmark choices come from recorded capture metadata, not names or later
+source edits. A selected benchmark absent from a historical/filtered view stays
+selected and reports no captures rather than silently switching to Solo.
 Source navigation reveals the marker endpoints in their owner context.
 
-Expanded groups stack CPU, memory, contributing threads and GPU sections.
-Each reports its own selected scope; selecting a CPU thread/hit does not leave
-unlabelled memory figures for a different scope. Aggregate views distinguish
-inclusive and exclusive measurements; nested captures must not be double
-counted in totals.
+CPU, memory, contributing threads and GPU sections report their selected
+scope. Process-wide CPU/RSS graphs remain labelled as process context; changing
+the benchmark does not turn RSS into range memory or attribute process CPU to
+that range. Capture-level CPU means avoid summing nested invocations; native
+allocation cohort sums are inclusive and labelled because cohorts can overlap.
+Snapshot RSS remains process-wide while its native cohort column follows the
+selected benchmark and filters. Missing collectors remain Unavailable/Planned.
 
 The public target is CPU and memory tooling with per-thread inspection.
 Whole-process sampling alone is an earlier checkpoint, not completion of

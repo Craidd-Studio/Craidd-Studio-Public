@@ -368,3 +368,9 @@ select {
 .profiler-capture-chart { margin:8px 0; }
 .profiler-capture-chart figcaption { display:flex; justify-content:space-between; color:#a6aeba; font-size:10px; margin-bottom:3px; }
 .profiler-capture-chart svg { display:block; width:100%; height:36px; background:#1b1e23; }
+.profiler-benchmark { display:flex; align-items:center; gap:5px; padding:6px 8px; border-bottom:1px solid #383d46; flex-shrink:0; }
+.profiler-benchmark label { color:#a6aeba; font-size:10px; }
+.profiler-benchmark select { flex:1; width:0; font-size:10px; text-overflow:ellipsis; }
+.profiler-benchmark button { font-size:10px; color:#d5bf89; }
+.profiler-benchmark-name { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.profiler-section-title > span { flex-shrink:0; }

@@ -3,14 +3,18 @@ import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import type { ProcessTarget } from "../components/dialogs/AttachProcessDialog";
 export interface ProfileSample { atMs: number; cpuMs: number; residentBytes: number; virtualBytes: number; threadCount: number; state: string }
-export interface GoldCapture { id: string; marker: string; name: string; thread: number; batch: number; startMs: number; endMs: number | null; cpuMs: number | null; status: string; allocatedBytes: number; freedBytes: number; liveBytes: number; allocationCount: number }
+export interface GoldCapture { id: string; marker: string; name: string; solo: boolean; thread: number; batch: number; startMs: number; endMs: number | null; cpuMs: number | null; status: string; allocatedBytes: number; freedBytes: number; liveBytes: number; allocationCount: number }
 export interface Profile { id: string; target: ProcessTarget; name: string; active: boolean; reason: string; batch: number; provider: boolean; pauses: {startMs:number;endMs:number|null;allThreads:boolean;thread:number|null;reason:string}[]; samples: ProfileSample[]; captures: GoldCapture[]; dropped: number }
 export interface Snapshot { id: string; name: string; profile: Profile }
-interface State { profile: Profile | null; snapshots: Snapshot[]; selected: string | null; bridge: string; error: string | null;
+interface State { profile: Profile | null; snapshots: Snapshot[]; selected: string | null; bridge: string; error: string | null; benchmarkBySession: Record<string, string | null>;
+ focusBenchmark: (session: string, marker: string | null) => void;
  start: (target: ProcessTarget) => Promise<void>; stop: () => Promise<void>; again: () => Promise<void>; snapshot: () => void; select: (id: string | null) => void;
 }
 export const useProfiling = create<State>((set,get) => ({
- profile: null, snapshots: [], selected: null, bridge: "", error: null,
+ profile: null, snapshots: [], selected: null, bridge: "", error: null, benchmarkBySession: {},
+ focusBenchmark: (session, marker) => set({benchmarkBySession: Object.fromEntries([
+  ...Object.entries(get().benchmarkBySession).filter(([id]) => id !== session), [session, marker],
+ ].slice(-9))}),
  start: async (target) => { set({ error: null, selected: null }); await invoke("start_profiling",{target}).catch(e=>{set({error:String(e)});throw e;}); },
  stop: async () => { await invoke("stop_profiling"); },
  again: async () => { await invoke("profile_record_again").catch(e=>set({error:String(e)})); },

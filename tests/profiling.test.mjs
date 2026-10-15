@@ -19,20 +19,51 @@ const solution=url(`import{create}from${JSON.stringify(zustand)};export const us
 // SSR uses Zustand's creation-time snapshot; project the real store's current
 // state for these presentation assertions. IPC/lifecycle tests above use the actual hook.
 const projectedStore=url(`import{useProfiling as store}from${JSON.stringify(storeURL)};export const useProfiling=selector=>selector?selector(store.getState()):store.getState();useProfiling.getState=store.getState;`);
-const componentURL=await load('../src/components/panels/ProfilerPanel.tsx',{'../../store/profilingStore':projectedStore,'../../store/goldStore':goldURL,'../../store/solutionStore':solution});
+const selectionURL=await load('../src/lib/profilingSelection.ts',{});
+const {goldBenchmarks,resolveGoldBenchmark}=await import(selectionURL);
+const componentURL=await load('../src/components/panels/ProfilerPanel.tsx',{'../../store/profilingStore':projectedStore,'../../store/goldStore':goldURL,'../../store/solutionStore':solution,'../../lib/profilingSelection':selectionURL});
 const Panel=(await import(componentURL)).default;
-const profile=()=>({id:'process-10-100',target:{pid:10,birth:100},name:'Native probe',active:true,reason:'',batch:1,provider:true,dropped:0,pauses:[],samples:[{atMs:0,cpuMs:1,residentBytes:4096,virtualBytes:8192,threadCount:3,state:'R'},{atMs:250,cpuMs:11,residentBytes:8192,virtualBytes:16384,threadCount:3,state:'R'}],captures:[{id:'r:1:1',marker:'r',name:'Scalar work',thread:20,batch:1,startMs:3,endMs:5,cpuMs:.4,status:'Complete',allocatedBytes:1024,freedBytes:0,liveBytes:1024,allocationCount:1}]});
-beforeEach(()=>{g.calls=[];g.handlers.clear();g.restore=null;useProfiling.setState({profile:null,snapshots:[],selected:null,error:null});});
+const profile=()=>({id:'process-10-100',target:{pid:10,birth:100},name:'Native probe',active:true,reason:'',batch:1,provider:true,dropped:0,pauses:[],samples:[{atMs:0,cpuMs:1,residentBytes:4096,virtualBytes:8192,threadCount:3,state:'R'},{atMs:250,cpuMs:11,residentBytes:8192,virtualBytes:16384,threadCount:3,state:'R'}],captures:[{id:'r:1:1',marker:'r',name:'Scalar work',solo:false,thread:20,batch:1,startMs:3,endMs:5,cpuMs:.4,status:'Complete',allocatedBytes:1024,freedBytes:0,liveBytes:1024,allocationCount:1}]});
+beforeEach(()=>{g.calls=[];g.handlers.clear();g.restore=null;useProfiling.setState({profile:null,snapshots:[],selected:null,error:null,benchmarkBySession:{}});});
 test('Snapshot preserves as-of allocations and rows while live results change',()=>{const p=profile();useProfiling.setState({profile:p});useProfiling.getState().snapshot();const copy=useProfiling.getState().snapshots[0].profile;p.captures[0].liveBytes=0;p.captures.push({...p.captures[0],id:'r:1:2'});assert.equal(copy.captures[0].liveBytes,1024);assert.equal(copy.captures.length,1);assert.equal(useProfiling.getState().profile.captures.length,2);});
 test('New process generation archives prior results and listener unsubscribes',async()=>{const off=await listenToProfiling();const emit=p=>g.handlers.get('craidd:profile')({payload:p});emit(profile());emit({...profile(),id:'process-10-101',target:{pid:10,birth:101}});assert.equal(useProfiling.getState().snapshots.length,1);assert.equal(useProfiling.getState().snapshots[0].profile.target.birth,100);assert.equal(useProfiling.getState().profile.target.birth,101);off();assert.equal(g.handlers.size,0);});
 test('Record again and Stop address profiling without a debugger control request',async()=>{useProfiling.setState({profile:profile()});await useProfiling.getState().again();await useProfiling.getState().stop();assert.deepEqual(g.calls.map(c=>c.command),['profile_record_again','stop_profiling']);});
 test('Diagnostics overview separates process memory from native cohorts and uses a mean for overlapping CPU captures',()=>{
- const p=profile();p.captures.push({...p.captures[0],id:'r:1:2',cpuMs:.8});useProfiling.setState({profile:p});
+ const p=profile();p.captures.push({...p.captures[0],id:'r:1:2',cpuMs:.8});useProfiling.setState({profile:p});useProfiling.getState().focusBenchmark(p.id,"r");
  const html=renderToStaticMarkup(createElement(Panel));
- for(const label of ['Process Memory (RSS)','CPU time (ms / interval)','Mean capture CPU','0.60 ms','Tracked native still live','Take snapshot','Profiling results'])assert.ok(html.includes(label),label);
+ for(const label of ['Process Memory (RSS)','Process CPU time (ms / interval)','Mean capture CPU','0.60 ms','Cohort live (sum)','Take snapshot','Profiling results'])assert.ok(html.includes(label),label);
  assert.ok(!html.includes('Record ranges'));assert.ok(html.includes('<svg'));assert.ok(!html.includes('Native provider setup'));
 });
 test('Unbound provider does not present missing native allocations as measured zero',()=>{
  useProfiling.setState({profile:{...profile(),provider:false,captures:[]}});const html=renderToStaticMarkup(createElement(Panel));
- assert.ok(html.includes('Process metrics only'));assert.ok(html.includes('Tracked native still live</dt><dd>—'));assert.ok(!html.includes('Scalar work'));
+ assert.ok(html.includes('Process metrics only'));assert.ok(html.includes('Cohort live (sum)</dt><dd>—'));assert.ok(!html.includes('Scalar work'));
+});
+
+const soloCapture=()=>({...profile().captures[0],id:'solo:s:1',marker:'s',name:'Whole session',solo:true,cpuMs:null,endMs:null});
+test('Recorded Solo is the automatic focus without guessing from names or IDs',()=>{
+ const misleading={...profile().captures[0],name:'Solo',id:'solo-looking-but-a-range'};
+ assert.equal(resolveGoldBenchmark(goldBenchmarks([misleading]),undefined),null);
+ const choices=goldBenchmarks([misleading,soloCapture()]);
+ assert.equal(choices[0].marker,'s');assert.equal(resolveGoldBenchmark(choices,undefined),'s');
+});
+test('Explicit range and process overview choices survive new hits, Solo and record-again batches',async()=>{
+ const p=profile();useProfiling.setState({profile:p});
+ useProfiling.getState().focusBenchmark(p.id,'r');
+ const first=resolveGoldBenchmark(goldBenchmarks(p.captures),useProfiling.getState().benchmarkBySession[p.id]);
+ assert.equal(first,'r');assert.equal(g.calls.length,0);
+ p.captures.push(soloCapture(),{...soloCapture(),id:'solo:s:2',batch:2});
+ await useProfiling.getState().again();
+ assert.equal(resolveGoldBenchmark(goldBenchmarks(p.captures),useProfiling.getState().benchmarkBySession[p.id]),'r');
+ useProfiling.getState().focusBenchmark(p.id,null);
+ assert.equal(resolveGoldBenchmark(goldBenchmarks(p.captures),useProfiling.getState().benchmarkBySession[p.id]),null);
+ assert.deepEqual(g.calls.map(c=>c.command),['profile_record_again']);
+});
+test('Snapshot views keep chosen identity even without its hits; another process gets its own default',()=>{
+ const p=profile();useProfiling.setState({profile:p});useProfiling.getState().snapshot();
+ useProfiling.getState().focusBenchmark(p.id,'s');
+ assert.equal(resolveGoldBenchmark(goldBenchmarks(p.captures),useProfiling.getState().benchmarkBySession[p.id]),'s');
+ const next={...profile(),id:'another-process',captures:[soloCapture()]};useProfiling.setState({profile:next});
+ assert.equal(resolveGoldBenchmark(goldBenchmarks(next.captures),useProfiling.getState().benchmarkBySession[next.id]),'s');
+ assert.equal(useProfiling.getState().benchmarkBySession[next.id],undefined);
+ assert.equal(useProfiling.getState().benchmarkBySession[p.id],'s');
 });

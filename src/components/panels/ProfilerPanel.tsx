@@ -1,5 +1,6 @@
 import { useRef, useState, type PointerEvent } from "react";
 import { useProfiling, type GoldCapture, type ProfileSample } from "../../store/profilingStore";
+import { goldBenchmarks, resolveGoldBenchmark } from "../../lib/profilingSelection";
 import { useGold } from "../../store/goldStore";
 import { useSolution } from "../../store/solutionStore";
 
@@ -11,6 +12,7 @@ const averageCpu = (captures: GoldCapture[]) => {
   const values = captures.flatMap(c => c.cpuMs === null ? [] : [c.cpuMs]);
   return values.length ? ms(values.reduce((n, v) => n + v, 0) / values.length) : "—";
 };
+const countLabel = (count: number, solo = false) => `${count} ${solo ? count === 1 ? "segment" : "segments" : count === 1 ? "hit" : "hits"}`;
 type Tab = "Summary" | "Gold" | "Memory" | "Events";
 type Span = [number, number];
 
@@ -48,7 +50,7 @@ function CaptureGraph({ label, hits, value, format, color }: {
 }) {
   const measured = hits.flatMap((hit, i) => { const n = value(hit); return n === null ? [] : [{ i, n }]; });
   const maximum = Math.max(...measured.map(v => v.n), 0);
-  return <figure className="profiler-capture-chart"><figcaption>{label}<span>{measured.length ? `${measured.length} hits` : "Unavailable"}</span></figcaption>
+  return <figure className="profiler-capture-chart"><figcaption>{label}<span>{measured.length ? countLabel(measured.length) : "Unavailable"}</span></figcaption>
     {measured.length > 0 && <svg role="img" aria-label={`${label}; per capture in start order; maximum ${format(maximum)}`} viewBox="0 0 300 36" preserveAspectRatio="none">
       <path d="M0 33H300M0 17H300" stroke="var(--profiler-grid)" fill="none" />
       {measured.map(v => <line key={v.i} x1={(v.i + .5) * 300 / hits.length} x2={(v.i + .5) * 300 / hits.length} y1="33" y2={33 - v.n / Math.max(maximum, 1) * 29} stroke={color} strokeWidth="3" vectorEffect="non-scaling-stroke"><title>Hit {v.i + 1} · {format(v.n)}</title></line>)}
@@ -76,22 +78,38 @@ export default function ProfilerPanel() {
   const selection: Span | null = range?.id === p?.id && range
     ? [Math.max(domain[0], Math.min(domain[1], range.span[0])), Math.max(domain[0], Math.min(domain[1], range.span[1]))] : null;
   const selectRange = (span: Span) => { if (p) { setRange({ id: p.id, span }); setRangeControls(true); } };
-  const captures = (p?.captures ?? []).filter(c => (thread === "all" || String(c.thread) === thread)
-    && (batch === "all" || String(c.batch) === batch)
-    && (!selection || c.startMs <= selection[1] && (c.endMs ?? domain[1]) >= selection[0]));
-  const groups = new Map<string, GoldCapture[]>();
-  for (const c of captures) groups.set(c.marker, [...(groups.get(c.marker) ?? []), c]);
-  const threads = [...new Set(p?.captures.map(c => c.thread) ?? [])];
+  const benchmarks = goldBenchmarks(p?.captures ?? []);
+  const benchmark = resolveGoldBenchmark(benchmarks, p ? state.benchmarkBySession[p.id] : undefined);
+  const focused = benchmarks.find(b => b.marker === benchmark);
+  const solo = benchmarks.find(b => b.solo);
+  const threads = [...new Set((p?.captures ?? []).filter(c => !benchmark || c.marker === benchmark).map(c => c.thread))];
+  const activeThread = threads.some(t => String(t) === thread) ? thread : "all";
+  const activeBatch = Number(batch) <= (p?.batch ?? 0) ? batch : "all";
+  const matches = (c: GoldCapture, until = domain[1]) => (activeThread === "all" || String(c.thread) === activeThread)
+    && (activeBatch === "all" || String(c.batch) === activeBatch)
+    && (!selection || c.startMs <= selection[1] && (c.endMs ?? until) >= selection[0]);
+  const allCaptures = (p?.captures ?? []).filter(c => matches(c));
+  const captures = benchmark ? allCaptures.filter(c => c.marker === benchmark) : [];
+  const focus = (marker: string | null) => { if (p) { state.focusBenchmark(p.id, marker); setThread("all"); setBatch("all"); } };
+  const benchmarkPicker = <div className="profiler-benchmark">
+    <label htmlFor="profiler-benchmark">Benchmark</label>
+    <select id="profiler-benchmark" aria-label="Gold benchmark" title={focused?.name ?? (benchmark ? "Selected benchmark unavailable in this view" : "Process overview")} value={benchmark ?? ""} onChange={e => focus(e.target.value || null)}>
+      <option value="">Process overview</option>
+      {benchmarks.map(b => <option key={b.marker} value={b.marker}>{b.solo ? "Solo" : "Range"} · {b.name} · {countLabel(b.hits, b.solo)}</option>)}
+      {benchmark && !focused && <option value={benchmark}>Selected benchmark · unavailable in this view</option>}
+    </select>
+    {solo && <button title="Return to Solo overview" disabled={benchmark === solo.marker} onClick={() => focus(solo.marker)}>Solo</button>}
+  </div>;
   const cpuSamples = samples.slice(1);
   const cpu = cpuSamples.map((s, i) => Math.max(0, s.cpuMs - samples[i].cpuMs));
   const snapshots = state.snapshots.filter(s => s.profile.id === p?.id);
   const fail = (e: unknown) => setError(String(e));
   const takeSnapshot = () => { state.snapshot(); setTab("Memory"); };
   const filters = <div className="profiler-filters">
-    <select aria-label="Capture thread" value={thread} onChange={e => setThread(e.target.value)} title="Filters Gold results; does not suspend threads or filter process graphs">
+    <select aria-label="Capture thread" value={activeThread} onChange={e => setThread(e.target.value)} title="Filters Gold results; does not suspend threads or filter process graphs">
       <option value="all">All threads</option>{threads.map(t => <option key={t} value={t}>Thread {t || "all (solo)"}</option>)}
     </select>
-    <select aria-label="Capture batch" value={batch} onChange={e => setBatch(e.target.value)}>
+    <select aria-label="Capture batch" value={activeBatch} onChange={e => setBatch(e.target.value)}>
       <option value="all">All batches</option>{Array.from({ length: p?.batch ?? 0 }, (_, i) => <option key={i} value={i + 1}>Batch {i + 1}</option>)}
     </select>
   </div>;
@@ -136,7 +154,7 @@ export default function ProfilerPanel() {
       <div className="profiler-timelines">
         <div className="profiler-ruler"><span>{seconds(domain[0])}</span><span>{seconds((domain[0] + domain[1]) / 2)}</span><span>{seconds(domain[1])}</span></div>
         <Timeline label="Process Memory (RSS)" samples={samples} values={samples.map(s => s.residentBytes)} color="#80b7d7" format={bytes} domain={domain} selection={selection} onSelect={selectRange} />
-        <Timeline label="CPU time (ms / interval)" samples={cpuSamples} values={cpu} color="#c9ba79" format={ms} domain={domain} selection={selection} onSelect={selectRange} />
+        <Timeline label="Process CPU time (ms / interval)" samples={cpuSamples} values={cpu} color="#c9ba79" format={ms} domain={domain} selection={selection} onSelect={selectRange} />
         <div className="profiler-event-track" aria-label="Gold capture timeline">{(p?.captures ?? []).filter(c => c.startMs >= domain[0] && c.startMs <= domain[1]).map(c => <span key={c.id} title={`${c.name} · thread ${c.thread} · ${seconds(c.startMs)} → ${c.endMs === null ? "recording" : seconds(c.endMs)}`}
           style={{ left: `${Math.max(0, Math.min(100, (c.startMs - domain[0]) / (domain[1] - domain[0]) * 100))}%` }} />)}<small>Gold</small></div>
       </div>
@@ -145,45 +163,56 @@ export default function ProfilerPanel() {
         <label>To<input type="range" aria-label="Selection end" min={domain[0]} max={domain[1]} step="any" value={selection?.[1] ?? domain[1]} onChange={e => selectRange([selection?.[0] ?? domain[0], Math.max(Number(e.target.value), selection?.[0] ?? domain[0])])} /></label>
       </div>}
       <div className="profiler-tabs" role="tablist" aria-label="Profiling results">{(["Summary", "Gold", "Memory", "Events"] as Tab[]).map(t => <button key={t} id={`profiler-tab-${t}`} role="tab" aria-selected={tab === t} aria-controls="profiler-results" onClick={() => setTab(t)}>{t}</button>)}</div>
+      {tab !== "Events" && benchmarkPicker}
       <div id="profiler-results" className="profiler-results" role="tabpanel" aria-labelledby={`profiler-tab-${tab}`}>
         {tab === "Summary" && <>
           <h3>Diagnostics overview</h3>
           {!p && <p>Attach to a process, or start Debug to record diagnostics.</p>}
-          <dl className="profiler-metrics"><dt>Gold captures{selection ? " in selection" : ""}</dt><dd>{captures.length}</dd>
+          <dl className="profiler-metrics"><dt>{benchmark ? focused?.solo ? "Solo segments" : "Selected benchmark hits" : "Gold captures"}{selection ? " in selection" : ""}</dt><dd>{benchmark ? captures.length : allCaptures.length}</dd>
             <dt title="Mean per measured capture; overlapping and nested captures are not summed">Mean capture CPU</dt><dd>{averageCpu(captures)}</dd>
             <dt>Resident memory</dt><dd>{latest ? bytes(latest.residentBytes) : "—"}</dd>
             <dt>Threads</dt><dd>{latest?.threadCount ?? "—"}</dd></dl>
           <h3>Memory</h3>
           <div className="profiler-section-title"><span>Capture and compare observations</span><button disabled={!state.profile?.samples.length} onClick={takeSnapshot}>Take snapshot</button></div>
-          <dl className="profiler-metrics"><dt>Tracked native allocations</dt><dd>{p?.provider ? bytes(sum(captures, "allocatedBytes")) : "—"}</dd><dt>Tracked native still live</dt><dd>{p?.provider ? bytes(sum(captures, "liveBytes")) : "—"}</dd></dl>
-          <button className="profiler-link" onClick={() => setTab("Gold")}>View Gold captures ({captures.length}) →</button>
+          <dl className="profiler-metrics"><dt title="Sum of selected capture cohorts; nested hits can include the same allocation">Cohort allocated (sum)</dt><dd>{p?.provider && captures.length ? bytes(sum(captures, "allocatedBytes")) : "—"}</dd><dt title="Sum of selected capture cohorts as of this view">Cohort live (sum)</dt><dd>{p?.provider && captures.length ? bytes(sum(captures, "liveBytes")) : "—"}</dd></dl>
+          <button className="profiler-link" onClick={() => setTab("Gold")}>View Gold captures ({benchmark ? captures.length : allCaptures.length}) →</button>
           <button className="profiler-link" onClick={() => setTab("Memory")}>View memory snapshots ({snapshots.length}) →</button>
         </>}
         {tab === "Gold" && <>
-          {filters}
-          {Array.from(groups, ([id, hits]) => <details key={`${p?.id}:${id}`} className="profiler-capture-group">
-            <summary><span className="profiler-gold">◆</span> {hits[0].name || id}<span>{hits.length} hits</span></summary>
-            <dl className="profiler-metrics"><dt title="Mean per measured capture; overlapping and nested captures are not summed">Mean capture CPU</dt><dd>{averageCpu(hits)}</dd><dt>Allocated / still live</dt><dd>{bytes(sum(hits, "allocatedBytes"))} / {bytes(sum(hits, "liveBytes"))}</dd></dl>
-            <CaptureGraph label="Thread CPU per hit" hits={hits} value={c => c.cpuMs} format={ms} color="#c9ba79" />
-            <CaptureGraph label="Native live bytes per hit" hits={hits} value={c => c.liveBytes} format={bytes} color="#80b7d7" />
-            {hits.map(c => <details key={c.id} className="profiler-hit"><summary>Thread {c.thread || "all"} · batch {c.batch}<span>{c.endMs === null ? state.selected ? "Open at snapshot" : "Recording" : ms(c.endMs - c.startMs)}</span></summary>
-              <dl className="profiler-metrics"><dt>Status</dt><dd>{c.status}</dd><dt>Thread CPU</dt><dd>{ms(c.cpuMs)}</dd><dt>Allocation count</dt><dd>{c.allocationCount}</dd><dt>Allocated</dt><dd>{bytes(c.allocatedBytes)}</dd><dt>Freed as of view</dt><dd>{bytes(c.freedBytes)}</dd><dt>Live as of view</dt><dd>{bytes(c.liveBytes)}</dd></dl>
-            </details>)}
-          </details>)}
-          {!captures.length && <p className="profiler-empty">{p?.provider ? "No Gold hits in this view." : "Waiting for an instrumented Gold source provider."}</p>}
+          {benchmark ? <>
+            <div className="profiler-section-title"><strong className="profiler-benchmark-name" title={focused?.name}>{focused ? `${focused.solo ? "Solo" : "Range"} · ${focused.name}` : "Selected benchmark"}</strong><span>{countLabel(captures.length, focused?.solo)}</span></div>
+            {filters}
+            {captures.length > 0 ? <>
+              <dl className="profiler-metrics"><dt title="Mean per measured capture; overlapping and nested captures are not summed">Mean capture CPU</dt><dd>{averageCpu(captures)}</dd><dt title="Inclusive cohort sums; nested hits may track the same allocation">Allocated / live (sum)</dt><dd>{bytes(sum(captures, "allocatedBytes"))} / {bytes(sum(captures, "liveBytes"))}</dd></dl>
+              <CaptureGraph label={focused?.solo ? "Thread CPU per segment" : "Thread CPU per hit"} hits={captures} value={c => c.cpuMs} format={ms} color="#c9ba79" />
+              <CaptureGraph label={focused?.solo ? "Native live bytes per segment" : "Native live bytes per hit"} hits={captures} value={c => c.liveBytes} format={bytes} color="#80b7d7" />
+              <details key={`${p?.id}:${benchmark}`} className="profiler-capture-group">
+                <summary>Recorded {focused?.solo ? "segments" : "hits"}<span>{captures.length}</span></summary>
+                {captures.map(c => <details key={c.id} className="profiler-hit"><summary>Thread {c.thread || "all"} · batch {c.batch}<span>{c.endMs === null ? state.selected ? "Open at snapshot" : "Recording" : ms(c.endMs - c.startMs)}</span></summary>
+                  <dl className="profiler-metrics"><dt>Status</dt><dd>{c.status}</dd><dt>Thread CPU</dt><dd>{ms(c.cpuMs)}</dd><dt>Allocation count</dt><dd>{c.allocationCount}</dd><dt>Allocated</dt><dd>{bytes(c.allocatedBytes)}</dd><dt>Freed as of view</dt><dd>{bytes(c.freedBytes)}</dd><dt>Live as of view</dt><dd>{bytes(c.liveBytes)}</dd></dl>
+                </details>)}
+              </details>
+            </> : <p className="profiler-empty">No captures for this benchmark in the selected view. Change the filters or choose another benchmark.</p>}
+          </> : <>
+            <h3>Process overview</h3>
+            <p className="profiler-caption">Choose a Gold benchmark above to inspect its CPU and memory graphs. All Gold markers continue recording automatically.</p>
+            {!benchmarks.length && <p className="profiler-empty">{p?.provider ? "No Gold hits in this view." : "Waiting for an instrumented Gold source provider."}</p>}
+          </>}
         </>}
         {tab === "Memory" && <>
           <div className="profiler-section-title"><strong>Memory snapshots</strong><button disabled={!state.profile?.samples.length} onClick={takeSnapshot}>Take snapshot</button></div>
-          <p className="profiler-caption">RSS and tracked native allocations. Heap object capture is unavailable.</p>
-          {snapshots.length ? <div className="profiler-table-scroll"><table><thead><tr><th>Snapshot</th><th>RSS</th><th>Δ RSS</th><th>Live native</th></tr></thead><tbody>{snapshots.map((s, i) => {
+          <p className="profiler-caption">Process RSS and the selected benchmark’s native allocations. Heap object capture is unavailable.</p>
+          {snapshots.length ? <div className="profiler-table-scroll"><table><thead><tr><th>Snapshot</th><th>RSS</th><th>Δ RSS</th><th title="Sum of the selected benchmark’s capture cohorts">Live cohorts</th></tr></thead><tbody>{snapshots.map((s, i) => {
             const sample = s.profile.samples[s.profile.samples.length - 1]; const previous = snapshots[i - 1]?.profile.samples[snapshots[i - 1].profile.samples.length - 1];
+            const snapshotHits = s.profile.captures.filter(c => c.marker === benchmark && matches(c, sample?.atMs));
             const delta = sample && previous ? sample.residentBytes - previous.residentBytes : null;
-            return <tr key={s.id} className={state.selected === s.id ? "is-selected" : ""}><td><button title={s.name} onClick={() => state.select(s.id)}>#{i + 1} · {sample ? seconds(sample.atMs) : "—"}</button></td><td>{sample ? bytes(sample.residentBytes) : "—"}</td><td>{delta === null ? "—" : `${delta >= 0 ? "+" : "−"}${bytes(Math.abs(delta))}`}</td><td>{s.profile.provider ? bytes(sum(s.profile.captures, "liveBytes")) : "—"}</td></tr>;
+            return <tr key={s.id} className={state.selected === s.id ? "is-selected" : ""}><td><button title={s.name} onClick={() => state.select(s.id)}>#{i + 1} · {sample ? seconds(sample.atMs) : "—"}</button></td><td>{sample ? bytes(sample.residentBytes) : "—"}</td><td>{delta === null ? "—" : `${delta >= 0 ? "+" : "−"}${bytes(Math.abs(delta))}`}</td><td>{s.profile.provider && snapshotHits.length ? bytes(sum(snapshotHits, "liveBytes")) : "—"}</td></tr>;
           })}</tbody></table></div> : <p className="profiler-empty">Take a snapshot to compare memory over time.</p>}
-          <h3>Native allocation cohorts</h3>
+          <h3>Native allocation cohorts{focused ? ` · ${focused.name}` : ""}</h3>
+          {!benchmark && <p className="profiler-caption">Choose a Gold benchmark to inspect its allocation cohort.</p>}
           {filters}
-          <dl className="profiler-metrics"><dt>Allocations</dt><dd>{p?.provider ? sum(captures, "allocationCount") : "—"}</dd><dt>Allocated</dt><dd>{p?.provider ? bytes(sum(captures, "allocatedBytes")) : "—"}</dd><dt>Freed as of view</dt><dd>{p?.provider ? bytes(sum(captures, "freedBytes")) : "—"}</dd><dt>Still live as of view</dt><dd>{p?.provider ? bytes(sum(captures, "liveBytes")) : "—"}</dd></dl>
-          <p className="profiler-caption">Explicitly instrumented allocations only. Frees after End update the original cohort; still live does not mean leaked.</p>
+          <dl className="profiler-metrics"><dt title="Inclusive sum across selected capture cohorts">Allocation count (sum)</dt><dd>{p?.provider && captures.length ? sum(captures, "allocationCount") : "—"}</dd><dt>Allocated (inclusive)</dt><dd>{p?.provider && captures.length ? bytes(sum(captures, "allocatedBytes")) : "—"}</dd><dt>Freed (inclusive)</dt><dd>{p?.provider && captures.length ? bytes(sum(captures, "freedBytes")) : "—"}</dd><dt>Still live (inclusive)</dt><dd>{p?.provider && captures.length ? bytes(sum(captures, "liveBytes")) : "—"}</dd></dl>
+          <p className="profiler-caption">Instrumented allocations only. Nested capture cohorts can overlap. Frees after End update the original cohort; still live does not mean leaked.</p>
           <dl className="profiler-metrics"><dt>Virtual memory</dt><dd>{latest ? bytes(latest.virtualBytes) : "—"}</dd><dt>Managed heap / GC</dt><dd>Unavailable</dd></dl>
         </>}
         {tab === "Events" && <>

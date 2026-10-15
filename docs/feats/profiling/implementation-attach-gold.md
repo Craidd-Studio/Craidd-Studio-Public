@@ -64,6 +64,33 @@ frozen snapshots followed by a simulated free, RSS differences, keyboard time
 selection and thread filtering. The fixture has mocked IPC; it does not qualify
 a heap collector or production desktop lifecycle.
 
+## Focused Gold benchmark selection
+
+The approved follow-up replaces stacked benchmark groups with one dropdown
+and visible graphs for its selected benchmark. Solo is the automatic default
+when recorded; an explicit selection, including Process overview, is remembered
+per process session across new hits, batches and snapshots. A Solo shortcut
+returns to the overview. The dropdown lists all recorded identities independently
+of time/thread/batch filters. A missing selected identity stays visible with an
+empty-state explanation. Repeated hits/segments retain collapsible details.
+
+Capture payloads carry a Solo boolean, including Solo batch continuations.
+Selection uses that recorded metadata; neither capture names nor current
+source definitions decide historical identity. Choosing a benchmark sends no
+collector/debugger request and does not affect automatic recording. Process
+CPU/RSS retain their process scope. Gold and Memory details share the benchmark
+and filters, including snapshot native-cohort columns. Cohort sums are labelled
+inclusive because nested captures may own the same instrumented allocation.
+
+Validation: eight focused frontend tests and all 14 frontend test files pass.
+Five Rust profiling tests pass, including the real Unix-socket/C++ provider
+integration and serialized Solo metadata across batch boundaries. The initial
+sandbox run denied socket creation; the same tests pass with local socket
+access. Browser checks use the labelled synthetic fixture at normal/wide panel
+widths to verify Solo default, range graph switching, new-hit/batch selection
+stability and the Solo shortcut. This remains presentation/state validation,
+not full desktop collector/lifecycle acceptance.
+
 ## Delivered experimental slice
 
 - Run → Attach to Process and Command Palette entry; searchable same-user PID

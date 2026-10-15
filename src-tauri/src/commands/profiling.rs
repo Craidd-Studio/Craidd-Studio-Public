@@ -42,6 +42,7 @@ pub struct Capture {
     pub id: String,
     pub marker: String,
     pub name: String,
+    pub solo: bool,
     pub thread: u64,
     pub batch: u64,
     pub start_ms: f64,
@@ -204,6 +205,7 @@ impl Profile {
                     id,
                     marker: e.marker,
                     name: e.name,
+                    solo: e.kind == "solo",
                     thread: e.thread,
                     batch: self.batch,
                     start_ms: at,
@@ -302,6 +304,7 @@ impl Profile {
                     id: format!("solo:{}:{}", marker, self.batch),
                     marker,
                     name: "Solo continuation".into(),
+                    solo: true,
                     thread: 0,
                     batch: self.batch,
                     start_ms: at,
@@ -630,6 +633,7 @@ mod tests {
         assert!(p.captures[0].end_ms.is_none());
         assert!(p.captures[2].end_ms.is_none());
         assert_eq!(p.captures[1].status, "Complete");
+        assert!(p.captures.iter().all(|capture| !capture.solo));
     }
     #[test]
     fn one_solo_and_snapshot_are_immutable() {
@@ -643,6 +647,11 @@ mod tests {
         assert!(snapshot.captures[0].end_ms.is_none());
         assert_eq!(p.captures.len(), 2);
         assert_eq!(p.captures[1].batch, 2);
+        // The UI must recognize Solo after a batch boundary without parsing IDs.
+        assert!(p.captures.iter().all(|capture| capture.solo));
+        let wire = serde_json::to_value(&p).unwrap();
+        assert_eq!(wire["captures"][0]["solo"], true);
+        assert_eq!(wire["captures"][1]["solo"], true);
     }
     #[test]
     fn allocation_cohort_survives_end_and_ignores_older_free() {
