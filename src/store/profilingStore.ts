@@ -4,7 +4,8 @@ import { listen } from "@tauri-apps/api/event";
 import type { ProcessTarget } from "../components/dialogs/AttachProcessDialog";
 export interface ProfileSample { atMs: number; cpuMs: number; residentBytes: number; virtualBytes: number; threadCount: number; state: string }
 export interface GoldCapture { id: string; marker: string; name: string; solo: boolean; thread: number; batch: number; startMs: number; endMs: number | null; cpuMs: number | null; status: string; allocatedBytes: number; freedBytes: number; liveBytes: number; allocationCount: number }
-export interface Profile { id: string; target: ProcessTarget; name: string; active: boolean; unityEditor?: boolean; waitingForPlay?: boolean; reason: string; batch: number; provider: boolean; pauses: {startMs:number;endMs:number|null;allThreads:boolean;thread:number|null;reason:string}[]; samples: ProfileSample[]; captures: GoldCapture[]; dropped: number }
+export interface ProfileCounters { agedSamples: number; evictedCaptures: number; rejectedEvents: number; disconnects: number; sourceGaps: number }
+export interface Profile { counters?: ProfileCounters; id: string; target: ProcessTarget; name: string; active: boolean; unityEditor?: boolean; waitingForPlay?: boolean; reason: string; batch: number; provider: boolean; pauses: {startMs:number;endMs:number|null;allThreads:boolean;thread:number|null;reason:string}[]; samples: ProfileSample[]; captures: GoldCapture[]; dropped: number }
 export interface Snapshot { id: string; name: string; profile: Profile }
 interface State { profile: Profile | null; snapshots: Snapshot[]; selected: string | null; bridge: string; error: string | null; benchmarkBySession: Record<string, string | null>;
  focusBenchmark: (session: string, marker: string | null) => void;

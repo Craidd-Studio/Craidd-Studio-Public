@@ -229,6 +229,9 @@ export default function ProfilerPanel() {
           <dl className="profiler-metrics"><dt>Virtual memory</dt><dd>{latest ? bytes(latest.virtualBytes) : "—"}</dd><dt>Managed heap / GC</dt><dd>Unavailable</dd></dl>
         </>}
         {tab === "Events" && <>
+          <h3>Capture history and coverage</h3>
+          <dl className="profiler-metrics"><dt>Older process samples</dt><dd>{p?.counters?.agedSamples ?? 0}</dd><dt>Older Gold hits</dt><dd>{p?.counters?.evictedCaptures ?? 0}</dd><dt>Rejected source events</dt><dd>{p?.counters?.rejectedEvents ?? p?.dropped ?? 0}</dd><dt>Missing source events</dt><dd>{p?.counters?.sourceGaps ?? 0}</dd><dt>Provider disconnects</dt><dd>{p?.counters?.disconnects ?? 0}</dd></dl>
+          <p className="profiler-caption">Rolling history removes older samples and ordinary hits. Solo segments and live allocation cohorts stay retained. Source errors and disconnects are separate coverage gaps.</p>
           <h3>Debugger stops · {p?.pauses.length ?? 0}</h3>
           {(p?.pauses ?? []).map((pause, i) => <div className="profiler-event" key={i}><strong>{seconds(pause.startMs)} → {pause.endMs === null ? "Paused" : seconds(pause.endMs)}</strong><span>{pause.allThreads ? "All threads" : `DAP thread ${pause.thread ?? "unknown"}`} · {pause.reason}</span></div>)}
           {!p?.pauses.length && <p className="profiler-empty">No debugger stops recorded.</p>}
@@ -237,7 +240,7 @@ export default function ProfilerPanel() {
         </>}
       </div>
       <div className="profiler-footer" title={p?.provider ? "Source events from the prepared native provider. Gutter intent requires a matching rebuilt target." : "Process metrics are available; Gold ranges require a prepared instrumented build."}>
-        <span>{p?.waitingForPlay ? "Unity · ready for Play" : p?.provider ? "◆ Gold connected" : "Process metrics only"}</span><span>{p?.dropped ? `${p.dropped} dropped · incomplete` : `${samples.length} samples`}</span>
+        <span>{p?.waitingForPlay ? "Unity · ready for Play" : p?.provider ? "◆ Gold connected" : "Process metrics only"}</span><span title="History and source coverage details are in Events">{p?.counters ? p.counters.disconnects || p.counters.rejectedEvents || p.counters.sourceGaps ? "Coverage interrupted" : p.counters.agedSamples || p.counters.evictedCaptures ? "Rolling history" : `${samples.length} samples` : p?.dropped ? `${p.dropped} source rejections` : `${samples.length} samples`}</span>
       </div>
     </>}
   </div>;
