@@ -93,6 +93,8 @@ pub struct Profile {
     pub target: ProcessIdentity,
     pub name: String,
     pub active: bool,
+    pub unity_editor: bool,
+    pub waiting_for_play: bool,
     pub reason: String,
     pub batch: u64,
     pub provider: bool,
@@ -100,6 +102,8 @@ pub struct Profile {
     pub samples: Vec<Sample>,
     pub captures: Vec<Capture>,
     pub dropped: u64,
+    #[serde(skip)]
+    discovery: Option<super::profiling_discovery::Registration>,
     #[serde(skip)]
     start: Option<Instant>,
     #[serde(skip)]
@@ -118,6 +122,9 @@ impl Profile {
             target,
             name,
             active: true,
+            unity_editor: false,
+            waiting_for_play: false,
+            discovery: None,
             reason: String::new(),
             batch: 1,
             provider: false,
@@ -138,6 +145,10 @@ impl Profile {
     fn close(&mut self, reason: &str) {
         let at = self.at();
         self.active = false;
+        self.waiting_for_play = false;
+        if let Some(route) = self.discovery.take() {
+            route.release();
+        }
         self.reason = reason.into();
         for pause in &mut self.pauses {
             if pause.end_ms.is_none() {
@@ -155,6 +166,21 @@ impl Profile {
                 .into();
             }
         }
+    }
+    fn reserve_capture(&mut self) -> bool {
+        if self.captures.len() < 2000 {
+            return true;
+        }
+        self.dropped += 1;
+        let Some(index) = self.captures.iter().position(|c| c.end_ms.is_some()) else {
+            return false;
+        };
+        let old = self.captures.remove(index).id;
+        self.allocations.retain(|_, (_, owners)| {
+            owners.retain(|id| id != &old);
+            !owners.is_empty()
+        });
+        true
     }
     fn event(&mut self, e: SourceEvent) {
         if !self.active {
@@ -175,6 +201,14 @@ impl Profile {
         }
         let at = e.wall_ns.saturating_sub(origin) as f64 / 1e6;
         let key = format!("{}:{}:{}", e.marker, e.thread, e.invocation);
+        if self.unity_editor && self.waiting_for_play && matches!(e.kind.as_str(), "begin" | "solo")
+        {
+            self.waiting_for_play = false;
+            if !self.captures.is_empty() {
+                self.batch += 1;
+            }
+            self.reason.clear();
+        }
         match e.kind.as_str() {
             "begin" | "solo" => {
                 if e.marker.len() > 128 || e.name.len() > 256 || e.marker.is_empty() {
@@ -187,12 +221,11 @@ impl Profile {
                     }
                     return;
                 }
-                if self.captures.len() >= 2000 {
+                if e.kind == "begin" && self.captures.iter().any(|c| c.id == key) {
                     self.dropped += 1;
                     return;
                 }
-                if e.kind == "begin" && self.captures.iter().any(|c| c.id == key) {
-                    self.dropped += 1;
+                if !self.reserve_capture() {
                     return;
                 }
                 let id = if e.kind == "solo" {
@@ -276,7 +309,21 @@ impl Profile {
                     }
                 }
             }
-            "play-end" => self.close("Verified instrumented Unity Play end"),
+            "play-end" if self.unity_editor => {
+                for c in self.captures.iter_mut().filter(|c| c.end_ms.is_none()) {
+                    c.end_ms = Some(at);
+                    c.status = if c.solo {
+                        "Unity Play ended"
+                    } else {
+                        "Incomplete: Unity Play ended"
+                    }
+                    .into();
+                }
+                self.solo = None;
+                self.waiting_for_play = true;
+                self.reason = "Unity Play ended; armed for the next Play session".into();
+            }
+            "play-end" => self.close("Verified instrumented Unity player end"),
             "hello" => {}
             _ => {
                 self.dropped += 1;
@@ -291,6 +338,12 @@ impl Profile {
             .clone()
             .filter(|marker| !self.blocked.contains(marker))
         {
+            let name = self
+                .captures
+                .iter()
+                .find(|c| c.solo && c.marker == marker)
+                .map(|c| c.name.clone())
+                .unwrap_or_else(|| "Solo".into());
             if let Some(c) = self
                 .captures
                 .iter_mut()
@@ -299,11 +352,11 @@ impl Profile {
                 c.end_ms = Some(at);
                 c.status = "Batch boundary".into();
             }
-            if self.captures.len() < 2000 {
+            if self.reserve_capture() {
                 self.captures.push(Capture {
                     id: format!("solo:{}:{}", marker, self.batch),
                     marker,
-                    name: "Solo continuation".into(),
+                    name,
                     solo: true,
                     thread: 0,
                     batch: self.batch,
@@ -328,6 +381,11 @@ pub struct ProfileManager {
 }
 impl Drop for ProfileManager {
     fn drop(&mut self) {
+        if let Ok(mut profiles) = self.profiles.lock() {
+            for p in profiles.values_mut() {
+                p.close("Profiler host closed");
+            }
+        }
         if let Ok(path) = self.socket.get_mut() {
             if let Some(path) = path {
                 let _ = fs::remove_file(path);
@@ -455,7 +513,7 @@ pub fn start(app: &AppHandle, label: &str, target: ProcessIdentity) -> Result<St
     }
     processes::counters(&target)?;
     // Process gauges remain useful if the optional source socket is unavailable.
-    let _ = ensure_bridge(app);
+    let bridge = ensure_bridge(app);
     let state = app.state::<ProfileManager>();
     let mut all = state.profiles.lock().map_err(|e| e.to_string())?;
     if let Some(existing) = all.get(label) {
@@ -474,7 +532,15 @@ pub fn start(app: &AppHandle, label: &str, target: ProcessIdentity) -> Result<St
             "This process is already profiled in another Craidd window; view that owner".into(),
         );
     }
-    let p = Profile::new(target.clone(), info.name);
+    let mut p = Profile::new(target.clone(), info.name);
+    p.unity_editor = info.unity_project.is_some();
+    p.waiting_for_play = p.unity_editor;
+    if let Ok(socket) = bridge {
+        match super::profiling_discovery::Registration::publish(&target, &socket, &p.id) {
+            Ok(route) => p.discovery = Some(route),
+            Err(error) => p.reason = format!("Source discovery unavailable: {error}"),
+        }
+    }
     let id = p.id.clone();
     let result_id = id.clone();
     publish(app, label, &p);
@@ -586,6 +652,9 @@ pub fn profile_record_again(app: AppHandle, w: tauri::WebviewWindow) -> Result<(
     if !p.active {
         return Err("Session ended; select a target again".into());
     }
+    if p.waiting_for_play {
+        return Err("Unity is ready; press Play to begin the next recording".into());
+    }
     p.again();
     publish(&app, w.label(), p);
     Ok(())
@@ -647,6 +716,7 @@ mod tests {
         assert!(snapshot.captures[0].end_ms.is_none());
         assert_eq!(p.captures.len(), 2);
         assert_eq!(p.captures[1].batch, 2);
+        assert_eq!(p.captures[1].name, "Work");
         // The UI must recognize Solo after a batch boundary without parsing IDs.
         assert!(p.captures.iter().all(|capture| capture.solo));
         let wire = serde_json::to_value(&p).unwrap();
@@ -673,6 +743,118 @@ mod tests {
         p.event(f);
         assert_eq!(p.captures[0].live_bytes, 0);
         assert_eq!(p.captures[0].freed_bytes, 32);
+    }
+    #[test]
+    fn editor_play_end_retains_selection_and_rearms_in_a_new_batch() {
+        let mut p = p();
+        p.unity_editor = true;
+        p.waiting_for_play = true;
+        p.event(e("solo", 0, 1, 100));
+        p.event(e("begin", 1, 1, 110));
+        p.event(e("play-end", 0, 1, 130));
+        assert!(p.active && p.waiting_for_play);
+        assert!(p.captures.iter().all(|c| c.end_ms.is_some()));
+        assert!(p.captures[1].status.starts_with("Incomplete"));
+        p.event(e("solo", 0, 1, 200));
+        assert!(p.active && !p.waiting_for_play);
+        assert_eq!(p.batch, 2);
+        assert_eq!(p.captures[2].batch, 2);
+        assert!(p.captures[2].solo);
+        p.close("User stopped profiling");
+        p.event(e("solo", 0, 1, 300));
+        assert!(!p.active);
+        assert_eq!(p.captures.len(), 3);
+    }
+    #[test]
+    fn bounded_history_does_not_prevent_another_play_or_record_again() {
+        let mut p = p();
+        p.unity_editor = true;
+        p.waiting_for_play = true;
+        p.event(e("solo", 0, 1, 100));
+        for i in 0..2100 {
+            p.event(e("begin", i + 1, 1, 101 + i * 2));
+            p.event(e("end", i + 1, 1, 102 + i * 2));
+        }
+        assert_eq!(p.captures.len(), 2000);
+        assert!(p.dropped > 0);
+        p.event(e("play-end", 0, 1, 5000));
+        p.event(e("solo", 0, 1, 6000));
+        assert_eq!(p.captures.len(), 2000);
+        assert!(p.captures.last().unwrap().solo);
+        assert_eq!(p.captures.last().unwrap().batch, 2);
+        p.again();
+        assert_eq!(p.captures.last().unwrap().batch, 3);
+    }
+    #[test]
+    fn native_target_started_before_ide_discovers_its_selected_owner_without_socket_env() {
+        use std::io::Write;
+        use std::process::{Command, Stdio};
+        let root = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .parent()
+            .unwrap()
+            .to_owned();
+        let dir = std::env::temp_dir().join(format!("craidd-late-test-{}", stamp()));
+        fs::create_dir(&dir).unwrap();
+        let binary = dir.join("target");
+        assert!(Command::new("c++")
+            .args(["-std=c++17", "-pthread"])
+            .arg("-I")
+            .arg(root.join("support/profiling"))
+            .arg(root.join("tests/fixtures/attach-profiling/late_profile_target.cpp"))
+            .arg("-o")
+            .arg(&binary)
+            .status()
+            .unwrap()
+            .success());
+        let mut child = Command::new(binary)
+            .env_remove("CRAIDD_PROFILE_SOCKET")
+            .stdin(Stdio::piped())
+            .stdout(Stdio::piped())
+            .spawn()
+            .unwrap();
+        let mut ready = String::new();
+        BufReader::new(child.stdout.take().unwrap())
+            .read_line(&mut ready)
+            .unwrap();
+        assert_eq!(ready.trim(), "READY");
+        let target = processes::identity(child.id() as i32).unwrap();
+        // Bind and advertise only AFTER the target is already running.
+        let path = dir.join("events.sock");
+        let listener = UnixListener::bind(&path).unwrap();
+        listener.set_nonblocking(true).unwrap();
+        let route = super::super::profiling_discovery::Registration::publish(
+            &target,
+            path.to_str().unwrap(),
+            "late-test",
+        )
+        .unwrap();
+        let deadline = Instant::now() + Duration::from_secs(5);
+        let stream = loop {
+            match listener.accept() {
+                Ok((s, _)) => break s,
+                Err(_) => {
+                    assert!(Instant::now() < deadline, "Late target never connected");
+                    thread::sleep(Duration::from_millis(20));
+                }
+            }
+        };
+        assert_eq!(peer(&stream).unwrap(), target);
+        stream
+            .set_read_timeout(Some(Duration::from_secs(3)))
+            .unwrap();
+        let mut reader = BufReader::new(stream);
+        loop {
+            let mut text = String::new();
+            assert!(reader.read_line(&mut text).unwrap() > 0);
+            let event: SourceEvent = serde_json::from_str(&text).unwrap();
+            if event.kind == "solo" {
+                break;
+            }
+        }
+        route.release();
+        child.stdin.take().unwrap().write_all(b"stop\n").unwrap();
+        assert!(child.wait().unwrap().success());
+        fs::remove_dir_all(dir).unwrap();
     }
     #[test]
     fn unwind_is_incomplete() {

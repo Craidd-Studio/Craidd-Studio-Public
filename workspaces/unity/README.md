@@ -31,14 +31,41 @@ sibling attach; this project does not change that policy. Launch under an author
 debugger where needed. Managed Unity Mono/IL2CPP is not qualified by netcoredbg's
 CoreCLR support; this fixture does not make that adapter work in Craidd.
 
-For live source profiling, copy the socket path from Craidd's Profiler and set
-`CRAIDD_PROFILE_SOCKET` **before starting** the Editor or player. Then select that
-PID using Run → Attach to Process → Profile only, or attach a native debugger.
-The prepared C++ hooks record automatically: one solo plus per-invocation ranges.
-Explicit allocation hooks account only for these native malloc/free calls. Managed
-GC.GetTotalMemory and process RSS are gauges, not a leak diagnosis. Component disable only cleans up its workers and allocations. Player OnApplicationQuit
-and Editor EnteredEditMode send separate fixture-specific runtime-end events.
-Re-entering Play needs a fresh profiling session. GPU and managed heap events are unavailable.
+For normal native Gold profiling, **Unity can start first**. After updating the
+native provider, rebuild the plugin and reopen Unity once if it had already
+loaded the old `.so`. Subsequent sessions need no launch environment variable. Previously built
+players must be rebuilt to include the updated plugin.
+
+1. Open this project in Unity, then open `unity.cln` in Craidd.
+2. Choose **Run → Attach to Process**. The matching Unity Editor is identified
+   from its actual project path and preselected when unambiguous.
+3. Choose **Profile only** for profiling, or explicitly attach LLDB for native
+   C++ debugging. The prepared plugin discovers the selected owner within a
+   second, including when Unity is already playing.
+4. Press Play. Solo and paired native benchmarks record automatically.
+5. Stop Play. Results remain; Craidd shows **Ready for Play**. The next Play
+   records in a new batch without another Attach operation. **Stop profiling**
+   explicitly disarms discovery and leaves Unity running.
+
+Select **CSharp to Cpp Probe** in Unity. Use **Probe/Allocate retained native
+1 MiB**, take a Craidd snapshot, then **Probe/Clear native allocations** and
+snapshot again. Inspect Solo or the native allocation benchmark to see its
+tracked cohort clear. Process RSS need not fall with the cohort.
+
+This discovers prepared native C++ hooks; it does not implement Unity managed
+C# breakpoints or heap object capture. The existing plugin has built-in test
+markers; placing arbitrary C#/C++ gutter intent does not instrument loaded code.
+Explicit allocation hooks account only for the fixture's native malloc/free.
+Component disable cleans up workers/allocations; Editor EnteredEditMode and
+player OnApplicationQuit report runtime end. An Editor stays armed across Play
+runs; player application end finishes its profiling session. GPU is unavailable.
+
+Discovery is published only after target selection, in the user's private
+`/run/user/<uid>/craidd-profiling/<pid>-<birth>.endpoint`. PID start time,
+private-file ownership and native socket peer credentials guard routing.
+Stop/close revokes the route; a provider reconnects after a new selection or
+Craidd restart. `CRAIDD_PROFILE_SOCKET` remains a fallback for older/manual
+builds, and is still supplied automatically for debugger-owned launches.
 
 Generated Gold source copies can be built separately using the Profiler's Prepare
 source copy action; ordinary gutter markers never alter this project's source or loaded plugin.
@@ -68,3 +95,16 @@ python3 tests/fixtures/attach-profiling/attach_probe.py --output /tmp/craidd-uni
 The disposable player opts into sibling debugger access with `--craidd-allow-attach`
 for its own PID only. Normal player launches and the Editor do not call this hook;
 host ptrace policy is never changed.
+
+Unity-first connection/reconnection check, using a disposable project copy and
+a real Editor launched without a socket variable:
+
+```sh
+python3 tests/fixtures/attach-profiling/unity_first_probe.py
+```
+
+The test proves late provider discovery, peer PID, route revocation and
+reconnection without restarting that Editor. It calls native methods from an
+Editor test method; it does not qualify interactive GUI Play or Tauri lifecycle
+acceptance. Rust tests separately exercise Editor Play end/rearm and bounded
+capture-history retention.

@@ -118,7 +118,7 @@ export default function ProfilerPanel() {
       <button onClick={() => window.dispatchEvent(new Event("craidd:attach-process"))}>Attach…</button>
       <span className="profiler-separator" />
       <button title="Take snapshot of current session — saves RSS and recorded allocation cohorts, not a heap dump" aria-label="Take memory snapshot" disabled={!state.profile?.samples.length} onClick={takeSnapshot}><span className="codicon codicon-device-camera" aria-hidden="true" /></button>
-      <button title="Snapshot and record again" aria-label="Snapshot and record again" disabled={!state.profile?.active} onClick={() => { state.snapshot(); state.select(null); void state.again(); }}><span className="codicon codicon-debug-restart" aria-hidden="true" /></button>
+      <button title="Snapshot and record again" aria-label="Snapshot and record again" disabled={!state.profile?.active || state.profile?.waitingForPlay} onClick={() => { state.snapshot(); state.select(null); void state.again(); }}><span className="codicon codicon-debug-restart" aria-hidden="true" /></button>
       <button title="Stop profiling; leave process running" aria-label="Stop profiling" disabled={!state.profile?.active} onClick={() => void state.stop().catch(fail)}><span className="codicon codicon-debug-stop" aria-hidden="true" /></button>
       <span className="profiler-toolbar-space" />
       <button title="Profiling settings and source markers" aria-label="Profiling settings" aria-expanded={setup} onClick={() => setSetup(!setup)}><span className="codicon codicon-gear" aria-hidden="true" /></button>
@@ -126,11 +126,12 @@ export default function ProfilerPanel() {
     <div className="profiler-target" title={p ? `${p.name} · PID ${p.target.pid} · start ${p.target.birth}` : "Attach to a process, or start Debug"}>
       <span className={`profiler-status ${p?.active && !state.selected ? "is-live" : ""}`} />
       <strong>{p ? `${p.name} · ${p.target.pid}` : "No process selected"}</strong>
-      <span>{state.selected ? "Snapshot" : p?.active ? "Live" : p ? "Stopped" : "Idle"}</span>
+      <span>{state.selected ? "Snapshot" : p?.waitingForPlay ? "Ready for Play" : p?.active ? "Live" : p ? "Stopped" : "Idle"}</span>
     </div>
     {state.snapshots.length > 0 && <select className="profiler-view" aria-label="Profiler view" value={state.selected ?? "live"} onChange={e => state.select(e.target.value === "live" ? null : e.target.value)}>
       <option value="live">Current session</option>{state.snapshots.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
     </select>}
+    {p?.reason.startsWith("Source discovery unavailable:") && <div role="status" className="profiler-notice">{p.reason}</div>}
     {(error || state.error) && <div role="alert" className="profiler-notice">{error || state.error}<button aria-label="Dismiss profiling error" onClick={() => { setError(""); useProfiling.setState({ error: null }); }}>×</button></div>}
     {setup ? <div className="profiler-results profiler-settings">
       <div className="profiler-section-title"><strong>Profiling settings</strong><button onClick={() => setSetup(false)}>Done</button></div>
@@ -140,7 +141,7 @@ export default function ProfilerPanel() {
       <button disabled={!file || dirty} title={dirty ? "Save and review source marker lines first" : "Export a C++ source copy using explicit Gold anchors"} onClick={() => { if (file) void useGold.getState().prepare(file).then(setPrepared).catch(fail); }}>Prepare source copy…</button>
       {prepared && <p className="select-text break-all">Prepared bundle: {prepared}. Read README.txt and build the copy.</p>}
       <h3>Native source provider</h3>
-      <p>Attach requires a target built with Gold instrumentation. Debug launches receive this environment variable automatically.</p>
+      <p>Prepared targets discover Craidd after Attach or Profile only, including targets started first. Unity Editor Play sessions stay armed until Stop. This environment variable is a fallback for older instrumented builds.</p>
       <code className="select-text break-all">CRAIDD_PROFILE_SOCKET={state.bridge || "Unavailable"}</code>
       <button disabled={!state.bridge} onClick={() => void navigator.clipboard.writeText(`CRAIDD_PROFILE_SOCKET=${state.bridge}`).catch(fail)}>Copy environment</button>
       <h3>Collectors</h3>
@@ -224,7 +225,7 @@ export default function ProfilerPanel() {
         </>}
       </div>
       <div className="profiler-footer" title={p?.provider ? "Source events from the prepared native provider. Gutter intent requires a matching rebuilt target." : "Process metrics are available; Gold ranges require a prepared instrumented build."}>
-        <span>{p?.provider ? "◆ Gold connected" : "Process metrics only"}</span><span>{p?.dropped ? `${p.dropped} dropped · incomplete` : `${samples.length} samples`}</span>
+        <span>{p?.waitingForPlay ? "Unity · ready for Play" : p?.provider ? "◆ Gold connected" : "Process metrics only"}</span><span>{p?.dropped ? `${p.dropped} dropped · incomplete` : `${samples.length} samples`}</span>
       </div>
     </>}
   </div>;

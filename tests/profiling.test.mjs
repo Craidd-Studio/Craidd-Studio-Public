@@ -67,3 +67,10 @@ test('Snapshot views keep chosen identity even without its hits; another process
  assert.equal(useProfiling.getState().benchmarkBySession[next.id],undefined);
  assert.equal(useProfiling.getState().benchmarkBySession[p.id],'s');
 });
+
+test('Unity between Play sessions stays armed and presents Ready for Play',()=>{
+ useProfiling.setState({profile:{...profile(),unityEditor:true,waitingForPlay:true}});
+ const html=renderToStaticMarkup(createElement(Panel));
+ assert.ok(html.includes('Ready for Play'));assert.ok(html.includes('Unity · ready for Play'));
+ assert.ok(/aria-label="Snapshot and record again" disabled/.test(html));
+});

@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { useProfiling } from "../../store/profilingStore";
+import { useSolution } from "../../store/solutionStore";
 import { useDebug } from "../../store/debugStore";
 
 export interface ProcessTarget { pid: number; birth: number }
-export interface ProcessInfo extends ProcessTarget { name: string; executable: string; cwd: string; uid: number; adapterHint: string }
+export interface ProcessInfo extends ProcessTarget { name: string; executable: string; cwd: string; uid: number; adapterHint: string; unityProject?: string | null }
 interface Adapter { id: string; name: string; available: boolean }
 
 export default function AttachProcessDialog({ onClose }: { onClose: () => void }) {
@@ -16,13 +17,17 @@ export default function AttachProcessDialog({ onClose }: { onClose: () => void }
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const project = useSolution(s => s.rootPath)?.replace(/\/$/, "");
   const panel = useRef<HTMLDivElement>(null);
   const refresh = async () => {
     setLoading(true); setError(null);
     try {
       const [targets, choices] = await Promise.all([invoke<ProcessInfo[]>("list_attach_processes"), invoke<Adapter[]>("attach_adapter_choices")]);
+      const currentRoot = useSolution.getState().rootPath?.replace(/\/$/, "");
+      const matching = currentRoot ? targets.filter(t => t.unityProject === currentRoot) : [];
+      targets.sort((a, b) => Number(matching.includes(b)) - Number(matching.includes(a)));
       setProcesses(targets); setAdapters(choices);
-      setSelected((old) => targets.find((target) => target.pid === old?.pid && target.birth === old.birth) ?? null);
+      setSelected((old) => targets.find((target) => target.pid === old?.pid && target.birth === old.birth) ?? (matching.length === 1 ? matching[0] : null));
     } catch (failure) { setError(String(failure)); }
     finally { setLoading(false); }
   };
@@ -42,7 +47,7 @@ export default function AttachProcessDialog({ onClose }: { onClose: () => void }
     window.addEventListener("keydown", key);
     return () => { window.removeEventListener("keydown", key); previous?.focus(); };
   }, [onClose, busy]);
-  const matches = processes.filter((target) => `${target.pid} ${target.name} ${target.executable} ${target.adapterHint}`.toLowerCase().includes(query.toLowerCase()));
+  const matches = processes.filter((target) => `${target.pid} ${target.name} ${target.executable} ${target.adapterHint} ${target.unityProject ?? ""}`.toLowerCase().includes(query.toLowerCase()));
   const attach = async (profileOnly = false) => {
     if (!selected) return;
     setBusy(true); setError(null);
@@ -60,15 +65,16 @@ export default function AttachProcessDialog({ onClose }: { onClose: () => void }
           {!loading && matches.length === 0 && <p className="p-3 text-zinc-400">No matching accessible processes.</p>}
           {!loading && matches.map((target) => <button key={`${target.pid}:${target.birth}`} type="button" role="option" aria-selected={selected?.pid === target.pid && selected.birth === target.birth}
             onClick={() => setSelected(target)} className={"w-full text-left px-3 py-2 border-b border-zinc-800 flex gap-3 items-start " + (selected?.pid === target.pid && selected.birth === target.birth ? "bg-blue-950 text-blue-100" : "hover:bg-zinc-800")}>
-            <span className="w-16 shrink-0 tabular-nums text-zinc-400">{target.pid}</span><span className="min-w-0 flex-1"><span className="block">{target.name}</span><span className="block text-[11px] text-zinc-400 break-all">{target.executable}</span></span><span className="max-w-44 text-[11px] text-zinc-400">{target.adapterHint}</span>
+            <span className="w-16 shrink-0 tabular-nums text-zinc-400">{target.pid}</span><span className="min-w-0 flex-1"><span className="block">{target.name}{target.unityProject && target.unityProject === project && <span className="ml-2 text-amber-200">Unity · this project</span>}</span><span className="block text-[11px] text-zinc-400 break-all">{target.executable}</span></span><span className="max-w-44 text-[11px] text-zinc-400">{target.adapterHint}</span>
           </button>)}
         </div>
         <label className="block">Debugger adapter<select value={adapter} onChange={(e) => setAdapter(e.target.value)} className="mt-1 block w-full rounded border border-zinc-600 bg-zinc-950 px-2 py-2">{adapters.map((choice) => <option key={choice.id} value={choice.id} disabled={!choice.available}>{choice.name}{choice.available ? "" : " · not found"}</option>)}</select></label>
+        {selected?.unityProject && <p className="text-amber-200">Unity Editor selected. Profile only connects prepared Gold hooks automatically; press Play in Unity. Native debugger attach remains a separate choice.</p>}
         {selected && <p className="text-zinc-400 break-all">Working directory: {selected.cwd || "Unavailable"}</p>}
         <p className="text-zinc-500">Hints do not select an adapter. Unity C# endpoints require a separately qualified adapter; LLDB-DAP targets native code.</p>
         {error && <p role="alert" className="text-amber-300 whitespace-pre-wrap break-words">{error}</p>}
       </div>
-      <footer className="px-5 py-3 border-t border-zinc-800 flex justify-end gap-2"><button type="button" onClick={onClose} disabled={busy} className="px-3 py-1.5">Cancel</button><button type="button" onClick={() => void attach(true)} disabled={busy || !selected || !matches.includes(selected)} className="px-3 py-1.5 rounded border border-zinc-600 disabled:opacity-40">Profile only</button><button type="button" onClick={() => void attach()} disabled={busy || !selected || !matches.includes(selected) || !adapters.some((a) => a.id === adapter && a.available)} className="px-3 py-1.5 rounded bg-blue-700 hover:bg-blue-600 disabled:opacity-40">{busy ? "Connecting…" : "Attach debugger"}</button></footer>
+      <footer className="px-5 py-3 border-t border-zinc-800 flex justify-end gap-2"><button type="button" onClick={onClose} disabled={busy} className="px-3 py-1.5">Cancel</button><button type="button" onClick={() => void attach(true)} disabled={busy || !selected || !matches.includes(selected)} className={"px-3 py-1.5 rounded disabled:opacity-40 " + (selected?.unityProject ? "bg-blue-700 hover:bg-blue-600 border border-blue-600" : "border border-zinc-600")}>Profile only</button><button type="button" onClick={() => void attach()} disabled={busy || !selected || !matches.includes(selected) || !adapters.some((a) => a.id === adapter && a.available)} className={"px-3 py-1.5 rounded disabled:opacity-40 " + (selected?.unityProject ? "border border-zinc-600 hover:bg-zinc-800" : "bg-blue-700 hover:bg-blue-600")}>{busy ? "Connecting…" : "Attach debugger"}</button></footer>
     </div>
   </div>;
 }

@@ -19,6 +19,7 @@ pub struct ProcessInfo {
     pub cwd: String,
     pub uid: u32,
     pub adapter_hint: String,
+    pub unity_project: Option<String>,
 }
 
 #[derive(Clone, Debug, Serialize)]
@@ -88,6 +89,41 @@ fn link(pid: i32, name: &str) -> String {
         .unwrap_or_default()
 }
 
+// A running Editor is matched through its executable, project argument and
+// the project's own Unity version declaration, never through C# extensions.
+pub fn unity_project(pid: i32) -> Option<String> {
+    let executable = PathBuf::from(link(pid, "exe"));
+    let args = fs::read(format!("/proc/{pid}/cmdline")).ok()?;
+    let args: Vec<_> = args
+        .split(|b| *b == 0)
+        .map(|v| String::from_utf8_lossy(v).into_owned())
+        .collect();
+    declared_unity_project(&executable, &args, PathBuf::from(link(pid, "cwd")))
+}
+fn declared_unity_project(
+    executable: &std::path::Path,
+    args: &[String],
+    cwd: PathBuf,
+) -> Option<String> {
+    // Hub may rename the actual executable. Match its installed Unity entry
+    // point by identity, rather than assuming /proc/<pid>/exe ends in Unity.
+    let entry = executable.parent()?.join("Unity");
+    if fs::canonicalize(entry).ok()? != fs::canonicalize(executable).ok()? {
+        return None;
+    }
+    let root = args
+        .windows(2)
+        .find(|a| a[0].eq_ignore_ascii_case("-projectPath"))
+        .map(|a| PathBuf::from(&a[1]))
+        .unwrap_or(cwd);
+    let root = fs::canonicalize(root).ok()?;
+    let version = fs::read_to_string(root.join("ProjectSettings/ProjectVersion.txt")).ok()?;
+    version
+        .lines()
+        .any(|s| s.starts_with("m_EditorVersion:"))
+        .then(|| root.to_string_lossy().into_owned())
+}
+
 pub fn info(pid: i32) -> Result<ProcessInfo, String> {
     let target = identity(pid)?;
     let status = fs::read_to_string(format!("/proc/{pid}/status")).map_err(|e| e.to_string())?;
@@ -100,10 +136,13 @@ pub fn info(pid: i32) -> Result<ProcessInfo, String> {
         })
         .ok_or("Process UID unavailable")?;
     let maps = fs::read_to_string(format!("/proc/{pid}/maps")).unwrap_or_default();
-    let adapter_hint = if maps.contains("libcoreclr.so") {
+    let unity_project = unity_project(pid);
+    let adapter_hint = if unity_project.is_some() {
+        "Unity Editor · native C++ / profiling"
+    } else if maps.contains("libcoreclr.so") {
         "netcoredbg · CoreCLR"
     } else if maps.contains("libmono") {
-        "Unity/Mono endpoint · not yet supported"
+        "Mono/Unity · native LLDB; managed unqualified"
     } else {
         "LLDB-DAP · native candidate"
     };
@@ -117,6 +156,7 @@ pub fn info(pid: i32) -> Result<ProcessInfo, String> {
         executable: link(pid, "exe"),
         cwd: link(pid, "cwd"),
         adapter_hint: adapter_hint.into(),
+        unity_project,
     };
     verify(&target)?;
     Ok(result)
@@ -220,6 +260,38 @@ mod tests {
         assert_eq!(s.cpu_ticks, 20);
         assert_eq!(s.resident_pages, 3);
         assert_eq!(s.threads, 4);
+    }
+    #[test]
+    fn unity_project_accepts_hub_renamed_binary_and_requires_project_declaration() {
+        let dir = std::env::temp_dir().join(format!(
+            "craidd-unity-detect-{}",
+            super::super::profiling::stamp()
+        ));
+        fs::create_dir_all(dir.join("Editor")).unwrap();
+        fs::create_dir_all(dir.join("Project/ProjectSettings")).unwrap();
+        let executable = dir.join("Editor/unityhub-unity-editor-6000.5.10f1");
+        fs::write(&executable, b"fixture").unwrap();
+        std::os::unix::fs::symlink(&executable, dir.join("Editor/Unity")).unwrap();
+        let root = dir.join("Project");
+        let args = vec![
+            "Unity".into(),
+            "-projectPath".into(),
+            root.to_string_lossy().into_owned(),
+        ];
+        assert!(declared_unity_project(&executable, &args, dir.clone()).is_none());
+        fs::write(
+            root.join("ProjectSettings/ProjectVersion.txt"),
+            "m_EditorVersion: 6000.5.10f1\n",
+        )
+        .unwrap();
+        assert_eq!(
+            declared_unity_project(&executable, &args, dir.clone()),
+            Some(root.to_string_lossy().into_owned())
+        );
+        let other = dir.join("Editor/other");
+        fs::write(&other, b"fixture").unwrap();
+        assert!(declared_unity_project(&other, &args, dir.clone()).is_none());
+        fs::remove_dir_all(dir).unwrap();
     }
     #[test]
     fn real_process_identity_and_counters() {

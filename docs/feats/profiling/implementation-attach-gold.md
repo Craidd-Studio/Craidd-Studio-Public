@@ -91,6 +91,58 @@ widths to verify Solo default, range graph switching, new-hit/batch selection
 stability and the Solo shortcut. This remains presentation/state validation,
 not full desktop collector/lifecycle acceptance.
 
+## Unity-first connection blocker observed on 16 October 2026
+
+The user could not follow the launch-environment/socket instructions while
+Unity was already open. Inspection confirmed that native hooks only discover
+CRAIDD_PROFILE_SOCKET inherited at startup; selecting the Editor later does
+not communicate Craidd's socket to it. Play end also closes the entire
+profiling session, forcing a fresh manual selection for every Play run.
+The user's running Editor also resolves `/proc/<pid>/exe` to Hub's renamed
+`unityhub-unity-editor-6000.5.10f1`, so an exact basename check would miss it.
+Matching now compares the installed Unity entry point's canonical identity,
+then verifies its project argument and ProjectVersion declaration.
+
+The correction publishes a process-incarnation-specific runtime discovery
+route only after explicit target selection, retains peer authentication, and
+releases that route on Stop/close. Unity Editor discovery reads its actual
+project declaration, not infer framework support from C# files. Editor Play
+end retains the armed connection and results for the next Play, while
+player application end still finishes its session.
+
+Prepared native hooks read a private per-PID/start-time rendezvous once per
+second and reconnect when its socket changes. Existing launch-environment
+routing remains a fallback. Publication is atomic and rejects an existing live
+owner; Stop/close only removes the same registration. The Attach dialog offers
+the unambiguous matching Editor first, while attachment remains explicit.
+
+Editor Play end closes current captures and retains the armed profiling context.
+The next source start opens a new batch/Solo. Old completed captures are evicted
+at the 2,000-capture bound, with the loss counter incremented, so a long first
+Play cannot prevent subsequent runs or Record again. Open captures are never
+evicted to make room. Native cohort ownership loses evicted capture IDs.
+
+Evidence: eleven focused Rust profiling/discovery tests pass, including a native
+process launched before its host without a socket variable, exclusive/private
+registration, route release, Editor rearm and bounded-history continuation.
+An actual Unity 6000.5.10f1 Editor in a disposable project copy also starts
+without CRAIDD_PROFILE_SOCKET, connects after route publication, disconnects
+on revocation and reconnects to a second route with the same PID/incarnation.
+Transcript: `/tmp/craidd-unity-first-proof` (local). The full Rust suite passes
+160 tests with four existing ignored tests; frontend regressions and production
+build pass. Browser fixture checks matching-Editor preselection and Ready for
+Play; its IPC is mocked. This tests real Editor/native
+interop and routing; interactive GUI Play and full Tauri lifecycle acceptance
+remain separate. The user's generated PackageManagerSettings.asset was present
+before this correction and is not included in it.
+The workspace plugin was rebuilt separately and atomically replaced while
+leaving the user's loaded Editor untouched. The prior binary is backed up at
+`/tmp/craidd-unity-first-proof/libcraidd_unity_probe.before.so`. Staged builds
+must compile the original absolute source paths: an initial copied-source build
+pointed DWARF at its disposable directory. `readelf` now confirms the delivered
+plugin resolves probe.cpp and anchored.cpp to the real workspace. Reopening
+Unity once loads that plugin; subsequent connection order is unrestricted.
+
 ## Delivered experimental slice
 
 - Run → Attach to Process and Command Palette entry; searchable same-user PID
@@ -231,5 +283,5 @@ This is a foundation for working on the feature, not completion of every
 
 ---
 
-*Last updated: Phase 3.x / 3.5, 15 October 2026. Author(s): ShinkuKira21.*
+*Last updated: Phase 3.x / 3.5, 16 October 2026. Author(s): ShinkuKira21.*
 *This document is a record.*

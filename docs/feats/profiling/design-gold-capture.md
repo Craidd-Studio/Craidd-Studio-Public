@@ -134,6 +134,22 @@ elapsed wall duration, observed pause/hold duration and any justified active
 duration separately. Never claim wall duration is CPU time or silently remove
 unobserved pauses. A linked participant can still run while another is held.
 
+## Unity-first connection
+
+Unity may already be open or playing when Craidd starts. Explicit target
+selection publishes a private per-process-incarnation rendezvous for prepared
+native source providers. The provider discovers and reconnects without a launch
+environment variable. An unambiguous matching Editor can be preselected in
+Attach from its executable, project argument and Unity version declaration;
+preselection does not attach a debugger. No managed adapter support is inferred.
+
+An Editor context remains armed between Play runs. Verified Play end closes
+captures and preserves results; the next source start belongs to a fresh batch.
+Explicit Stop/close disarms routing and cannot automatically rearm later. A
+player's application end finishes its context. Target exit/PID reuse invalidates
+the selection. Old provider binaries need rebuilding/reloading once to gain
+runtime discovery. Process gauges remain available without source coverage.
+
 ## Profiler presentation
 
 Profiler lives in the **right panel beside Debugger**, per
@@ -255,5 +271,5 @@ unbounded memory use by the IDE.
 
 ---
 
-*Last updated: Phase 3.5, 15 October 2026. Author(s): ShinkuKira21.*
+*Last updated: Phase 3.5, 16 October 2026. Author(s): ShinkuKira21.*
 *This document is a design.*
