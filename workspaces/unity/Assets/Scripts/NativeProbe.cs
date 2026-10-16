@@ -15,10 +15,13 @@ public sealed class NativeProbe : MonoBehaviour
     [DllImport(Library)] public static extern void craidd_probe_workers_start();
     [DllImport(Library)] public static extern void craidd_probe_workers_stop();
     [DllImport(Library)] public static extern void craidd_probe_play_end();
+    [DllImport(Library)] public static extern void craidd_probe_disconnect_source();
+    [DllImport(Library)] public static extern void craidd_probe_play_state(ulong generation, int active);
     public int seed = 7;
     public int iterations = 20000;
     public bool runWorkers;
     public bool retainNativeAllocations;
+    public bool runPeriodicAllocations = true;
     public int result;
     public ulong nativeLiveBytes;
     public long managedLiveBytes;
@@ -28,6 +31,8 @@ public sealed class NativeProbe : MonoBehaviour
     bool workersActive;
     int frames;
     string lastAction = "Ready";
+    public int FrameCount { get { return frames; } }
+    public int OverlayDrawCount { get; private set; }
 
     void OnEnable()
     {
@@ -39,6 +44,7 @@ public sealed class NativeProbe : MonoBehaviour
     void OnGUI()
     {
         if (!showProfilerOverlay) return;
+        if (Event.current.type == EventType.Repaint) OverlayDrawCount++;
         GUILayout.BeginArea(new Rect(12, 12, 310, 150), GUI.skin.box);
         GUILayout.Label("Craidd native profiling probe");
         GUILayout.Label($"Native live: {nativeLiveBytes:N0} bytes · Frames: {frames}");
@@ -68,7 +74,7 @@ public sealed class NativeProbe : MonoBehaviour
             if (runWorkers) craidd_probe_workers_start(); else craidd_probe_workers_stop();
             workersActive = runWorkers;
         }
-        if (++frames % 120 == 0) craidd_probe_allocate(4096, retainNativeAllocations ? 1 : 0);
+        if (++frames % 120 == 0 && runPeriodicAllocations) craidd_probe_allocate(4096, retainNativeAllocations ? 1 : 0);
         nativeLiveBytes = craidd_probe_live();
         managedLiveBytes = GC.GetTotalMemory(false); // gauge, never a retained-object proof
         // Headless player smoke exits itself, allowing repeatable noninteractive validation.

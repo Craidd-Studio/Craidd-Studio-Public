@@ -2,10 +2,11 @@
 //! No process signals, debugger requests, or heap/cycle inference occur here.
 use super::processes::{self, ProcessCounters, ProcessIdentity};
 use serde::{Deserialize, Serialize};
+#[cfg(test)]
+use std::io::{BufRead, BufReader};
 use std::{
     collections::{HashMap, HashSet},
     fs,
-    io::{BufRead, BufReader},
     os::unix::{
         fs::PermissionsExt,
         io::AsRawFd,
@@ -76,6 +77,12 @@ pub struct SourceEvent {
     pub address: u64,
     #[serde(default)]
     pub bytes: u64,
+    #[serde(default)]
+    pub sequence: u64,
+    #[serde(default)]
+    pub generation: u64,
+    #[serde(default)]
+    pub playing: Option<bool>,
 }
 #[derive(Clone, Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -104,6 +111,7 @@ pub struct Profile {
     pub active: bool,
     pub unity_editor: bool,
     pub waiting_for_play: bool,
+    pub play_generation: Option<u64>,
     pub reason: String,
     pub batch: u64,
     pub provider: bool,
@@ -123,6 +131,8 @@ pub struct Profile {
     #[serde(skip)]
     next_segment: u64,
     #[serde(skip)]
+    last_sequence: Option<u64>,
+    #[serde(skip)]
     allocations: HashMap<u64, (u64, Vec<String>)>,
     #[serde(skip)]
     blocked: HashSet<String>,
@@ -136,6 +146,7 @@ impl Profile {
             active: true,
             unity_editor: false,
             waiting_for_play: false,
+            play_generation: None,
             discovery: None,
             reason: String::new(),
             batch: 1,
@@ -149,6 +160,36 @@ impl Profile {
             origin: Some(monotonic_ns()),
             solo: None,
             next_segment: 0,
+            last_sequence: None,
+            allocations: HashMap::new(),
+            blocked: HashSet::new(),
+        }
+    }
+    fn view(&self) -> Self {
+        // Only public presentation data is copied; allocator ownership and
+        // discovery registrations stay with the collector, not every UI tick.
+        Self {
+            id: self.id.clone(),
+            target: self.target.clone(),
+            name: self.name.clone(),
+            active: self.active,
+            unity_editor: self.unity_editor,
+            waiting_for_play: self.waiting_for_play,
+            play_generation: self.play_generation,
+            reason: self.reason.clone(),
+            batch: self.batch,
+            provider: self.provider,
+            pauses: self.pauses.clone(),
+            samples: self.samples.clone(),
+            captures: self.captures.clone(),
+            dropped: self.dropped,
+            counters: self.counters.clone(),
+            discovery: None,
+            start: None,
+            origin: None,
+            solo: None,
+            next_segment: 0,
+            last_sequence: None,
             allocations: HashMap::new(),
             blocked: HashSet::new(),
         }
@@ -190,24 +231,50 @@ impl Profile {
             self.samples.remove(0);
             self.counters.aged_samples += 1;
         }
-        self.samples.push(Sample { at_ms: self.at(), counters });
+        self.samples.push(Sample {
+            at_ms: self.at(),
+            counters,
+        });
     }
     fn reserve_capture(&mut self, marker: &str, solo: bool) -> bool {
         // Keep a bounded recent history per marker. Hot per-frame markers
         // cannot displace a rare allocation benchmark, Solo, or a live cohort.
         const HITS_PER_MARKER: usize = 128;
         let eligible = |c: &Capture| !c.solo && c.end_ms.is_some() && c.live_bytes == 0;
-        let same_marker = self.captures.iter().filter(|c| !c.solo && c.marker == marker).count();
+        let same_marker = self
+            .captures
+            .iter()
+            .filter(|c| !c.solo && c.marker == marker)
+            .count();
         let mut victim = if !solo && same_marker >= HITS_PER_MARKER {
-            self.captures.iter().position(|c| c.marker == marker && eligible(c))
-        } else { None };
+            self.captures
+                .iter()
+                .position(|c| c.marker == marker && eligible(c))
+        } else {
+            None
+        };
         if victim.is_none() && self.captures.len() >= 2000 {
             let mut counts = HashMap::<&str, usize>::new();
-            for c in &self.captures { if !c.solo { *counts.entry(&c.marker).or_default() += 1; } }
-            let largest = self.captures.iter().filter(|c| eligible(c))
-                .map(|c| counts[c.marker.as_str()]).max();
-            victim = largest.and_then(|n| self.captures.iter().position(|c| eligible(c) && counts[c.marker.as_str()] == n));
-            if victim.is_none() { self.reject(); return false; }
+            for c in &self.captures {
+                if !c.solo {
+                    *counts.entry(&c.marker).or_default() += 1;
+                }
+            }
+            let largest = self
+                .captures
+                .iter()
+                .filter(|c| eligible(c))
+                .map(|c| counts[c.marker.as_str()])
+                .max();
+            victim = largest.and_then(|n| {
+                self.captures
+                    .iter()
+                    .position(|c| eligible(c) && counts[c.marker.as_str()] == n)
+            });
+            if victim.is_none() {
+                self.reject();
+                return false;
+            }
         }
         if let Some(index) = victim {
             self.captures.remove(index);
@@ -225,6 +292,20 @@ impl Profile {
             c.status = "Incomplete: provider disconnected".into();
         }
     }
+    fn finish_play(&mut self, at: f64) {
+        for c in self.captures.iter_mut().filter(|c| c.end_ms.is_none()) {
+            c.end_ms = Some(at);
+            c.status = if c.solo {
+                "Unity Play ended"
+            } else {
+                "Incomplete: Unity Play ended"
+            }
+            .into();
+        }
+        self.solo = None;
+        self.waiting_for_play = true;
+        self.reason = "Unity Play ended; armed for the next Play session".into();
+    }
     fn event(&mut self, e: SourceEvent) {
         if !self.active {
             return;
@@ -233,6 +314,26 @@ impl Profile {
             return;
         }
         self.provider = true;
+        if e.sequence > 0 {
+            if let Some(previous) = self.last_sequence {
+                if e.sequence <= previous {
+                    self.reject();
+                    return;
+                }
+                let missing = e.sequence - previous - 1;
+                if missing > 0 {
+                    self.counters.source_gaps += missing;
+                    self.dropped += missing;
+                    self.solo = None;
+                    let at = self.at();
+                    for c in self.captures.iter_mut().filter(|c| c.end_ms.is_none()) {
+                        c.end_ms = Some(at);
+                        c.status = "Incomplete: source events missing".into();
+                    }
+                }
+            }
+            self.last_sequence = Some(e.sequence);
+        }
         // Both endpoints use the same host CLOCK_MONOTONIC. Never infer wall/CPU equivalence.
         let origin = *self.origin.get_or_insert_with(|| {
             e.wall_ns
@@ -243,8 +344,40 @@ impl Profile {
             return;
         }
         let at = e.wall_ns.saturating_sub(origin) as f64 / 1e6;
+        if self.unity_editor {
+            if let Some(playing) = e.playing {
+                if self.play_generation.is_some_and(|old| e.generation < old) {
+                    self.reject();
+                    return;
+                }
+                if self.play_generation != Some(e.generation) {
+                    let had_play = self.play_generation.is_some_and(|old| old > 0)
+                        || !self.captures.is_empty();
+                    self.finish_play(at);
+                    self.play_generation = Some(e.generation);
+                    if playing && had_play {
+                        self.batch += 1;
+                    }
+                }
+                if playing {
+                    self.waiting_for_play = false;
+                    self.reason.clear();
+                } else {
+                    if !self.waiting_for_play {
+                        self.finish_play(at);
+                    }
+                    // Late frees still belong to their original retained cohorts.
+                    if e.kind != "free" && e.kind != "state" {
+                        return;
+                    }
+                }
+            }
+        }
         let key = format!("{}:{}:{}", e.marker, e.thread, e.invocation);
-        if self.unity_editor && self.waiting_for_play && matches!(e.kind.as_str(), "begin" | "solo")
+        if self.unity_editor
+            && e.playing.is_none()
+            && self.waiting_for_play
+            && matches!(e.kind.as_str(), "begin" | "solo")
         {
             self.waiting_for_play = false;
             if !self.captures.is_empty() {
@@ -353,22 +486,9 @@ impl Profile {
                     }
                 }
             }
-            "play-end" if self.unity_editor => {
-                for c in self.captures.iter_mut().filter(|c| c.end_ms.is_none()) {
-                    c.end_ms = Some(at);
-                    c.status = if c.solo {
-                        "Unity Play ended"
-                    } else {
-                        "Incomplete: Unity Play ended"
-                    }
-                    .into();
-                }
-                self.solo = None;
-                self.waiting_for_play = true;
-                self.reason = "Unity Play ended; armed for the next Play session".into();
-            }
+            "play-end" if self.unity_editor => self.finish_play(at),
             "play-end" => self.close("Verified instrumented Unity player end"),
-            "hello" => {}
+            "hello" | "state" => {}
             _ => {
                 self.reject();
             }
@@ -424,22 +544,47 @@ pub struct ProfileManager {
     pub profiles: Arc<Mutex<HashMap<String, Profile>>>,
     socket: Mutex<Option<PathBuf>>,
 }
-impl Drop for ProfileManager {
-    fn drop(&mut self) {
+impl ProfileManager {
+    pub fn shutdown(&self) {
         if let Ok(mut profiles) = self.profiles.lock() {
             for p in profiles.values_mut() {
                 p.close("Profiler host closed");
             }
         }
-        if let Ok(path) = self.socket.get_mut() {
-            if let Some(path) = path {
+        if let Ok(mut socket) = self.socket.lock() {
+            if let Some(path) = socket.take() {
                 let _ = fs::remove_file(path);
             }
         }
     }
 }
+impl Drop for ProfileManager {
+    fn drop(&mut self) {
+        self.shutdown();
+    }
+}
+pub fn shutdown(app: &AppHandle) {
+    if let Some(state) = app.try_state::<ProfileManager>() {
+        state.shutdown();
+    }
+}
+
 fn publish(app: &AppHandle, label: &str, p: &Profile) {
     let _ = app.emit_to(label, "craidd:profile", p);
+}
+fn change_profile(app: &AppHandle, label: &str, action: impl FnOnce(&mut Profile)) {
+    let view = {
+        let state = app.state::<ProfileManager>();
+        let Ok(mut all) = state.profiles.lock() else {
+            return;
+        };
+        let Some(p) = all.get_mut(label).filter(|p| p.active) else {
+            return;
+        };
+        action(p);
+        p.view()
+    };
+    publish(app, label, &view);
 }
 fn peer(stream: &UnixStream) -> Result<ProcessIdentity, String> {
     let mut cred: libc::ucred = unsafe { std::mem::zeroed() };
@@ -465,11 +610,9 @@ pub fn ensure_bridge(app: &AppHandle) -> Result<String, String> {
     if let Some(p) = slot.as_ref() {
         return Ok(p.to_string_lossy().into());
     }
-    let path = std::env::temp_dir().join(format!(
-        "craidd-profile-{}-{}.sock",
-        std::process::id(),
-        stamp()
-    ));
+    let owner = processes::identity(std::process::id() as i32)?;
+    let path = super::profiling_discovery::directory()?
+        .join(format!("host-{}-{}.sock", owner.pid, owner.birth));
     let listener = UnixListener::bind(&path).map_err(|e| e.to_string())?;
     fs::set_permissions(&path, fs::Permissions::from_mode(0o600)).map_err(|e| e.to_string())?;
     let profiles = state.profiles.clone();
@@ -489,38 +632,67 @@ pub fn ensure_bridge(app: &AppHandle) -> Result<String, String> {
             drop(active);
             thread::spawn(move || {
                 let _ = stream.set_read_timeout(Some(Duration::from_secs(2)));
-                let mut reader = BufReader::new(stream);
+                use std::io::Read;
+                let mut stream = stream;
+                let mut buffer = [0_u8; 16384];
+                let mut pending = Vec::with_capacity(20480);
+                let mut verified_at = Instant::now();
                 loop {
-                    let mut line = String::new();
-                    use std::io::Read;
-                    let result = reader.by_ref().take(4097).read_line(&mut line);
-                    match result {
+                    let count = match stream.read(&mut buffer) {
                         Ok(0) => break,
-                        Ok(_) if line.len() <= 4096 => {}
+                        Ok(n) => n,
                         Err(ref e)
-                            if line.is_empty()
-                                && [
-                                    std::io::ErrorKind::WouldBlock,
-                                    std::io::ErrorKind::TimedOut,
-                                ]
-                                .contains(&e.kind()) =>
+                            if matches!(
+                                e.kind(),
+                                std::io::ErrorKind::WouldBlock | std::io::ErrorKind::TimedOut
+                            ) =>
                         {
                             if processes::verify(&target).is_err() {
                                 break;
                             }
+                            verified_at = Instant::now();
                             continue;
                         }
-                        _ => break,
+                        Err(_) => break,
                     };
-                    if processes::verify(&target).is_err() {
+                    // The authenticated socket has a fixed peer. Check its
+                    // process incarnation at a bounded cadence, not per event.
+                    if verified_at.elapsed() >= Duration::from_millis(250) {
+                        if processes::verify(&target).is_err() {
+                            break;
+                        }
+                        verified_at = Instant::now();
+                    }
+                    pending.extend_from_slice(&buffer[..count]);
+                    let Some(last) = pending.iter().rposition(|b| *b == b'\n') else {
+                        if pending.len() > 4096 {
+                            break;
+                        }
+                        continue;
+                    };
+                    let mut events = Vec::new();
+                    let mut rejected = 0;
+                    let mut oversized = false;
+                    for line in pending[..last].split(|b| *b == b'\n') {
+                        if line.len() > 4096 {
+                            oversized = true;
+                            break;
+                        }
+                        match serde_json::from_slice::<SourceEvent>(line) {
+                            Ok(event) => events.push(event),
+                            Err(_) => rejected += 1,
+                        }
+                    }
+                    pending.drain(..=last);
+                    if oversized || pending.len() > 4096 {
                         break;
                     }
-                    if let Ok(event) = serde_json::from_str::<SourceEvent>(&line) {
-                        if let Ok(mut all) = profiles.lock() {
-                            for (_, p) in all
-                                .iter_mut()
-                                .filter(|(_, p)| p.target == target && p.active)
-                            {
+                    if let Ok(mut all) = profiles.lock() {
+                        for p in all.values_mut().filter(|p| p.target == target && p.active) {
+                            for _ in 0..rejected {
+                                p.reject();
+                            }
+                            for event in &events {
                                 p.event(event.clone());
                             }
                         }
@@ -577,29 +749,34 @@ pub fn start(app: &AppHandle, label: &str, target: ProcessIdentity) -> Result<St
             Ok(route) => p.discovery = Some(route),
             Err(error) => p.reason = format!("Source discovery unavailable: {error}"),
         }
+    } else if let Err(error) = bridge {
+        p.reason = format!("Source discovery unavailable: {error}");
     }
     let id = p.id.clone();
     let result_id = id.clone();
-    publish(app, label, &p);
+    let view = p.view();
     all.insert(label.into(), p);
     drop(all);
+    publish(app, label, &view);
     let profiles = state.profiles.clone();
     let app = app.clone();
     let label = label.to_owned();
     thread::spawn(move || loop {
         thread::sleep(Duration::from_millis(250));
-        let Ok(mut all) = profiles.lock() else { break };
-        let Some(p) = all.get_mut(&label) else { break };
-        if p.id != id || !p.active {
-            break;
-        }
-        match processes::counters(&target) {
-            Ok(counters) => {
-                p.sample(counters);
+        let counters = processes::counters(&target);
+        let view = {
+            let Ok(mut all) = profiles.lock() else { break };
+            let Some(p) = all.get_mut(&label) else { break };
+            if p.id != id || !p.active {
+                break;
             }
-            Err(_) => p.close("Target exited or became inaccessible"),
+            match counters {
+                Ok(counters) => p.sample(counters),
+                Err(_) => p.close("Target exited or became inaccessible"),
+            }
+            p.view()
         };
-        publish(&app, &label, p);
+        publish(&app, &label, &view);
     });
     Ok(result_id)
 }
@@ -612,65 +789,59 @@ pub fn start_profiling(
     start(&app, w.label(), target)
 }
 pub fn invalidate_marker(app: &AppHandle, id: &str) {
-    if let Ok(mut all) = app.state::<ProfileManager>().profiles.lock() {
-        for (label, p) in all.iter_mut().filter(|(_, p)| p.active) {
+    let views = {
+        let state = app.state::<ProfileManager>();
+        let Ok(mut all) = state.profiles.lock() else {
+            return;
+        };
+        all.iter_mut().filter(|(_, p)| p.active).map(|(label, p)| {
             p.blocked.insert(id.into());
             let at = p.at();
-            for c in p
-                .captures
-                .iter_mut()
-                .filter(|c| c.marker == id && c.end_ms.is_none())
-            {
+            for c in p.captures.iter_mut().filter(|c| c.marker == id && c.end_ms.is_none()) {
                 c.end_ms = Some(at);
                 c.status = "Incomplete: marker edited".into();
             }
-            p.reason="Gold intent changed; affected compiled markers stay unarmed until rebuild/restart and a new profiling session".into();
-            publish(app, label, p);
-        }
+            p.reason = "Gold intent changed; affected compiled markers stay unarmed until rebuild/restart and a new profiling session".into();
+            (label.clone(), p.view())
+        }).collect::<Vec<_>>()
+    };
+    for (label, view) in views {
+        publish(app, &label, &view);
     }
 }
 pub fn stop_session(app: &AppHandle, label: &str, id: &str, reason: &str) {
-    if let Ok(mut all) = app.state::<ProfileManager>().profiles.lock() {
-        if let Some(p) = all.get_mut(label).filter(|p| p.active && p.id == id) {
+    change_profile(app, label, |p| {
+        if p.id == id {
             p.close(reason);
-            publish(app, label, p);
         }
-    }
+    });
 }
 pub fn stop(app: &AppHandle, label: &str, reason: &str) {
-    if let Ok(mut all) = app.state::<ProfileManager>().profiles.lock() {
-        if let Some(p) = all.get_mut(label).filter(|p| p.active) {
-            p.close(reason);
-            publish(app, label, p);
-        }
-    }
+    change_profile(app, label, |p| p.close(reason));
 }
 pub fn debug_pause(app: &AppHandle, label: &str, body: &serde_json::Value, stopped: bool) {
-    if let Ok(mut all) = app.state::<ProfileManager>().profiles.lock() {
-        if let Some(p) = all.get_mut(label).filter(|p| p.active) {
-            let at = p.at();
-            if stopped {
-                if p.pauses.len() < 2000 {
-                    p.pauses.push(Pause {
-                        start_ms: at,
-                        end_ms: None,
-                        all_threads: body["allThreadsStopped"] == true,
-                        thread: body["threadId"].as_i64(),
-                        reason: body["reason"].as_str().unwrap_or("debugger stop").into(),
-                    });
-                }
-            } else {
-                let all_continued = body["allThreadsContinued"] == true;
-                let tid = body["threadId"].as_i64();
-                for pause in p.pauses.iter_mut().filter(|s| s.end_ms.is_none()) {
-                    if all_continued || (!pause.all_threads && pause.thread == tid) {
-                        pause.end_ms = Some(at);
-                    }
+    change_profile(app, label, |p| {
+        let at = p.at();
+        if stopped {
+            if p.pauses.len() < 2000 {
+                p.pauses.push(Pause {
+                    start_ms: at,
+                    end_ms: None,
+                    all_threads: body["allThreadsStopped"] == true,
+                    thread: body["threadId"].as_i64(),
+                    reason: body["reason"].as_str().unwrap_or("debugger stop").into(),
+                });
+            }
+        } else {
+            let all_continued = body["allThreadsContinued"] == true;
+            let tid = body["threadId"].as_i64();
+            for pause in p.pauses.iter_mut().filter(|s| s.end_ms.is_none()) {
+                if all_continued || (!pause.all_threads && pause.thread == tid) {
+                    pause.end_ms = Some(at);
                 }
             }
-            publish(app, label, p);
         }
-    }
+    });
 }
 #[tauri::command]
 pub fn stop_profiling(app: AppHandle, w: tauri::WebviewWindow) {
@@ -688,7 +859,9 @@ pub fn profile_record_again(app: AppHandle, w: tauri::WebviewWindow) -> Result<(
         return Err("Unity is ready; press Play to begin the next recording".into());
     }
     p.again();
-    publish(&app, w.label(), p);
+    let view = p.view();
+    drop(all);
+    publish(&app, w.label(), &view);
     Ok(())
 }
 #[tauri::command]
@@ -698,7 +871,7 @@ pub fn get_profile(app: AppHandle, w: tauri::WebviewWindow) -> Option<Profile> {
         .lock()
         .ok()?
         .get(w.label())
-        .cloned()
+        .map(Profile::view)
 }
 
 #[cfg(test)]
@@ -715,6 +888,9 @@ mod tests {
             cpu_ns: wall / 2,
             address: 0,
             bytes: 0,
+            sequence: 0,
+            generation: 0,
+            playing: None,
         }
     }
     fn p() -> Profile {
@@ -766,7 +942,11 @@ mod tests {
         alloc.address = 123;
         alloc.bytes = 1048576;
         p.event(alloc);
-        let open = p.captures.iter().find(|c| c.solo && c.end_ms.is_none()).unwrap();
+        let open = p
+            .captures
+            .iter()
+            .find(|c| c.solo && c.end_ms.is_none())
+            .unwrap();
         assert!(p.provider);
         assert_ne!(p.captures[0].id, open.id);
         assert_eq!(open.live_bytes, 1048576);
@@ -793,15 +973,32 @@ mod tests {
             p.event(e("begin", i + 2, 1, 300 + i * 2));
             p.event(e("end", i + 2, 1, 301 + i * 2));
         }
-        assert_eq!(p.captures.iter().filter(|c| !c.solo && c.marker == "work").count(), 128);
+        assert_eq!(
+            p.captures
+                .iter()
+                .filter(|c| !c.solo && c.marker == "work")
+                .count(),
+            128
+        );
         assert_eq!(p.captures.iter().filter(|c| c.solo).count(), 2);
-        assert_eq!(p.captures.iter().find(|c| c.marker == "allocation").unwrap().live_bytes, 1048576);
+        assert_eq!(
+            p.captures
+                .iter()
+                .find(|c| c.marker == "allocation")
+                .unwrap()
+                .live_bytes,
+            1048576
+        );
         let mut free = e("free", 0, 2, 20000);
         free.address = 123;
         p.event(free);
         let old_solo = &p.captures[0];
         assert_eq!((old_solo.live_bytes, old_solo.freed_bytes), (0, 1048576));
-        let cohort = p.captures.iter().find(|c| c.marker == "allocation").unwrap();
+        let cohort = p
+            .captures
+            .iter()
+            .find(|c| c.marker == "allocation")
+            .unwrap();
         assert_eq!((cohort.live_bytes, cohort.freed_bytes), (0, 1048576));
         assert!(p.captures.iter().any(|c| c.solo && c.end_ms.is_none()));
         assert_eq!(p.counters.evicted_captures, 5000 - 128);
@@ -813,13 +1010,88 @@ mod tests {
     fn process_sample_aging_is_not_a_source_error() {
         let mut p = p();
         for _ in 0..3000 {
-            p.sample(ProcessCounters { cpu_ms: 1., resident_bytes: 100, virtual_bytes: 200, thread_count: 1, state: "R".into() });
+            p.sample(ProcessCounters {
+                cpu_ms: 1.,
+                resident_bytes: 100,
+                virtual_bytes: 200,
+                thread_count: 1,
+                state: "R".into(),
+            });
         }
         assert_eq!(p.samples.len(), 2400);
         assert_eq!(p.counters.aged_samples, 600);
         assert_eq!(p.counters.evicted_captures, 0);
         assert_eq!(p.counters.rejected_events, 0);
         assert_eq!(p.dropped, 0);
+    }
+    #[test]
+    fn play_generation_recovers_a_lost_end_and_idle_heartbeat_finishes_play() {
+        let mut p = p();
+        p.unity_editor = true;
+        p.waiting_for_play = true;
+        let mut state = e("state", 0, 1, 100);
+        state.generation = 1;
+        state.playing = Some(true);
+        p.event(state.clone());
+        let mut solo = state.clone();
+        solo.kind = "solo".into();
+        p.event(solo.clone());
+        // No Play-end event is delivered. A later generation closes the old
+        // recording before the first marker from the new Play can be recorded.
+        solo.generation = 2;
+        solo.wall_ns = 200;
+        p.event(solo);
+        assert_eq!(p.batch, 2);
+        assert_eq!(p.captures.iter().filter(|c| c.end_ms.is_none()).count(), 1);
+        assert_eq!(p.captures[0].status, "Unity Play ended");
+        state.generation = 2;
+        state.wall_ns = 300;
+        state.playing = Some(false);
+        p.event(state.clone());
+        p.event(state);
+        assert!(p.waiting_for_play && p.active && p.solo.is_none());
+        assert!(p.captures.iter().all(|c| c.end_ms.is_some()));
+        assert_eq!(p.batch, 2);
+    }
+    #[test]
+    fn missing_sequence_reopens_solo_without_discarding_owned_cohorts() {
+        let mut p = p();
+        let mut solo = e("solo", 0, 1, 100);
+        solo.sequence = 20;
+        p.event(solo.clone());
+        solo.sequence = 22;
+        solo.wall_ns = 200;
+        p.event(solo);
+        assert_eq!(p.counters.source_gaps, 1);
+        assert_eq!(p.counters.disconnects, 0);
+        assert_eq!(p.counters.rejected_events, 0);
+        assert_eq!(p.captures.len(), 2);
+        assert_eq!(p.captures[0].status, "Incomplete: source events missing");
+        assert!(p.captures[1].end_ms.is_none());
+        let snapshot = p.view();
+        assert!(snapshot.allocations.is_empty() && snapshot.discovery.is_none());
+        assert_eq!(snapshot.counters.source_gaps, 1);
+    }
+    #[test]
+    fn explicit_host_shutdown_unlinks_socket_and_never_signals_a_foreign_target() {
+        let dir = std::env::temp_dir().join(format!("craidd-shutdown-{}", stamp()));
+        fs::create_dir(&dir).unwrap();
+        let path = dir.join("socket");
+        let listener = UnixListener::bind(&path).unwrap();
+        let manager = ProfileManager::default();
+        *manager.socket.lock().unwrap() = Some(path.clone());
+        let target = processes::identity(std::process::id() as i32).unwrap();
+        manager.profiles.lock().unwrap().insert(
+            "test".into(),
+            Profile::new(target.clone(), "foreign".into()),
+        );
+        manager.shutdown();
+        manager.shutdown();
+        assert!(!path.exists());
+        assert!(!manager.profiles.lock().unwrap()["test"].active);
+        processes::verify(&target).unwrap();
+        drop(listener);
+        fs::remove_dir_all(dir).unwrap();
     }
     #[test]
     fn allocation_cohort_survives_end_and_ignores_older_free() {

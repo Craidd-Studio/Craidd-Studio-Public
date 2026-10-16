@@ -206,8 +206,8 @@ pub fn run() {
         ])
         .build(tauri::generate_context!())
         .expect("error while building tauri application")
-        .run(|_, event| {
-            if matches!(event, tauri::RunEvent::Exit) { process_supervisor::shutdown(); }
+        .run(|app, event| {
+            if matches!(event, tauri::RunEvent::Exit) { commands::profiling::shutdown(app); process_supervisor::shutdown(); }
         });
     process_supervisor::shutdown();
 }
