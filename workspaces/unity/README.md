@@ -8,6 +8,10 @@ Open `workspaces/unity/unity.cln` in Craidd for the managed sources, Editor tool
 
 From the repository root:
 
+Close any Editor/player that has loaded this fixture plugin before an ordinary
+CMake rebuild. The UI harness below always builds a disposable copy instead;
+it never rebuilds the original plugin or restarts the user's Editor.
+
 ```sh
 cmake -S workspaces/unity/Native -B workspaces/unity/Native/build -DCMAKE_BUILD_TYPE=Debug
 cmake --build workspaces/unity/Native/build
@@ -20,6 +24,12 @@ unity open workspaces/unity
 
 Open `Assets/Scenes/DebugProbe.unity`, enter Play, select **CSharp to Cpp Probe**.
 Its inspector controls workers, scalar work and periodic retained native allocation.
+The Game view also has an opaque diagnostic overlay with **Allocate 1 MiB**,
+**Clear**, native live bytes, frame count and the last action's before/after
+values. These buttons call the same native allocation/clear actions as the
+menus. The fixture defaults to 60 fps; set Target Frame Rate before Play to
+`-1` for uncapped testing. Run Periodic Allocations can be disabled for an exact
+manual memory baseline. It remains enabled by default.
 Component context menu **Probe/** provides managed retain/release/GC and native retain/clear.
 `Native/probe.cpp` has `NATIVE_BREAK_HERE`; `Assets/Scripts/NativeProbe.cs` has `MANAGED_BREAK_HERE`.
 Native scalar locals form a future value-LDI qualification case. `craidd_probe_stateful`
@@ -64,11 +74,17 @@ Component disable cleans up workers/allocations; Editor EnteredEditMode and
 player OnApplicationQuit report runtime end. An Editor stays armed across Play
 runs; player application end finishes its profiling session. GPU is unavailable.
 
-Discovery is published only after target selection, in the user's private
-`/run/user/<uid>/craidd-profiling/<pid>-<birth>.endpoint`. PID start time,
+Discovery is published only after target selection, in a private namespace
+under `$XDG_RUNTIME_DIR/craidd-profiling/`. The namespace follows canonical
+HOME, isolating scratch harness settings; a shared `CRAIDD_PROFILE_NAMESPACE`
+can explicitly pair an isolated host and disposable provider. Without
+XDG_RUNTIME_DIR, the private fallback is `$HOME/.cache/craidd-studio/`.
+Both endpoints must use the same runtime base and namespace. PID start time,
 private-file ownership and native socket peer credentials guard routing.
 Stop/close revokes the route; a provider reconnects after a new selection or
-Craidd restart. `CRAIDD_PROFILE_SOCKET` remains a fallback for older/manual
+Craidd restart. Dead-host endpoint/socket files are removed by the live provider
+or the next host startup in that namespace. Namespace locks remain intentionally.
+`CRAIDD_PROFILE_SOCKET` remains a fallback for older/manual
 builds, and is still supplied automatically for debugger-owned launches.
 
 Generated Gold source copies can be built separately using the Profiler's Prepare
@@ -112,3 +128,22 @@ reconnection without restarting that Editor. It calls native methods from an
 Editor test method; it does not qualify interactive GUI Play or Tauri lifecycle
 acceptance. Rust tests separately exercise Editor Play end/rearm and bounded
 capture-history retention.
+
+Real embedded UI/UX acceptance (all Unity instances are disposable copies):
+
+```sh
+npm run test:ui:build
+npm run test:ui:profiling
+# Includes a real ten-minute sample-history rollover:
+npm run test:ui:profiling:long
+```
+
+The batch-mode controllers drive `EditorApplication.ExecuteMenuItem` using file
+signals, at 60 fps and uncapped. The separate graphical copy captures the Game
+overlay. Native state repeats the current Play generation/active flag every
+250 ms and on ordinary events; no single Play-end message is required for
+Editor rearming. Sequence gaps/disconnects mark affected captures incomplete
+and allow a fresh Solo. Ordinary history rolls per marker; Solo/live cohorts
+stay pinned. Taking a snapshot keeps Live selected; choose a snapshot row to
+inspect it, then use Live to return. See [the harness](../../tests/ui/README.md)
+and [acceptance report](../../docs/bugs/16-10-2026/unity-profiling-final-report.md).
