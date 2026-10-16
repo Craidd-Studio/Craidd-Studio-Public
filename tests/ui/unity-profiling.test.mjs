@@ -121,10 +121,12 @@ for (const fps of [60,-1]) test(`disposable Unity profiling via real menu action
     await unity.command('workers',1);
     const threaded=await waitProfile(app,'three native work threads',p=>new Set(p.captures.filter(c=>c.marker==='unity.native.mix').map(c=>c.thread)).size>=3);
     await selectBenchmark(app,'unity.native.mix');
+    await click(app,"//details[contains(@class,'profiler-capture-group')]/summary");
     const tids=[...new Set(threaded.captures.filter(c=>c.marker==='unity.native.mix').map(c=>c.thread))];
     const chosen=tids[1];
+    await app.waitFor('worker thread option rendered',async()=>({done:await app.wd.execute("return [...document.querySelectorAll('select[aria-label=\"Capture thread\"] option')].some(o=>o.value===arguments[0])",[String(chosen)])}));
     await click(app,`//select[@aria-label='Capture thread']/option[@value='${chosen}']`);
-    await app.waitFor('thread inspection filter',async()=>({done:await app.wd.execute("return [...document.querySelectorAll('.profiler-hit > summary')].length>0&&[...document.querySelectorAll('.profiler-hit > summary')].every(s=>s.innerText.startsWith('Thread '+arguments[0]+' ·'))",[String(chosen)])}));
+    await app.waitFor('thread inspection filter',async()=>({done:await app.wd.execute("return [...document.querySelectorAll('.profiler-hit > summary')].length>0&&[...document.querySelectorAll('.profiler-hit > summary')].every(s=>s.innerText.startsWith('Thread '+arguments[0]+' ·'))",[String(chosen)]),value:await app.wd.execute("return {selected:document.querySelector('select[aria-label=\"Capture thread\"]').value,hits:[...document.querySelectorAll('.profiler-hit > summary')].slice(0,3).map(s=>s.innerText)}")}));
     const newestOther=Math.max(...threaded.captures.filter(c=>c.marker==='unity.native.mix'&&c.thread!==chosen).map(c=>c.startMs));
     const stillRunning=await waitProfile(app,'other native threads continue while filtering',p=>p.captures.some(c=>c.marker==='unity.native.mix'&&c.thread!==chosen&&c.startMs>newestOther+250));
     await click(app,`//select[@aria-label='Capture batch']/option[@value='${again.batch}']`);
