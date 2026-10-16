@@ -31,6 +31,10 @@ stepping, profiler changes and broader debugger refactors.
   Rescan lists every match, newest version first. Automatic uses the newest,
   and the user can pick another. Craidd never downloads, bundles or updates it
   (*no bundling of tools*).
+- Collaborators without the extension can build the same pinned adapter with
+  [`experiments/unity-managed-debug/build-monodbg.sh`](../../../experiments/unity-managed-debug/README.md)
+  and choose it explicitly. Its ignored output is never committed: the build
+  includes Microsoft's proprietary `VSCodeDebugProtocol` assembly.
 - Run it as `<dotnet> <monodbg.dll>`, using the C# toolchain's `dotnet` (the
   `sdk` role). Report a missing .NET 10+ runtime as a prerequisite error.
 - Session output names the adapter path, which includes the extension

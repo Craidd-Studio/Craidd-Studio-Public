@@ -70,3 +70,11 @@ This is bounded experimental behavior, not a guarantee of independent
 stepping for every program, adapter version, newly created thread, or blocking
 wait. Keep the debugger route, owning process and observed counters explicit
 in a test report.
+
+## Unity managed C# debugging
+
+[`unity-managed-debug/`](unity-managed-debug/README.md) builds DotRush's Mono
+debug adapter from pinned source for Craidd's experimental **Unity C# ·
+DotRush Mono (Editor)** attach route. The build stays in that experiment's
+ignored `.local-tools/` and is selected explicitly in Preferences. It is
+separate from the thread-control experiments above.
