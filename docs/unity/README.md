@@ -32,6 +32,13 @@ native driver, if supported, is a distinct owned process with a distinct heap.
 
 ## Continuing this branch
 
+[Unity profiling's UI/UX harness checklist](../uiux/unity-profiling-harness-checklist.md)
+is the open usability gate. Its [initial findings](../bugs/16-10-2026/unity-profiling-uiux-report.md)
+record the blank desktop toolbar, silent memory test action and missing
+branch-local real-app harness. The [Opus review handoff](../handoffs/handoff-unity-profiling-uiux-2026-10-16.md)
+specifies repairs, evidence and the required final report; that external review
+has not run.
+
 [The design handoff](../handoffs/handoff-unity-profiling-2026-10-14.md) records
 the agreed UX, open provider decisions and the first implementation proof.
 HTML references are visual studies; they do not override these contracts or
@@ -39,5 +46,5 @@ establish runtime support.
 
 ---
 
-*Last updated: Phase 3.x / 3.5, 15 October 2026. Author(s): ShinkuKira21.*
+*Last updated: Phase 3.x / 3.5, 16 October 2026. Author(s): ShinkuKira21.*
 *This document is a record.*
