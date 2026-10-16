@@ -140,6 +140,9 @@ def main():
     parser.add_argument('--adapter', required=True, help='path to monodbg.dll')
     parser.add_argument('--player', default=str(repo / 'workspaces/unity/Builds/Linux/CraiddUnityProbe.x86_64'))
     parser.add_argument('--output', required=True)
+    parser.add_argument('--explicit-endpoint', action='store_true',
+                        help='adapter with the drafted upstream patch: transportArgs port, no EditorInstance.json shim, '
+                             'and configurationDone sent unconditionally to check it is no longer fatal')
     args = parser.parse_args()
     out = pathlib.Path(args.output).resolve(); out.mkdir(parents=True, exist_ok=True)
     source = str((repo / 'workspaces/unity/Assets/Scripts/NativeProbe.cs').resolve())
@@ -200,9 +203,14 @@ def main():
                                               'columnsStartAt1': True, 'pathFormat': 'path'})['body'] or {}
             # DAP: configurationDone only when advertised. DotRush 2026.10 does not advertise it and
             # treats an unsolicited request as fatal (observed in run 1; see the qualification record).
-            dap.configuration_done = bool(caps.get('supportsConfigurationDoneRequest'))
+            dap.configuration_done = bool(caps.get('supportsConfigurationDoneRequest')) or args.explicit_endpoint
             report.setdefault('capabilities', caps)
-            if shim:
+            if args.explicit_endpoint:
+                if target['port'] not in listening_ports(target['pid']):
+                    raise RuntimeError('Debugger port is no longer owned by the selected player')
+                arguments = {'transportArgs': {'type': 'generic', 'port': target['port']},
+                             'cwd': str(player.parent), 'userAssemblies': [str(managed)]}
+            elif shim:
                 # DotRush 2026.10 always reads <cwd>/Library/EditorInstance.json and treats
                 # processId as the TCP port. A private shim satisfies that for a player.
                 cwd = out / f'shim-{name}'; (cwd / 'Library').mkdir(parents=True, exist_ok=True)
@@ -236,11 +244,12 @@ def main():
             return stop, int(locals_['input']) - int(fields['seed'])
 
         # S0: the adapter's documented route needs an Editor-written EditorInstance.json.
-        dap, response = attach('s0-unshimmed', shim=False)
-        step('S0 unshimmed player attach is rejected by adapter (observed limitation)', not response.get('success'),
-             message=response.get('message'))
-        dap.proc.kill(); dap.exited(5)
-        step('S0 player unaffected', alive(pid, birth))
+        if not args.explicit_endpoint:
+            dap, response = attach('s0-unshimmed', shim=False)
+            step('S0 unshimmed player attach is rejected by adapter (observed limitation)', not response.get('success'),
+                 message=response.get('message'))
+            dap.proc.kill(); dap.exited(5)
+            step('S0 player unaffected', alive(pid, birth))
 
         # S1: attach, breakpoint, stack/locals, step, continue, clear, detach while running.
         dap, response = attach('s1')

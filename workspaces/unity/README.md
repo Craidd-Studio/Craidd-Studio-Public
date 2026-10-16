@@ -101,7 +101,12 @@ The disposable player opts into sibling debugger access with `--craidd-allow-att
 for its own PID only. Normal player launches and the Editor do not call this hook;
 host ptrace policy is never changed.
 
-Managed C# protocol probes (external DotRush `monodbg`, not a Craidd route). Each
+Managed C# Editor debugging in Craidd (experimental): install DotRush (or choose its
+`monodbg.dll` in Preferences → Toolchain → C#), set Unity's Code Optimization to
+Debug, then **Run → Attach to Process**, select the Unity Editor and choose
+**Unity C# · DotRush Mono (Editor)**. Players are not yet routed.
+
+Managed C# protocol probes (external DotRush `monodbg`, independent of Craidd). Each
 starts its own player or a batch Editor on a scratch project copy, and connects only
 to a debugger port owned by that PID. See the
 [qualification record](../../docs/unity/feats/record-unity-managed-csharp-qualification.md):

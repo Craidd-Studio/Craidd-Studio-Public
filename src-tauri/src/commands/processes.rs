@@ -1,6 +1,11 @@
 //! Read-only Linux target discovery and process-incarnation checks. Never owns or signals targets.
 use serde::{Deserialize, Serialize};
-use std::{collections::BTreeSet, fs, os::unix::fs::MetadataExt, path::PathBuf};
+use std::{
+    collections::{BTreeSet, HashSet},
+    fs,
+    os::unix::fs::MetadataExt,
+    path::{Path, PathBuf},
+};
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
@@ -20,6 +25,15 @@ pub struct ProcessInfo {
     pub uid: u32,
     pub adapter_hint: String,
     pub unity_project: Option<String>,
+    /// Verified Unity Editor managed-debugger port, when it is listening.
+    pub unity_managed_port: Option<u16>,
+}
+
+/// A Unity Editor's Mono soft-debugger agent, verified for one PID incarnation.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct UnityManagedEndpoint {
+    pub port: u16,
+    pub project: String,
 }
 
 #[derive(Clone, Debug, Serialize)]
@@ -134,6 +148,102 @@ fn declared_unity_project(
         .then(|| root.to_string_lossy().into_owned())
 }
 
+/// TCP LISTEN ports whose sockets this PID holds. Read from /proc only:
+/// no connection is made and no other process's sockets are reported.
+pub fn listening_ports(pid: i32) -> Vec<u16> {
+    let inodes: HashSet<String> = fs::read_dir(format!("/proc/{pid}/fd"))
+        .map(|entries| {
+            entries
+                .filter_map(Result::ok)
+                .filter_map(|fd| fs::read_link(fd.path()).ok())
+                .filter_map(|target| {
+                    let target = target.to_string_lossy().into_owned();
+                    Some(target.strip_prefix("socket:[")?.strip_suffix(']')?.to_owned())
+                })
+                .collect()
+        })
+        .unwrap_or_default();
+    let mut ports: Vec<u16> = ["tcp", "tcp6"]
+        .iter()
+        .filter_map(|table| fs::read_to_string(format!("/proc/{pid}/net/{table}")).ok())
+        .flat_map(|text| parse_listen_ports(&text, &inodes))
+        .collect();
+    ports.sort_unstable();
+    ports.dedup();
+    ports
+}
+
+fn parse_listen_ports(table: &str, inodes: &HashSet<String>) -> Vec<u16> {
+    table
+        .lines()
+        .skip(1)
+        .filter_map(|row| {
+            let cols: Vec<_> = row.split_whitespace().collect();
+            // 0A is TCP_LISTEN; column 9 is the socket inode.
+            if cols.get(3) != Some(&"0A") || !inodes.contains(*cols.get(9)?) {
+                return None;
+            }
+            u16::from_str_radix(cols.get(1)?.rsplit_once(':')?.1, 16).ok()
+        })
+        .collect()
+}
+
+// Unity's Editor agent listens on 127.0.0.1:56000 + PID % 1000. The project's
+// Library/EditorInstance.json, written by that Editor, must name the same PID.
+fn editor_debug_port(pid: i32) -> u16 {
+    56000 + (pid % 1000) as u16
+}
+
+fn editor_instance_pid(text: &str) -> Option<i32> {
+    serde_json::from_str::<serde_json::Value>(text)
+        .ok()?
+        .get("process_id")?
+        .as_i64()
+        .and_then(|pid| i32::try_from(pid).ok())
+}
+
+fn select_editor_endpoint(
+    pid: i32,
+    project: &str,
+    instance: Option<&str>,
+    listening: &[u16],
+) -> Result<UnityManagedEndpoint, String> {
+    let declared = instance.and_then(editor_instance_pid).ok_or_else(|| {
+        format!("{project}/Library/EditorInstance.json is missing or unreadable; open the project in this Unity Editor")
+    })?;
+    if declared != pid {
+        return Err(format!(
+            "Library/EditorInstance.json names Unity PID {declared}, not {pid}; refusing an ambiguous managed endpoint"
+        ));
+    }
+    let port = editor_debug_port(pid);
+    if !listening.contains(&port) {
+        return Err(format!(
+            "Unity Editor PID {pid} is not listening for a managed debugger on port {port}. Enable Code Optimization: Debug (and Editor Attaching) in Unity"
+        ));
+    }
+    Ok(UnityManagedEndpoint {
+        port,
+        project: project.into(),
+    })
+}
+
+/// Verified Editor endpoint for a selected incarnation. The port must be held
+/// by that PID, so a colliding or foreign listener is never chosen.
+pub fn unity_editor_endpoint(target: &ProcessIdentity) -> Result<UnityManagedEndpoint, String> {
+    verify(target)?;
+    let project = unity_project(target.pid).ok_or("Select the Unity Editor process for this project")?;
+    let instance = fs::read_to_string(Path::new(&project).join("Library/EditorInstance.json")).ok();
+    let endpoint = select_editor_endpoint(
+        target.pid,
+        &project,
+        instance.as_deref(),
+        &listening_ports(target.pid),
+    )?;
+    verify(target)?;
+    Ok(endpoint)
+}
+
 pub fn info(pid: i32) -> Result<ProcessInfo, String> {
     let target = identity(pid)?;
     let status = fs::read_to_string(format!("/proc/{pid}/status")).map_err(|e| e.to_string())?;
@@ -147,7 +257,13 @@ pub fn info(pid: i32) -> Result<ProcessInfo, String> {
         .ok_or("Process UID unavailable")?;
     let maps = fs::read_to_string(format!("/proc/{pid}/maps")).unwrap_or_default();
     let unity_project = unity_project(pid);
-    let adapter_hint = if unity_project.is_some() {
+    let unity_managed_port = unity_project
+        .as_ref()
+        .and_then(|_| unity_editor_endpoint(&target).ok())
+        .map(|endpoint| endpoint.port);
+    let adapter_hint = if unity_managed_port.is_some() {
+        "Unity Editor · C# (DotRush Mono) / native C++ / profiling"
+    } else if unity_project.is_some() {
         "Unity Editor · native C++ / profiling"
     } else if maps.contains("libcoreclr.so") {
         "netcoredbg · CoreCLR"
@@ -171,6 +287,7 @@ pub fn info(pid: i32) -> Result<ProcessInfo, String> {
         cwd: link(pid, "cwd"),
         adapter_hint: adapter_hint.into(),
         unity_project,
+        unity_managed_port,
     };
     verify(&target)?;
     Ok(result)
@@ -253,6 +370,9 @@ pub fn attach_adapter_choices() -> Vec<serde_json::Value> {
         serde_json::json!({"id":id,"name":name,
             "available":super::debug::adapter_available_for_language(lang)})
     })
+    .chain(std::iter::once(serde_json::json!({"id":"unity-mono",
+        "name":"Unity C# · DotRush Mono (Editor)",
+        "available":super::debug::unity_mono_adapter_available()})))
     .collect()
 }
 
@@ -378,6 +498,47 @@ mod tests {
                 .unity_project
                 .is_none());
         }
+    }
+    #[test]
+    fn listen_ports_require_this_processes_socket_inode() {
+        let table = "  sl  local_address rem_address   st tx_queue rx_queue tr tm->when retrnsmt   uid  timeout inode
+   0: 0100007F:DDD7 00000000:0000 0A 00000000:00000000 00:00000000 00000000  1000        0 111 1 0 100 0 0 10 0
+   1: 0100007F:DDD8 00000000:0000 0A 00000000:00000000 00:00000000 00000000  1000        0 222 1 0 100 0 0 10 0
+   2: 0100007F:DDD9 0100007F:1F90 01 00000000:00000000 00:00000000 00000000  1000        0 333 1 0 100 0 0 10 0";
+        let ours: HashSet<String> = ["111".into(), "333".into()].into();
+        // 222 belongs to another process; 333 is connected, not listening.
+        assert_eq!(parse_listen_ports(table, &ours), vec![0xDDD7]);
+    }
+    #[test]
+    fn editor_endpoint_requires_matching_instance_and_owned_port() {
+        let instance = r#"{ "process_id" : 317471, "version" : "6000.5.10f1" }"#;
+        assert_eq!(
+            select_editor_endpoint(317471, "/p", Some(instance), &[34999, 56471]),
+            Ok(UnityManagedEndpoint {
+                port: 56471,
+                project: "/p".into()
+            })
+        );
+        assert!(select_editor_endpoint(317471, "/p", None, &[56471]).is_err());
+        assert!(select_editor_endpoint(317471, "/p", Some("not json"), &[56471]).is_err());
+        // Another Editor wrote the project file: never fall back to a guess.
+        let other = r#"{"process_id":168668}"#;
+        assert!(select_editor_endpoint(317471, "/p", Some(other), &[56471])
+            .unwrap_err()
+            .contains("168668"));
+        // The formula's port held by some other process is not ours.
+        assert!(select_editor_endpoint(317471, "/p", Some(instance), &[56668]).is_err());
+    }
+    #[test]
+    #[ignore = "requires CRAIDD_TEST_UNITY_EDITOR_PID for a running Editor with Debug code optimization"]
+    fn running_unity_editor_managed_endpoint() {
+        let pid = std::env::var("CRAIDD_TEST_UNITY_EDITOR_PID")
+            .unwrap()
+            .parse()
+            .unwrap();
+        let endpoint = unity_editor_endpoint(&identity(pid).unwrap()).unwrap();
+        assert_eq!(endpoint.port, editor_debug_port(pid));
+        assert_eq!(info(pid).unwrap().unity_managed_port, Some(endpoint.port));
     }
     #[test]
     fn real_process_identity_and_counters() {

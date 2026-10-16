@@ -102,7 +102,8 @@ Filterable by name, user, and adapter. Sorted by executable by default.
 | Signal | Adapter hint |
 |---|---|
 | The process has `libcoreclr` mapped | netcoredbg |
-| The process has `libmono` mapped | Managed/Unity adapter candidate; DotRush `monodbg` is protocol-qualified for a Mono development player (see Unity record); Craidd routing is not implemented |
+| The process has `libmono` mapped | Managed/Unity adapter candidate; DotRush `monodbg` is protocol-qualified for a Mono development player (see Unity record); Craidd's player route is not implemented |
+| The process is a Unity Editor with a verified managed endpoint | `unity-mono` (DotRush Mono, experimental Editor route) |
 | The process has a Python interpreter mapped as its main executable | Python DAP (future) |
 | The executable is an ELF binary with debug sections, or an LLDB-compatible target | LLDB-DAP |
 | Nothing matches | "(no adapter detected)" — the user may still pick one |
@@ -142,9 +143,10 @@ The process does **not** appear in Solution Explorer. It has no
   [qualification record](../../unity/feats/record-unity-managed-csharp-qualification.md)
   and [integration proposal](../../unity/feats/design-unity-managed-csharp-attach.md).
   Its `processId` is a TCP port, it lacks `configurationDone`, and it emits
-  `terminated` without `exited`; the current attach path needs those three
-  routing changes before use. Remaining: qualify runtime endpoint discovery in
-  Craidd, frame reads for LDI, and teardown through the UI. A generic Mono label does not identify a usable
+  `terminated` without `exited`. An experimental **Editor** route
+  (`unity-mono`) now handles all three, with a verified endpoint. The player
+  route waits for an upstream explicit-endpoint change. Remaining: desktop UI
+  acceptance, players, IL2CPP and frame reads for LDI. A generic Mono label does not identify a usable
   adapter. Unity documents C# debugging on both Mono and IL2CPP; this is not
   a claim that Craidd supports either route today. See
   [Unity's debugger setup](https://docs.unity3d.com/6000.0/Documentation/Manual/managed-code-debugging.html).

@@ -37,7 +37,7 @@ explicitly confirmed action under the general attach contract.
 | Route | Proposed Craidd behaviour | Prerequisite / limitation |
 | --- | --- | --- |
 | Native plugin in Editor, Mono player or IL2CPP player | LLDB-DAP attaches to the real process and inspects native plugin code | Installed adapter, attach permission, debug symbols and loaded-artifact mapping |
-| Unity C# source debugging | Connect a Unity-compatible managed-debug protocol adapter | Endpoint discovery, Unity configuration and a specifically qualified adapter; stock CoreCLR netcoredbg support is not proof. DotRush `monodbg` is protocol-qualified for the Mono player and batch Editor ([record](record-unity-managed-csharp-qualification.md)); Craidd routing is a [proposal](design-unity-managed-csharp-attach.md) |
+| Unity C# source debugging | Connect a Unity-compatible managed-debug protocol adapter | Endpoint discovery, Unity configuration and a specifically qualified adapter; stock CoreCLR netcoredbg support is not proof. DotRush `monodbg` is protocol-qualified for the Mono player and batch Editor ([record](record-unity-managed-csharp-qualification.md)); Craidd's experimental Editor route and the deferred player route are in [the C# attach design](design-unity-managed-csharp-attach.md) |
 | Value-shaped C# → native LDI | Hold a supported Unity C# call site and reproduce copied inputs in an owned native driver | Qualified held-frame extraction, ABI/driver support, release/cancellation and artifact identity |
 | State-shaped native call | Inspect the real native execution or C# side through the chosen route | Never reproduce pointers, handles, callbacks or Unity object state by copying their numbers |
 

@@ -60,7 +60,7 @@ const roles: Record<string, string[]> = {
   typescript: ["runtime", "package_manager"],
   javascript: ["runtime", "package_manager"],
   cpp: ["compiler", "build_system", "debugger"],
-  csharp: ["sdk", "debugger"],
+  csharp: ["sdk", "debugger", "unity_debugger"],
   python: ["runtime", "package_manager"],
   config: [],
 };

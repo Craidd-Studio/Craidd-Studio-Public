@@ -5,7 +5,7 @@ import { useSolution } from "../../store/solutionStore";
 import { useDebug } from "../../store/debugStore";
 
 export interface ProcessTarget { pid: number; birth: number }
-export interface ProcessInfo extends ProcessTarget { name: string; executable: string; cwd: string; uid: number; adapterHint: string; unityProject?: string | null }
+export interface ProcessInfo extends ProcessTarget { name: string; executable: string; cwd: string; uid: number; adapterHint: string; unityProject?: string | null; unityManagedPort?: number | null }
 interface Adapter { id: string; name: string; available: boolean }
 
 export default function AttachProcessDialog({ onClose }: { onClose: () => void }) {
@@ -70,11 +70,14 @@ export default function AttachProcessDialog({ onClose }: { onClose: () => void }
         </div>
         <label className="block">Debugger adapter<select value={adapter} onChange={(e) => setAdapter(e.target.value)} className="mt-1 block w-full rounded border border-zinc-600 bg-zinc-950 px-2 py-2">{adapters.map((choice) => <option key={choice.id} value={choice.id} disabled={!choice.available}>{choice.name}{choice.available ? "" : " · not found"}</option>)}</select></label>
         {selected?.unityProject && <p className="text-amber-200">Unity Editor selected. Profile only connects prepared Gold hooks automatically; press Play in Unity. Native debugger attach remains a separate choice.</p>}
+        {adapter === "unity-mono" && selected && (selected.unityManagedPort
+          ? <p className="text-zinc-300">Unity C# debugger: 127.0.0.1:{selected.unityManagedPort}. Breakpoints bind in Edit and Play; leaving Play rebinds them on the next run. Detach leaves Unity running.</p>
+          : <p className="text-amber-300">DotRush Mono attaches to a Unity Editor whose managed debugger is listening. Select the Editor for this project, or enable Code Optimization: Debug in Unity, then Refresh.</p>)}
         {selected && <p className="text-zinc-400 break-all">Working directory: {selected.cwd || "Unavailable"}</p>}
-        <p className="text-zinc-500">Hints do not select an adapter. Unity C# endpoints require a separately qualified adapter; LLDB-DAP targets native code.</p>
+        <p className="text-zinc-500">Hints do not select an adapter. LLDB-DAP targets native code; DotRush Mono targets Unity Editor C# only (players and IL2CPP are not yet supported).</p>
         {error && <p role="alert" className="text-amber-300 whitespace-pre-wrap break-words">{error}</p>}
       </div>
-      <footer className="px-5 py-3 border-t border-zinc-800 flex justify-end gap-2"><button type="button" onClick={onClose} disabled={busy} className="px-3 py-1.5">Cancel</button><button type="button" onClick={() => void attach(true)} disabled={busy || !selected || !matches.includes(selected)} className={"px-3 py-1.5 rounded disabled:opacity-40 " + (selected?.unityProject ? "bg-blue-700 hover:bg-blue-600 border border-blue-600" : "border border-zinc-600")}>Profile only</button><button type="button" onClick={() => void attach()} disabled={busy || !selected || !matches.includes(selected) || !adapters.some((a) => a.id === adapter && a.available)} className={"px-3 py-1.5 rounded disabled:opacity-40 " + (selected?.unityProject ? "border border-zinc-600 hover:bg-zinc-800" : "bg-blue-700 hover:bg-blue-600")}>{busy ? "Connecting…" : "Attach debugger"}</button></footer>
+      <footer className="px-5 py-3 border-t border-zinc-800 flex justify-end gap-2"><button type="button" onClick={onClose} disabled={busy} className="px-3 py-1.5">Cancel</button><button type="button" onClick={() => void attach(true)} disabled={busy || !selected || !matches.includes(selected)} className={"px-3 py-1.5 rounded disabled:opacity-40 " + (selected?.unityProject ? "bg-blue-700 hover:bg-blue-600 border border-blue-600" : "border border-zinc-600")}>Profile only</button><button type="button" onClick={() => void attach()} disabled={busy || !selected || !matches.includes(selected) || !adapters.some((a) => a.id === adapter && a.available) || (adapter === "unity-mono" && !selected?.unityManagedPort)} className={"px-3 py-1.5 rounded disabled:opacity-40 " + (selected?.unityProject ? "border border-zinc-600 hover:bg-zinc-800" : "bg-blue-700 hover:bg-blue-600")}>{busy ? "Connecting…" : "Attach debugger"}</button></footer>
     </div>
   </div>;
 }

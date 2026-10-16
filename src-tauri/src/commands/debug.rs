@@ -38,6 +38,12 @@ pub struct DebugRequest {
 struct Session {
     attached: Option<super::processes::ProcessIdentity>,
     disconnect_ack: AtomicBool,
+    /// Any disconnect sent. An attached session must not await an ack it never requested.
+    disconnect_requested: AtomicBool,
+    /// DAP: configurationDone is sent only when the adapter advertises it.
+    configuration_done_supported: AtomicBool,
+    /// Verified Unity Editor managed-debugger port for the DotRush Mono route.
+    unity_port: Option<u16>,
     profile_id: Mutex<Option<String>>,
     writer: super::debug_transport::DapWriter,
     next_seq: AtomicU64,
@@ -365,6 +371,7 @@ pub fn update_solution_breakpoints(app: &AppHandle, solution_path: &str, points:
 }
 
 fn request(session: &Session, command: &str, arguments: Value) -> Result<u64, String> {
+    if command == "disconnect" { session.disconnect_requested.store(true, Ordering::Release); }
     let seq = session.next_seq.fetch_add(1, Ordering::Relaxed);
     let body = json!({ "seq": seq, "type": "request", "command": command, "arguments": arguments }).to_string();
     session.writer.send(&body)?;
@@ -1079,6 +1086,39 @@ pub fn adapter_available_for_method(method: &str) -> bool {
     })
 }
 
+/// DotRush's Mono adapter attached to a verified Unity Editor endpoint.
+pub(crate) struct UnityManagedAttach { port: u16, project: PathBuf, dotnet: PathBuf, adapter: PathBuf }
+
+/// `dotnet` and DotRush's `monodbg.dll`, from Preferences or installed extensions.
+/// Read-only: unlike `resolve_tool`, availability checks never trigger a rescan.
+fn unity_mono_adapter() -> Result<(PathBuf, PathBuf), String> {
+    let tools = get_toolchain("csharp".into())?;
+    let chosen = |role: &str| -> Result<Option<PathBuf>, String> {
+        match tools.defaults.get(role) {
+            Some(path) if Path::new(path).is_file() => Ok(Some(PathBuf::from(path))),
+            Some(path) => Err(format!("Selected C# {} is missing: {path}. Change it in Preferences → Toolchain.", role.replace('_', " "))),
+            None => Ok(tools.tools.iter().find(|tool| tool.role == role && Path::new(&tool.path).is_file()).map(|tool| PathBuf::from(&tool.path))),
+        }
+    };
+    let adapter = match chosen("unity_debugger")? {
+        Some(path) => path,
+        None => std::env::var_os("HOME")
+            .and_then(|home| super::toolchain::dotrush_mono_debuggers(Path::new(&home)).into_iter().next())
+            .map(|tool| PathBuf::from(tool.path))
+            .ok_or("DotRush's Unity debugger (monodbg.dll) was not found. Install the DotRush extension, or choose its monodbg.dll in Preferences → Toolchain → C#.")?,
+    };
+    let dotnet = chosen("sdk")?.or_else(|| super::toolchain::find_executable("dotnet"))
+        .ok_or("dotnet was not found. DotRush's Unity debugger needs the .NET 10 (or later) runtime.")?;
+    Ok((dotnet, adapter))
+}
+
+pub fn unity_mono_adapter_available() -> bool { unity_mono_adapter().is_ok() }
+
+fn unity_attach_arguments(unity: &UnityManagedAttach) -> Value {
+    // DotRush 2026.10 reads processId as the agent's TCP port, never a PID.
+    json!({"processId": unity.port, "cwd": unity.project})
+}
+
 #[derive(Deserialize)]
 #[serde(rename_all="camelCase")]
 pub struct AttachRequest {
@@ -1095,16 +1135,21 @@ pub async fn attach_to_process(window: WebviewWindow, app: AppHandle, request_sp
         let info=super::processes::info(request_spec.target.pid)?;
         if info.identity != request_spec.target { return Err("Attach target changed; refresh the process list".into()); }
         if info.uid != unsafe {libc::geteuid()} { return Err("Only processes owned by the current user can be attached".into()); }
-        let language=match request_spec.adapter.as_str() {"lldb"=>"cpp","coreclr"=>"csharp",_=>return Err("Unsupported attach adapter".into())};
-        if language=="csharp" && info.adapter_hint != "netcoredbg · CoreCLR" {
+        let language=match request_spec.adapter.as_str() {"lldb"=>"cpp","coreclr"|"unity-mono"=>"csharp",_=>return Err("Unsupported attach adapter".into())};
+        if request_spec.adapter=="coreclr" && info.adapter_hint != "netcoredbg · CoreCLR" {
             return Err("netcoredbg attach requires CoreCLR. Unity/Mono/IL2CPP needs a separately qualified adapter.".into());
         }
         if has_debug_session(&app,&label) {return Err("End the existing debugger session before attaching".into());}
         let executable=super::processes::executable(&request_spec.target)?;
+        let unity = if request_spec.adapter == "unity-mono" {
+            let endpoint = super::processes::unity_editor_endpoint(&request_spec.target)?;
+            let (dotnet, adapter) = unity_mono_adapter()?;
+            Some(UnityManagedAttach { port: endpoint.port, project: PathBuf::from(endpoint.project), dotnet, adapter })
+        } else { None };
         let cwd=PathBuf::from(&info.cwd);
-        let cwd=if cwd.is_dir(){cwd}else{std::env::current_dir().map_err(|e|e.to_string())?};
+        let cwd=if let Some(unity)=&unity { unity.project.clone() } else if cwd.is_dir(){cwd}else{std::env::current_dir().map_err(|e|e.to_string())?};
         start_prepared(app,label,language,cwd,request_spec.solution_path,executable,vec![],BTreeMap::new(),
-            request_spec.breakpoints,None,None,None,Some(request_spec.target))
+            request_spec.breakpoints,None,None,None,Some(request_spec.target),unity)
     }).await.map_err(|e|e.to_string())?
 }
 
@@ -1202,7 +1247,7 @@ pub(crate) fn launch_prepared(
     ldi_token: Option<u64>,
     native_snapshot: Option<Vec<super::native_debug::Binding>>,
 ) -> Result<(), String> {
-    start_prepared(app,label,language,cwd,solution_path,executable,args,env,breakpoints,dev_lease,ldi_token,native_snapshot,None)
+    start_prepared(app,label,language,cwd,solution_path,executable,args,env,breakpoints,dev_lease,ldi_token,native_snapshot,None,None)
 }
 
 fn start_prepared(
@@ -1210,6 +1255,7 @@ fn start_prepared(
     solution_path: String, executable: PathBuf, args: Vec<String>, mut env: BTreeMap<String,String>,
     breakpoints: Vec<Breakpoint>, dev_lease: Option<super::tauri_dev::DevLease>, ldi_token: Option<u64>,
     native_snapshot: Option<Vec<super::native_debug::Binding>>, attached: Option<super::processes::ProcessIdentity>,
+    unity: Option<UnityManagedAttach>,
 ) -> Result<(), String> {
     if let Some(target)=&attached { super::processes::verify(target)?; }
     if attached.is_none() {
@@ -1224,11 +1270,17 @@ fn start_prepared(
         super::ldi::validate_origin_program(&app, &label, &executable)?;
         super::ldi::configure_origin_launch_env(&app, &label, &executable, &mut env)?;
     }
-    let adapter = adapter_path(language)?;
+    let adapter = match &unity { Some(unity) => unity.adapter.clone(), None => adapter_path(language)? };
     if language == "csharp" {
         emit(&app, &label, json!({"status":"output",
             "text":format!("C# debugger adapter: {}", adapter.display())}));
     }
+    if let Some(unity) = &unity {
+        emit(&app, &label, json!({"status":"output", "text":format!(
+            "Unity Editor managed debugger: 127.0.0.1:{} via DotRush Mono ({}). Detach leaves Unity running.",
+            unity.port, unity.dotnet.display())}));
+    }
+    let unity_launch = unity.as_ref().map(unity_attach_arguments);
     let native_bindings = if language == "rust" {
         super::native_debug::prepare(&app, &label, &solution_path, &cwd, native_snapshot.unwrap_or_default())?
     } else { vec![] };
@@ -1247,8 +1299,11 @@ fn start_prepared(
     emit(&app, &label, json!({"status":"starting", "text":if dev_lease.is_some() {
         "Frontend is responding; starting the Tauri executable under LLDB. This is not GUI readiness."
     } else { "Starting the executable under its debugger…" }}));
-    let mut command = Command::new(&adapter);
-    if language == "csharp" { command.arg("--interpreter=vscode"); }
+    let mut command = match &unity {
+        Some(unity) => { let mut command = Command::new(&unity.dotnet); command.arg(&unity.adapter); command }
+        None => Command::new(&adapter),
+    };
+    if language == "csharp" && unity.is_none() { command.arg("--interpreter=vscode"); }
     command.current_dir(&cwd).stdin(Stdio::piped()).stdout(Stdio::piped()).stderr(Stdio::piped());
     unsafe { command.pre_exec(|| { if libc::setsid() == -1 { return Err(std::io::Error::last_os_error()); } Ok(()) }); }
     let foreign=attached.is_some();
@@ -1270,6 +1325,8 @@ fn start_prepared(
     });
     let session = Arc::new(Session {
         attached: attached.clone(), disconnect_ack: AtomicBool::new(false),profile_id:Mutex::new(None),
+        disconnect_requested: AtomicBool::new(false), configuration_done_supported: AtomicBool::new(true),
+        unity_port: unity.as_ref().map(|unity| unity.port),
         writer,
         next_seq: AtomicU64::new(1), thread_id: AtomicI64::new(0),
         ldi_token,
@@ -1356,7 +1413,9 @@ fn start_prepared(
         let mut pending_native_stop: Option<(u64, Value)> = None;
         let mut hidden_driver_frames: Option<Value> = None;
         let mut auto_resume_after_control = false;
-        let launch = if let Some(target)=&attached {
+        let launch = if let Some(unity) = unity_launch {
+            unity
+        } else if let Some(target)=&attached {
             if language == "csharp" { json!({"processId":target.pid}) }
             else { json!({"pid":target.pid,"program":executable,"initCommands":native_symbol_commands(download_symbols)}) }
         } else if language == "csharp" {
@@ -1393,7 +1452,16 @@ fn start_prepared(
                                 emit(&app_reader, &label_reader, json!({"status":"output",
                                     "text":format!("Could not apply breakpoints: {error}")}));
                             }
-                            let _ = request(&session, "configurationDone", json!({}));
+                            if session.configuration_done_supported.load(Ordering::Acquire) {
+                                let _ = request(&session, "configurationDone", json!({}));
+                            } else if startup.on_configuration_response() {
+                                // Not advertised (DotRush Mono): configuration is complete.
+                                launch_accepted_reader.store(true, Ordering::Release);
+                                if language == "csharp" && !ready_reader.swap(true, Ordering::AcqRel) {
+                                    emit(&app_reader, &label_reader, json!({"status":"running"}));
+                                }
+                                if let Ok(seq) = request(&session, "threads", json!({})) { pending.insert(seq, "threads".into()); }
+                            }
                         }
                     }
                     "stopped" => {
@@ -1547,7 +1615,15 @@ fn start_prepared(
                     "terminated" => {
                         // LLDB sends terminated BEFORE disconnect's acknowledgement.
                         // Keep reading so foreign-target teardown is actually confirmed.
-                        if session.attached.is_some() { continue; }
+                        // DotRush Mono sends terminated without exited and then waits:
+                        // request the detach it is waiting for, still with no target signal.
+                        if session.attached.is_some() {
+                            if !session.disconnect_requested.load(Ordering::Acquire) {
+                                emit(&app_reader, &label_reader, json!({"status":"output", "text":"The attached target ended its debug connection. Detaching the adapter."}));
+                                let _ = request(&session, "disconnect", json!({"terminateDebuggee":false}));
+                            }
+                            continue;
+                        }
                         emit(&app_reader, &label_reader, json!({"status":"terminated"}));
                         terminated_emitted = true;
                         break;
@@ -1866,6 +1942,8 @@ fn start_prepared(
                             &language, session.multi_thread, session.ldi_token, &message["body"]);
                         session.native_single_step.store(native_single_step, Ordering::Release);
                         session.exclusive_next_mode.store(exclusive_next_mode, Ordering::Release);
+                        session.configuration_done_supported.store(
+                            message["body"]["supportsConfigurationDoneRequest"] == true, Ordering::Release);
                         emit_current_session(&app_reader, &label_reader, &session,
                             json!({"status":"capabilities", "sessionKey":format!("{}:{}", session.pgid, session.birth),
                                 "language":language, "nativeSingleStep":native_single_step,
@@ -1875,6 +1953,12 @@ fn start_prepared(
                         let command=if session.attached.is_some(){"attach"}else{"launch"};
                         if session.attached.as_ref().is_some_and(|target|super::processes::verify(target).is_err()) {
                             emit(&app_reader,&label_reader,json!({"status":"error","text":"Attach target exited or changed identity before connection"})); let _=request_session_stop(&session);continue;
+                        }
+                        if let (Some(target), Some(port)) = (&session.attached, session.unity_port) {
+                            if super::processes::unity_editor_endpoint(target).map(|endpoint| endpoint.port) != Ok(port) {
+                                emit(&app_reader,&label_reader,json!({"status":"error","text":"Unity managed endpoint changed before connection; nothing was attached and no target signal was sent"}));
+                                let _=request_session_stop(&session);continue;
+                            }
                         }
                         if let Ok(seq) = request(&session, command, launch.clone()) { pending.insert(seq, command.into()); }
                     }
@@ -2043,7 +2127,7 @@ fn start_prepared(
     let manager = app.state::<DebugManager>();
     let active = manager.0.lock().map_err(|e| e.to_string())?;
     if let Some(session) = active.get(&label) {
-        if let Err(error) = request(session, "initialize", json!({"clientID":"craidd-studio", "adapterID":if language == "csharp" { "coreclr" } else { "lldb-dap" },
+        if let Err(error) = request(session, "initialize", json!({"clientID":"craidd-studio", "adapterID":if session.unity_port.is_some() { "unity" } else if language == "csharp" { "coreclr" } else { "lldb-dap" },
             "pathFormat":"path", "linesStartAt1":true, "columnsStartAt1":true,
             "supportsRunInTerminalRequest":false})) {
             if session.attached.is_none() { unsafe { libc::killpg(session.pgid, libc::SIGTERM); } }
@@ -2849,6 +2933,13 @@ mod tests {
         assert_eq!(dap_line_breakpoint("/project/main.cs", 8, &points, &[blue.clone()]), json!({"line":8,"condition":"i < 10"}));
         let blue = super::super::ldi::ManagedBlueBreakpoint { condition: None, ..blue };
         assert_eq!(dap_line_breakpoint("/project/main.cs", 8, &points, &[blue]), json!({"line":8}));
+    }
+
+    #[test]
+    fn unity_mono_attach_sends_the_verified_port_not_the_pid() {
+        let unity = UnityManagedAttach { port: 56471, project: PathBuf::from("/project"),
+            dotnet: PathBuf::from("/usr/bin/dotnet"), adapter: PathBuf::from("/x/monodbg.dll") };
+        assert_eq!(unity_attach_arguments(&unity), json!({"processId":56471,"cwd":"/project"}));
     }
 
     #[test]

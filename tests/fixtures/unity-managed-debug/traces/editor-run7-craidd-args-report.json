@@ -1,0 +1,260 @@
+{
+ "steps": [
+  {
+   "step": "disposable Editor endpoint owned by started PID",
+   "passed": true,
+   "pid": 351371,
+   "birth": 3820425,
+   "port": 56371,
+   "listening": [
+    34999,
+    35335,
+    55505,
+    56371
+   ],
+   "editor_instance": {
+    "process_id": 351371,
+    "version": "6000.5.10f1",
+    "app_path": "~/Unity/Hub/Editor/6000.5.10f1/Editor/Unity",
+    "app_contents_path": "~/Unity/Hub/Editor/6000.5.10f1/Editor/Data"
+   }
+  },
+  {
+   "step": "E1 attach in Edit mode accepted",
+   "passed": true,
+   "message": null
+  },
+  {
+   "step": "E1 no Edit-mode stop before Play",
+   "passed": true,
+   "stops": []
+  },
+  {
+   "step": "E1: C# breakpoint stack/locals in Play",
+   "passed": true,
+   "thread": 1,
+   "top": "[Managed] NativeProbe.Update()",
+   "file": "<scratch>/editor-copy-7/unity/Assets/Scripts/NativeProbe.cs",
+   "depth": 1,
+   "locals": {
+    "this": "CSharp to Cpp Probe (NativeProbe)",
+    "count": "20000",
+    "input": "7"
+   }
+  },
+  {
+   "step": "E1 step over",
+   "passed": true,
+   "line": 42,
+   "reason": "pause"
+  },
+  {
+   "step": "E1 repeat: C# breakpoint stack/locals in Play",
+   "passed": true,
+   "thread": 1,
+   "top": "[Managed] NativeProbe.Update()",
+   "file": "<scratch>/editor-copy-7/unity/Assets/Scripts/NativeProbe.cs",
+   "depth": 1,
+   "locals": {
+    "this": "CSharp to Cpp Probe (NativeProbe)",
+    "count": "20000",
+    "input": "8"
+   }
+  },
+  {
+   "step": "E1 detach while playing; Editor alive and still playing",
+   "passed": true,
+   "adapter_exit": 0,
+   "state_before": [
+    "playing",
+    "1933821065"
+   ],
+   "state_after": [
+    "playing",
+    "54550372"
+   ]
+  },
+  {
+   "step": "E2 reattach during Play accepted",
+   "passed": true,
+   "message": null
+  },
+  {
+   "step": "E2 first run: C# breakpoint stack/locals in Play",
+   "passed": true,
+   "thread": 1,
+   "top": "[Managed] NativeProbe.Update()",
+   "file": "<scratch>/editor-copy-7/unity/Assets/Scripts/NativeProbe.cs",
+   "depth": 1,
+   "locals": {
+    "this": "CSharp to Cpp Probe (NativeProbe)",
+    "count": "20000",
+    "input": "55927"
+   }
+  },
+  {
+   "step": "E2 session survives Play exit",
+   "passed": true
+  },
+  {
+   "step": "E2 second Play run, same attached session: C# breakpoint stack/locals in Play",
+   "passed": true,
+   "thread": 1,
+   "top": "[Managed] NativeProbe.Update()",
+   "file": "<scratch>/editor-copy-7/unity/Assets/Scripts/NativeProbe.cs",
+   "depth": 1,
+   "locals": {
+    "this": "CSharp to Cpp Probe (NativeProbe)",
+    "count": "20000",
+    "input": "7"
+   }
+  },
+  {
+   "step": "E2 detach after second Play run; Editor alive",
+   "passed": true,
+   "detach": true,
+   "second_run": true,
+   "state": [
+    "playing",
+    "98833922"
+   ]
+  },
+  {
+   "step": "E3 attach in second Play run accepted",
+   "passed": true,
+   "message": null
+  },
+  {
+   "step": "E3: C# breakpoint stack/locals in Play",
+   "passed": true,
+   "thread": 1,
+   "top": "[Managed] NativeProbe.Update()",
+   "file": "<scratch>/editor-copy-7/unity/Assets/Scripts/NativeProbe.cs",
+   "depth": 1,
+   "locals": {
+    "this": "CSharp to Cpp Probe (NativeProbe)",
+    "count": "20000",
+    "input": "37047"
+   }
+  },
+  {
+   "step": "E3 detach in Edit mode; Editor alive",
+   "passed": true,
+   "adapter_exit": 0,
+   "state": [
+    "edit",
+    "0"
+   ]
+  },
+  {
+   "step": "disposable Editor quit on request",
+   "passed": true,
+   "exit": 0
+  }
+ ],
+ "foreignBefore": {
+  "51760": {
+   "exe": "/usr/lib/unityhub/unityhub-bin",
+   "birth": 1716148
+  },
+  "51779": {
+   "exe": "/usr/lib/unityhub/unityhub-bin",
+   "birth": 1716167
+  },
+  "51780": {
+   "exe": "/usr/lib/unityhub/unityhub-bin",
+   "birth": 1716168
+  },
+  "51782": {
+   "exe": "/usr/lib/unityhub/unityhub-bin",
+   "birth": 1716170
+  },
+  "51821": {
+   "exe": "/usr/lib/unityhub/unityhub-bin",
+   "birth": 1716227
+  },
+  "51827": {
+   "exe": "/usr/lib/unityhub/unityhub-bin",
+   "birth": 1716228
+  },
+  "51884": {
+   "exe": "/usr/lib/unityhub/unityhub-bin",
+   "birth": 1716238
+  },
+  "51910": {
+   "exe": "/usr/lib/unityhub/UnityLicensingClient_V1/Unity.Licensing.Client",
+   "birth": 1716266
+  },
+  "168668": {
+   "exe": "~/Unity/Hub/Editor/6000.5.10f1/Editor/unityhub-unity-editor-6000.5.10f1",
+   "birth": 2411689
+  },
+  "168706": {
+   "exe": "~/Unity/Hub/Editor/6000.5.10f1/Editor/Data/Resources/Licensing/Client/Unity.Licensing.Client",
+   "birth": 2411693
+  },
+  "168792": {
+   "exe": "~/Unity/Hub/Editor/6000.5.10f1/Editor/Data/Resources/PackageManager/Server/UnityPackageManager",
+   "birth": 2411769
+  },
+  "168936": {
+   "exe": "~/Unity/Hub/Editor/6000.5.10f1/Editor/Data/Tools/BuildPipeline/Compilation/Unity.ILPP.Runner/Unity.ILPP.Runner",
+   "birth": 2411912
+  },
+  "168937": {
+   "exe": "~/Unity/Hub/Editor/6000.5.10f1/Editor/Data/Tools/UnityAutoQuitter",
+   "birth": 2411912
+  },
+  "169022": {
+   "exe": "~/Unity/Hub/Editor/6000.5.10f1/Editor/unityhub-unity-editor-6000.5.10f1",
+   "birth": 2411992
+  },
+  "169023": {
+   "exe": "~/Unity/Hub/Editor/6000.5.10f1/Editor/Data/Tools/UnityAutoQuitter",
+   "birth": 2411992
+  },
+  "169025": {
+   "exe": "~/Unity/Hub/Editor/6000.5.10f1/Editor/Data/Tools/UnityShaderCompiler",
+   "birth": 2411994
+  },
+  "169258": {
+   "exe": "~/Unity/Hub/Editor/6000.5.10f1/Editor/Data/Tools/UnityShaderCompiler",
+   "birth": 2412188
+  },
+  "169292": {
+   "exe": "~/Unity/Hub/Editor/6000.5.10f1/Editor/unityhub-unity-editor-6000.5.10f1",
+   "birth": 2412194
+  },
+  "169293": {
+   "exe": "~/Unity/Hub/Editor/6000.5.10f1/Editor/Data/Tools/UnityAutoQuitter",
+   "birth": 2412194
+  },
+  "169617": {
+   "exe": "~/Unity/Hub/Editor/6000.5.10f1/Editor/Data/Tools/UnityShaderCompiler",
+   "birth": 2412381
+  }
+ },
+ "e1Breakpoints": [
+  {
+   "id": 38517930,
+   "verified": false,
+   "message": "The breakpoint will not currently be hit",
+   "line": 41,
+   "column": 1,
+   "BoundBreakpoints": []
+  }
+ ],
+ "e1EditModeStops": [],
+ "e2RearmBreakpoints": [
+  {
+   "id": 14527199,
+   "verified": false,
+   "message": "The breakpoint will not currently be hit",
+   "line": 41,
+   "column": 1,
+   "BoundBreakpoints": []
+  }
+ ],
+ "e2SecondRun": true,
+ "foreignSurvived": true
+}

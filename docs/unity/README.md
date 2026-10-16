@@ -15,15 +15,15 @@
    whole-process sampling checkpoint, collectors and Gold CPU/memory gates.
 5. [Unity managed C# qualification](feats/record-unity-managed-csharp-qualification.md)
    and [its integration proposal](feats/design-unity-managed-csharp-attach.md) —
-   DotRush `monodbg` protocol evidence for a Mono player and batch Editor; not
-   yet a Craidd route.
+   DotRush `monodbg` protocol evidence for a Mono player and batch Editor; an
+   experimental Craidd Editor route; player route pending upstream.
 6. [Value vs state](../philosophies/debugging/ldi-debugging/philosophy-value-vs-state.md)
    and [managed LDI](../feats/ldi-debugging/design-ldi-debugging.md) — held
    origin, supported copied inputs, separate reproduction and release.
 
 ## Implementation boundary
 
-The [experimental implementation record](../feats/profiling/implementation-attach-gold.md) describes native attach routing, process gauges, prepared C++ Gold hooks and grouped Profiler results. The [tracked Unity fixture](../../workspaces/unity/README.md) provides a real C#↔C++ bridge and development player tests. Unity C# adapter protocol qualification now exists for DotRush `monodbg` 2026.10 against a Unity 6000.5.10f1 Mono development player and a disposable batch Editor across two Play runs. Craidd does not route to it yet; IL2CPP, the GUI Editor and Unity LDI remain open.
+The [experimental implementation record](../feats/profiling/implementation-attach-gold.md) describes native attach routing, process gauges, prepared C++ Gold hooks and grouped Profiler results. The [tracked Unity fixture](../../workspaces/unity/README.md) provides a real C#↔C++ bridge and development player tests. Unity C# adapter protocol qualification now exists for DotRush `monodbg` 2026.10 against a Unity 6000.5.10f1 Mono development player and a disposable batch Editor across two Play runs. Craidd has an experimental Editor route (`unity-mono`) that has not yet passed desktop UI acceptance. Players wait for an upstream DotRush endpoint change; IL2CPP and Unity LDI remain open.
 
 Native attach, C# attach, exact Gold capture and Play lifecycle have separate
 acceptance gates. A PID sample or instrumented native reproduction is not

@@ -65,6 +65,8 @@ def main():
     parser.add_argument('--adapter', required=True)
     parser.add_argument('--output', required=True)
     parser.add_argument('--scratch', required=True, help='empty folder for the disposable project copy')
+    parser.add_argument('--craidd-arguments', action='store_true',
+                        help="send Craidd's unity-mono attach shape: processId = verified port, cwd = project")
     parser.add_argument('--editor', default=str(pathlib.Path.home() / 'Unity/Hub/Editor/6000.5.10f1/Editor/Unity'))
     args = parser.parse_args()
     out = pathlib.Path(args.output).resolve(); out.mkdir(parents=True, exist_ok=True)
@@ -144,11 +146,13 @@ def main():
             if port not in probe.listening_ports(pid) or not probe.alive(pid, birth):
                 raise RuntimeError('Editor endpoint is no longer owned by the disposable Editor')
             dap = probe.Dap(adapter, trace, name)
-            caps = dap.request('initialize', {'clientID': 'craidd-probe', 'adapterID': 'unity',
+            caps = dap.request('initialize', {'clientID': 'craidd-studio' if args.craidd_arguments else 'craidd-probe', 'adapterID': 'unity',
                                               'linesStartAt1': True, 'columnsStartAt1': True, 'pathFormat': 'path'})['body'] or {}
             dap.configuration_done = bool(caps.get('supportsConfigurationDoneRequest'))
             # processId 0: DotRush derives the port from EditorInstance.json, its documented Editor route.
-            response = dap.request('attach', {'processId': 0, 'cwd': str(project)}, timeout=30, ok=False)
+            # Craidd instead sends the port it verified (debug.rs unity_attach_arguments).
+            attach_args = {'processId': port if args.craidd_arguments else 0, 'cwd': str(project)}
+            response = dap.request('attach', attach_args, timeout=30, ok=False)
             return dap, response
 
         def breakpoints(dap, lines):

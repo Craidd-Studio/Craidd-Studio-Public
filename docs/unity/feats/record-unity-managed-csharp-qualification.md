@@ -3,9 +3,10 @@
 **Roadmap track:** Phase 3.x debugger attach. See the [current roadmap](../../roadmaps/Roadmap-v0.0.4A.md).
 
 **Status:** Protocol qualification, 16 October 2026. A direct DAP probe drove an
-external adapter against real, disposable Unity targets. **Craidd does not use
-this route yet.** No Craidd UI, Tauri lifecycle or production code was exercised.
-The integration proposal is [design-unity-managed-csharp-attach.md](design-unity-managed-csharp-attach.md).
+external adapter against real, disposable Unity targets. Craidd's experimental
+**Editor** route followed; see its [design and implementation status](design-unity-managed-csharp-attach.md).
+Runs `editor7` and `patched1` (below) cover Craidd's arguments and the drafted
+upstream patch. No Craidd UI or Tauri lifecycle was exercised.
 
 **Companions:** [Unity native plugin workflow](design-unity-native-plugin.md),
 [attach to process](../../feats/debugging/design-attach-to-process.md),
@@ -213,6 +214,22 @@ therefore kept out of the repository; the scratch copies were redacted.
 - Unity LDI: held-frame value extraction, ABI and release. Prerequisites are
   listed in the proposal.
 
+## Follow-up runs (16 October 2026)
+
+- **`patched1`:** DotRush 2026.10 plus the two drafted patches
+  (`tests/fixtures/unity-managed-debug/upstream/`), built the same way. The
+  player probe with `--explicit-endpoint` passes S1–S6: `transportArgs` port,
+  no `EditorInstance.json` shim, and `configurationDone` sent unconditionally
+  and answered.
+- **`editor7`:** unpatched 2026.10, with the Editor probe using
+  `--craidd-arguments` (`processId` = verified port, `cwd` = project, no
+  `configurationDone`). E1–E3 pass. While that Editor ran, the production
+  `processes::unity_editor_endpoint` and `info` reported port 56371 for PID
+  351371 (opt-in `running_unity_editor_managed_endpoint`).
+- The user's GUI Editor (PID 168668, start time 2411689) listens on 56668,
+  which matches the rule. This was read from /proc only; nothing connected to
+  it. Its start time is unchanged in every run report.
+
 ## Reproduce
 
 From the repository root, on the debug branch:
@@ -227,6 +244,9 @@ dotnet publish /tmp/dotrush/src/DotRush.Debugging.Mono/DotRush.Debugging.Mono.cs
 python3 -I tests/fixtures/unity-managed-debug/unity_managed_probe.py --adapter /tmp/monodbg/monodbg.dll --output /tmp/craidd-unity-managed-player
 mkdir /tmp/craidd-unity-editor-copy
 python3 -I tests/fixtures/unity-managed-debug/unity_editor_probe.py --adapter /tmp/monodbg/monodbg.dll --output /tmp/craidd-unity-managed-editor --scratch /tmp/craidd-unity-editor-copy
+# Craidd's argument shape; add --explicit-endpoint to the player probe for a patched adapter
+python3 -I tests/fixtures/unity-managed-debug/unity_editor_probe.py --adapter /tmp/monodbg/monodbg.dll --craidd-arguments --output /tmp/craidd-unity-managed-editor-2 --scratch <empty-dir>
+CRAIDD_TEST_UNITY_EDITOR_PID=<disposable editor pid> cargo test --offline --manifest-path src-tauri/Cargo.toml --lib running_unity_editor_managed_endpoint -- --ignored
 ```
 
 Run the probes with normal desktop and socket access. They start their own
