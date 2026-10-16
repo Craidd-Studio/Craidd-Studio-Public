@@ -23,6 +23,7 @@ test('disposable Unity recovers Solo/cohorts after disconnect and cleans abrupt-
   const unity=await disposableUnity(dir,namespace);t.after(()=>unity.close());
   await unity.waitFor('Editor ready',()=>readFile(join(unity.signals,'ready'),'utf8'),240000);
   const pid=(await unity.status()).pid;assert.equal(pid,unity.child.pid);
+  console.log('recovery: own Editor ready',pid);
   const app=await launch('unity-recovery',{environment:{CRAIDD_PROFILE_NAMESPACE:namespace}});t.after(()=>app.close());
   await attach(app,unity,pid);await unity.command('play',60);
   await wait(app,'first Solo',p=>p.captures.some(c=>c.solo&&c.endMs===null));
@@ -34,6 +35,7 @@ test('disposable Unity recovers Solo/cohorts after disconnect and cleans abrupt-
   await unity.command('clear');const released=await wait(app,'late free reaches pinned interrupted cohort',p=>sum(p)===0&&p.captures.some(c=>oldIds.includes(c.id)&&c.freedBytes>=1048576));
   await unity.command('allocate');await wait(app,'new Solo measures another allocation',p=>sum(p)===1048576);
   await unity.command('clear');await wait(app,'clear before host crash',p=>sum(p)===0);
+  console.log('recovery: provider Solo and late-free recovery passed');
   app.record('provider-recovery',{before,resumed,released});await app.screenshot('recovered-solo');
   const target=await processIdentity(pid);const scope=discoveryDirectory(namespace);
   const route=join(scope,`${pid}-${target.birth}.endpoint`);const body=(await readFile(route,'utf8')).trim().split('\n');
@@ -47,8 +49,13 @@ test('disposable Unity recovers Solo/cohorts after disconnect and cleans abrupt-
   assert.equal((await unity.status()).playing,true,'disposable Editor survives its profiling host crash');
   app.record('host-crash-cleanup',{host,target,scope,route,socket:body[1],routeExists:await exists(route),socketExists:await exists(body[1])});
 
+  console.log('recovery: dead host artifacts removed');
+  // Retire the dead WebDriver session before opening a replacement.
+  await app.close();
+  console.log('recovery: dead driver group closed');
   const replacement=await launch('unity-recovery-replacement',{environment:{CRAIDD_PROFILE_NAMESPACE:namespace}});t.after(()=>replacement.close());
   await attach(replacement,unity,pid);
+  console.log('recovery: replacement attached');
   await wait(replacement,'running Play reconnects without Editor restart',p=>!p.waitingForPlay&&p.captures.some(c=>c.solo&&c.endMs===null));
   await unity.command('allocate');const recovered=await wait(replacement,'replacement host measures 1 MiB',p=>sum(p)===1048576);
   await unity.command('clear');await wait(replacement,'replacement host measures clear',p=>sum(p)===0);
@@ -58,4 +65,5 @@ test('disposable Unity recovers Solo/cohorts after disconnect and cleans abrupt-
   await click(replacement,"//button[@aria-label='Stop profiling']");
   await wait(replacement,'replacement stops profiling',p=>!p.active);
   assert.equal(await exists(route),false);
+  console.log('recovery: replacement allocation, clear and safe Stop passed');
 });

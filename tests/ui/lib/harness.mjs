@@ -92,7 +92,12 @@ export async function launch(scenario, { port = 0, environment = {} } = {}) {
     CRAIDD_TRACE_TITLES: "1",
   };
   const log = [];
-  const driver = spawn(findDriver(), ["--port", String(port), "--native-port", String(nativePort)], { env, stdio: ["ignore", "pipe", "pipe"] });
+  const driver = spawn(findDriver(), ["--port", String(port), "--native-port", String(nativePort)], { env, detached: true, stdio: ["ignore", "pipe", "pipe"] });
+  const stopDriver = () => {
+    // detached creates a new process group containing only this driver/app.
+    // A foreign Unity Editor is never launched under this driver.
+    try { process.kill(-driver.pid, "SIGTERM"); } catch (error) { if (error.code !== "ESRCH") throw error; }
+  };
   for (const stream of [driver.stdout, driver.stderr]) {
     stream.setEncoding("utf8");
     let partial = "";
@@ -106,7 +111,7 @@ export async function launch(scenario, { port = 0, environment = {} } = {}) {
   await waitForPort(base, 10_000);
   let wd;
   try { wd = await WebDriver.connect(base, APP); }
-  catch (error) { driver.kill("SIGTERM"); await writeFile(join(dir, "startup-error.json"), JSON.stringify({ error: String(error), log }, null, 2)); throw error; }
+  catch (error) { stopDriver(); await writeFile(join(dir, "startup-error.json"), JSON.stringify({ error: String(error), log }, null, 2)); throw error; }
   const records = [];
 
   const app = {
@@ -134,12 +139,16 @@ export async function launch(scenario, { port = 0, environment = {} } = {}) {
       throw new Error(`Timed out: ${description}. Last: ${JSON.stringify(last)}`);
     },
     async close() {
+      if (app.closed) return;
+      app.closed = true;
       if (!app.crashed) {
         await app.screenshot("final-state").catch(() => {});
         await app.invoke("get_profile").then(profile => app.record("final-profile", { profile })).catch(() => {});
       }
-      await wd.quit();
-      driver.kill("SIGTERM");
+      // A deliberately killed host has no healthy browser session to delete.
+      // Stop its own driver directly rather than waiting on a dead webview.
+      if (!app.crashed) await wd.quit();
+      stopDriver();
       await new Promise((r) => setTimeout(r, 500));
       await writeFile(join(dir, "record.json"), JSON.stringify({ records, log }, null, 2));
     },
