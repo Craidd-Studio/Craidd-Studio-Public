@@ -360,7 +360,9 @@ impl Profile {
                 }
                 if playing {
                     self.waiting_for_play = false;
-                    self.reason.clear();
+                    if self.reason.starts_with("Unity Play ended") {
+                        self.reason.clear();
+                    }
                 } else {
                     if !self.waiting_for_play {
                         self.finish_play(at);
@@ -1067,6 +1069,19 @@ mod tests {
         assert!(p.waiting_for_play && p.active && p.solo.is_none());
         assert!(p.captures.iter().all(|c| c.end_ms.is_some()));
         assert_eq!(p.batch, 2);
+    }
+    #[test]
+    fn play_heartbeat_preserves_an_existing_marker_warning() {
+        let mut p = p();
+        p.unity_editor = true;
+        p.play_generation = Some(1);
+        p.reason = "Gold intent changed; rebuild the prepared marker".into();
+        let mut state = e("state", 0, 1, 100);
+        state.marker.clear();
+        state.generation = 1;
+        state.playing = Some(true);
+        p.event(state);
+        assert!(p.reason.starts_with("Gold intent changed"));
     }
     #[test]
     fn missing_sequence_reopens_solo_without_discarding_owned_cohorts() {

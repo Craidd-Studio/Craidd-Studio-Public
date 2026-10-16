@@ -19,7 +19,7 @@ export const useProfiling = create<State>((set,get) => ({
  start: async (target) => { set({ error: null, selected: null }); await invoke("start_profiling",{target}).catch(e=>{set({error:String(e)});throw e;}); },
  stop: async () => { await invoke("stop_profiling"); },
  again: async () => { await invoke("profile_record_again").catch(e=>set({error:String(e)})); },
- snapshot: () => {const p=get().profile;if(!p)return;const copy=structuredClone(p);const id=crypto.randomUUID();set({snapshots:[...get().snapshots,{id,name:`${p.name} · ${new Date().toLocaleTimeString()}`,profile:copy}].slice(-8)});},
+ snapshot: () => {const p=get().profile;if(!p)return;const copy=structuredClone(p);const id=crypto.randomUUID();const snapshots=[...get().snapshots,{id,name:`${p.name} · ${new Date().toLocaleTimeString()}`,profile:copy}].slice(-8);const selected=snapshots.some(s=>s.id===get().selected)?get().selected:null;set({snapshots,selected});},
  select: selected=>set({selected}),
 }));
 export async function listenToProfiling() {
