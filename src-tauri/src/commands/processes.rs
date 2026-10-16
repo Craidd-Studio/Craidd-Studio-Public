@@ -1,6 +1,6 @@
 //! Read-only Linux target discovery and process-incarnation checks. Never owns or signals targets.
 use serde::{Deserialize, Serialize};
-use std::{collections::BTreeSet, fs, path::PathBuf};
+use std::{collections::BTreeSet, fs, os::unix::fs::MetadataExt, path::PathBuf};
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
@@ -107,8 +107,18 @@ fn declared_unity_project(
 ) -> Option<String> {
     // Hub may rename the actual executable. Match its installed Unity entry
     // point by identity, rather than assuming /proc/<pid>/exe ends in Unity.
-    let entry = executable.parent()?.join("Unity");
-    if fs::canonicalize(entry).ok()? != fs::canonicalize(executable).ok()? {
+    // Canonical paths still differ for Hub's hard-linked executable names.
+    let entry = fs::metadata(executable.parent()?.join("Unity")).ok()?;
+    let binary = fs::metadata(executable).ok()?;
+    if (entry.dev(), entry.ino()) != (binary.dev(), binary.ino()) {
+        return None;
+    }
+    // Import helpers run the same binary in the same project as the Editor.
+    // Their explicit role must not create ambiguous Editor matches.
+    if args
+        .windows(2)
+        .any(|a| a[0].eq_ignore_ascii_case("-name") && a[1].starts_with("AssetImportWorker"))
+    {
         return None;
     }
     let root = args
@@ -149,10 +159,14 @@ pub fn info(pid: i32) -> Result<ProcessInfo, String> {
     let result = ProcessInfo {
         identity: target.clone(),
         uid,
-        name: fs::read_to_string(format!("/proc/{pid}/comm"))
-            .unwrap_or_default()
-            .trim()
-            .to_owned(),
+        name: if unity_project.is_some() {
+            "Unity Editor".into()
+        } else {
+            fs::read_to_string(format!("/proc/{pid}/comm"))
+                .unwrap_or_default()
+                .trim()
+                .to_owned()
+        },
         executable: link(pid, "exe"),
         cwd: link(pid, "cwd"),
         adapter_hint: adapter_hint.into(),
@@ -292,6 +306,78 @@ mod tests {
         fs::write(&other, b"fixture").unwrap();
         assert!(declared_unity_project(&other, &args, dir.clone()).is_none());
         fs::remove_dir_all(dir).unwrap();
+    }
+    #[test]
+    fn unity_project_accepts_hub_hardlinks_but_excludes_import_workers() {
+        let dir = std::env::temp_dir().join(format!(
+            "craidd-unity-hardlink-{}",
+            super::super::profiling::stamp()
+        ));
+        fs::create_dir_all(dir.join("Editor")).unwrap();
+        fs::create_dir_all(dir.join("Project/ProjectSettings")).unwrap();
+        let executable = dir.join("Editor/unityhub-unity-editor-6000.5.10f1");
+        fs::write(&executable, b"fixture").unwrap();
+        fs::hard_link(&executable, dir.join("Editor/Unity")).unwrap();
+        let root = dir.join("Project");
+        fs::write(
+            root.join("ProjectSettings/ProjectVersion.txt"),
+            "m_EditorVersion: 6000.5.10f1\n",
+        )
+        .unwrap();
+        let mut args = vec![
+            "Unity".into(),
+            "-projectpath".into(),
+            root.to_string_lossy().into_owned(),
+        ];
+        let expected = Some(root.to_string_lossy().into_owned());
+        assert_eq!(
+            declared_unity_project(&executable, &args, dir.clone()),
+            expected
+        );
+        // Batch-mode Editor tests are valid targets; only the declared worker
+        // role is excluded from Editor auto-selection and Play rearming.
+        args.push("-batchMode".into());
+        assert_eq!(
+            declared_unity_project(&executable, &args, dir.clone()),
+            expected
+        );
+        args.extend(["-name".into(), "AssetImportWorkerHW1".into()]);
+        assert!(declared_unity_project(&executable, &args, dir.clone()).is_none());
+        args.pop();
+        args.push("AssetImportWorkerHW2".into());
+        assert!(declared_unity_project(&executable, &args, dir.clone()).is_none());
+        let other = dir.join("Editor/other");
+        fs::write(&other, b"fixture").unwrap();
+        assert!(declared_unity_project(&other, &args[..3], dir.clone()).is_none());
+        fs::remove_dir_all(dir).unwrap();
+    }
+    #[test]
+    #[ignore = "requires CRAIDD_TEST_UNITY_EDITOR_PID, CRAIDD_TEST_UNITY_PROJECT and CRAIDD_TEST_UNITY_WORKER_PIDS for a running Editor"]
+    fn running_unity_editor_discovery() {
+        let pid = std::env::var("CRAIDD_TEST_UNITY_EDITOR_PID")
+            .unwrap()
+            .parse()
+            .unwrap();
+        let project = fs::canonicalize(std::env::var("CRAIDD_TEST_UNITY_PROJECT").unwrap())
+            .unwrap()
+            .to_string_lossy()
+            .into_owned();
+        let editor = info(pid).unwrap();
+        assert_eq!(editor.unity_project.as_deref(), Some(project.as_str()));
+        assert_eq!(editor.name, "Unity Editor");
+        let targets = list_attach_processes().unwrap();
+        assert!(targets
+            .iter()
+            .any(|p| p.identity == editor.identity && p.unity_project == editor.unity_project));
+        for worker in std::env::var("CRAIDD_TEST_UNITY_WORKER_PIDS")
+            .unwrap()
+            .split(',')
+        {
+            assert!(info(worker.parse().unwrap())
+                .unwrap()
+                .unity_project
+                .is_none());
+        }
     }
     #[test]
     fn real_process_identity_and_counters() {

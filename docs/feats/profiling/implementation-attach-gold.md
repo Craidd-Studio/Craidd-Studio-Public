@@ -100,7 +100,7 @@ not communicate Craidd's socket to it. Play end also closes the entire
 profiling session, forcing a fresh manual selection for every Play run.
 The user's running Editor also resolves `/proc/<pid>/exe` to Hub's renamed
 `unityhub-unity-editor-6000.5.10f1`, so an exact basename check would miss it.
-Matching now compares the installed Unity entry point's canonical identity,
+Matching now compares the installed Unity entry point's device/inode identity,
 then verifies its project argument and ProjectVersion declaration.
 
 The correction publishes a process-incarnation-specific runtime discovery
@@ -142,6 +142,38 @@ must compile the original absolute source paths: an initial copied-source build
 pointed DWARF at its disposable directory. `readelf` now confirms the delivered
 plugin resolves probe.cpp and anchored.cpp to the real workspace. Reopening
 Unity once loads that plugin; subsequent connection order is unrestricted.
+
+## Running Editor missing from Attach, observed on 16 October 2026
+
+The user's Attach dialog showed two AssetImportWork processes first, without
+a matching Editor or enabled Profile only action. Live inspection found the
+main Editor at PID 52202 and its asset-import children at 52942 and 53016.
+The installed `Editor/Unity` and Hub-renamed executable have different
+canonical paths but the same device/inode: they are hard links. The initial
+canonical-path comparison therefore rejects the actual Editor. The children
+share that executable and project, so fixing identity alone would incorrectly
+produce three matching Editors. Their observed role is declared through
+`-name AssetImportWorkerHW1` / `AssetImportWorkerHW2`.
+
+The correction compares device/inode identity (following symlinks), excludes
+the declared import-worker role from Editor matching, and labels the main
+process **Unity Editor** instead of the truncated Linux thread name. Workers
+remain available as ordinary manual attach targets. Batch-mode Editors without
+that worker role remain eligible. No process is launched, stopped or signalled.
+
+A hard-link regression first reproduced the missed match, then passed after
+the correction; the existing symlink/declaration regression also passes. An
+explicit live regression runs the production `info` and `list_attach_processes`
+functions against PID 52202 and both workers: only the main process receives
+the Unity project identity. This confirms backend discovery on the user's
+installation; desktop dialog selection and Play capture still need the rebuilt
+Craidd process. The live regression is opt-in because it requires those running
+processes and their project path.
+
+Validation: the complete Rust suite passes 161 tests with five opt-in/existing
+ignored tests; the live discovery test passes separately against the user's
+Editor and workers. The debug executable builds successfully. This correction
+does not change the native plugin or its one-time reload requirement above.
 
 ## Delivered experimental slice
 
