@@ -29,7 +29,8 @@ Attach LLDB to the **Unity Editor or development player process**; the `.so` is 
 loaded module, never an attach target of its own. Linux ptrace policy may prevent
 sibling attach; this project does not change that policy. Launch under an authorized
 debugger where needed. Managed Unity Mono/IL2CPP is not qualified by netcoredbg's
-CoreCLR support; this fixture does not make that adapter work in Craidd.
+CoreCLR support; this fixture does not make that adapter work in Craidd. `MANAGED_BREAK_HERE`
+is the managed probes' breakpoint line.
 
 For normal native Gold profiling, **Unity can start first**. After updating the
 native provider, rebuild the plugin and reopen Unity once if it had already
@@ -99,6 +100,16 @@ python3 tests/fixtures/attach-profiling/attach_probe.py --output /tmp/craidd-uni
 The disposable player opts into sibling debugger access with `--craidd-allow-attach`
 for its own PID only. Normal player launches and the Editor do not call this hook;
 host ptrace policy is never changed.
+
+Managed C# protocol probes (external DotRush `monodbg`, not a Craidd route). Each
+starts its own player or a batch Editor on a scratch project copy, and connects only
+to a debugger port owned by that PID. See the
+[qualification record](../../docs/unity/feats/record-unity-managed-csharp-qualification.md):
+
+```sh
+python3 -I tests/fixtures/unity-managed-debug/unity_managed_probe.py --adapter <monodbg.dll> --output /tmp/craidd-unity-managed-player
+python3 -I tests/fixtures/unity-managed-debug/unity_editor_probe.py --adapter <monodbg.dll> --output /tmp/craidd-unity-managed-editor --scratch <empty-dir>
+```
 
 Unity-first connection/reconnection check, using a disposable project copy and
 a real Editor launched without a socket variable:

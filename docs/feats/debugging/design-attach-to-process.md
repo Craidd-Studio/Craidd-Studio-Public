@@ -102,7 +102,7 @@ Filterable by name, user, and adapter. Sorted by executable by default.
 | Signal | Adapter hint |
 |---|---|
 | The process has `libcoreclr` mapped | netcoredbg |
-| The process has `libmono` mapped | Managed/Unity adapter candidate; endpoint and runtime support still need qualification |
+| The process has `libmono` mapped | Managed/Unity adapter candidate; DotRush `monodbg` is protocol-qualified for a Mono development player (see Unity record); Craidd routing is not implemented |
 | The process has a Python interpreter mapped as its main executable | Python DAP (future) |
 | The executable is an ELF binary with debug sections, or an LLDB-compatible target | LLDB-DAP |
 | Nothing matches | "(no adapter detected)" — the user may still pick one |
@@ -135,8 +135,16 @@ The process does **not** appear in Solution Explorer. It has no
 
 ### Documented, deferred
 
-- **Unity-compatible C# adapter.** Qualify runtime endpoint discovery, protocol,
-  frame reads and teardown. A generic Mono label does not identify a usable
+- **Unity-compatible C# adapter.** Protocol evidence, not Craidd support:
+  DotRush `monodbg` 2026.10 passed attach, breakpoint, stack/locals, step,
+  detach, reattach and adapter-failure cases against a Unity 6000.5.10f1 Mono
+  development player and a disposable batch Editor. See the
+  [qualification record](../../unity/feats/record-unity-managed-csharp-qualification.md)
+  and [integration proposal](../../unity/feats/design-unity-managed-csharp-attach.md).
+  Its `processId` is a TCP port, it lacks `configurationDone`, and it emits
+  `terminated` without `exited`; the current attach path needs those three
+  routing changes before use. Remaining: qualify runtime endpoint discovery in
+  Craidd, frame reads for LDI, and teardown through the UI. A generic Mono label does not identify a usable
   adapter. Unity documents C# debugging on both Mono and IL2CPP; this is not
   a claim that Craidd supports either route today. See
   [Unity's debugger setup](https://docs.unity3d.com/6000.0/Documentation/Manual/managed-code-debugging.html).
@@ -327,5 +335,5 @@ but do not establish that every adapter has identical behaviour.
 
 ---
 
-*Last updated: Phase 3.x, 15 October 2026. Author(s): ShinkuKira21.*
+*Last updated: Phase 3.x, 16 October 2026. Author(s): ShinkuKira21.*
 *This document is a design.*
