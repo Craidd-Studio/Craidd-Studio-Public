@@ -309,6 +309,10 @@ select {
 .profiler-status.is-live { background:#7eb397; }
 .profiler-panel select { background:#262930; border:1px solid #484e59; border-radius:0; padding:3px; min-width:0; }
 .profiler-view { margin:0 8px 5px; }
+.profiler-view-controls { display:flex; gap:5px; margin:0 8px 5px; min-width:0; }
+.profiler-view-controls select { flex:1; min-width:0; }
+.profiler-view-controls button { border-color:#484e59; flex-shrink:0; }
+.profiler-view-controls button[aria-pressed="true"] { color:#a6d5f7; border-color:#608eae; }
 .profiler-session { display:flex; gap:3px; align-items:center; padding:1px 8px 3px; font-size:10px; }
 .profiler-session > span { flex:1; }
 .profiler-session strong { color:#e1e3e7; font-weight:500; }
@@ -336,6 +340,8 @@ select {
 .profiler-metrics dd { text-align:right; margin:0; color:#e0e3e8; }
 .profiler-section-title { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:7px; }
 .profiler-section-title > span { color:#a6aeba; }
+.profiler-section-title > span:first-child { flex:1; min-width:0; }
+.profiler-ready-hint { margin:0 8px 6px; font-size:10px; color:#a6aeba; }
 .profiler-section-title button, .profiler-settings > button { border:1px solid #505865; background:#2d323a; font-size:10px; }
 .profiler-link { display:block; color:#8bc3ed !important; padding-left:0 !important; margin-top:6px; }
 .profiler-filters { display:flex; gap:6px; margin:0 0 8px; }

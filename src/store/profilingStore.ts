@@ -5,7 +5,7 @@ import type { ProcessTarget } from "../components/dialogs/AttachProcessDialog";
 export interface ProfileSample { atMs: number; cpuMs: number; residentBytes: number; virtualBytes: number; threadCount: number; state: string }
 export interface GoldCapture { id: string; marker: string; name: string; solo: boolean; thread: number; batch: number; startMs: number; endMs: number | null; cpuMs: number | null; status: string; allocatedBytes: number; freedBytes: number; liveBytes: number; allocationCount: number }
 export interface ProfileCounters { agedSamples: number; evictedCaptures: number; rejectedEvents: number; disconnects: number; sourceGaps: number }
-export interface Profile { counters?: ProfileCounters; id: string; target: ProcessTarget; name: string; active: boolean; unityEditor?: boolean; waitingForPlay?: boolean; reason: string; batch: number; provider: boolean; pauses: {startMs:number;endMs:number|null;allThreads:boolean;thread:number|null;reason:string}[]; samples: ProfileSample[]; captures: GoldCapture[]; dropped: number }
+export interface Profile { counters?: ProfileCounters; id: string; target: ProcessTarget; name: string; active: boolean; unityEditor?: boolean; waitingForPlay?: boolean; playGeneration?: number | null; reason: string; batch: number; provider: boolean; pauses: {startMs:number;endMs:number|null;allThreads:boolean;thread:number|null;reason:string}[]; samples: ProfileSample[]; captures: GoldCapture[]; dropped: number }
 export interface Snapshot { id: string; name: string; profile: Profile }
 interface State { profile: Profile | null; snapshots: Snapshot[]; selected: string | null; bridge: string; error: string | null; benchmarkBySession: Record<string, string | null>;
  focusBenchmark: (session: string, marker: string | null) => void;
@@ -19,7 +19,7 @@ export const useProfiling = create<State>((set,get) => ({
  start: async (target) => { set({ error: null, selected: null }); await invoke("start_profiling",{target}).catch(e=>{set({error:String(e)});throw e;}); },
  stop: async () => { await invoke("stop_profiling"); },
  again: async () => { await invoke("profile_record_again").catch(e=>set({error:String(e)})); },
- snapshot: () => {const p=get().profile;if(!p)return;const copy=structuredClone(p);const id=crypto.randomUUID();set({snapshots:[...get().snapshots,{id,name:`${p.name} · ${new Date().toLocaleTimeString()}`,profile:copy}].slice(-8),selected:id});},
+ snapshot: () => {const p=get().profile;if(!p)return;const copy=structuredClone(p);const id=crypto.randomUUID();set({snapshots:[...get().snapshots,{id,name:`${p.name} · ${new Date().toLocaleTimeString()}`,profile:copy}].slice(-8)});},
  select: selected=>set({selected}),
 }));
 export async function listenToProfiling() {

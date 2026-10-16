@@ -83,6 +83,7 @@ export default function ProfilerPanel() {
   const [range, setRange] = useState<{ id: string; span: Span } | null>(null);
   const [prepared, setPrepared] = useState("");
   const [error, setError] = useState("");
+  const [snapshotNote, setSnapshotNote] = useState("");
   const p = state.selected ? state.snapshots.find(s => s.id === state.selected)?.profile : state.profile;
   const samples = p?.samples ?? [];
   const latest = samples[samples.length - 1];
@@ -116,7 +117,7 @@ export default function ProfilerPanel() {
   const cpu = cpuSamples.map((s, i) => Math.max(0, s.cpuMs - samples[i].cpuMs));
   const snapshots = state.snapshots.filter(s => s.profile.id === p?.id);
   const fail = (e: unknown) => setError(String(e));
-  const takeSnapshot = () => { state.snapshot(); setTab("Memory"); };
+  const takeSnapshot = () => { state.snapshot(); setTab("Memory"); setSnapshotNote(state.selected ? "Snapshot saved from current session" : state.profile?.active ? "Snapshot saved · Live continues" : "Snapshot saved"); };
   const filters = <div className="profiler-filters">
     <select aria-label="Capture thread" value={activeThread} onChange={e => setThread(e.target.value)} title="Filters Gold results; does not suspend threads or filter process graphs">
       <option value="all">All threads</option>{threads.map(t => <option key={t} value={t}>Thread {t || "all (solo)"}</option>)}
@@ -140,15 +141,17 @@ export default function ProfilerPanel() {
       <strong>{p ? `${p.name} · ${p.target.pid}` : "No process selected"}</strong>
       <span>{state.selected ? "Snapshot" : p?.waitingForPlay ? "Ready for Play" : p?.active ? "Live" : p ? "Stopped" : "Idle"}</span>
     </div>
-    {state.snapshots.length > 0 && <select className="profiler-view" aria-label="Profiler view" value={state.selected ?? "live"} onChange={e => state.select(e.target.value === "live" ? null : e.target.value)}>
-      <option value="live">Current session</option>{state.snapshots.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-    </select>}
+    {state.snapshots.length > 0 && <div className="profiler-view-controls"><button aria-label="Return to live profiling" aria-pressed={!state.selected} onClick={() => state.select(null)}>Live</button><select aria-label="Profiler view" value={state.selected ?? "live"} onChange={e => state.select(e.target.value === "live" ? null : e.target.value)}>
+      <option value="live">Current session{state.profile?.active ? " · Live" : " · Stopped"}</option>{state.snapshots.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+    </select></div>}
     {p?.reason.startsWith("Source discovery unavailable:") && <div role="status" className="profiler-notice">{p.reason}</div>}
+    {p?.waitingForPlay && !state.selected && <p className="profiler-ready-hint">Press Play in Unity to record prepared Gold benchmarks.</p>}
     {(error || state.error) && <div role="alert" className="profiler-notice">{error || state.error}<button aria-label="Dismiss profiling error" onClick={() => { setError(""); useProfiling.setState({ error: null }); }}>×</button></div>}
     {setup ? <div className="profiler-results profiler-settings">
       <div className="profiler-section-title"><strong>Profiling settings</strong><button onClick={() => setSetup(false)}>Done</button></div>
       <h3>Source markers · {gold.length}</h3>
       <p>Gold markers record automatically without pausing. Pairs end at their End marker; one solo records until the session ends.</p>
+      <p>Gutter markers require a prepared source copy and a rebuilt matching native target. Fixture benchmarks come from its compiled hooks. Unity managed C# markers are not instrumented by this exporter.</p>
       {gold.map(g => <div key={g.id} className="profiler-marker">◆ {g.solo ? "Solo" : `${g.start} → ${g.end ?? "Awaiting End"}`} · {g.file.split("/").pop()}{g.condition ? ` · if ${g.condition}` : ""}</div>)}
       <button disabled={!file || dirty} title={dirty ? "Save and review source marker lines first" : "Export a C++ source copy using explicit Gold anchors"} onClick={() => { if (file) void useGold.getState().prepare(file).then(setPrepared).catch(fail); }}>Prepare source copy…</button>
       {prepared && <p className="select-text break-all">Prepared bundle: {prepared}. Read README.txt and build the copy.</p>}
@@ -214,6 +217,7 @@ export default function ProfilerPanel() {
         </>}
         {tab === "Memory" && <>
           <div className="profiler-section-title"><strong>Memory snapshots</strong><button disabled={!state.profile?.samples.length} onClick={takeSnapshot}>Take snapshot</button></div>
+          {snapshotNote && <p role="status" className="profiler-caption">{snapshotNote}</p>}
           <p className="profiler-caption">Process RSS and the selected benchmark’s native allocations. Heap object capture is unavailable.</p>
           {snapshots.length ? <div className="profiler-table-scroll"><table><thead><tr><th>Snapshot</th><th>RSS</th><th>Δ RSS</th><th title="Sum of the selected benchmark’s capture cohorts">Live cohorts</th></tr></thead><tbody>{snapshots.map((s, i) => {
             const sample = s.profile.samples[s.profile.samples.length - 1]; const previous = snapshots[i - 1]?.profile.samples[snapshots[i - 1].profile.samples.length - 1];
