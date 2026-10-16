@@ -47,10 +47,14 @@ players must be rebuilt to include the updated plugin.
    records in a new batch without another Attach operation. **Stop profiling**
    explicitly disarms discovery and leaves Unity running.
 
-Select **CSharp to Cpp Probe** in Unity. Use **Probe/Allocate retained native
-1 MiB**, take a Craidd snapshot, then **Probe/Clear native allocations** and
-snapshot again. Inspect Solo or the native allocation benchmark to see its
-tracked cohort clear. Process RSS need not fall with the cohort.
+While playing, use Unity's top menu **Craidd → Probe → Allocate retained native
+1 MiB**, take a Craidd snapshot, then **Craidd → Probe → Clear native allocations**
+and snapshot again. These actions also exist in the NativeProbe component's
+context menu. The Unity Console reports native before/after byte counts and the
+Inspector's Native Live Bytes updates immediately. That field is an observation;
+typing a number into it does not allocate memory. Component disable reports any
+retained bytes it clears. Inspect Solo or the native allocation benchmark to see
+its tracked cohort clear. Process RSS need not fall with the cohort.
 
 This discovers prepared native C++ hooks; it does not implement Unity managed
 C# breakpoints or heap object capture. The existing plugin has built-in test

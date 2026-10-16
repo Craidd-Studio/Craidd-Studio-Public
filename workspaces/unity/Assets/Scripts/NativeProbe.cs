@@ -63,8 +63,22 @@ public sealed class NativeProbe : MonoBehaviour
     [ContextMenu("Probe/Allocate managed 1 MiB")] public void AllocateManaged() { managedRetained = new byte[1024 * 1024]; }
     [ContextMenu("Probe/Release managed reference")] public void ReleaseManaged() { managedRetained = null; }
     [ContextMenu("Probe/Collect managed garbage")] public void CollectManaged() { GC.Collect(); }
-    [ContextMenu("Probe/Allocate retained native 1 MiB")] public void AllocateNative() { craidd_probe_allocate(1024 * 1024, 1); }
-    [ContextMenu("Probe/Clear native allocations")] public void ClearNative() { craidd_probe_clear(); }
+    [ContextMenu("Probe/Allocate retained native 1 MiB")]
+    public void AllocateNative()
+    {
+        ulong before = craidd_probe_live();
+        craidd_probe_allocate(1024 * 1024, 1);
+        nativeLiveBytes = craidd_probe_live();
+        Debug.Log($"[Craidd Probe] Allocate retained native 1 MiB: {before} -> {nativeLiveBytes} bytes (Play={Application.isPlaying}, active={isActiveAndEnabled})", this);
+    }
+    [ContextMenu("Probe/Clear native allocations")]
+    public void ClearNative()
+    {
+        ulong before = craidd_probe_live();
+        craidd_probe_clear();
+        nativeLiveBytes = craidd_probe_live();
+        Debug.Log($"[Craidd Probe] Clear native allocations: {before} -> {nativeLiveBytes} bytes", this);
+    }
     [ContextMenu("Probe/Stateful call - not value LDI")] public void Stateful() { Debug.Log(craidd_probe_stateful(1)); }
     void OnApplicationQuit()
     {
@@ -76,7 +90,9 @@ public sealed class NativeProbe : MonoBehaviour
     void OnDisable()
     {
         craidd_probe_workers_stop(); workersActive = false;
+        ulong before = craidd_probe_live();
         craidd_probe_clear();
-
+        nativeLiveBytes = craidd_probe_live();
+        if (before != 0) Debug.Log($"[Craidd Probe] Component disabled: clearing {before} native bytes (Play={Application.isPlaying})", this);
     }
 }

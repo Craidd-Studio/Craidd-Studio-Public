@@ -7,6 +7,19 @@ using UnityEngine;
 public static class ProbeProject
 {
     const string ScenePath = "Assets/Scenes/DebugProbe.unity";
+    [MenuItem("Craidd/Probe/Allocate retained native 1 MiB")]
+    public static void AllocateRetainedNative() { ActiveProbe()?.AllocateNative(); }
+    [MenuItem("Craidd/Probe/Clear native allocations")]
+    public static void ClearRetainedNative() { ActiveProbe()?.ClearNative(); }
+    [MenuItem("Craidd/Probe/Allocate retained native 1 MiB", true)]
+    [MenuItem("Craidd/Probe/Clear native allocations", true)]
+    public static bool CanInspectNative() { return EditorApplication.isPlaying; }
+    static NativeProbe ActiveProbe()
+    {
+        var probe = UnityEngine.Object.FindAnyObjectByType<NativeProbe>();
+        if (probe == null) Debug.LogWarning("[Craidd Probe] No active NativeProbe. Open DebugProbe and enter Play.");
+        return probe;
+    }
     [MenuItem("Craidd/Prepare debugging fixture")]
     public static void Prepare()
     {

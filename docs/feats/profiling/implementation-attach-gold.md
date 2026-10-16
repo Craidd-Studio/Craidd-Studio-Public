@@ -175,6 +175,30 @@ ignored tests; the live discovery test passes separately against the user's
 Editor and workers. The debug executable builds successfully. This correction
 does not change the native plugin or its one-time reload requirement above.
 
+## Retained-allocation action unclear, observed on 16 October 2026
+
+During interactive Play, the user's Solo view remained at 36 KiB allocated,
+36 KiB freed and 0 B live after trying the retained 1 MiB component action.
+Unity's displayed Native Live Bytes also remained 0. That field is a public
+serialized value refreshed only by Update, so this does not establish whether
+the action ran, the display was stale, or component disable cleared memory.
+The native plugin loaded by the Editor is the updated binary; no relevant
+Unity errors were found. A separate process loading that same plugin verifies
+0 → 1,048,576 → 0 bytes across native allocate/clear. This is native-library
+evidence, not acceptance of the user's live C# action or Craidd memory view.
+
+The fixture actions now report direct native before/after byte counts to the
+Unity Console and immediately refresh the Inspector field. Unity's top menu
+**Craidd → Probe** exposes Allocate retained native 1 MiB and Clear native
+allocations during Play. These call the same component actions; a missing
+active probe produces a warning. Component disable reports retained memory it
+clears. Both runtime and Editor scripts compile without warnings against the
+installed Unity 6000.5.10f1 references, with compiler outputs isolated in
+`/tmp/craidd-unity-action-diagnostics`. Live action evidence is still pending.
+The large dropped/incomplete count is separate: the implementation currently
+combines aged-out process samples, capture eviction and source errors into
+one counter. It does not by itself prove lost allocation events.
+
 ## Delivered experimental slice
 
 - Run → Attach to Process and Command Palette entry; searchable same-user PID
