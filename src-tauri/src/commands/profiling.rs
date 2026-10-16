@@ -272,7 +272,6 @@ impl Profile {
                     .position(|c| eligible(c) && counts[c.marker.as_str()] == n)
             });
             if victim.is_none() {
-                self.reject();
                 return false;
             }
         }
@@ -402,6 +401,8 @@ impl Profile {
                     return;
                 }
                 if !self.reserve_capture(&e.marker, e.kind == "solo") {
+                    self.reject();
+                    self.reason = "Capture storage full of pinned Solo segments or live cohorts; start a new profiling session".into();
                     return;
                 }
                 let id = if e.kind == "solo" {
@@ -494,7 +495,18 @@ impl Profile {
             }
         }
     }
-    fn again(&mut self) {
+    fn again(&mut self) -> bool {
+        if let Some(marker) = self
+            .solo
+            .clone()
+            .filter(|marker| !self.blocked.contains(marker))
+        {
+            // Reserve before closing the current segment: an all-pinned
+            // capacity limit must not silently disarm the active recording.
+            if !self.reserve_capture(&marker, true) {
+                return false;
+            }
+        }
         self.batch += 1;
         let at = self.at();
         if let Some(marker) = self
@@ -537,6 +549,7 @@ impl Profile {
                 });
             }
         }
+        true
     }
 }
 #[derive(Default)]
@@ -858,7 +871,9 @@ pub fn profile_record_again(app: AppHandle, w: tauri::WebviewWindow) -> Result<(
     if p.waiting_for_play {
         return Err("Unity is ready; press Play to begin the next recording".into());
     }
-    p.again();
+    if !p.again() {
+        return Err("Capture storage is full of pinned Solo segments/live cohorts; the current recording continues. Start a new profiling session to create more segments.".into());
+    }
     let view = p.view();
     drop(all);
     publish(&app, w.label(), &view);
@@ -1092,6 +1107,46 @@ mod tests {
         processes::verify(&target).unwrap();
         drop(listener);
         fs::remove_dir_all(dir).unwrap();
+    }
+    #[test]
+    fn global_history_bound_preserves_pins_and_rare_markers() {
+        let mut p = p();
+        p.event(e("solo", 0, 1, 100));
+        let mut alloc = e("alloc", 0, 1, 110);
+        alloc.address = 123;
+        alloc.bytes = 1048576;
+        p.event(alloc);
+        for i in 0..2500 {
+            let mut begin = e("begin", i + 1, 1, 120 + i * 2);
+            begin.marker = format!("marker-{i}");
+            let mut end = begin.clone();
+            end.kind = "end".into();
+            end.wall_ns += 1;
+            p.event(begin);
+            p.event(end);
+        }
+        assert_eq!(p.captures.len(), 2000);
+        assert!(p.captures[0].solo && p.captures[0].live_bytes == 1048576);
+        assert_eq!(p.counters.rejected_events, 0);
+        assert_eq!(p.counters.evicted_captures, 501);
+        let mut free = e("free", 0, 2, 6000);
+        free.address = 123;
+        p.event(free);
+        assert_eq!(p.captures[0].live_bytes, 0);
+        assert_eq!(p.captures[0].freed_bytes, 1048576);
+    }
+    #[test]
+    fn record_again_at_an_all_pinned_limit_keeps_the_current_recording() {
+        let mut p = p();
+        p.event(e("solo", 0, 1, 100));
+        for _ in 1..2000 {
+            p.again();
+        }
+        let batch = p.batch;
+        let id = p.captures.last().unwrap().id.clone();
+        p.again();
+        assert_eq!(p.batch, batch);
+        assert!(p.captures.iter().any(|c| c.id == id && c.end_ms.is_none()));
     }
     #[test]
     fn allocation_cohort_survives_end_and_ignores_older_free() {

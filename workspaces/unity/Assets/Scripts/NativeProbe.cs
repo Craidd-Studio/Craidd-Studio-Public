@@ -45,7 +45,12 @@ public sealed class NativeProbe : MonoBehaviour
     {
         if (!showProfilerOverlay) return;
         if (Event.current.type == EventType.Repaint) OverlayDrawCount++;
-        GUILayout.BeginArea(new Rect(12, 12, 310, 150), GUI.skin.box);
+        var area = new Rect(12, 12, 310, 150);
+        Color previous = GUI.color;
+        GUI.color = new Color(.08f, .09f, .1f, 1f);
+        GUI.DrawTexture(area, Texture2D.whiteTexture);
+        GUI.color = previous;
+        GUILayout.BeginArea(area, GUI.skin.box);
         GUILayout.Label("Craidd native profiling probe");
         GUILayout.Label($"Native live: {nativeLiveBytes:N0} bytes · Frames: {frames}");
         GUILayout.BeginHorizontal();

@@ -144,7 +144,7 @@ export default function ProfilerPanel() {
     {state.snapshots.length > 0 && <div className="profiler-view-controls"><button aria-label="Return to live profiling" aria-pressed={!state.selected} onClick={() => state.select(null)}>Live</button><select aria-label="Profiler view" value={state.selected ?? "live"} onChange={e => state.select(e.target.value === "live" ? null : e.target.value)}>
       <option value="live">Current session{state.profile?.active ? " · Live" : " · Stopped"}</option>{state.snapshots.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
     </select></div>}
-    {p?.reason.startsWith("Source discovery unavailable:") && <div role="status" className="profiler-notice">{p.reason}</div>}
+    {(p?.reason.startsWith("Source discovery unavailable:") || p?.reason.startsWith("Capture storage full")) && <div role="status" className="profiler-notice">{p.reason}</div>}
     {p?.waitingForPlay && !state.selected && <p className="profiler-ready-hint">Press Play in Unity to record prepared Gold benchmarks.</p>}
     {(error || state.error) && <div role="alert" className="profiler-notice">{error || state.error}<button aria-label="Dismiss profiling error" onClick={() => { setError(""); useProfiling.setState({ error: null }); }}>×</button></div>}
     {setup ? <div className="profiler-results profiler-settings">
