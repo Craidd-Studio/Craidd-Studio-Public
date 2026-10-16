@@ -184,7 +184,12 @@ start times. The probes never signalled or connected to them.
    followed the harness's SIGTERM fallback to its own disposable Editor after
    Play, and in both the debugger was already gone. A clean
    `EditorApplication.Exit(0)` in Edit mode (`editor6`) exited with code 0.
-   **Not attributed** to debugging, and not isolated further.
+   **Not attributed** to debugging, and not isolated further. That SIGTERM
+   also left two `AssetImportWorker` children of the `editor5` copy running.
+   The `editor6` before/after snapshot listed them as foreign processes (PIDs
+   314853 and 314954). They were found after the runs, confirmed by project
+   path, and terminated. A future harness should reap the Editor's whole
+   process group.
 
 Batch Editor logs contain Hub `-accessToken` arguments. Raw Unity logs are
 therefore kept out of the repository; the scratch copies were redacted.
