@@ -16,6 +16,18 @@ const countLabel = (count: number, solo = false) => `${count} ${solo ? count ===
 type Tab = "Summary" | "Gold" | "Memory" | "Events";
 type Span = [number, number];
 
+function ProfilerIcon({ kind }: { kind: "snapshot" | "again" | "stop" | "settings" }) {
+  const paths = {
+    snapshot: "M3 7h4l2-3h6l2 3h4v13H3Z M16 13a4 4 0 1 1-8 0 4 4 0 0 1 8 0Z",
+    again: "M4 4v6h6 M4.8 9a8 8 0 1 1-.3 6",
+    stop: "M5 5h14v14H5Z",
+    settings: "m9 3-.5 3-2 1-3-.5-2 3 2.5 2v2L1.5 16l2 3 3-.5 2 1 .5 3h4l.5-3 2-1 3 .5 2-3-2.5-2.5v-2l2.5-2-2-3-3 .5-2-1L13 3Z M15 13a4 4 0 1 1-8 0 4 4 0 0 1 8 0Z",
+  };
+  // Presentation attributes work under the embedded app's CSP and do not
+  // depend on Monaco injecting a codicon stylesheet or loading an icon font.
+  return <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 26" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d={paths[kind]} /></svg>;
+}
+
 function Timeline({ label, samples, values, color, format, domain, selection, onSelect }: {
   label: string; samples: ProfileSample[]; values: number[]; color: string;
   format: (n: number) => string; domain: Span; selection: Span | null; onSelect: (span: Span) => void;
@@ -117,11 +129,11 @@ export default function ProfilerPanel() {
     <div className="profiler-toolbar" role="toolbar" aria-label="Profiling controls">
       <button onClick={() => window.dispatchEvent(new Event("craidd:attach-process"))}>Attach…</button>
       <span className="profiler-separator" />
-      <button title="Take snapshot of current session — saves RSS and recorded allocation cohorts, not a heap dump" aria-label="Take memory snapshot" disabled={!state.profile?.samples.length} onClick={takeSnapshot}><span className="codicon codicon-device-camera" aria-hidden="true" /></button>
-      <button title="Snapshot and record again" aria-label="Snapshot and record again" disabled={!state.profile?.active || state.profile?.waitingForPlay} onClick={() => { state.snapshot(); state.select(null); void state.again(); }}><span className="codicon codicon-debug-restart" aria-hidden="true" /></button>
-      <button title="Stop profiling; leave process running" aria-label="Stop profiling" disabled={!state.profile?.active} onClick={() => void state.stop().catch(fail)}><span className="codicon codicon-debug-stop" aria-hidden="true" /></button>
+      <button title="Take snapshot of current session — saves RSS and recorded allocation cohorts, not a heap dump" aria-label="Take memory snapshot" disabled={!state.profile?.samples.length} onClick={takeSnapshot}><ProfilerIcon kind="snapshot" /></button>
+      <button title="Snapshot and record again" aria-label="Snapshot and record again" disabled={!state.profile?.active || state.profile?.waitingForPlay} onClick={() => { state.snapshot(); state.select(null); void state.again(); }}><ProfilerIcon kind="again" /></button>
+      <button title="Stop profiling; leave process running" aria-label="Stop profiling" disabled={!state.profile?.active} onClick={() => void state.stop().catch(fail)}><ProfilerIcon kind="stop" /></button>
       <span className="profiler-toolbar-space" />
-      <button title="Profiling settings and source markers" aria-label="Profiling settings" aria-expanded={setup} onClick={() => setSetup(!setup)}><span className="codicon codicon-gear" aria-hidden="true" /></button>
+      <button title="Profiling settings and source markers" aria-label="Profiling settings" aria-expanded={setup} onClick={() => setSetup(!setup)}><ProfilerIcon kind="settings" /></button>
     </div>
     <div className="profiler-target" title={p ? `${p.name} · PID ${p.target.pid} · start ${p.target.birth}` : "Attach to a process, or start Debug"}>
       <span className={`profiler-status ${p?.active && !state.selected ? "is-live" : ""}`} />
