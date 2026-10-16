@@ -42,8 +42,8 @@ title text and makes no claim about how the shell displays it.
 - **Isolation:** each run uses a scratch `HOME` (with `CARGO_HOME` and
   `RUSTUP_HOME` passed through). It never reads or writes the user's
   `~/.craidd-studio`. Profiling additionally uses a per-run namespace, with
-  separate Tauri/WebKit driver ports. Solutions open through a seeded `recent.toml`
-  `last_session`, not through the file picker.
+  separate Tauri/WebKit driver ports. Solutions open through the application workspace-window command, not the
+  native file picker.
 - **Labs:** scenarios open the existing `workspaces/*.cln` labs (MT Lab,
   Polyglot Lab, the LDI labs) in place. They write nothing inside the labs
   except build output that the labs already ignore.
@@ -113,6 +113,9 @@ state comes from the running copy and collector; IPC mocks are not substituted.
 
 New Profiler cases use scratch HOME/config/cache/data, explicit runtime
 namespaces, unique intermediary/native ports and app-specific process checks.
+Drivers have private process groups. Recovery retires the dead driver before
+launching its replacement, and cleanup signals only that group. Unity Editors
+are independently spawned copies and never members of the Craidd driver group.
 The existing exit scenario was adapted to verify only its own host, rather
 than requiring every `craidd-studio` process on the user's desktop to disappear.
 The former synthetic Profiler fixture remains a distinct presentation check.

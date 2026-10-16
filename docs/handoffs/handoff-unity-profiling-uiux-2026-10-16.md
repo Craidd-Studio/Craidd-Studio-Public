@@ -2,7 +2,12 @@
 
 **Roadmap track:** Phase 3.x / 3.5, usable native Unity attach and profiling.
 
-**Status:** Prepared on 16 October 2026 for the user-requested Opus 5.5 review.
+**Status:** Historical brief prepared on 16 October 2026. The user later
+supplied an independent Claude Opus 5.5 review, followed by the
+[repair and runtime report](../bugs/16-10-2026/unity-profiling-final-report.md).
+The following execution constraints describe the original handoff session.
+
+Prepared on 16 October 2026 for the user-requested Opus 5.5 review.
 Execution pending. The locally bundled Claude Code reports `loggedIn: false`;
 no Opus model invocation or response has been obtained. Availability of the
 requested model has not been verified. Do not silently substitute a reviewer.
@@ -90,5 +95,5 @@ or GPU support from this native fixture.
 
 ---
 
-*Last updated: Phase 3.x / 3.5, 16 October 2026. Author(s): ShinkuKira21.*
+*Last updated: Phase 3.x / 3.5, 17 October 2026. Author(s): ShinkuKira21.*
 *This document is a plan.*

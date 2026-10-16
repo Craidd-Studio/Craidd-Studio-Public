@@ -2,7 +2,10 @@
 
 **Roadmap track:** Phase 3.x / 3.5, usable native Unity profiling.
 
-**Status:** Work in progress, 16 October 2026. Continuation of `d00d19d`.
+**Status:** Repairs completed with scoped evidence, 17 October 2026. Continuation
+of `d00d19d`. See the [final report](unity-profiling-final-report.md) and
+[checklist](../../uiux/unity-profiling-harness-checklist.md) for proved results
+and remaining clauses; the broader master gate stays open.
 
 The user supplied an independent Claude Opus 5.5 review after the initial
 local report. Its runtime findings confirm the embedded CSP style failures,
@@ -28,5 +31,5 @@ from the font-independent SVG control fix. No CSP change is approved or applied.
 
 ---
 
-*Last updated: Phase 3.x / 3.5, 16 October 2026. Author: ShinkuKira21.*
+*Last updated: Phase 3.x / 3.5, 17 October 2026. Author: ShinkuKira21.*
 *This document is a record.*

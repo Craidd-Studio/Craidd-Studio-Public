@@ -1,7 +1,7 @@
 # Unity, attach and profiling design collection
 
 **Roadmap track:** Phase 3.x attach/LDI and Phase 3.5 profiling proposals.
-**Status:** Design navigation and qualification boundaries, 14 October 2026.
+**Status:** Design navigation and qualification boundaries, 17 October 2026.
 
 ## Reading order
 
@@ -32,12 +32,12 @@ native driver, if supported, is a distinct owned process with a distinct heap.
 
 ## Continuing this branch
 
-[Unity profiling's UI/UX harness checklist](../uiux/unity-profiling-harness-checklist.md)
-is the open usability gate. Its [initial findings](../bugs/16-10-2026/unity-profiling-uiux-report.md)
-record the blank desktop toolbar, silent memory test action and missing
-branch-local real-app harness. The [Opus review handoff](../handoffs/handoff-unity-profiling-uiux-2026-10-16.md)
-specifies repairs, evidence and the required final report; that external review
-has not run.
+The [repair report](../bugs/16-10-2026/unity-profiling-final-report.md) records
+real Tauri/disposable Unity acceptance, fixes and remaining limits. The
+[UI/UX harness checklist](../uiux/unity-profiling-harness-checklist.md) retains
+unproved clauses as open. The [initial findings](../bugs/16-10-2026/unity-profiling-uiux-report.md)
+and [Opus review handoff](../handoffs/handoff-unity-profiling-uiux-2026-10-16.md)
+are historical; the user subsequently supplied the independent review.
 
 [The design handoff](../handoffs/handoff-unity-profiling-2026-10-14.md) records
 the agreed UX, open provider decisions and the first implementation proof.
@@ -46,5 +46,5 @@ establish runtime support.
 
 ---
 
-*Last updated: Phase 3.x / 3.5, 16 October 2026. Author(s): ShinkuKira21.*
+*Last updated: Phase 3.x / 3.5, 17 October 2026. Author(s): ShinkuKira21.*
 *This document is a record.*

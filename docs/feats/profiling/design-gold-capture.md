@@ -139,12 +139,23 @@ unobserved pauses. A linked participant can still run while another is held.
 Unity may already be open or playing when Craidd starts. Explicit target
 selection publishes a private per-process-incarnation rendezvous for prepared
 native source providers. The provider discovers and reconnects without a launch
-environment variable. An unambiguous matching Editor can be preselected in
+environment variable. Discovery uses a private XDG runtime directory (HOME
+cache fallback), scoped by HOME or an explicit shared test namespace; routes
+include the target PID and start identity. Dead-host routes/sockets are removed
+by a live provider or the next host startup in that scope. A small lock file
+and namespace directory remain intentionally. An unambiguous matching Editor can be preselected in
 Attach from its executable, project argument and Unity version declaration;
 preselection does not attach a debugger. No managed adapter support is inferred.
 
 An Editor context remains armed between Play runs. Verified Play end closes
 captures and preserves results; the next source start belongs to a fresh batch.
+Native providers repeat the current Play generation and playing/idle state on
+every event and a periodic heartbeat. A missed single Play-end event cannot
+strand the context; a new generation closes old captures and opens a new batch.
+A disconnected stream closes open results as incomplete, clears pending Solo
+state, and permits a fresh segment on reconnection. Late frees keep their
+original cohort ownership. Sequence gaps are coverage loss, separately counted.
+
 Explicit Stop/close disarms routing and cannot automatically rearm later. A
 player's application end finishes its context. Target exit/PID reuse invalidates
 the selection. Old provider binaries need rebuilding/reloading once to gain
@@ -233,7 +244,10 @@ qualification. A missing collector produces no invented chart.
 These are result controls; neither starts the program or replaces automatic
 arming. **Snapshot** preserves an immutable view of current observations while
 Live continues. Open intervals in that view are partial, with an as-of time;
-later data cannot rewrite the snapshot. This is not a solo point marker.
+later data cannot rewrite the snapshot. Saving keeps Live selected; reviewing
+a saved snapshot is explicit, with a visible Live control to return. If a
+reviewed snapshot ages out of the eight-view bound, return to Live. This is not
+a solo point marker.
 
 **Record again** preserves the previous batch and starts a fresh measurement
 batch without restarting the target or altering user counters. Already-open
@@ -242,10 +256,14 @@ new batch. If the solo is open, split its recording into labelled batch
 segments at the boundary, without pretending the solo source line was hit
 again. Events completing late retain their original batch/capture identity.
 
-Storage is bounded by count/size; overflow, dropped events and truncation are
-visible. Explicitly pinned/exported results need defined retention. The final
-storage format and numerical limits are open; indefinite runs cannot imply
-unbounded memory use by the IDE.
+The current native collector retains at most 128 ordinary completed hits per
+marker, 2,000 total captures and 2,400 process samples. Solo segments, open
+captures and cohorts with live allocations are pinned; a hot range cannot evict
+them. When all slots are pinned, admission fails visibly and Record again
+keeps the current recording intact. Pinned history is still bounded. Sample
+aging and capture eviction are expected rolling retention; source rejections,
+sequence gaps and disconnects are separate coverage counters. Eight snapshots
+are retained in memory. Persistent export/storage remains future work.
 
 ## Acceptance before implementation is called complete
 
@@ -271,5 +289,5 @@ unbounded memory use by the IDE.
 
 ---
 
-*Last updated: Phase 3.5, 16 October 2026. Author(s): ShinkuKira21.*
+*Last updated: Phase 3.5, 17 October 2026. Author(s): ShinkuKira21.*
 *This document is a design.*

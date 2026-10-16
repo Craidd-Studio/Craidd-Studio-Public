@@ -17,9 +17,10 @@ native attach, future Unity C# / LDI qualification, non-stopping Gold capture
 and runtime lifecycle. Start with the [Gold capture contract](feats/profiling/design-gold-capture.md)
 for the single solo, paired ranges and Profiler result rules. The experimental
 implementation includes process gauges and prepared native hooks; complete
-Unity usability acceptance remains open in the
-[UI/UX harness checklist](uiux/unity-profiling-harness-checklist.md), with
-[initial findings](bugs/16-10-2026/unity-profiling-uiux-report.md) and an
+Unity fixture qualification and remaining usability gates are recorded in the
+[UI/UX harness checklist](uiux/unity-profiling-harness-checklist.md) and
+[repair report](bugs/16-10-2026/unity-profiling-final-report.md), following the
+[initial findings](bugs/16-10-2026/unity-profiling-uiux-report.md) and
 [Opus review handoff](handoffs/handoff-unity-profiling-uiux-2026-10-16.md).
 
 The rest of the docs are grouped by purpose:
@@ -43,5 +44,5 @@ The [Docs viewer design collection](feats/editor/docs-viewer/README.md) records 
 
 ---
 
-*Last updated: Phase 3.x / 3.5, 16 October 2026. Author(s): ShinkuKira21.*
+*Last updated: Phase 3.x / 3.5, 17 October 2026. Author(s): ShinkuKira21.*
 *This document is a record.*

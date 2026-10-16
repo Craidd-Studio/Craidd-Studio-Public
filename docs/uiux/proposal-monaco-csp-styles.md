@@ -2,7 +2,7 @@
 
 **Roadmap track:** Phase 3.x editor reliability and Phase 3.5 profiling UI.
 
-**Status:** Proposal only, 16 October 2026. User approval required before any
+**Status:** Proposal only, updated 17 October 2026. User approval required before any
 CSP configuration change. `src-tauri/tauri.conf.json` remains unchanged.
 
 The independent Opus 5.5 review supplied by the user reports runtime
@@ -10,7 +10,10 @@ The independent Opus 5.5 review supplied by the user reports runtime
 sources to the style policy, so the existing `'unsafe-inline'` no longer
 authorizes Monaco's dynamically created style elements. This affects syntax
 colours and icon styles, including when an editor is open. The browser fixture
-does not exercise the embedded policy. Profiler controls now use inline SVG
+does not exercise the embedded policy. The fresh embedded harness run also
+records inline `style-src-elem`/`style-src-attr` violations; see the
+[repair report](../bugs/16-10-2026/unity-profiling-final-report.md).
+Profiler controls now use inline SVG
 presentation attributes and require no font or runtime stylesheet.
 
 ## Proposed option, not applied
@@ -53,5 +56,5 @@ and the installed `@tauri-apps/cli/config.schema.json` description of
 
 ---
 
-*Last updated: Phase 3.x / 3.5, 16 October 2026. Author: ShinkuKira21.*
+*Last updated: Phase 3.x / 3.5, 17 October 2026. Author: ShinkuKira21.*
 *This document is a plan.*

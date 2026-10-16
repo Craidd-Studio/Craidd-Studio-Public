@@ -39,7 +39,9 @@ are copied from tracked fixture sources into `/tmp/cui-*`; no original
 Library, plugin binary, user settings or untracked files are copied. A fresh
 native plugin is built there. The user's live Editor is never selected,
 attached, clicked, restarted or used for commands. The intentional SIGKILL
-requires namespace, process birth, executable and driver-ancestry proof.
+requires namespace, process birth, executable and driver-ancestry proof. Each
+driver uses its own process group; the dead driver is retired before creating
+a replacement, and group cleanup covers only that harness instance.
 
 Evidence goes to ignored `test-results/ui/<timestamp>/<scenario>/`: screenshots,
 record.json, native build output, source/plugin hashes, Unity logs and file
