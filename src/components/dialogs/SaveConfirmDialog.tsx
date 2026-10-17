@@ -1,3 +1,4 @@
+import { isFileTab } from "../../types/project";
 import { useSolution } from "../../store/solutionStore";
 import { requestFileSave } from "../../lib/fileActions";
 
@@ -10,7 +11,7 @@ export default function SaveConfirmDialog({
 }) {
   const tabs = useSolution((s) => s.tabs);
   const discardTab = useSolution((s) => s.discardTab);
-  const tab = tabs.find((t) => t.fileId === fileId);
+  const tab = tabs.filter(isFileTab).find((t) => t.fileId === fileId);
 
   if (!tab) {
     onClose();

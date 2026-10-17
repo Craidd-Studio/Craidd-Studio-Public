@@ -2,7 +2,7 @@
 
 **Roadmap track:** Phase 3.5 profiling.
 
-**Status:** Reconciled design contract, source-reviewed 17 October 2026; ready for the staged implementation in section 10. Workspace modes are not implemented or desktop-verified. Linked viewing remains gated on backend routing, shared retention and lifecycle prerequisites; Duplicate Window does not supply them today.
+**Status:** Reconciled design contract, 17 October 2026. Milestone A is source-implemented with build, regression and automated native/Tauri evidence in the [milestone A record](../../handoffs/handoff-phase-3-5-profiler-workspace-a.md); human desktop acceptance remains separate. Linked viewing (B/C) is not implemented and remains gated on backend routing, shared retention and lifecycle prerequisites.
 
 **Companions:** [Profiler scopes](design-profiler-scopes.md) governs inspection and snapshots; [Gold capture](design-gold-capture.md) and [attached profiling](design-attach-profiling.md) govern capture identity and target ownership. Use the dated [implementation record](implementation-attach-gold.md) for current capabilities. Older layout-only, automatic Solo-focus and snapshot wording in companion documents is historical where superseded by that record and the scope contract.
 
@@ -12,9 +12,9 @@ Present the existing Profiler in the right sidebar or as a normal, first-class e
 
 **Design principle:** Preserve the full IDE shell in every mode. Reuse the existing tab strip, shell, window registry, startup flow and collector. Change the Profiler host and derive temporary right-panel suppression solely from the active primary editor tab, never keyboard focus.
 
-## 2. Verified baseline and implementation seams
+## 2. Preimplementation baseline and implementation seams
 
-Paths below are repository-relative source references, not runtime acceptance evidence.
+This table records the source baseline before milestone A; it is not a description of its new typed-tab and host-routing code. Paths are repository-relative references, not runtime acceptance evidence.
 
 | Area | Current implementation and consequence |
 | --- | --- |
@@ -188,6 +188,8 @@ These are acceptance gates, not checked evidence. Source review and automated fi
 
 ## 10. Milestones and readiness
 
+**Current delivery decision:** Milestone A is the intended current UX. For another IDE window, use ordinary Duplicate Window and open its Profiling tab; no dedicated Profiler new-window action is required. This does not share the original window's ongoing capture. B/C below remain a deferred shared-session proposal, not required follow-on implementation or acceptance gates for A.
+
 ### A. Editor Panel — independently deliverable
 
 Extend the typed primary-tab model and existing editor boundary; retain `AppShell`, file behaviour and side editor. Rehost the existing Profiler with shared per-window inspection state. Implement primary-selection-only suppression, disabled panel toggle, shell-level show routing and nonredundant actions. Keep existing local collector ownership and frontend snapshot retention; no cross-window session binding, backend snapshot migration or new collector is needed for this milestone.
@@ -206,7 +208,7 @@ Prove late join, concurrent retention, all-eight-protected capacity, owner/viewe
 
 Use existing normal visible-window creation, bootstrap, identity, tray, focus and reuse paths. Add explicit Profiler startup/binding intent; do not adopt the origin's viewed-window context or use the ordinary duplicate hidden fallback. Verify a full editable IDE with independently navigable Profiler inspection, explicit local-session switching, no duplicate collector and correct close/Hide/Show behaviour in real multi-window Tauri runs. Keep ordinary Duplicate Window semantics and all three presentations intact.
 
-**Readiness verdict:** Ready for staged implementation; no unresolved UX or architecture choice blocks A. Backend work in B and end-to-end evidence in C remain blockers to enabling Linked Window, not reasons to replace the existing architecture. The acceptance list spans these milestones; A alone cannot mark linked requirements complete. This reconciliation changes documentation only and authorises no feature implementation.
+**Readiness verdict:** Ready for staged implementation; no unresolved UX or architecture choice blocks A. Backend work in B and end-to-end evidence in C remain blockers to enabling Linked Window, not reasons to replace the existing architecture. The acceptance list spans these milestones; A alone cannot mark linked requirements complete. The original reconciliation was documentation-only; subsequent milestone A implementation and its evidence are recorded separately in the linked record.
 
 **Core rule:** One bound Profiler capture; three places to view it. Independent process contexts stay independent. The normal IDE remains available throughout.
 

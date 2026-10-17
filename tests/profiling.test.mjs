@@ -13,7 +13,7 @@ const g=globalThis.__profileTest;g.calls.push({command,args});if(command==='prof
 const event=url(`export async function listen(name,cb){globalThis.__profileTest.handlers.set(name,cb);return()=>globalThis.__profileTest.handlers.delete(name);}`);
 async function load(file,replacements){let {outputText:s}=ts.transpileModule(await fs.readFile(new URL(file,import.meta.url),'utf8'),{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ESNext,jsx:ts.JsxEmit.ReactJSX}});for(const [name,value]of Object.entries({...replacements,react:import.meta.resolve('react'),'react/jsx-runtime':import.meta.resolve('react/jsx-runtime')}))s=s.replaceAll(JSON.stringify(name),JSON.stringify(value));return url(s);}
 const storeURL=await load('../src/store/profilingStore.ts',{zustand,'@tauri-apps/api/core':core,'@tauri-apps/api/event':event});
-const {useProfiling,listenToProfiling,receiveProfile,snapshotIncludesRecording,canTakeSnapshot}=await import(storeURL);
+const {useProfiling,listenToProfiling,receiveProfile,snapshotIncludesRecording,canTakeSnapshot,initialProfilerPresentation}=await import(storeURL);
 const goldURL=await load('../src/store/goldStore.ts',{zustand,'@tauri-apps/api/core':core,'@tauri-apps/api/event':event});
 const solution=url(`import{create}from${JSON.stringify(zustand)};export const useSolution=create(()=>({activeFileId:null,tabs:[]}));`);
 // SSR uses Zustand's creation-time snapshot; project the real store's current
@@ -21,10 +21,12 @@ const solution=url(`import{create}from${JSON.stringify(zustand)};export const us
 const projectedStore=url(`import{useProfiling as store}from${JSON.stringify(storeURL)};export const useProfiling=selector=>selector?selector(store.getState()):store.getState();useProfiling.getState=store.getState;export {canTakeSnapshot,snapshotIncludesRecording} from ${JSON.stringify(storeURL)};`);
 const selectionURL=await load('../src/lib/profilingSelection.ts',{});
 const {goldBenchmarks,resolveGoldBenchmark,resolveProfileScope,recordingStatus,timelineEntries}=await import(selectionURL);
-const componentURL=await load('../src/components/panels/ProfilerPanel.tsx',{'../../store/profilingStore':projectedStore,'../../store/goldStore':goldURL,'../../store/solutionStore':solution,'../../lib/profilingSelection':selectionURL});
+const projectTypes=await load("../src/types/project.ts",{});
+const workspace=url(`export const openProfilerWorkspace=()=>{};`);
+const componentURL=await load('../src/components/panels/ProfilerPanel.tsx',{'../../types/project':projectTypes,'../../lib/profilerWorkspace':workspace,'../../store/profilingStore':projectedStore,'../../store/goldStore':goldURL,'../../store/solutionStore':solution,'../../lib/profilingSelection':selectionURL});
 const Panel=(await import(componentURL)).default;
 const profile=()=>({id:'process-10-100',target:{pid:10,birth:100},name:'Native probe',active:true,reason:'',batch:1,provider:true,dropped:0,pauses:[],samples:[{atMs:0,cpuMs:1,residentBytes:4096,virtualBytes:8192,threadCount:3,state:'R'},{atMs:250,cpuMs:11,residentBytes:8192,virtualBytes:16384,threadCount:3,state:'R'}],captures:[{id:'r:1:1',marker:'r',name:'Scalar work',solo:false,thread:20,batch:1,startMs:3,endMs:5,cpuMs:.4,status:'Complete',allocatedBytes:1024,freedBytes:0,liveBytes:1024,allocationCount:1}]});
-beforeEach(()=>{g.calls=[];g.handlers.clear();g.restore=null;useProfiling.setState({profile:null,snapshots:[],selected:null,recording:null,error:null,benchmarkBySession:{}});});
+beforeEach(()=>{g.calls=[];g.handlers.clear();g.restore=null;useProfiling.setState({profile:null,snapshots:[],selected:null,recording:null,error:null,benchmarkBySession:{},presentation:structuredClone(initialProfilerPresentation)});});
 test('Snapshot preserves as-of allocations and rows while live results change',()=>{const p=profile();useProfiling.setState({profile:p});useProfiling.getState().snapshot();assert.equal(useProfiling.getState().selected,null,"taking a snapshot keeps Live selected");const copy=useProfiling.getState().snapshots[0].profile;p.captures[0].liveBytes=0;p.captures.push({...p.captures[0],id:'r:1:2'});assert.equal(copy.captures[0].liveBytes,1024);assert.equal(copy.captures.length,1);assert.equal(useProfiling.getState().profile.captures.length,2);});
 test('New process generation archives prior results and listener unsubscribes',async()=>{const off=await listenToProfiling();const emit=p=>g.handlers.get('craidd:profile')({payload:p});emit(profile());emit({...profile(),id:'process-10-101',target:{pid:10,birth:101}});assert.equal(useProfiling.getState().snapshots.length,1);assert.equal(useProfiling.getState().snapshots[0].profile.target.birth,100);assert.equal(useProfiling.getState().profile.target.birth,101);off();assert.equal(g.handlers.size,0);});
 test('Record again and Stop address profiling without a debugger control request',async()=>{useProfiling.setState({profile:profile()});await useProfiling.getState().again();await useProfiling.getState().stop();assert.deepEqual(g.calls.map(c=>c.command),['profile_record_again','stop_profiling']);});
@@ -181,4 +183,27 @@ test('Snapshot availability depends on live process rather than viewed recording
 test('Missing open recording has an unknown End and duration rather than a fabricated zero',()=>{
  const p=scopedProfile(),r=ref(p);p.captures=[];useProfiling.setState({profile:p,recording:r});const html=renderToStaticMarkup(createElement(Panel));
  assert.ok(html.includes('End unavailable'));assert.ok(html.includes('Recording duration</dt><dd>—'));assert.ok(!html.includes('Recording duration</dt><dd>0.00 ms'));
+});
+
+test('Expanded Gold presents retained hits and existing details without changing shared scope',()=>{
+ const p=scopedProfile();useProfiling.setState({profile:p,presentation:{...initialProfilerPresentation,tab:'Gold',hit:{profileId:p.id,snapshotId:null,id:p.captures[0].id}}});
+ const html=renderToStaticMarkup(createElement(Panel,{expanded:true}));
+ assert.ok(html.includes('Expanded Profiler'));assert.ok(html.includes('profiler-summary-row'));
+ assert.ok(html.includes('aria-label="Gold hits"'));assert.ok(html.includes('Selected Gold hit details'));
+ assert.ok(html.includes('Focus recording'));assert.ok(!html.includes('Open in Editor Panel'));
+ assert.ok(!html.includes('Open in Linked Window'));assert.equal(useProfiling.getState().recording,null);
+ assert.equal(useProfiling.getState().presentation.hit.id,p.captures[0].id);
+ const compact=renderToStaticMarkup(createElement(Panel));
+ assert.ok(compact.includes('Open in Editor Panel'));assert.equal(useProfiling.getState().presentation.tab,'Gold');
+});
+
+test('Presentations keep graph range, filters, result tab and expansion state independently of snapshot data',()=>{
+ const p=scopedProfile();useProfiling.setState({profile:p});useProfiling.getState().snapshot();
+ const saved=useProfiling.getState().snapshots[0];useProfiling.getState().select(saved.id);
+ const presentation={...initialProfilerPresentation,tab:'Memory',thread:'20',batch:'1',range:{id:`${saved.id}:session`,span:[250,750]},expanded:{saved:true},scrollTop:50};
+ useProfiling.getState().setPresentation(presentation);
+ renderToStaticMarkup(createElement(Panel,{expanded:true}));renderToStaticMarkup(createElement(Panel));
+ assert.deepEqual(useProfiling.getState().presentation,presentation);
+ assert.equal(useProfiling.getState().selected,saved.id);
+ assert.equal(useProfiling.getState().snapshots[0],saved);
 });

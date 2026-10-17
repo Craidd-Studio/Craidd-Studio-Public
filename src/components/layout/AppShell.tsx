@@ -1,3 +1,5 @@
+import { PROFILER_TAB_ID, isFileTab } from "../../types/project";
+import { showProfiler } from "../../lib/profilerWorkspace";
 import { useEffect, useState } from "react";
 import MenuBar from "../menu/MenuBar";
 import AttachProcessDialog from "../dialogs/AttachProcessDialog";
@@ -100,8 +102,9 @@ export default function AppShell({ startProjectDialog = false, onCloseStartProje
   useEffect(() => { void useGold.getState().load(clnPath).catch(console.error); }, [clnPath]);
   useEffect(() => {
     const open = () => setAttachOpen(true);
+    window.addEventListener("craidd:show-profiler", showProfiler);
     window.addEventListener("craidd:attach-process", open);
-    return () => window.removeEventListener("craidd:attach-process", open);
+    return () => { window.removeEventListener("craidd:attach-process", open); window.removeEventListener("craidd:show-profiler", showProfiler); };
   }, []);
 
   useEffect(() => {
@@ -177,8 +180,8 @@ export default function AppShell({ startProjectDialog = false, onCloseStartProje
     };
     const unlistenSolution = useSolution.subscribe((state, previous) => {
       if (state.activeFileId !== previous.activeFileId || state.tabs !== previous.tabs) {
-        const oldTab = previous.tabs.find((item) => item.fileId === previous.activeFileId);
-        const newTab = state.tabs.find((item) => item.fileId === state.activeFileId);
+        const oldTab = previous.tabs.filter(isFileTab).find((item) => item.fileId === previous.activeFileId);
+        const newTab = state.tabs.filter(isFileTab).find((item) => item.fileId === state.activeFileId);
         const typing = state.activeFileId === previous.activeFileId && oldTab?.content !== newTab?.content;
         publish(typing ? 600 : 80);
       }
@@ -261,6 +264,7 @@ export default function AppShell({ startProjectDialog = false, onCloseStartProje
   const sidebarVisible = usePreferences((s) => s.sidebarVisible);
   const bottomPanelVisible = usePreferences((s) => s.bottomPanelVisible);
   const rightPanelVisible = usePreferences((s) => s.rightPanelVisible);
+  const profilerActive = useSolution((s) => s.activeTabId === PROFILER_TAB_ID);
 
   const sidebarWidth = useLayout((s) => s.sidebarWidth);
   const setSidebarWidth = useLayout((s) => s.setSidebarWidth);
@@ -326,7 +330,7 @@ export default function AppShell({ startProjectDialog = false, onCloseStartProje
           )}
         </div>
 
-        {rightPanelVisible && (
+        {rightPanelVisible && !profilerActive && (
           <>
             <ResizeHandle orientation="vertical" onDrag={(delta) => setRightPanelWidth(rightPanelWidth - delta)} />
             <div style={{ width: rightPanelWidth }} className="h-full shrink-0"><RightPanel /></div>

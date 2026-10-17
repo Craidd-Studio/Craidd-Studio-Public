@@ -56,7 +56,7 @@ export default function SearchPanel() {
     };
   }, [local, run]);
 
-  const openPaths = useMemo(() => new Set(tabs.map((t) => t.fileId)), [tabs]);
+  const openPaths = useMemo(() => new Set(tabs.filter((t) => t.kind === "file").map((t) => t.fileId)), [tabs]);
 
   const solutionProjectRoots = useMemo(() => {
     if (!solution || !rootPath) return [] as string[];
@@ -111,7 +111,7 @@ export default function SearchPanel() {
   const hasQuery = local.trim().length > 0;
 
   const onOpenMatch = async (abs: string, line?: number) => {
-    const tab = tabs.find((t) => t.fileId === abs);
+    const tab = tabs.find((t) => t.kind === "file" && t.fileId === abs);
     if (tab) {
       useSolution.getState().setActiveFile(abs);
     } else {

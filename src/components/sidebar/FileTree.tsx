@@ -100,7 +100,7 @@ export default function FileTree({
     }
     void (async () => {
       await openFile(absPath, node.name);
-      if (hidden && useSolution.getState().tabs.some((tab) => tab.fileId === absPath)) {
+      if (hidden && useSolution.getState().tabs.some((tab) => tab.kind === "file" && tab.fileId === absPath)) {
         // A owns the editable tab; the parked session remembers the file
         // to show again when its window is restored.
         linked.setRemoteEditing(true);

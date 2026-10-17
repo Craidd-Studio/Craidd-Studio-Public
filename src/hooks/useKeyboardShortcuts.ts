@@ -1,3 +1,4 @@
+import { isFileTab } from "../types/project";
 import { useEffect } from "react";
 import { usePreferences } from "../store/preferencesStore";
 import { useSolution } from "../store/solutionStore";
@@ -62,7 +63,7 @@ export function useKeyboardShortcuts(
           return;
         case "saveAs":
           if (!canEditViewed()) return;
-          try { await saveActiveFileAs(); } catch (error) {
+          try { await saveActiveFileAs(useSplit.getState().sideFocused ? useSplit.getState().sideFileId : useSolution.getState().activeFileId); } catch (error) {
             console.error("[craidd] Save As failed:", error);
             report("Save As", error);
           }
@@ -91,8 +92,9 @@ export function useKeyboardShortcuts(
           if (useSplit.getState().sideFocused && useSplit.getState().sideFileId) { useSplit.getState().closeSide(); return; }
           // A dirty or deleted tab goes through the pane's close prompt.
           const s = useSolution.getState();
-          if (!s.activeFileId) return;
-          const tab = s.tabs.find((t) => t.fileId === s.activeFileId);
+          if (!s.activeTabId) return;
+          if (!s.activeFileId) { s.closeTab(s.activeTabId); return; }
+          const tab = s.tabs.filter(isFileTab).find((t) => t.fileId === s.activeFileId);
           if (tab && (tab.dirty || tab.diskState === "deleted")) {
             window.dispatchEvent(new CustomEvent("craidd:request-close", { detail: s.activeFileId }));
           } else {

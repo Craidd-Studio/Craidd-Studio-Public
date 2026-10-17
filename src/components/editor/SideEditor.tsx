@@ -1,5 +1,5 @@
+import { isFileTab } from "../../types/project";
 import Editor from "@monaco-editor/react";
-import type { Monaco } from "@monaco-editor/react";
 import type { editor } from "monaco-editor";
 import { useEffect, useRef } from "react";
 import { useSolution } from "../../store/solutionStore";
@@ -16,30 +16,25 @@ import { CRAIDD_DARK_THEME, defineCraiddDarkTheme } from "../../lib/editorThemes
  */
 export default function SideEditor() {
   const fileId = useSplit((s) => s.sideFileId);
-  const tab = useSolution((s) => s.tabs.find((item) => item.fileId === fileId));
+  const tab = useSolution((s) => s.tabs.filter(isFileTab).find((item) => item.fileId === fileId));
   const activeFileId = useSolution((s) => s.activeFileId);
   const updateTabContent = useSolution((s) => s.updateTabContent);
   const fontSize = usePreferences((s) => s.fontSize);
   const tabSize = usePreferences((s) => s.tabSize);
   const wordWrap = usePreferences((s) => s.wordWrap);
   const theme = usePreferences((s) => s.theme);
-  const monacoRef = useRef<Monaco | null>(null);
   const instanceRef = useRef<editor.IStandaloneCodeEditor | null>(null);
 
   // The tab was closed: close the group.
   useEffect(() => { if (fileId && !tab) useSplit.getState().closeSide(); }, [fileId, tab]);
 
-  // The side editor keeps its model on unmount (the main editor may share it).
-  // Dispose it once no editor shows the file, so a later reopen reads the tab content.
-  useEffect(() => () => {
-    if (!fileId || useSolution.getState().activeFileId === fileId) return;
-    const monaco = monacoRef.current;
-    monaco?.editor.getModel(monaco.Uri.parse(fileId))?.dispose();
-  }, [fileId]);
-
+  // EditorPane releases models only when their file tab closes. Closing a
+  // split group must keep the open file's undo history, even beside Profiler.
   if (!fileId || !tab) return null;
   const name = fileId.split("/").pop() ?? fileId;
-  return <div className="flex-1 min-w-0 min-h-0 flex flex-col border-l border-zinc-800">
+  return <div role="group" aria-label="Side editor group"
+    onFocusCapture={() => { useSplit.getState().setSideFocused(true); if (instanceRef.current) setActiveEditor(instanceRef.current, () => fileId); }}
+    className="flex-1 min-w-0 min-h-0 flex flex-col border-l border-zinc-800">
     <div className="h-9 shrink-0 flex items-center gap-2 px-3 bg-zinc-900 border-b border-zinc-800 text-xs">
       <span className="truncate text-zinc-200" title={fileId}>{name}</span>
       {tab.dirty && <span className="text-zinc-400" title="Unsaved changes">●</span>}
@@ -57,9 +52,9 @@ export default function SideEditor() {
         theme={theme === "craidd-dark" ? CRAIDD_DARK_THEME : theme}
         beforeMount={defineCraiddDarkTheme}
         onChange={(value) => { if (typeof value === "string") updateTabContent(fileId, value); }}
-        onMount={(instance, monaco) => {
+        onMount={(instance) => {
           instanceRef.current = instance;
-          monacoRef.current = monaco;
+          if (instance.hasTextFocus()) { useSplit.getState().setSideFocused(true); setActiveEditor(instance, () => fileId); }
           instance.onDidFocusEditorText(() => { useSplit.getState().setSideFocused(true); setActiveEditor(instance, () => fileId); });
           instance.onDidDispose(() => { if (getActiveEditor() === instance) setActiveEditor(null); });
         }}

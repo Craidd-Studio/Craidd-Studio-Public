@@ -1,3 +1,4 @@
+import { isFileTab } from "../types/project";
 import { create } from "zustand";
 import type { CraiddSolution } from "../types/project";
 import { choicesForConfig, resolveSpec, selectConfiguration, useBuild } from "./buildStore";
@@ -141,7 +142,7 @@ export async function publishLinkedWindow(solution: CraiddSolution | null, clnPa
   const project = solution?.projects.find((candidate) => candidate.path === selected?.target);
   const currentRevision = ++revision;
   const solutionState = useSolution.getState();
-  const activeTab = solutionState.tabs.find((tab) => tab.fileId === solutionState.activeFileId);
+  const activeTab = solutionState.tabs.filter(isFileTab).find((tab) => tab.fileId === solutionState.activeFileId);
   const specs: Record<string, NonNullable<ReturnType<typeof resolveSpec>>> = {};
   if (solution && solutionState.rootPath) {
     for (const action of ["build", "run", "debug"] as const) {
@@ -170,9 +171,9 @@ export async function publishLinkedWindow(solution: CraiddSolution | null, clnPa
     activeFile: activeTab ? { path: activeTab.fileId, name: activeTab.name,
       language: activeTab.monacoLanguage, content: activeTab.content.slice(0, 80_000),
       dirty: activeTab.dirty, truncated: activeTab.content.length > 80_000 } : null,
-    tabs: solutionState.tabs.map((tab) => ({ path: tab.fileId, name: tab.name, dirty: tab.dirty })),
+    tabs: solutionState.tabs.filter(isFileTab).map((tab) => ({ path: tab.fileId, name: tab.name, dirty: tab.dirty })),
     output: (debug.status !== "idle" && debug.status !== "terminated" ? debug.output : build.output).slice(-16_000),
-    dirtyCount: solutionState.tabs.filter((tab) => tab.dirty).length,
+    dirtyCount: solutionState.tabs.filter(isFileTab).filter((tab) => tab.dirty).length,
     debugFrames: debug.frames,
     debugVariables: debug.variables,
     revision: currentRevision,
@@ -274,7 +275,7 @@ export async function listenToLinkedWindows(): Promise<() => void> {
           }
         } catch { /* Stale navigation request. */ }
       }
-      else if (kind === "select_tab" && value && useSolution.getState().tabs.some((tab) => tab.fileId === value)) {
+      else if (kind === "select_tab" && value && useSolution.getState().tabs.some((tab) => tab.kind === "file" && tab.fileId === value)) {
         useSolution.getState().setActiveFile(value);
       }
       else if (kind.startsWith("start_")) {
@@ -294,7 +295,7 @@ export async function listenToLinkedWindows(): Promise<() => void> {
           await publishLinkedWindow(useSolution.getState().solution, useSolution.getState().clnPath);
         } catch (cause) { error = String(cause); }
         await emitTo(replyLabel, "craidd:linked-prepare-result", { requestId, error,
-          dirtyCount: useSolution.getState().tabs.filter((tab) => tab.dirty).length });
+          dirtyCount: useSolution.getState().tabs.filter(isFileTab).filter((tab) => tab.dirty).length });
       })();
     },
   );
@@ -307,7 +308,7 @@ export async function listenToLinkedWindows(): Promise<() => void> {
 }
 
 async function prepareOwnWindow(decision: "save" | "discard"): Promise<void> {
-  const dirty = useSolution.getState().tabs.filter((tab) => tab.dirty);
+  const dirty = useSolution.getState().tabs.filter(isFileTab).filter((tab) => tab.dirty);
   for (const tab of dirty) {
     if (decision === "discard") {
       useSolution.getState().discardTab(tab.fileId);
@@ -318,7 +319,7 @@ async function prepareOwnWindow(decision: "save" | "discard"): Promise<void> {
   }
   if (decision === "save") {
     await useSolution.getState().refreshDiskStates();
-    for (const tab of useSolution.getState().tabs.filter((item) => !item.dirty && item.diskState === "newer")) {
+    for (const tab of useSolution.getState().tabs.filter(isFileTab).filter((item) => !item.dirty && item.diskState === "newer")) {
       await useSolution.getState().reloadTabFromDisk(tab.fileId);
     }
   }
@@ -340,7 +341,7 @@ export async function prepareApplicationWindow(targetLabel: string, solutionPath
     if (useSolution.getState().clnPath !== solutionPath) throw new Error("The solution changed before this window could be prepared");
     if (decision !== "inspect") await prepareOwnWindow(decision);
     await publishLinkedWindow(useSolution.getState().solution, solutionPath);
-    return useSolution.getState().tabs.filter((tab) => tab.dirty).length;
+    return useSolution.getState().tabs.filter(isFileTab).filter((tab) => tab.dirty).length;
   }
   const { emitTo } = await import("@tauri-apps/api/event");
   const { getCurrentWebviewWindow } = await import("@tauri-apps/api/webviewWindow");
