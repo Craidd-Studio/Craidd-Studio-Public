@@ -60,7 +60,7 @@ for (const fps of [60,-1]) test(`disposable Unity profiling via real menu action
   await app.waitFor("retained value rendered before snapshot",async()=>({done:await app.wd.execute("return [...document.querySelectorAll('.profiler-metrics dt')].some(dt=>dt.textContent==='Observed native live'&&dt.nextElementSibling.textContent==='1.00 MiB')")}));
   await click(app,"//button[@aria-label='Take memory snapshot']");
   assert.equal(await app.wd.execute("return document.querySelector('select[aria-label=\"Profiler view\"]').value"),'live',"snapshot keeps Live selected");
-  assert.equal(await app.wd.execute("return document.querySelector('[role=tab][aria-selected=true]').textContent"),'Summary',"snapshot preserves the selected tab");
+  assert.equal(await app.wd.execute("return document.querySelector('.profiler-tabs [role=tab][aria-selected=true]').textContent"),'Summary',"snapshot preserves the selected tab");
   await click(app,"//button[@id='profiler-tab-Memory']");
   await app.waitFor('retained snapshot table',async()=>({done:await app.wd.execute("return document.querySelectorAll('.profiler-table-scroll tbody tr').length===1")}));
   app.record('retained-memory',{unity:allocated,profile:retained});
@@ -156,9 +156,9 @@ for (const fps of [60,-1]) test(`disposable Unity profiling via real menu action
     if(longRun){
       console.log(`${name}: sustained capture passed; continuing past the 2,400-sample window`);
       const aged=await waitProfile(app,"real sample window rolls past ten minutes",p=>p.counters.agedSamples>0,650000);
-      assert.equal(aged.counters.sourceGaps+aged.counters.rejectedEvents+aged.counters.disconnects,0);
-      app.record('long-rolling-history',{unity:await unity.status(),profile:aged});
+      app.record('long-rolling-history',{unity:await unity.status(),profile:aged,renderedFooter:await app.wd.execute("return document.querySelector('.profiler-footer').innerText")});
       await app.screenshot('long-rolling-history');
+      assert.equal(aged.counters.sourceGaps+aged.counters.rejectedEvents+aged.counters.disconnects,0);
     }
   }
   // A rare retained cohort must remain visible after the hot hit history rolls.

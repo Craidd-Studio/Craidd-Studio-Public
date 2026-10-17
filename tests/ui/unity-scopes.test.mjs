@@ -31,7 +31,7 @@ test('unified scopes preserve selected Gold/Solo completion and separate manual 
  await click(app,"//button[normalize-space()='Profile only']");
  await waitProfile(app,'samples before any Gold recording',p=>p.target.pid===pid&&p.provider&&p.captures.length===0&&p.samples.length>=2);
  await click(app,"//button[@aria-label='Take memory snapshot']");
- assert.equal(await app.wd.execute("return document.querySelector('[role=tab][aria-selected=true]').textContent"),'Summary');
+ assert.equal(await app.wd.execute("return document.querySelector('.profiler-tabs [role=tab][aria-selected=true]').textContent"),'Summary');
  assert.equal(await app.wd.execute("return document.querySelector('select[aria-label=\"Profiler view\"]').value"),'live');
  assert.equal(await app.wd.execute("return document.querySelectorAll('optgroup[label=\"Manual snapshots\"] option').length"),1);
  app.record('manual-without-gold',{profile:await get(app)});await app.screenshot('manual-without-gold');
@@ -55,7 +55,7 @@ test('unified scopes preserve selected Gold/Solo completion and separate manual 
  await click(app,`//select[@aria-label='Profiler view']/optgroup/option[@value='${beforeGoldId}']`);await tab(app,'Events');
  await click(app,"//button[@aria-label='Take memory snapshot']");
  assert.equal(await app.wd.execute("return document.querySelector('select[aria-label=\"Profiler view\"]').value"),beforeGoldId);
- assert.equal(await app.wd.execute("return document.querySelector('[role=tab][aria-selected=true]').textContent"),'Events');
+ assert.equal(await app.wd.execute("return document.querySelector('.profiler-tabs [role=tab][aria-selected=true]').textContent"),'Events');
  await click(app,"//button[@aria-label='Return to live profiling']");await chooseMarker(app,'harness.outer');
  const overlapSnapshots=await related(app);assert.equal(overlapSnapshots.length,2);assert.ok(overlapSnapshots.includes(snapshotId));
  await chooseMarker(app,'harness.inner');assert.deepEqual(await related(app),overlapSnapshots);await chooseMarker(app,'harness.outer');
@@ -72,7 +72,7 @@ test('unified scopes preserve selected Gold/Solo completion and separate manual 
  // Completed viewing scope must not acquire a new live snapshot; Solo is still active.
  await click(app,"//button[@aria-label='Take memory snapshot']");assert.deepEqual(await related(app),overlapSnapshots);
  assert.equal(await app.wd.execute("return document.querySelector('[data-recording-id]').getAttribute('data-recording-id')"),outer.id);
- assert.equal(await app.wd.execute("return document.querySelector('[role=tab][aria-selected=true]').textContent"),'Memory');
+ assert.equal(await app.wd.execute("return document.querySelector('.profiler-tabs [role=tab][aria-selected=true]').textContent"),'Memory');
  const ruler=await app.wd.execute("return document.querySelector('.profiler-ruler').innerText");
  assert.ok(ruler.includes((completed.startMs/1000).toFixed(2)+' s'));assert.ok(ruler.includes((completed.endMs/1000).toFixed(2)+' s'));
  const chartLabels=await app.wd.execute("return [...document.querySelectorAll('.profiler-chart svg')].map(s=>s.getAttribute('aria-label'))");
