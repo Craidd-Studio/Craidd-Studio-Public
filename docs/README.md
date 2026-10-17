@@ -28,6 +28,12 @@ The [unified scope contract](feats/profiling/design-profiler-scopes.md) and
 Gold/Solo windows, separate manual snapshot history and subsequent verification.
 Human baseline acceptance remains separately attributed in that report.
 
+The [detailed Unity UI/UX acceptance runbook](uiux/unity-profiling-manual-acceptance-checklist.md)
+starts a fresh joint review of native profiling and the Profiling editor tab.
+The [language extension plan](uiux/profiling-language-extension-plan.md) describes
+C++/C#/Rust, MT and distinct managed-LDI/live-native gates for a later reviewed
+`feat/profiling` checkpoint. These are unexecuted plans, not new acceptance results.
+
 The rest of the docs are grouped by purpose:
 
 | Folder | Contents |

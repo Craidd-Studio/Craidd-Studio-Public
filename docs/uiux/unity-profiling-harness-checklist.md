@@ -14,6 +14,13 @@ zero-loss check** (15 missing source events). Its retained sample bound held;
 sustained-load zero-loss qualification remains open. Earlier passing clauses
 below are historical evidence, not a claim that this new failure passed.
 
+For the next joint human/UI review, use the
+[detailed Unity acceptance runbook](unity-profiling-manual-acceptance-checklist.md).
+It includes the new Profiling editor host and starts with fresh unchecked tasks;
+the historical results in this file must not prefill it. The later
+[language extension plan](profiling-language-extension-plan.md) keeps C++, C#,
+managed LDI and Rust/live-native qualification separate.
+
 **Master checkbox:**
 
 - [ ] **Unity profiling is usable through the real Craidd UI:** complete the critical checks below and publish a report with screenshots, measured values, remaining failures and exact revision.
