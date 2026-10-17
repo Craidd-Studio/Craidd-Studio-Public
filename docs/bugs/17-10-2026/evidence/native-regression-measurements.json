@@ -1,0 +1,1338 @@
+{
+  "profiler-icons": {
+    "path": "test-results/ui/2026-10-17T16-11-37-122Z/profiler-icons/record.json",
+    "records": [
+      {
+        "step": "build-target",
+        "at": "2026-10-17T16:11:38.323Z",
+        "application": "/mnt/ext_drives/Development/Development/Desktop Development/Craidd-Studio/src-tauri/target/debug/craidd-studio",
+        "url": "tauri://localhost"
+      },
+      {
+        "step": "no-file-open",
+        "at": "2026-10-17T16:11:38.407Z",
+        "icons": [
+          {
+            "height": 16,
+            "label": "Take memory snapshot",
+            "stroke": "rgb(198, 202, 208)",
+            "path": "M3 7h4l2-3h6l2 3h4v13H3Z M16 13a4 4 0 1 1-8 0 4 4 0 0 1 8 0Z",
+            "width": 16,
+            "iconFont": false
+          },
+          {
+            "height": 16,
+            "label": "Snapshot and record again",
+            "stroke": "rgb(198, 202, 208)",
+            "path": "M4 4v6h6 M4.8 9a8 8 0 1 1-.3 6",
+            "width": 16,
+            "iconFont": false
+          },
+          {
+            "height": 16,
+            "label": "Stop profiling",
+            "stroke": "rgb(198, 202, 208)",
+            "path": "M5 5h14v14H5Z",
+            "width": 16,
+            "iconFont": false
+          },
+          {
+            "height": 16,
+            "label": "Profiling settings",
+            "stroke": "rgb(198, 202, 208)",
+            "path": "m9 3-.5 3-2 1-3-.5-2 3 2.5 2v2L1.5 16l2 3 3-.5 2 1 .5 3h4l.5-3 2-1 3 .5 2-3-2.5-2.5v-2l2.5-2-2-3-3 .5-2-1L13 3Z M15 13a4 4 0 1 1-8 0 4 4 0 0 1 8 0Z",
+            "width": 16,
+            "iconFont": false
+          }
+        ],
+        "viewport": {
+          "width": 1280,
+          "height": 800,
+          "dpr": 1,
+          "csp": null
+        }
+      },
+      {
+        "step": "editor-open",
+        "at": "2026-10-17T16:11:38.822Z",
+        "icons": [
+          {
+            "height": 16,
+            "label": "Take memory snapshot",
+            "stroke": "rgb(198, 202, 208)",
+            "path": "M3 7h4l2-3h6l2 3h4v13H3Z M16 13a4 4 0 1 1-8 0 4 4 0 0 1 8 0Z",
+            "width": 16,
+            "iconFont": false
+          },
+          {
+            "height": 16,
+            "label": "Snapshot and record again",
+            "stroke": "rgb(198, 202, 208)",
+            "path": "M4 4v6h6 M4.8 9a8 8 0 1 1-.3 6",
+            "width": 16,
+            "iconFont": false
+          },
+          {
+            "height": 16,
+            "label": "Stop profiling",
+            "stroke": "rgb(198, 202, 208)",
+            "path": "M5 5h14v14H5Z",
+            "width": 16,
+            "iconFont": false
+          },
+          {
+            "height": 16,
+            "label": "Profiling settings",
+            "stroke": "rgb(198, 202, 208)",
+            "path": "m9 3-.5 3-2 1-3-.5-2 3 2.5 2v2L1.5 16l2 3 3-.5 2 1 .5 3h4l.5-3 2-1 3 .5 2-3-2.5-2.5v-2l2.5-2-2-3-3 .5-2-1L13 3Z M15 13a4 4 0 1 1-8 0 4 4 0 0 1 8 0Z",
+            "width": 16,
+            "iconFont": false
+          }
+        ],
+        "viewport": {
+          "width": 1280,
+          "height": 800,
+          "dpr": 1,
+          "csp": null
+        }
+      },
+      {
+        "step": "monaco-csp-unmodified",
+        "at": "2026-10-17T16:11:38.847Z",
+        "violations": [
+          {
+            "blocked": "inline",
+            "directive": "style-src-elem"
+          },
+          {
+            "blocked": "inline",
+            "directive": "style-src-elem"
+          },
+          {
+            "blocked": "inline",
+            "directive": "style-src-elem"
+          },
+          {
+            "blocked": "inline",
+            "directive": "style-src-elem"
+          },
+          {
+            "blocked": "inline",
+            "directive": "style-src-attr"
+          },
+          {
+            "blocked": "inline",
+            "directive": "style-src-attr"
+          },
+          {
+            "blocked": "inline",
+            "directive": "style-src-attr"
+          },
+          {
+            "blocked": "inline",
+            "directive": "style-src-attr"
+          },
+          {
+            "blocked": "inline",
+            "directive": "style-src-attr"
+          },
+          {
+            "blocked": "inline",
+            "directive": "style-src-attr"
+          },
+          {
+            "blocked": "inline",
+            "directive": "style-src-attr"
+          },
+          {
+            "blocked": "inline",
+            "directive": "style-src-attr"
+          },
+          {
+            "blocked": "inline",
+            "directive": "style-src-attr"
+          },
+          {
+            "blocked": "inline",
+            "directive": "style-src-attr"
+          },
+          {
+            "blocked": "inline",
+            "directive": "style-src-attr"
+          },
+          {
+            "blocked": "inline",
+            "directive": "style-src-attr"
+          },
+          {
+            "blocked": "inline",
+            "directive": "style-src-attr"
+          }
+        ]
+      },
+      {
+        "step": "final-profile",
+        "at": "2026-10-17T16:11:38.927Z"
+      }
+    ]
+  },
+  "unity-60fps": {
+    "path": "test-results/ui/2026-10-17T16-11-55-776Z/unity-60fps/record.json",
+    "records": [
+      {
+        "step": "environment",
+        "at": "2026-10-17T16:12:02.261Z",
+        "unityVersion": "6000.5.10f1",
+        "editor": "/home/skira24/Unity/Hub/Editor/6000.5.10f1/Editor/Unity",
+        "editorPid": 153385,
+        "project": "/tmp/cui-CORaaU/workspaces/unity",
+        "namespace": "unity-60fps-8497f33c-0f89-4cec-9c5c-a35d5034e7b2",
+        "requestedFps": 60
+      },
+      {
+        "step": "first-play",
+        "at": "2026-10-17T16:12:04.703Z",
+        "batch": 1,
+        "generation": 1,
+        "profileSummary": {
+          "id": "153385-1352666-1792253523607042446",
+          "target": {
+            "pid": 153385,
+            "birth": 1352666
+          },
+          "active": true,
+          "waitingForPlay": false,
+          "batch": 1,
+          "playGeneration": 1,
+          "counters": {
+            "evictedCaptures": 0,
+            "agedSamples": 0,
+            "rejectedEvents": 0,
+            "disconnects": 0,
+            "sourceGaps": 0
+          }
+        }
+      },
+      {
+        "step": "retained-memory",
+        "at": "2026-10-17T16:12:05.138Z",
+        "unity": {
+          "pid": 153385,
+          "playing": true,
+          "changing": false,
+          "nativeLiveBytes": 1048576,
+          "frames": 31,
+          "overlayDraws": 0,
+          "lastCommand": 2,
+          "menuExecuted": true,
+          "error": ""
+        },
+        "profileSummary": {
+          "id": "153385-1352666-1792253523607042446",
+          "target": {
+            "pid": 153385,
+            "birth": 1352666
+          },
+          "active": true,
+          "waitingForPlay": false,
+          "batch": 1,
+          "playGeneration": 1,
+          "counters": {
+            "evictedCaptures": 0,
+            "agedSamples": 0,
+            "rejectedEvents": 0,
+            "disconnects": 0,
+            "sourceGaps": 0
+          }
+        }
+      },
+      {
+        "step": "cleared-memory",
+        "at": "2026-10-17T16:12:05.593Z",
+        "unity": {
+          "pid": 153385,
+          "playing": true,
+          "changing": false,
+          "nativeLiveBytes": 0,
+          "frames": 63,
+          "overlayDraws": 0,
+          "lastCommand": 3,
+          "menuExecuted": true,
+          "error": ""
+        },
+        "snapshots": [
+          "#1 \u00b7 1.25 s\t531.19 MiB\t\u2014\t1.00 MiB",
+          "#2 \u00b7 1.75 s\t531.19 MiB\t+0 B\t0 B"
+        ],
+        "profileSummary": {
+          "id": "153385-1352666-1792253523607042446",
+          "target": {
+            "pid": 153385,
+            "birth": 1352666
+          },
+          "active": true,
+          "waitingForPlay": false,
+          "batch": 1,
+          "playGeneration": 1,
+          "counters": {
+            "evictedCaptures": 0,
+            "agedSamples": 0,
+            "rejectedEvents": 0,
+            "disconnects": 0,
+            "sourceGaps": 0
+          }
+        }
+      },
+      {
+        "step": "resize-pointer",
+        "at": "2026-10-17T16:12:06.021Z",
+        "requested": 288,
+        "before": {
+          "width": 288,
+          "x": 990,
+          "y": 225
+        },
+        "after": {
+          "width": 288,
+          "events": [
+            {
+              "type": "pointermove",
+              "buttons": 0,
+              "x": 990,
+              "y": 225
+            },
+            {
+              "type": "pointerdown",
+              "buttons": 1,
+              "x": 990,
+              "y": 225
+            },
+            {
+              "type": "pointermove",
+              "buttons": 1,
+              "x": 990,
+              "y": 225
+            },
+            {
+              "type": "pointerup",
+              "buttons": 0,
+              "x": 990,
+              "y": 225
+            }
+          ]
+        }
+      },
+      {
+        "step": "resize-pointer",
+        "at": "2026-10-17T16:12:06.515Z",
+        "requested": 288,
+        "before": {
+          "width": 288,
+          "x": 990,
+          "y": 225
+        },
+        "after": {
+          "width": 288,
+          "events": [
+            {
+              "type": "pointermove",
+              "buttons": 0,
+              "x": 990,
+              "y": 225
+            },
+            {
+              "type": "pointerdown",
+              "buttons": 1,
+              "x": 990,
+              "y": 225
+            },
+            {
+              "type": "pointermove",
+              "buttons": 1,
+              "x": 990,
+              "y": 225
+            },
+            {
+              "type": "pointerup",
+              "buttons": 0,
+              "x": 990,
+              "y": 225
+            }
+          ]
+        }
+      },
+      {
+        "step": "width-288",
+        "at": "2026-10-17T16:12:06.559Z",
+        "summary": {
+          "width": 287,
+          "viewport": {
+            "width": 1280,
+            "height": 800,
+            "dpr": 1
+          },
+          "clientWidth": 287,
+          "scrollWidth": 287
+        },
+        "memory": {
+          "width": 287,
+          "viewport": {
+            "width": 1280,
+            "height": 800,
+            "dpr": 1
+          },
+          "clientWidth": 287,
+          "scrollWidth": 287
+        }
+      },
+      {
+        "step": "resize-pointer",
+        "at": "2026-10-17T16:12:07.022Z",
+        "requested": 360,
+        "before": {
+          "width": 288,
+          "x": 990,
+          "y": 225
+        },
+        "after": {
+          "width": 360,
+          "events": [
+            {
+              "type": "pointermove",
+              "buttons": 0,
+              "x": 990,
+              "y": 225
+            },
+            {
+              "type": "pointerdown",
+              "buttons": 1,
+              "x": 990,
+              "y": 225
+            },
+            {
+              "type": "pointermove",
+              "buttons": 1,
+              "x": 918,
+              "y": 225
+            },
+            {
+              "type": "pointerup",
+              "buttons": 0,
+              "x": 918,
+              "y": 225
+            }
+          ]
+        }
+      },
+      {
+        "step": "resize-pointer",
+        "at": "2026-10-17T16:12:07.479Z",
+        "requested": 360,
+        "before": {
+          "width": 360,
+          "x": 918,
+          "y": 225
+        },
+        "after": {
+          "width": 360,
+          "events": [
+            {
+              "type": "pointermove",
+              "buttons": 0,
+              "x": 918,
+              "y": 225
+            },
+            {
+              "type": "pointerdown",
+              "buttons": 1,
+              "x": 918,
+              "y": 225
+            },
+            {
+              "type": "pointermove",
+              "buttons": 1,
+              "x": 918,
+              "y": 225
+            },
+            {
+              "type": "pointerup",
+              "buttons": 0,
+              "x": 918,
+              "y": 225
+            }
+          ]
+        }
+      },
+      {
+        "step": "width-360",
+        "at": "2026-10-17T16:12:07.481Z",
+        "summary": {
+          "width": 359,
+          "viewport": {
+            "width": 1280,
+            "height": 800,
+            "dpr": 1
+          },
+          "clientWidth": 359,
+          "scrollWidth": 359
+        },
+        "memory": {
+          "width": 359,
+          "viewport": {
+            "width": 1280,
+            "height": 800,
+            "dpr": 1
+          },
+          "clientWidth": 359,
+          "scrollWidth": 359
+        }
+      },
+      {
+        "step": "resize-pointer",
+        "at": "2026-10-17T16:12:07.886Z",
+        "requested": 420,
+        "before": {
+          "width": 360,
+          "x": 918,
+          "y": 225
+        },
+        "after": {
+          "width": 420,
+          "events": [
+            {
+              "type": "pointermove",
+              "buttons": 0,
+              "x": 918,
+              "y": 225
+            },
+            {
+              "type": "pointerdown",
+              "buttons": 1,
+              "x": 918,
+              "y": 225
+            },
+            {
+              "type": "pointermove",
+              "buttons": 1,
+              "x": 858,
+              "y": 225
+            },
+            {
+              "type": "pointerup",
+              "buttons": 0,
+              "x": 858,
+              "y": 225
+            }
+          ]
+        }
+      },
+      {
+        "step": "resize-pointer",
+        "at": "2026-10-17T16:12:08.353Z",
+        "requested": 420,
+        "before": {
+          "width": 420,
+          "x": 858,
+          "y": 225
+        },
+        "after": {
+          "width": 420,
+          "events": [
+            {
+              "type": "pointermove",
+              "buttons": 0,
+              "x": 858,
+              "y": 225
+            },
+            {
+              "type": "pointerdown",
+              "buttons": 1,
+              "x": 858,
+              "y": 225
+            },
+            {
+              "type": "pointermove",
+              "buttons": 1,
+              "x": 858,
+              "y": 225
+            },
+            {
+              "type": "pointerup",
+              "buttons": 0,
+              "x": 858,
+              "y": 225
+            }
+          ]
+        }
+      },
+      {
+        "step": "width-420",
+        "at": "2026-10-17T16:12:08.407Z",
+        "summary": {
+          "width": 419,
+          "viewport": {
+            "width": 1280,
+            "height": 800,
+            "dpr": 1
+          },
+          "clientWidth": 419,
+          "scrollWidth": 419
+        },
+        "memory": {
+          "width": 419,
+          "viewport": {
+            "width": 1280,
+            "height": 800,
+            "dpr": 1
+          },
+          "clientWidth": 419,
+          "scrollWidth": 419
+        }
+      },
+      {
+        "step": "record-again",
+        "at": "2026-10-17T16:12:09.419Z",
+        "batch": 2,
+        "profileSummary": {
+          "id": "153385-1352666-1792253523607042446",
+          "target": {
+            "pid": 153385,
+            "birth": 1352666
+          },
+          "active": true,
+          "waitingForPlay": false,
+          "batch": 2,
+          "playGeneration": 1,
+          "counters": {
+            "evictedCaptures": 160,
+            "agedSamples": 0,
+            "rejectedEvents": 0,
+            "disconnects": 0,
+            "sourceGaps": 0
+          }
+        }
+      },
+      {
+        "step": "thread-and-batch-inspection",
+        "at": "2026-10-17T16:12:10.156Z",
+        "chosen": 155615,
+        "tids": [
+          153385,
+          155615,
+          155616
+        ],
+        "profileSummary": {
+          "id": "153385-1352666-1792253523607042446",
+          "target": {
+            "pid": 153385,
+            "birth": 1352666
+          },
+          "active": true,
+          "waitingForPlay": false,
+          "batch": 2,
+          "playGeneration": 1,
+          "counters": {
+            "evictedCaptures": 248,
+            "agedSamples": 0,
+            "rejectedEvents": 0,
+            "disconnects": 0,
+            "sourceGaps": 0
+          }
+        }
+      },
+      {
+        "step": "coverage-limits",
+        "at": "2026-10-17T16:12:10.515Z"
+      },
+      {
+        "step": "second-play",
+        "at": "2026-10-17T16:12:11.983Z",
+        "previousBatch": 2,
+        "generation": 2,
+        "profileSummary": {
+          "id": "153385-1352666-1792253523607042446",
+          "target": {
+            "pid": 153385,
+            "birth": 1352666
+          },
+          "active": true,
+          "waitingForPlay": false,
+          "batch": 3,
+          "playGeneration": 2,
+          "counters": {
+            "evictedCaptures": 315,
+            "agedSamples": 0,
+            "rejectedEvents": 0,
+            "disconnects": 0,
+            "sourceGaps": 0
+          }
+        }
+      },
+      {
+        "step": "final-profile",
+        "at": "2026-10-17T16:12:19.211Z",
+        "profileSummary": {
+          "id": "153385-1352666-1792253523607042446",
+          "target": {
+            "pid": 153385,
+            "birth": 1352666
+          },
+          "active": false,
+          "waitingForPlay": false,
+          "batch": 3,
+          "playGeneration": 2,
+          "counters": {
+            "evictedCaptures": 320,
+            "agedSamples": 0,
+            "rejectedEvents": 0,
+            "disconnects": 0,
+            "sourceGaps": 0
+          }
+        }
+      }
+    ],
+    "sourceManifest": {
+      "revision": "03f87ad722b4e2ff6fdbfb4eb4b67c9de85e8f87",
+      "files": {
+        "support/profiling/craidd_gold.hpp": "118ba38ef5612ac44907b0aa37d637a38a4dac348f6c15bfa60b9f1d2d085f16",
+        "workspaces/unity/.gitattributes": "4e18fd8e6c01d20924ac5354b372a02647583ac8172091a2e4bfaeae10e709df",
+        "workspaces/unity/.gitignore": "5d49d005668f0793860c6e306f5b2a12c6dbfa06a7bc455fede6ce1ecb92976d",
+        "workspaces/unity/Assets/Editor.meta": "777cc20516e9e2cb0344bf4b0a3b9c9ef2d81299bbbb803d59fb9ae48b8e2cd4",
+        "workspaces/unity/Assets/Editor/Editor.craidd": "de7d5bb38139f7fafad81d41894eff89a5d3f469abad714b3e5624f4c9884eb0",
+        "workspaces/unity/Assets/Editor/Editor.craidd.meta": "168918dc07372b4c1307e924f6dd6c9d44759be3590717c2fcf38a863cf0681c",
+        "workspaces/unity/Assets/Editor/ProbePlayLifecycle.cs": "5dee6ee3909d6d1e6f84371bf82cf9c0511d855b1d9d3e6e4fed156d9fb2c599",
+        "workspaces/unity/Assets/Editor/ProbePlayLifecycle.cs.meta": "ca46daa0446062c5bdd5c7ad56f9971e13cc8bddf019e5eeb0dde8321dd16872",
+        "workspaces/unity/Assets/Editor/ProbeProject.cs": "800aa0ebee1a0013b49677fdf520dc90a6ac0c07e21df9af101116d1c6505b6c",
+        "workspaces/unity/Assets/Editor/ProbeProject.cs.meta": "a655f86c3d7241e17ec187f01897e9101836ab7167ba7299442d8b61f91320a3",
+        "workspaces/unity/Assets/Plugins.meta": "c3a0cc44c2ff98ef4459d7a7b7c070574b535d0d9b631abfba1b77396ca893cf",
+        "workspaces/unity/Assets/Plugins/x86_64.meta": "94b43f9e2faff2c7f7977d4ff165b693119e481c1519a1c1e093970a5813f487",
+        "workspaces/unity/Assets/Scenes.meta": "8b3487ab851cbc3425f88e147c141126ec36fb2d1acb8e4bd3e67a832e3d871b",
+        "workspaces/unity/Assets/Scenes/DebugProbe.unity": "71cd5c00374529ee462a27c3087b5590a1b9822f2558d07eea82fc6ec6d27dff",
+        "workspaces/unity/Assets/Scenes/DebugProbe.unity.meta": "d0a12cb6c716ae3b0f0abfdf69febbe73ded6983469141da3a8d3737dcbefc5a",
+        "workspaces/unity/Assets/Scripts.meta": "8031359bbb14dcd1e2351c0fd0064ee5043379a9c7629a451beaf13768c1def9",
+        "workspaces/unity/Assets/Scripts/Managed.craidd": "e9111126212c8a51e2fcdbd777b6c3dd93f373ffedd4ebab86c0681675d8d546",
+        "workspaces/unity/Assets/Scripts/Managed.craidd.meta": "52dafb490c7a52eb53f7ba5bba6cfa87273b6e961c9aed6df8263fd9f5e177cf",
+        "workspaces/unity/Assets/Scripts/NativeProbe.cs": "798a0039c432e2ec4e40c6a23612e8321a757648dbc3d4242194aade42866ab4",
+        "workspaces/unity/Assets/Scripts/NativeProbe.cs.meta": "3a37f70206ee11f80cae6e3128859b0117ca5f40d4e3b4e1e4e372599d359c08",
+        "workspaces/unity/Native/CMakeLists.txt": "d50579924dbbd066c24881fa8e33737dedc54a6d86a6bc7061c553fcfd5fb978",
+        "workspaces/unity/Native/Native.craidd": "6b26950ce6ed8c6d81609af0edc22976941b89ccb31c3d7ea52219bcc58945a4",
+        "workspaces/unity/Native/anchored.cpp": "4c30df42fd4624ffc01aed330e2cd8563f30b1aff9d371f32dd9f5cf229ed41c",
+        "workspaces/unity/Native/probe.cpp": "d861f4c694b4d0e7f2d4fda6195e5c61c4b6f56d0deca72e3055a53855fe226f",
+        "workspaces/unity/Native/smoke.cpp": "12e0db96b6b9eef442df0088b94ccd89ff23b76af31fea644afa59e3f7f33eaa",
+        "workspaces/unity/Packages/manifest.json": "5ca72b781ce904d775d1232449d3f77eee76ca5361e80a2584e633c0724a3fca",
+        "workspaces/unity/Packages/packages-lock.json": "8579359bdb3ffcbd6565c993f47d32bf4800443e2a0573957b91c9dc6e9f2e86",
+        "workspaces/unity/ProjectSettings/AudioManager.asset": "9543c41dbfc7d3951217c4dd9481ed026eb8e529b85ecf4463969a0fea747729",
+        "workspaces/unity/ProjectSettings/ClusterInputManager.asset": "40e65dd214bf254955d2c8829ca8ce2130fd3510485560ce012e9a1ddd93e623",
+        "workspaces/unity/ProjectSettings/DynamicsManager.asset": "d102dd312ef330f5e5ca255c070fb34f68f59ec633d1e9fd67e2f2f6f88f66c8",
+        "workspaces/unity/ProjectSettings/EditorBuildSettings.asset": "223127de28d015b529894ec127865218b6e749f922c3f5024a3af3a5c902ac35",
+        "workspaces/unity/ProjectSettings/EditorSettings.asset": "c3457984f413109cea03254192b3873ad51a17d4ef50d13dbb427f8a7a76cdd2",
+        "workspaces/unity/ProjectSettings/GraphicsSettings.asset": "8ef104b545ec651221d6806e99e8e3ee854916c6366d8db57d2d6c50eaf4a9a3",
+        "workspaces/unity/ProjectSettings/InputManager.asset": "d0f454ddb880912abcae92e3e12957a7446786ba89e24937e019ff3bbc0d4300",
+        "workspaces/unity/ProjectSettings/MemorySettings.asset": "25fb3fdd1ce94347ccdcf23d5d5e446055ca81d8b3756a7df85d614645a71ac4",
+        "workspaces/unity/ProjectSettings/MultiplayerManager.asset": "aba89fd1a1ddad182727ad82727e536d27372e90328a8196da2a4560398983dd",
+        "workspaces/unity/ProjectSettings/NavMeshAreas.asset": "7ebbf8f53b8033104e1878b95ca07a28d0954092d81c220f14196a42f651e658",
+        "workspaces/unity/ProjectSettings/Physics2DSettings.asset": "1cfc0c8fbceec604fd7cd2a06c04ff05dddee6335b75c92b0f5715ad80ba9490",
+        "workspaces/unity/ProjectSettings/PhysicsCoreProjectSettings2D.asset": "bedc5339a832c60dc3f11b84abc4f4384dbfa20b0cd9ad6c444b907e751fc35e",
+        "workspaces/unity/ProjectSettings/PresetManager.asset": "29c125923fe6e29f90190d4fce1c82d660e7051546e2c9d02908d18c9cf2436c",
+        "workspaces/unity/ProjectSettings/ProjectAuditorSettings.asset": "dbf44dc7e72b2fd3110f8834c18fe632a203c898d7303601b2201b67b7d18dc9",
+        "workspaces/unity/ProjectSettings/ProjectSettings.asset": "7aa1a7f2456f49bd368fbe855ef64e700ca91b97a78cdd18b997b4f7350313da",
+        "workspaces/unity/ProjectSettings/ProjectVersion.txt": "68312bd68c3d81c0dabeaa9905955fd523a6a184f4e6ae180377a1cdb8b2fd42",
+        "workspaces/unity/ProjectSettings/QualitySettings.asset": "f1f893b1be47ad2442f58338dd7c860dc1986bb317e2f5bb31084454ffabbf4c",
+        "workspaces/unity/ProjectSettings/SceneTemplateSettings.json": "bb9098b3bfcde78d93e264b96f7b77b5430e64e8c57a7aad7f5a5d9c3945e16a",
+        "workspaces/unity/ProjectSettings/TagManager.asset": "996628fdc904025b83606bbfbda4fe08c0bbe916475146110e77cdc2f22c2013",
+        "workspaces/unity/ProjectSettings/TimeManager.asset": "3396f52fdc16d445024e01d7a2d99db6f0a37569d1d73c0302e9ffb857d90287",
+        "workspaces/unity/ProjectSettings/UnityConnectSettings.asset": "11251dae0356b6f43dd2c67bb511f6b7ecda4e5de425186bba3297e6f3dc1c6f",
+        "workspaces/unity/ProjectSettings/VFXManager.asset": "2973a6af930e142f62cde00076beda8a3cc3a66d9bfcde7a58ba7d4be2251c26",
+        "workspaces/unity/ProjectSettings/VersionControlSettings.asset": "e199cdfa6a8f2bf33cfd47e549198f13e3eb2a5099e908fdb4e0f14d939ccc6b",
+        "workspaces/unity/README.md": "0f7314274549e8cc3741bb6842e805458e8b366ef8f96a409e2b4dbbe2017678",
+        "workspaces/unity/unity.cln": "e8de3e791e3d605c99a4e4e673c2af8e26d1ce51c0f8580db3bf1b8ab50d954c",
+        "workspaces/unity/Assets/Editor/UnityProfilingHarness.cs": "59fdef96ca49a8e7ba77616e3d273703c51ec9b918c5eb4d90b4c8bc2ea0026d",
+        "workspaces/unity/Native/scoped_ranges.cpp": "51c238b51f4c978dc3c1d6b3756dafc8a7ed05a683b2f16450f6c5ef03133f22"
+      },
+      "pluginSha256": "6af17f54b8581e1805dc1666aac989d59f232fb4103a0951b0c209ddb6f3739f"
+    }
+  },
+  "unity-uncapped": {
+    "path": "test-results/ui/2026-10-17T16-11-55-776Z/unity-uncapped/record.json",
+    "records": [
+      {
+        "step": "environment",
+        "at": "2026-10-17T16:12:26.311Z",
+        "unityVersion": "6000.5.10f1",
+        "editor": "/home/skira24/Unity/Hub/Editor/6000.5.10f1/Editor/Unity",
+        "editorPid": 155820,
+        "project": "/tmp/cui-4IgIJg/workspaces/unity",
+        "namespace": "unity-uncapped-0bd111d6-ce6f-4523-b836-308183aaa452",
+        "requestedFps": -1
+      },
+      {
+        "step": "first-play",
+        "at": "2026-10-17T16:12:29.715Z",
+        "batch": 1,
+        "generation": 1,
+        "profileSummary": {
+          "id": "155820-1355063-1792253547605342194",
+          "target": {
+            "pid": 155820,
+            "birth": 1355063
+          },
+          "active": true,
+          "waitingForPlay": false,
+          "batch": 1,
+          "playGeneration": 1,
+          "counters": {
+            "evictedCaptures": 4534,
+            "agedSamples": 0,
+            "rejectedEvents": 0,
+            "disconnects": 0,
+            "sourceGaps": 0
+          }
+        }
+      },
+      {
+        "step": "retained-memory",
+        "at": "2026-10-17T16:12:30.123Z",
+        "unity": {
+          "pid": 155820,
+          "playing": true,
+          "changing": false,
+          "nativeLiveBytes": 1048576,
+          "frames": 7219,
+          "overlayDraws": 0,
+          "lastCommand": 2,
+          "menuExecuted": true,
+          "error": ""
+        },
+        "profileSummary": {
+          "id": "155820-1355063-1792253547605342194",
+          "target": {
+            "pid": 155820,
+            "birth": 1355063
+          },
+          "active": true,
+          "waitingForPlay": false,
+          "batch": 1,
+          "playGeneration": 1,
+          "counters": {
+            "evictedCaptures": 8330,
+            "agedSamples": 0,
+            "rejectedEvents": 0,
+            "disconnects": 0,
+            "sourceGaps": 0
+          }
+        }
+      },
+      {
+        "step": "cleared-memory",
+        "at": "2026-10-17T16:12:30.660Z",
+        "unity": {
+          "pid": 155820,
+          "playing": true,
+          "changing": false,
+          "nativeLiveBytes": 0,
+          "frames": 15402,
+          "overlayDraws": 0,
+          "lastCommand": 3,
+          "menuExecuted": true,
+          "error": ""
+        },
+        "snapshots": [
+          "#1 \u00b7 2.26 s\t556.75 MiB\t\u2014\t1.00 MiB",
+          "#2 \u00b7 2.76 s\t553.23 MiB\t\u22123.52 MiB\t0 B"
+        ],
+        "profileSummary": {
+          "id": "155820-1355063-1792253547605342194",
+          "target": {
+            "pid": 155820,
+            "birth": 1355063
+          },
+          "active": true,
+          "waitingForPlay": false,
+          "batch": 1,
+          "playGeneration": 1,
+          "counters": {
+            "evictedCaptures": 15449,
+            "agedSamples": 0,
+            "rejectedEvents": 0,
+            "disconnects": 0,
+            "sourceGaps": 0
+          }
+        }
+      },
+      {
+        "step": "record-again",
+        "at": "2026-10-17T16:12:31.490Z",
+        "batch": 2,
+        "profileSummary": {
+          "id": "155820-1355063-1792253547605342194",
+          "target": {
+            "pid": 155820,
+            "birth": 1355063
+          },
+          "active": true,
+          "waitingForPlay": false,
+          "batch": 2,
+          "playGeneration": 1,
+          "counters": {
+            "evictedCaptures": 29251,
+            "agedSamples": 0,
+            "rejectedEvents": 0,
+            "disconnects": 0,
+            "sourceGaps": 0
+          }
+        }
+      },
+      {
+        "step": "uncapped-sustained",
+        "at": "2026-10-17T16:12:31.499Z",
+        "unity": {
+          "pid": 155820,
+          "playing": true,
+          "changing": false,
+          "nativeLiveBytes": 0,
+          "frames": 32049,
+          "overlayDraws": 0,
+          "lastCommand": 5,
+          "menuExecuted": true,
+          "error": ""
+        },
+        "profileSummary": {
+          "id": "155820-1355063-1792253547605342194",
+          "target": {
+            "pid": 155820,
+            "birth": 1355063
+          },
+          "active": true,
+          "waitingForPlay": false,
+          "batch": 2,
+          "playGeneration": 1,
+          "counters": {
+            "evictedCaptures": 32827,
+            "agedSamples": 0,
+            "rejectedEvents": 0,
+            "disconnects": 0,
+            "sourceGaps": 0
+          }
+        }
+      },
+      {
+        "step": "second-play",
+        "at": "2026-10-17T16:12:32.973Z",
+        "previousBatch": 2,
+        "generation": 2,
+        "profileSummary": {
+          "id": "155820-1355063-1792253547605342194",
+          "target": {
+            "pid": 155820,
+            "birth": 1355063
+          },
+          "active": true,
+          "waitingForPlay": false,
+          "batch": 3,
+          "playGeneration": 2,
+          "counters": {
+            "evictedCaptures": 41909,
+            "agedSamples": 0,
+            "rejectedEvents": 0,
+            "disconnects": 0,
+            "sourceGaps": 0
+          }
+        }
+      },
+      {
+        "step": "final-profile",
+        "at": "2026-10-17T16:12:43.063Z",
+        "profileSummary": {
+          "id": "155820-1355063-1792253547605342194",
+          "target": {
+            "pid": 155820,
+            "birth": 1355063
+          },
+          "active": false,
+          "waitingForPlay": false,
+          "batch": 3,
+          "playGeneration": 2,
+          "counters": {
+            "evictedCaptures": 43421,
+            "agedSamples": 0,
+            "rejectedEvents": 0,
+            "disconnects": 0,
+            "sourceGaps": 0
+          }
+        }
+      }
+    ],
+    "sourceManifest": {
+      "revision": "03f87ad722b4e2ff6fdbfb4eb4b67c9de85e8f87",
+      "files": {
+        "support/profiling/craidd_gold.hpp": "118ba38ef5612ac44907b0aa37d637a38a4dac348f6c15bfa60b9f1d2d085f16",
+        "workspaces/unity/.gitattributes": "4e18fd8e6c01d20924ac5354b372a02647583ac8172091a2e4bfaeae10e709df",
+        "workspaces/unity/.gitignore": "5d49d005668f0793860c6e306f5b2a12c6dbfa06a7bc455fede6ce1ecb92976d",
+        "workspaces/unity/Assets/Editor.meta": "777cc20516e9e2cb0344bf4b0a3b9c9ef2d81299bbbb803d59fb9ae48b8e2cd4",
+        "workspaces/unity/Assets/Editor/Editor.craidd": "de7d5bb38139f7fafad81d41894eff89a5d3f469abad714b3e5624f4c9884eb0",
+        "workspaces/unity/Assets/Editor/Editor.craidd.meta": "168918dc07372b4c1307e924f6dd6c9d44759be3590717c2fcf38a863cf0681c",
+        "workspaces/unity/Assets/Editor/ProbePlayLifecycle.cs": "5dee6ee3909d6d1e6f84371bf82cf9c0511d855b1d9d3e6e4fed156d9fb2c599",
+        "workspaces/unity/Assets/Editor/ProbePlayLifecycle.cs.meta": "ca46daa0446062c5bdd5c7ad56f9971e13cc8bddf019e5eeb0dde8321dd16872",
+        "workspaces/unity/Assets/Editor/ProbeProject.cs": "800aa0ebee1a0013b49677fdf520dc90a6ac0c07e21df9af101116d1c6505b6c",
+        "workspaces/unity/Assets/Editor/ProbeProject.cs.meta": "a655f86c3d7241e17ec187f01897e9101836ab7167ba7299442d8b61f91320a3",
+        "workspaces/unity/Assets/Plugins.meta": "c3a0cc44c2ff98ef4459d7a7b7c070574b535d0d9b631abfba1b77396ca893cf",
+        "workspaces/unity/Assets/Plugins/x86_64.meta": "94b43f9e2faff2c7f7977d4ff165b693119e481c1519a1c1e093970a5813f487",
+        "workspaces/unity/Assets/Scenes.meta": "8b3487ab851cbc3425f88e147c141126ec36fb2d1acb8e4bd3e67a832e3d871b",
+        "workspaces/unity/Assets/Scenes/DebugProbe.unity": "71cd5c00374529ee462a27c3087b5590a1b9822f2558d07eea82fc6ec6d27dff",
+        "workspaces/unity/Assets/Scenes/DebugProbe.unity.meta": "d0a12cb6c716ae3b0f0abfdf69febbe73ded6983469141da3a8d3737dcbefc5a",
+        "workspaces/unity/Assets/Scripts.meta": "8031359bbb14dcd1e2351c0fd0064ee5043379a9c7629a451beaf13768c1def9",
+        "workspaces/unity/Assets/Scripts/Managed.craidd": "e9111126212c8a51e2fcdbd777b6c3dd93f373ffedd4ebab86c0681675d8d546",
+        "workspaces/unity/Assets/Scripts/Managed.craidd.meta": "52dafb490c7a52eb53f7ba5bba6cfa87273b6e961c9aed6df8263fd9f5e177cf",
+        "workspaces/unity/Assets/Scripts/NativeProbe.cs": "798a0039c432e2ec4e40c6a23612e8321a757648dbc3d4242194aade42866ab4",
+        "workspaces/unity/Assets/Scripts/NativeProbe.cs.meta": "3a37f70206ee11f80cae6e3128859b0117ca5f40d4e3b4e1e4e372599d359c08",
+        "workspaces/unity/Native/CMakeLists.txt": "d50579924dbbd066c24881fa8e33737dedc54a6d86a6bc7061c553fcfd5fb978",
+        "workspaces/unity/Native/Native.craidd": "6b26950ce6ed8c6d81609af0edc22976941b89ccb31c3d7ea52219bcc58945a4",
+        "workspaces/unity/Native/anchored.cpp": "4c30df42fd4624ffc01aed330e2cd8563f30b1aff9d371f32dd9f5cf229ed41c",
+        "workspaces/unity/Native/probe.cpp": "d861f4c694b4d0e7f2d4fda6195e5c61c4b6f56d0deca72e3055a53855fe226f",
+        "workspaces/unity/Native/smoke.cpp": "12e0db96b6b9eef442df0088b94ccd89ff23b76af31fea644afa59e3f7f33eaa",
+        "workspaces/unity/Packages/manifest.json": "5ca72b781ce904d775d1232449d3f77eee76ca5361e80a2584e633c0724a3fca",
+        "workspaces/unity/Packages/packages-lock.json": "8579359bdb3ffcbd6565c993f47d32bf4800443e2a0573957b91c9dc6e9f2e86",
+        "workspaces/unity/ProjectSettings/AudioManager.asset": "9543c41dbfc7d3951217c4dd9481ed026eb8e529b85ecf4463969a0fea747729",
+        "workspaces/unity/ProjectSettings/ClusterInputManager.asset": "40e65dd214bf254955d2c8829ca8ce2130fd3510485560ce012e9a1ddd93e623",
+        "workspaces/unity/ProjectSettings/DynamicsManager.asset": "d102dd312ef330f5e5ca255c070fb34f68f59ec633d1e9fd67e2f2f6f88f66c8",
+        "workspaces/unity/ProjectSettings/EditorBuildSettings.asset": "223127de28d015b529894ec127865218b6e749f922c3f5024a3af3a5c902ac35",
+        "workspaces/unity/ProjectSettings/EditorSettings.asset": "c3457984f413109cea03254192b3873ad51a17d4ef50d13dbb427f8a7a76cdd2",
+        "workspaces/unity/ProjectSettings/GraphicsSettings.asset": "8ef104b545ec651221d6806e99e8e3ee854916c6366d8db57d2d6c50eaf4a9a3",
+        "workspaces/unity/ProjectSettings/InputManager.asset": "d0f454ddb880912abcae92e3e12957a7446786ba89e24937e019ff3bbc0d4300",
+        "workspaces/unity/ProjectSettings/MemorySettings.asset": "25fb3fdd1ce94347ccdcf23d5d5e446055ca81d8b3756a7df85d614645a71ac4",
+        "workspaces/unity/ProjectSettings/MultiplayerManager.asset": "aba89fd1a1ddad182727ad82727e536d27372e90328a8196da2a4560398983dd",
+        "workspaces/unity/ProjectSettings/NavMeshAreas.asset": "7ebbf8f53b8033104e1878b95ca07a28d0954092d81c220f14196a42f651e658",
+        "workspaces/unity/ProjectSettings/Physics2DSettings.asset": "1cfc0c8fbceec604fd7cd2a06c04ff05dddee6335b75c92b0f5715ad80ba9490",
+        "workspaces/unity/ProjectSettings/PhysicsCoreProjectSettings2D.asset": "bedc5339a832c60dc3f11b84abc4f4384dbfa20b0cd9ad6c444b907e751fc35e",
+        "workspaces/unity/ProjectSettings/PresetManager.asset": "29c125923fe6e29f90190d4fce1c82d660e7051546e2c9d02908d18c9cf2436c",
+        "workspaces/unity/ProjectSettings/ProjectAuditorSettings.asset": "dbf44dc7e72b2fd3110f8834c18fe632a203c898d7303601b2201b67b7d18dc9",
+        "workspaces/unity/ProjectSettings/ProjectSettings.asset": "7aa1a7f2456f49bd368fbe855ef64e700ca91b97a78cdd18b997b4f7350313da",
+        "workspaces/unity/ProjectSettings/ProjectVersion.txt": "68312bd68c3d81c0dabeaa9905955fd523a6a184f4e6ae180377a1cdb8b2fd42",
+        "workspaces/unity/ProjectSettings/QualitySettings.asset": "f1f893b1be47ad2442f58338dd7c860dc1986bb317e2f5bb31084454ffabbf4c",
+        "workspaces/unity/ProjectSettings/SceneTemplateSettings.json": "bb9098b3bfcde78d93e264b96f7b77b5430e64e8c57a7aad7f5a5d9c3945e16a",
+        "workspaces/unity/ProjectSettings/TagManager.asset": "996628fdc904025b83606bbfbda4fe08c0bbe916475146110e77cdc2f22c2013",
+        "workspaces/unity/ProjectSettings/TimeManager.asset": "3396f52fdc16d445024e01d7a2d99db6f0a37569d1d73c0302e9ffb857d90287",
+        "workspaces/unity/ProjectSettings/UnityConnectSettings.asset": "11251dae0356b6f43dd2c67bb511f6b7ecda4e5de425186bba3297e6f3dc1c6f",
+        "workspaces/unity/ProjectSettings/VFXManager.asset": "2973a6af930e142f62cde00076beda8a3cc3a66d9bfcde7a58ba7d4be2251c26",
+        "workspaces/unity/ProjectSettings/VersionControlSettings.asset": "e199cdfa6a8f2bf33cfd47e549198f13e3eb2a5099e908fdb4e0f14d939ccc6b",
+        "workspaces/unity/README.md": "0f7314274549e8cc3741bb6842e805458e8b366ef8f96a409e2b4dbbe2017678",
+        "workspaces/unity/unity.cln": "e8de3e791e3d605c99a4e4e673c2af8e26d1ce51c0f8580db3bf1b8ab50d954c",
+        "workspaces/unity/Assets/Editor/UnityProfilingHarness.cs": "59fdef96ca49a8e7ba77616e3d273703c51ec9b918c5eb4d90b4c8bc2ea0026d",
+        "workspaces/unity/Native/scoped_ranges.cpp": "51c238b51f4c978dc3c1d6b3756dafc8a7ed05a683b2f16450f6c5ef03133f22"
+      },
+      "pluginSha256": "d78f45e6a70ec5bd609a32b0ed32a1b9b2ea3f4a32f2c17d8f595ce1ac4ceef7"
+    }
+  },
+  "unity-recovery": {
+    "path": "test-results/ui/2026-10-17T16-12-43-602Z/unity-recovery/record.json",
+    "records": [
+      {
+        "step": "provider-recovery",
+        "at": "2026-10-17T16:12:53.720Z",
+        "before": {
+          "waitingForPlay": false,
+          "playGeneration": 1,
+          "batch": 1,
+          "target": {
+            "pid": 158238,
+            "birth": 1357454
+          },
+          "id": "158238-1357454-1792253571355467052",
+          "reason": "",
+          "nativeLiveBytes": 1048576,
+          "counters": {
+            "evictedCaptures": 0,
+            "agedSamples": 0,
+            "rejectedEvents": 0,
+            "disconnects": 0,
+            "sourceGaps": 0
+          },
+          "nativeActivity": {
+            "unmatchedFrees": 0,
+            "allocatedBytes": 1048576,
+            "freedBytes": 0,
+            "freeCount": 0,
+            "allocationCount": 1
+          },
+          "active": true,
+          "sampleCount": 5,
+          "captureCount": 20
+        },
+        "resumed": {
+          "waitingForPlay": false,
+          "playGeneration": 1,
+          "batch": 1,
+          "target": {
+            "pid": 158238,
+            "birth": 1357454
+          },
+          "id": "158238-1357454-1792253571355467052",
+          "reason": "",
+          "nativeLiveBytes": 1048576,
+          "counters": {
+            "evictedCaptures": 0,
+            "agedSamples": 0,
+            "rejectedEvents": 0,
+            "disconnects": 1,
+            "sourceGaps": 0
+          },
+          "nativeActivity": {
+            "unmatchedFrees": 0,
+            "allocatedBytes": 1048576,
+            "freedBytes": 0,
+            "freeCount": 0,
+            "allocationCount": 1
+          },
+          "active": true,
+          "sampleCount": 6,
+          "captureCount": 39
+        },
+        "released": {
+          "waitingForPlay": false,
+          "playGeneration": 1,
+          "batch": 1,
+          "target": {
+            "pid": 158238,
+            "birth": 1357454
+          },
+          "id": "158238-1357454-1792253571355467052",
+          "reason": "",
+          "nativeLiveBytes": 0,
+          "counters": {
+            "evictedCaptures": 0,
+            "agedSamples": 0,
+            "rejectedEvents": 0,
+            "disconnects": 1,
+            "sourceGaps": 0
+          },
+          "nativeActivity": {
+            "unmatchedFrees": 0,
+            "allocatedBytes": 1048576,
+            "freedBytes": 1048576,
+            "freeCount": 1,
+            "allocationCount": 1
+          },
+          "active": true,
+          "sampleCount": 7,
+          "captureCount": 52
+        }
+      },
+      {
+        "step": "host-crash-cleanup",
+        "at": "2026-10-17T16:12:54.469Z",
+        "host": {
+          "pid": 159903,
+          "birth": 1357959,
+          "parent": 159900,
+          "state": "S"
+        },
+        "target": {
+          "pid": 158238,
+          "birth": 1357454,
+          "parent": 158135,
+          "state": "R"
+        },
+        "scope": "/run/user/1000/craidd-profiling/n6cb25ecc7b33b8a3",
+        "route": "/run/user/1000/craidd-profiling/n6cb25ecc7b33b8a3/158238-1357454.endpoint",
+        "socket": "/run/user/1000/craidd-profiling/n6cb25ecc7b33b8a3/host-159903-1357959.sock",
+        "routeExists": false,
+        "socketExists": false
+      }
+    ],
+    "sourceManifest": {
+      "revision": "03f87ad722b4e2ff6fdbfb4eb4b67c9de85e8f87",
+      "files": {
+        "support/profiling/craidd_gold.hpp": "118ba38ef5612ac44907b0aa37d637a38a4dac348f6c15bfa60b9f1d2d085f16",
+        "workspaces/unity/.gitattributes": "4e18fd8e6c01d20924ac5354b372a02647583ac8172091a2e4bfaeae10e709df",
+        "workspaces/unity/.gitignore": "5d49d005668f0793860c6e306f5b2a12c6dbfa06a7bc455fede6ce1ecb92976d",
+        "workspaces/unity/Assets/Editor.meta": "777cc20516e9e2cb0344bf4b0a3b9c9ef2d81299bbbb803d59fb9ae48b8e2cd4",
+        "workspaces/unity/Assets/Editor/Editor.craidd": "de7d5bb38139f7fafad81d41894eff89a5d3f469abad714b3e5624f4c9884eb0",
+        "workspaces/unity/Assets/Editor/Editor.craidd.meta": "168918dc07372b4c1307e924f6dd6c9d44759be3590717c2fcf38a863cf0681c",
+        "workspaces/unity/Assets/Editor/ProbePlayLifecycle.cs": "5dee6ee3909d6d1e6f84371bf82cf9c0511d855b1d9d3e6e4fed156d9fb2c599",
+        "workspaces/unity/Assets/Editor/ProbePlayLifecycle.cs.meta": "ca46daa0446062c5bdd5c7ad56f9971e13cc8bddf019e5eeb0dde8321dd16872",
+        "workspaces/unity/Assets/Editor/ProbeProject.cs": "800aa0ebee1a0013b49677fdf520dc90a6ac0c07e21df9af101116d1c6505b6c",
+        "workspaces/unity/Assets/Editor/ProbeProject.cs.meta": "a655f86c3d7241e17ec187f01897e9101836ab7167ba7299442d8b61f91320a3",
+        "workspaces/unity/Assets/Plugins.meta": "c3a0cc44c2ff98ef4459d7a7b7c070574b535d0d9b631abfba1b77396ca893cf",
+        "workspaces/unity/Assets/Plugins/x86_64.meta": "94b43f9e2faff2c7f7977d4ff165b693119e481c1519a1c1e093970a5813f487",
+        "workspaces/unity/Assets/Scenes.meta": "8b3487ab851cbc3425f88e147c141126ec36fb2d1acb8e4bd3e67a832e3d871b",
+        "workspaces/unity/Assets/Scenes/DebugProbe.unity": "71cd5c00374529ee462a27c3087b5590a1b9822f2558d07eea82fc6ec6d27dff",
+        "workspaces/unity/Assets/Scenes/DebugProbe.unity.meta": "d0a12cb6c716ae3b0f0abfdf69febbe73ded6983469141da3a8d3737dcbefc5a",
+        "workspaces/unity/Assets/Scripts.meta": "8031359bbb14dcd1e2351c0fd0064ee5043379a9c7629a451beaf13768c1def9",
+        "workspaces/unity/Assets/Scripts/Managed.craidd": "e9111126212c8a51e2fcdbd777b6c3dd93f373ffedd4ebab86c0681675d8d546",
+        "workspaces/unity/Assets/Scripts/Managed.craidd.meta": "52dafb490c7a52eb53f7ba5bba6cfa87273b6e961c9aed6df8263fd9f5e177cf",
+        "workspaces/unity/Assets/Scripts/NativeProbe.cs": "798a0039c432e2ec4e40c6a23612e8321a757648dbc3d4242194aade42866ab4",
+        "workspaces/unity/Assets/Scripts/NativeProbe.cs.meta": "3a37f70206ee11f80cae6e3128859b0117ca5f40d4e3b4e1e4e372599d359c08",
+        "workspaces/unity/Native/CMakeLists.txt": "d50579924dbbd066c24881fa8e33737dedc54a6d86a6bc7061c553fcfd5fb978",
+        "workspaces/unity/Native/Native.craidd": "6b26950ce6ed8c6d81609af0edc22976941b89ccb31c3d7ea52219bcc58945a4",
+        "workspaces/unity/Native/anchored.cpp": "4c30df42fd4624ffc01aed330e2cd8563f30b1aff9d371f32dd9f5cf229ed41c",
+        "workspaces/unity/Native/probe.cpp": "d861f4c694b4d0e7f2d4fda6195e5c61c4b6f56d0deca72e3055a53855fe226f",
+        "workspaces/unity/Native/smoke.cpp": "12e0db96b6b9eef442df0088b94ccd89ff23b76af31fea644afa59e3f7f33eaa",
+        "workspaces/unity/Packages/manifest.json": "5ca72b781ce904d775d1232449d3f77eee76ca5361e80a2584e633c0724a3fca",
+        "workspaces/unity/Packages/packages-lock.json": "8579359bdb3ffcbd6565c993f47d32bf4800443e2a0573957b91c9dc6e9f2e86",
+        "workspaces/unity/ProjectSettings/AudioManager.asset": "9543c41dbfc7d3951217c4dd9481ed026eb8e529b85ecf4463969a0fea747729",
+        "workspaces/unity/ProjectSettings/ClusterInputManager.asset": "40e65dd214bf254955d2c8829ca8ce2130fd3510485560ce012e9a1ddd93e623",
+        "workspaces/unity/ProjectSettings/DynamicsManager.asset": "d102dd312ef330f5e5ca255c070fb34f68f59ec633d1e9fd67e2f2f6f88f66c8",
+        "workspaces/unity/ProjectSettings/EditorBuildSettings.asset": "223127de28d015b529894ec127865218b6e749f922c3f5024a3af3a5c902ac35",
+        "workspaces/unity/ProjectSettings/EditorSettings.asset": "c3457984f413109cea03254192b3873ad51a17d4ef50d13dbb427f8a7a76cdd2",
+        "workspaces/unity/ProjectSettings/GraphicsSettings.asset": "8ef104b545ec651221d6806e99e8e3ee854916c6366d8db57d2d6c50eaf4a9a3",
+        "workspaces/unity/ProjectSettings/InputManager.asset": "d0f454ddb880912abcae92e3e12957a7446786ba89e24937e019ff3bbc0d4300",
+        "workspaces/unity/ProjectSettings/MemorySettings.asset": "25fb3fdd1ce94347ccdcf23d5d5e446055ca81d8b3756a7df85d614645a71ac4",
+        "workspaces/unity/ProjectSettings/MultiplayerManager.asset": "aba89fd1a1ddad182727ad82727e536d27372e90328a8196da2a4560398983dd",
+        "workspaces/unity/ProjectSettings/NavMeshAreas.asset": "7ebbf8f53b8033104e1878b95ca07a28d0954092d81c220f14196a42f651e658",
+        "workspaces/unity/ProjectSettings/Physics2DSettings.asset": "1cfc0c8fbceec604fd7cd2a06c04ff05dddee6335b75c92b0f5715ad80ba9490",
+        "workspaces/unity/ProjectSettings/PhysicsCoreProjectSettings2D.asset": "bedc5339a832c60dc3f11b84abc4f4384dbfa20b0cd9ad6c444b907e751fc35e",
+        "workspaces/unity/ProjectSettings/PresetManager.asset": "29c125923fe6e29f90190d4fce1c82d660e7051546e2c9d02908d18c9cf2436c",
+        "workspaces/unity/ProjectSettings/ProjectAuditorSettings.asset": "dbf44dc7e72b2fd3110f8834c18fe632a203c898d7303601b2201b67b7d18dc9",
+        "workspaces/unity/ProjectSettings/ProjectSettings.asset": "7aa1a7f2456f49bd368fbe855ef64e700ca91b97a78cdd18b997b4f7350313da",
+        "workspaces/unity/ProjectSettings/ProjectVersion.txt": "68312bd68c3d81c0dabeaa9905955fd523a6a184f4e6ae180377a1cdb8b2fd42",
+        "workspaces/unity/ProjectSettings/QualitySettings.asset": "f1f893b1be47ad2442f58338dd7c860dc1986bb317e2f5bb31084454ffabbf4c",
+        "workspaces/unity/ProjectSettings/SceneTemplateSettings.json": "bb9098b3bfcde78d93e264b96f7b77b5430e64e8c57a7aad7f5a5d9c3945e16a",
+        "workspaces/unity/ProjectSettings/TagManager.asset": "996628fdc904025b83606bbfbda4fe08c0bbe916475146110e77cdc2f22c2013",
+        "workspaces/unity/ProjectSettings/TimeManager.asset": "3396f52fdc16d445024e01d7a2d99db6f0a37569d1d73c0302e9ffb857d90287",
+        "workspaces/unity/ProjectSettings/UnityConnectSettings.asset": "11251dae0356b6f43dd2c67bb511f6b7ecda4e5de425186bba3297e6f3dc1c6f",
+        "workspaces/unity/ProjectSettings/VFXManager.asset": "2973a6af930e142f62cde00076beda8a3cc3a66d9bfcde7a58ba7d4be2251c26",
+        "workspaces/unity/ProjectSettings/VersionControlSettings.asset": "e199cdfa6a8f2bf33cfd47e549198f13e3eb2a5099e908fdb4e0f14d939ccc6b",
+        "workspaces/unity/README.md": "0f7314274549e8cc3741bb6842e805458e8b366ef8f96a409e2b4dbbe2017678",
+        "workspaces/unity/unity.cln": "e8de3e791e3d605c99a4e4e673c2af8e26d1ce51c0f8580db3bf1b8ab50d954c",
+        "workspaces/unity/Assets/Editor/UnityProfilingHarness.cs": "59fdef96ca49a8e7ba77616e3d273703c51ec9b918c5eb4d90b4c8bc2ea0026d",
+        "workspaces/unity/Native/scoped_ranges.cpp": "51c238b51f4c978dc3c1d6b3756dafc8a7ed05a683b2f16450f6c5ef03133f22"
+      },
+      "pluginSha256": "2c99fdec8396ec7b4129755ef065f4f5395ed439e58974c577f743d434671fb2"
+    }
+  },
+  "unity-recovery-replacement": {
+    "path": "test-results/ui/2026-10-17T16-12-43-602Z/unity-recovery-replacement/record.json",
+    "records": [
+      {
+        "step": "replacement-host",
+        "at": "2026-10-17T16:12:58.401Z",
+        "originalHost": {
+          "pid": 159903,
+          "birth": 1357959,
+          "parent": 159900,
+          "state": "S"
+        },
+        "editorPid": 158238,
+        "profileSummary": {
+          "id": "158238-1357454-1792253576655673226",
+          "target": {
+            "pid": 158238,
+            "birth": 1357454
+          },
+          "active": true,
+          "waitingForPlay": false,
+          "batch": 1,
+          "playGeneration": 1,
+          "counters": {
+            "evictedCaptures": 0,
+            "agedSamples": 0,
+            "rejectedEvents": 0,
+            "disconnects": 0,
+            "sourceGaps": 0
+          }
+        }
+      },
+      {
+        "step": "final-profile",
+        "at": "2026-10-17T16:13:07.052Z",
+        "profileSummary": {
+          "id": "158238-1357454-1792253576655673226",
+          "target": {
+            "pid": 158238,
+            "birth": 1357454
+          },
+          "active": false,
+          "waitingForPlay": false,
+          "batch": 1,
+          "playGeneration": 1,
+          "counters": {
+            "evictedCaptures": 0,
+            "agedSamples": 0,
+            "rejectedEvents": 0,
+            "disconnects": 0,
+            "sourceGaps": 0
+          }
+        }
+      }
+    ]
+  },
+  "unity-overlay": {
+    "path": "test-results/ui/2026-10-17T16-11-39-456Z/unity-overlay",
+    "state": {
+      "project": "/tmp/cui-11BJze/workspaces/unity",
+      "editor": "/home/skira24/Unity/Hub/Editor/6000.5.10f1/Editor/Unity",
+      "version": "6000.5.10f1",
+      "status": {
+        "pid": 149359,
+        "playing": true,
+        "changing": false,
+        "nativeLiveBytes": 1048576,
+        "frames": 44,
+        "overlayDraws": 44,
+        "lastCommand": 3,
+        "menuExecuted": false,
+        "error": ""
+      }
+    },
+    "sourceManifest": {
+      "revision": "03f87ad722b4e2ff6fdbfb4eb4b67c9de85e8f87",
+      "files": {
+        "support/profiling/craidd_gold.hpp": "118ba38ef5612ac44907b0aa37d637a38a4dac348f6c15bfa60b9f1d2d085f16",
+        "workspaces/unity/.gitattributes": "4e18fd8e6c01d20924ac5354b372a02647583ac8172091a2e4bfaeae10e709df",
+        "workspaces/unity/.gitignore": "5d49d005668f0793860c6e306f5b2a12c6dbfa06a7bc455fede6ce1ecb92976d",
+        "workspaces/unity/Assets/Editor.meta": "777cc20516e9e2cb0344bf4b0a3b9c9ef2d81299bbbb803d59fb9ae48b8e2cd4",
+        "workspaces/unity/Assets/Editor/Editor.craidd": "de7d5bb38139f7fafad81d41894eff89a5d3f469abad714b3e5624f4c9884eb0",
+        "workspaces/unity/Assets/Editor/Editor.craidd.meta": "168918dc07372b4c1307e924f6dd6c9d44759be3590717c2fcf38a863cf0681c",
+        "workspaces/unity/Assets/Editor/ProbePlayLifecycle.cs": "5dee6ee3909d6d1e6f84371bf82cf9c0511d855b1d9d3e6e4fed156d9fb2c599",
+        "workspaces/unity/Assets/Editor/ProbePlayLifecycle.cs.meta": "ca46daa0446062c5bdd5c7ad56f9971e13cc8bddf019e5eeb0dde8321dd16872",
+        "workspaces/unity/Assets/Editor/ProbeProject.cs": "800aa0ebee1a0013b49677fdf520dc90a6ac0c07e21df9af101116d1c6505b6c",
+        "workspaces/unity/Assets/Editor/ProbeProject.cs.meta": "a655f86c3d7241e17ec187f01897e9101836ab7167ba7299442d8b61f91320a3",
+        "workspaces/unity/Assets/Plugins.meta": "c3a0cc44c2ff98ef4459d7a7b7c070574b535d0d9b631abfba1b77396ca893cf",
+        "workspaces/unity/Assets/Plugins/x86_64.meta": "94b43f9e2faff2c7f7977d4ff165b693119e481c1519a1c1e093970a5813f487",
+        "workspaces/unity/Assets/Scenes.meta": "8b3487ab851cbc3425f88e147c141126ec36fb2d1acb8e4bd3e67a832e3d871b",
+        "workspaces/unity/Assets/Scenes/DebugProbe.unity": "71cd5c00374529ee462a27c3087b5590a1b9822f2558d07eea82fc6ec6d27dff",
+        "workspaces/unity/Assets/Scenes/DebugProbe.unity.meta": "d0a12cb6c716ae3b0f0abfdf69febbe73ded6983469141da3a8d3737dcbefc5a",
+        "workspaces/unity/Assets/Scripts.meta": "8031359bbb14dcd1e2351c0fd0064ee5043379a9c7629a451beaf13768c1def9",
+        "workspaces/unity/Assets/Scripts/Managed.craidd": "e9111126212c8a51e2fcdbd777b6c3dd93f373ffedd4ebab86c0681675d8d546",
+        "workspaces/unity/Assets/Scripts/Managed.craidd.meta": "52dafb490c7a52eb53f7ba5bba6cfa87273b6e961c9aed6df8263fd9f5e177cf",
+        "workspaces/unity/Assets/Scripts/NativeProbe.cs": "798a0039c432e2ec4e40c6a23612e8321a757648dbc3d4242194aade42866ab4",
+        "workspaces/unity/Assets/Scripts/NativeProbe.cs.meta": "3a37f70206ee11f80cae6e3128859b0117ca5f40d4e3b4e1e4e372599d359c08",
+        "workspaces/unity/Native/CMakeLists.txt": "d50579924dbbd066c24881fa8e33737dedc54a6d86a6bc7061c553fcfd5fb978",
+        "workspaces/unity/Native/Native.craidd": "6b26950ce6ed8c6d81609af0edc22976941b89ccb31c3d7ea52219bcc58945a4",
+        "workspaces/unity/Native/anchored.cpp": "4c30df42fd4624ffc01aed330e2cd8563f30b1aff9d371f32dd9f5cf229ed41c",
+        "workspaces/unity/Native/probe.cpp": "d861f4c694b4d0e7f2d4fda6195e5c61c4b6f56d0deca72e3055a53855fe226f",
+        "workspaces/unity/Native/smoke.cpp": "12e0db96b6b9eef442df0088b94ccd89ff23b76af31fea644afa59e3f7f33eaa",
+        "workspaces/unity/Packages/manifest.json": "5ca72b781ce904d775d1232449d3f77eee76ca5361e80a2584e633c0724a3fca",
+        "workspaces/unity/Packages/packages-lock.json": "8579359bdb3ffcbd6565c993f47d32bf4800443e2a0573957b91c9dc6e9f2e86",
+        "workspaces/unity/ProjectSettings/AudioManager.asset": "9543c41dbfc7d3951217c4dd9481ed026eb8e529b85ecf4463969a0fea747729",
+        "workspaces/unity/ProjectSettings/ClusterInputManager.asset": "40e65dd214bf254955d2c8829ca8ce2130fd3510485560ce012e9a1ddd93e623",
+        "workspaces/unity/ProjectSettings/DynamicsManager.asset": "d102dd312ef330f5e5ca255c070fb34f68f59ec633d1e9fd67e2f2f6f88f66c8",
+        "workspaces/unity/ProjectSettings/EditorBuildSettings.asset": "223127de28d015b529894ec127865218b6e749f922c3f5024a3af3a5c902ac35",
+        "workspaces/unity/ProjectSettings/EditorSettings.asset": "c3457984f413109cea03254192b3873ad51a17d4ef50d13dbb427f8a7a76cdd2",
+        "workspaces/unity/ProjectSettings/GraphicsSettings.asset": "8ef104b545ec651221d6806e99e8e3ee854916c6366d8db57d2d6c50eaf4a9a3",
+        "workspaces/unity/ProjectSettings/InputManager.asset": "d0f454ddb880912abcae92e3e12957a7446786ba89e24937e019ff3bbc0d4300",
+        "workspaces/unity/ProjectSettings/MemorySettings.asset": "25fb3fdd1ce94347ccdcf23d5d5e446055ca81d8b3756a7df85d614645a71ac4",
+        "workspaces/unity/ProjectSettings/MultiplayerManager.asset": "aba89fd1a1ddad182727ad82727e536d27372e90328a8196da2a4560398983dd",
+        "workspaces/unity/ProjectSettings/NavMeshAreas.asset": "7ebbf8f53b8033104e1878b95ca07a28d0954092d81c220f14196a42f651e658",
+        "workspaces/unity/ProjectSettings/Physics2DSettings.asset": "1cfc0c8fbceec604fd7cd2a06c04ff05dddee6335b75c92b0f5715ad80ba9490",
+        "workspaces/unity/ProjectSettings/PhysicsCoreProjectSettings2D.asset": "bedc5339a832c60dc3f11b84abc4f4384dbfa20b0cd9ad6c444b907e751fc35e",
+        "workspaces/unity/ProjectSettings/PresetManager.asset": "29c125923fe6e29f90190d4fce1c82d660e7051546e2c9d02908d18c9cf2436c",
+        "workspaces/unity/ProjectSettings/ProjectAuditorSettings.asset": "dbf44dc7e72b2fd3110f8834c18fe632a203c898d7303601b2201b67b7d18dc9",
+        "workspaces/unity/ProjectSettings/ProjectSettings.asset": "7aa1a7f2456f49bd368fbe855ef64e700ca91b97a78cdd18b997b4f7350313da",
+        "workspaces/unity/ProjectSettings/ProjectVersion.txt": "68312bd68c3d81c0dabeaa9905955fd523a6a184f4e6ae180377a1cdb8b2fd42",
+        "workspaces/unity/ProjectSettings/QualitySettings.asset": "f1f893b1be47ad2442f58338dd7c860dc1986bb317e2f5bb31084454ffabbf4c",
+        "workspaces/unity/ProjectSettings/SceneTemplateSettings.json": "bb9098b3bfcde78d93e264b96f7b77b5430e64e8c57a7aad7f5a5d9c3945e16a",
+        "workspaces/unity/ProjectSettings/TagManager.asset": "996628fdc904025b83606bbfbda4fe08c0bbe916475146110e77cdc2f22c2013",
+        "workspaces/unity/ProjectSettings/TimeManager.asset": "3396f52fdc16d445024e01d7a2d99db6f0a37569d1d73c0302e9ffb857d90287",
+        "workspaces/unity/ProjectSettings/UnityConnectSettings.asset": "11251dae0356b6f43dd2c67bb511f6b7ecda4e5de425186bba3297e6f3dc1c6f",
+        "workspaces/unity/ProjectSettings/VFXManager.asset": "2973a6af930e142f62cde00076beda8a3cc3a66d9bfcde7a58ba7d4be2251c26",
+        "workspaces/unity/ProjectSettings/VersionControlSettings.asset": "e199cdfa6a8f2bf33cfd47e549198f13e3eb2a5099e908fdb4e0f14d939ccc6b",
+        "workspaces/unity/README.md": "0f7314274549e8cc3741bb6842e805458e8b366ef8f96a409e2b4dbbe2017678",
+        "workspaces/unity/unity.cln": "e8de3e791e3d605c99a4e4e673c2af8e26d1ce51c0f8580db3bf1b8ab50d954c",
+        "workspaces/unity/Assets/Editor/UnityProfilingHarness.cs": "59fdef96ca49a8e7ba77616e3d273703c51ec9b918c5eb4d90b4c8bc2ea0026d",
+        "workspaces/unity/Native/scoped_ranges.cpp": "51c238b51f4c978dc3c1d6b3756dafc8a7ed05a683b2f16450f6c5ef03133f22"
+      },
+      "pluginSha256": "27d31014222afe6f6a096e3d3b865b076ad231549ab5d9aab88bffbce5c7fc2d"
+    }
+  }
+}

@@ -6,6 +6,16 @@ The [17 October repair report](../../bugs/16-10-2026/unity-profiling-final-repor
 supersedes the historical counter, retention, snapshot, transport and discovery
 limitations below. Earlier dated sections describe their observed revisions.
 
+## Unified scopes follow-up, 17 October
+
+The [scope contract](design-profiler-scopes.md) supersedes the earlier automatic
+Solo default and session-wide chart presentation. It preserves the panel and
+native lifecycle, adds a shared scope resolver and frozen boundary summaries,
+and keeps manual snapshot history separate from the one-entry-per-benchmark
+Scope picker. The [scope report](../../bugs/17-10-2026/profiler-scopes-report.md)
+records implementation/automated evidence and the separately supplied human
+baseline. A completed selected recording remains selected as Recorded.
+
 ## Native profiling repair qualification, 17 October
 
 The real harness is imported from `uiux/ui-harness` at `280b1d8`. Disposable

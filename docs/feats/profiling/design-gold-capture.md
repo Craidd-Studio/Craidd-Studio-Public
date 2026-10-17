@@ -166,28 +166,28 @@ runtime discovery. Process gauges remain available without source coverage.
 Profiler lives in the **right panel beside Debugger**, per
 [the public-release layout](../../uiux/design-public-release-sweep.md#3-profiling-layout-only).
 It identifies the selected process/session, loaded module and capture state.
-A **Gold benchmark dropdown** selects one recorded solo or paired range for
-CPU/memory detail. Solo is the automatic default when recorded. Without Solo,
-the initial view is Process overview. An explicit range or Process overview
-choice takes precedence and survives new hits, batches and snapshot switching
-within that process session. New hits never override an explicit choice. A
-Solo shortcut returns to its overview; a different process gets its own default.
+A **Scope dropdown** selects Full session or a recorded Gold/Solo benchmark.
+Full session is the default under the approved
+[unified scope contract](design-profiler-scopes.md). Selecting a benchmark
+focuses its latest retained invocation/segment once. New hits never retarget
+that chosen capture. When it completes, the same selection visibly becomes
+Recorded with fixed boundaries. Individual retained hits can be focused from
+the existing collapsed history or the Gold timeline. The selector lists a
+benchmark once; repeated hits do not become dozens of duplicate menu entries.
 
-The selected benchmark's graphs are visible directly. Repeated hits or Solo
-batch segments live in a collapsible list with expandable per-hit details.
-All Gold markers continue recording independently of this view selection.
-Benchmark choices come from recorded capture metadata, not names or later
-source edits. A selected benchmark absent from a historical/filtered view stays
-selected and reports no captures rather than silently switching to Solo.
-Source navigation reveals the marker endpoints in their owner context.
+**Manual snapshot history remains a separate dropdown**, preserving saved
+moments, comparison and one-click Live return. Gold intervals are never called
+snapshots. Source names/identities come from recorded metadata. Missing/evicted
+recordings remain explicitly unavailable; a later hit cannot silently replace
+the selected capture. Source navigation and gutter pairing remain unchanged.
 
-CPU, memory, contributing threads and GPU sections report their selected
-scope. Process-wide CPU/RSS graphs remain labelled as process context; changing
-the benchmark does not turn RSS into range memory or attribute process CPU to
-that range. Capture-level CPU means avoid summing nested invocations; native
-allocation cohort sums are inclusive and labelled because cohorts can overlap.
-Snapshot RSS remains process-wide while its native cohort column follows the
-selected benchmark and filters. Missing collectors remain Unavailable/Planned.
+All existing tabs share the resolved scope. CPU/RSS charts show process-wide
+observations inside its window, with sampled boundary limitations; they are
+not function-exclusive metrics. Gold's Marker filter is only a history browser.
+Capture cohorts remain inclusive. Frozen End values and later survivor/free
+observations are separately labelled. Full-session native totals count accepted
+explicit allocation events once, independently of nested owners. Missing
+collectors/observations remain unavailable rather than measured zero.
 
 The public target is CPU and memory tooling with per-thread inspection.
 Whole-process sampling alone is an earlier checkpoint, not completion of

@@ -39,6 +39,12 @@ unproved clauses as open. The [initial findings](../bugs/16-10-2026/unity-profil
 and [Opus review handoff](../handoffs/handoff-unity-profiling-uiux-2026-10-16.md)
 are historical; the user subsequently supplied the independent review.
 
+The [shared-scope contract](../feats/profiling/design-profiler-scopes.md) and
+[Phase 2 implementation report](../bugs/17-10-2026/profiler-scopes-report.md)
+continue this work with fixed Gold/Solo windows, independent snapshot history
+and explicit native memory semantics. Their automated checks do not change the
+separate human manual acceptance record.
+
 [The design handoff](../handoffs/handoff-unity-profiling-2026-10-14.md) records
 the agreed UX, open provider decisions and the first implementation proof.
 HTML references are visual studies; they do not override these contracts or

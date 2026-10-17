@@ -2,10 +2,17 @@
 
 **Roadmap track:** Phase 3.x / 3.5, Unity attach and profiling acceptance.
 
-**Status:** Native fixture evidence updated 17 October 2026. The user supplied
+**Status:** Native fixture evidence updated 17 October 2026.
+The [scope follow-up](../bugs/17-10-2026/profiler-scopes-report.md) records the
+subsequent approved navigation changes and separate human manual evidence.
+Results below describe the earlier repair gate, not complete profiler acceptance. The user supplied
 an independent Claude Opus 5.5 review; Codex implemented and reran the repairs.
 See the [final repair report](../bugs/16-10-2026/unity-profiling-final-report.md).
 Four entries retain unproved clauses; the master checkbox stays open.
+The later scope follow-up additionally found a **failed ten-minute uncapped
+zero-loss check** (15 missing source events). Its retained sample bound held;
+sustained-load zero-loss qualification remains open. Earlier passing clauses
+below are historical evidence, not a claim that this new failure passed.
 
 **Master checkbox:**
 
@@ -51,7 +58,7 @@ mutation; never replace the user's live profiling owner with a harness owner.
 - [ ] **U05 — Unity-first attach (critical):** open Unity before Craidd; find the main Editor for `workspaces/unity`, including Hub hard-linked executable names. Asset-import workers are ordinary helper targets, not matching Editors. Preselect only an unambiguous matching Editor; attachment remains an explicit action. Reject PID reuse/stale targets.
 - [x] **U06 — Profile only (critical):** the selected Editor discovers prepared hooks without a launch environment variable. CPU-time/RSS graphs update, and connected source coverage is visible. Profile only does not pause Unity or attach a debugger. Stop profiling leaves the foreign process running.
 - [x] **U07 — Marker meaning (critical):** the UI distinguishes compiled fixture hooks from gutter intent requiring a prepared/rebuilt source. Gold markers record automatically and never act as user execution breakpoints. Unity C# attach/LDI support is not inferred from a native hook or LLDB attach.
-- [ ] **U08 — Benchmark selection:** one Solo is the initial overview; a deliberate range selection stays selected as more hits arrive. All benchmarks remain available in the dropdown. A Solo shortcut returns to the overview. Missing Solo and no-hit cases are usable.
+- [ ] **U08 — Benchmark selection:** Full session is the default (superseding earlier automatic Solo focus); Solo is selectable; a deliberate range selection stays selected as more hits arrive. All benchmarks remain available in the dropdown. A Solo shortcut returns to the overview. Missing Solo and no-hit cases are usable.
 - [x] **U09 — Collapsibles:** Gold lists Recorded hits/segments compactly; expanding an entry exposes its thread, batch, duration/status and memory values. New hits do not reset unrelated selection or expansion. The panel remains usable with large histories.
 
 ## Native memory: prove the complete path
@@ -102,7 +109,7 @@ refer to each scenario's `record.json`.
 | U05 | **Partial.** Real Unity-first matching copy is preselected; Profile only is explicit. Hard-link/worker exclusion has backend regression evidence. Every stale/ambiguous dialog state and PID-reuse UI rejection was not driven; no interaction with the user's Editor. |
 | U06 | **Pass.** No socket launch variable; real authenticated provider and CPU/RSS update. Explicit Stop leaves the same disposable Editor playing. See first-play, second-play, final-profile and target identities. No debugger attach/stop commands are used. |
 | U07 | **Pass.** Settings shows compiled-hook/prepared-source distinction and uninstrumented Unity C# warning. Native events arrive automatically; coverage-limits screenshot/text records managed/GPU boundaries. |
-| U08 | **Partial.** Solo defaults; deliberate range remains selected with new hits; dropdown lists identities; no-hit idle overview tested. A dedicated ranges-only/no-Solo runtime and the Solo shortcut pointer action remain unrun. |
+| U08 | **Partial for the historical gate.** Solo previously defaulted; the scope follow-up changes default to Full session; deliberate range remains selected with new hits; dropdown lists identities; no-hit idle overview tested. A dedicated ranges-only/no-Solo runtime and the Solo shortcut pointer action remain unrun. |
 | U09 | **Pass for bounded retained history.** Real Gold group/hit expansion shows thread, batch, status, CPU and memory. More hits leave chosen benchmark/group open; large raw histories remain limited to retained per-marker hits. |
 | U10 | **Partial.** Real `ExecuteMenuItem` in each disposable Editor succeeds; direct native bytes and actual `[Craidd Probe]` logs correlate. Graphical overlay visibly repaints. Immediate Inspector repaint and physical pointer clicks on overlay buttons were not tested; original live-session silence remains untouched. |
 | U11 | **Pass.** Menu allocation gives exact 1,048,576 direct native bytes and retained bytes in both Solo and allocation-range cohorts. Periodic allocations disabled for comparison; inclusive sums are not treated as unique heap. |
@@ -114,6 +121,22 @@ refer to each scenario's `record.json`.
 | U17 | **Pass with revision limit.** Real uncapped run rolls past 2,400 samples and millions of raw captures; allocation/free/repeated Play still work with 0 source gaps/rejections/disconnects. Long run occurred during implementation; final build has short runtime checks plus unit edge regressions, not another ten-minute run. |
 | U18 | **Pass for native inspection.** Real worker-thread/batch selection filters visible Gold hits while other native threads keep producing hits. Whole-process charts remain labelled CPU time/RSS; filter tooltip says it does not suspend threads. DAP pause presentation is source/regression-checked, not a new Unity debugger-pause qualification. |
 | U19 | **Pass.** Report separates supplied Opus findings, user observations, Codex runtime evidence, source/unit proof, repairs/commits, commands, screenshots, partial checks, unrelated failures, limits and user test sequence. |
+
+## Phase 2 shared-scope follow-up (automated evidence)
+
+These checks refer to the [Phase 2 report](../bugs/17-10-2026/profiler-scopes-report.md),
+not a new human acceptance claim. They leave the master checkbox open.
+
+- [x] **P01 — Shared scope:** Full session, Gold/Solo and all tabs use the same time window; process CPU/RSS retain their process-wide semantics. Resolver edge tests and real interval/chart sample counts prove this.
+- [x] **P02 — Completion:** selected Gold/Solo keeps its ID and fixed boundaries when Recording becomes Recorded, including a subsequent automated Play generation. Frozen End memory differs correctly from later free/survivor observations.
+- [x] **P03 — Separate selectors:** Scope lists a marker once; individual retained hits use history/Focus or timeline. Global snapshot history contains saved moments, with related snapshots grouped first and one-click Live return.
+- [x] **P04 — Active associations:** one live snapshot identity is shared by overlapping active recordings regardless of historical viewing scope. Completed selected recordings receive no new association. Multiple associated snapshots remain accessible after completion.
+- [x] **P05 — Review and retention:** snapshot capture preserves selected source/scope/tab, including the explicitly reviewed saved moment at the unchanged eight-view bound. Oldest other views are evicted.
+- [x] **P06 — Missing history:** selected-hit eviction stays explicit, with no silent replacement or Full-session chart fallback. Unit tests also cover unknown End, sub-poll ranges and partial sample history.
+- [x] **P07 — Compact access:** real keyboard scope selection, timeline/history focus and all four tabs at 288/360/420 px widths pass without horizontal overflow. Saved history remains independently selectable.
+- [ ] **P08 — Sustained uncapped zero-loss:** ten-minute run detected 15 missing source events. Bounded retention held; zero-loss qualification and regression attribution remain open.
+- [ ] **P09 — Physical pointer follow-up:** independently verify scope switching with the mouse after returning from snapshot history. WebDriver option-level activation was unreliable; the qualified scope scenario uses real keyboard input and rendered identity assertions.
+- [ ] **P10 — Human replay acceptance:** Stop Play → Play again without reattaching remains NOT EXPLICITLY VERIFIED by the human. Automated replay does not tick this box.
 
 ---
 

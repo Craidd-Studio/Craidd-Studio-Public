@@ -14,7 +14,7 @@ npm run test:ui:profiling
 npm run test:ui:profiling:long
 ```
 
-The targeted suite has five tests:
+The targeted suite has six tests:
 
 - Profiler SVG icons, cold/no file and with Monaco open, in the real webview.
 - Diagnostic overlay in a separate graphical Unity copy, with a Game capture.
@@ -23,6 +23,9 @@ The targeted suite has five tests:
   thread/batch inspection, Record again/late free, repeat Play and safe Stop.
 - The same batch-mode native profiling flow uncapped, past 2,000 raw hits.
   The long command additionally runs through the real 2,400-sample window.
+- Unified scope navigation with controlled nested Gold windows, Recording →
+  Recorded selection stability, separate snapshot history, timeline/history
+  focus, explicit selected-hit eviction, and 288/360/420 px across all tabs.
 - Forced source disconnect, pinned late free, abrupt death of the verified
   harness-owned host, artifact cleanup, and reconnection to a replacement host
   without restarting the disposable Editor.
@@ -55,6 +58,10 @@ A development URL binary can be selected with `CRAIDD_UI_APP`; the default is
 the embedded debug executable. CSP is never relaxed by this harness. The
 [Monaco CSP proposal](../../docs/uiux/proposal-monaco-csp-styles.md) still needs
 user approval.
+
+The [scope contract](../../docs/feats/profiling/design-profiler-scopes.md) and
+[scope report](../../docs/bugs/17-10-2026/profiler-scopes-report.md) cover the new
+selection semantics. The human manual baseline is separately attributed there.
 
 The [Unity checklist](../../docs/uiux/unity-profiling-harness-checklist.md)
 records acceptance; the [repair report](../../docs/bugs/16-10-2026/unity-profiling-final-report.md)

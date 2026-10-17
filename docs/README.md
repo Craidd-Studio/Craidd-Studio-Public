@@ -23,6 +23,11 @@ Unity fixture qualification and remaining usability gates are recorded in the
 [initial findings](bugs/16-10-2026/unity-profiling-uiux-report.md) and
 [Opus review handoff](handoffs/handoff-unity-profiling-uiux-2026-10-16.md).
 
+The [unified scope contract](feats/profiling/design-profiler-scopes.md) and
+[Phase 2 report](bugs/17-10-2026/profiler-scopes-report.md) cover shared
+Gold/Solo windows, separate manual snapshot history and subsequent verification.
+Human baseline acceptance remains separately attributed in that report.
+
 The rest of the docs are grouped by purpose:
 
 | Folder | Contents |
