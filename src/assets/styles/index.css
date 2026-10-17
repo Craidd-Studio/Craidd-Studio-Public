@@ -380,3 +380,12 @@ select {
 .profiler-benchmark button { font-size:10px; color:#d5bf89; }
 .profiler-benchmark-name { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .profiler-section-title > span { flex-shrink:0; }
+
+/* Shared scope navigation keeps the existing compact Profiler structure. */
+.profiler-scope-caption { margin:0 8px 5px; font-size:10px; line-height:1.4; overflow-wrap:anywhere; color:#b6c7d4; }
+.profiler-event-track { height:23px; }
+.profiler-event-track > button { position:absolute; height:5px; min-width:3px; padding:0; border:0; border-radius:1px; background:#b99b57; }
+.profiler-event-track > button[aria-pressed="true"] { background:#a8d9fa; outline:1px solid #e4f4ff; z-index:2; }
+.profiler-event-track > button:focus-visible { outline:2px solid #fff; z-index:3; }
+.profiler-event-track small { pointer-events:none; }
+.profiler-metrics dt { min-width:0; overflow-wrap:anywhere; }
