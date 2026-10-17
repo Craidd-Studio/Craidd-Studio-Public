@@ -8,6 +8,8 @@ using UnityEngine;
 [InitializeOnLoad]
 public static class UnityProfilingHarness
 {
+    [System.Runtime.InteropServices.DllImport("craidd_unity_probe")] static extern void craidd_harness_begin(int nested);
+    [System.Runtime.InteropServices.DllImport("craidd_unity_probe")] static extern void craidd_harness_end(int nested);
     const string Active = "CraiddHarness.Active";
     static double nextPoll;
     static double nextStatus;
@@ -64,6 +66,8 @@ public static class UnityProfilingHarness
                         SessionState.SetBool("CraiddHarness.Menu", executed);
                         if (!executed) throw new Exception("Menu dispatch rejected: " + item);
                     }
+                    else if (command.action == "begin" || command.action == "begin-inner") craidd_harness_begin(command.action == "begin-inner" ? 1 : 0);
+                    else if (command.action == "end" || command.action == "end-inner") craidd_harness_end(command.action == "end-inner" ? 1 : 0);
                     else if (command.action == "workers")
                     {
                         var probe = UnityEngine.Object.FindAnyObjectByType<NativeProbe>();

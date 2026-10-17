@@ -48,7 +48,7 @@ for (const fps of [60,-1]) test(`disposable Unity profiling via real menu action
   await unity.command('play',fps);
   await unity.waitFor("Play started",async()=>{const s=await unity.status();return s.playing&&s.frames>2?s:false;});
   const first=await waitProfile(app,"first Solo and range",p=>!p.waitingForPlay&&p.captures.some(c=>c.solo&&c.endMs===null)&&p.captures.some(c=>c.marker==='unity.native.mix'));
-  assert.equal(await app.wd.execute("return document.getElementById('profiler-benchmark').value"),'unity.solo');
+  assert.equal(await app.wd.execute("return document.getElementById('profiler-scope').value"),'session');
   assert.ok((await visibleIcons(app)).every(i=>i.width>0&&i.path&&!i.iconFont));
   app.record('first-play',{batch:first.batch,generation:first.playGeneration,profile:first});
   await app.screenshot('playing-solo');
@@ -57,7 +57,7 @@ for (const fps of [60,-1]) test(`disposable Unity profiling via real menu action
   assert.equal(allocated.menuExecuted,true);
   assert.equal(allocated.nativeLiveBytes,1048576);
   const retained=await waitProfile(app,"Solo retains exactly 1 MiB",p=>liveBytes(p)===1048576&&liveBytes(p,'unity.native.alloc')===1048576);
-  await app.waitFor("retained value rendered before snapshot",async()=>({done:await app.wd.execute("return [...document.querySelectorAll('.profiler-metrics dt')].some(dt=>dt.textContent==='Cohort live (sum)'&&dt.nextElementSibling.textContent==='1.00 MiB')")}));
+  await app.waitFor("retained value rendered before snapshot",async()=>({done:await app.wd.execute("return [...document.querySelectorAll('.profiler-metrics dt')].some(dt=>dt.textContent==='Observed native live'&&dt.nextElementSibling.textContent==='1.00 MiB')")}));
   await click(app,"//button[@aria-label='Take memory snapshot']");
   assert.equal(await app.wd.execute("return document.querySelector('select[aria-label=\"Profiler view\"]').value"),'live',"snapshot keeps Live selected");
   await app.waitFor('retained snapshot table',async()=>({done:await app.wd.execute("return document.querySelectorAll('.profiler-table-scroll tbody tr').length===1")}));
@@ -68,7 +68,7 @@ for (const fps of [60,-1]) test(`disposable Unity profiling via real menu action
   assert.equal(cleared.menuExecuted,true);
   assert.equal(cleared.nativeLiveBytes,0);
   const freed=await waitProfile(app,"original cohorts observe the free",p=>liveBytes(p)===0&&p.captures.some(c=>c.marker==='unity.native.alloc'&&c.freedBytes>=1048576));
-  await app.waitFor("released value rendered before snapshot",async()=>({done:await app.wd.execute("return [...document.querySelectorAll('.profiler-metrics dt')].some(dt=>dt.textContent==='Still live (inclusive)'&&dt.nextElementSibling.textContent==='0 B')")}));
+  await app.waitFor("released value rendered before snapshot",async()=>({done:await app.wd.execute("return [...document.querySelectorAll('.profiler-metrics dt')].some(dt=>dt.textContent==='Still live'&&dt.nextElementSibling.textContent==='0 B')")}));
   await click(app,"//button[@aria-label='Take memory snapshot']");
   const snapshots=await app.wd.execute("return [...document.querySelectorAll('.profiler-table-scroll tbody tr')].map(r=>r.innerText)");
   assert.equal(snapshots.length,2);

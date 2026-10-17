@@ -16,6 +16,9 @@ export async function disposableUnity(output, namespace, { graphics = false } = 
   // No Library, generated plugin, user settings, untracked files or credentials
   // are copied. Build and Editor execution are confined to this project.
   await copyFile(join(ROOT, "tests/fixtures/attach-profiling/UnityProfilingHarness.cs"), join(project, "Assets/Editor/UnityProfilingHarness.cs"));
+  await copyFile(join(ROOT,"tests/fixtures/attach-profiling/scoped_ranges.cpp"),join(project,"Native/scoped_ranges.cpp"));
+  const cmake=join(project,"Native/CMakeLists.txt");
+  await writeFile(cmake,(await readFile(cmake,"utf8"))+"\ntarget_sources(craidd_unity_probe PRIVATE scoped_ranges.cpp)\n");
   const log = [];
   async function run(exe, args) {
     const child = spawn(exe, args, { cwd: project, stdio: ["ignore", "pipe", "pipe"] });
@@ -27,7 +30,7 @@ export async function disposableUnity(output, namespace, { graphics = false } = 
   await run("cmake", ["--build", join(project, "Native/build"), "-j2"]);
   await writeFile(join(output, "native-build.log"), log.join(""));
   const manifest = {};
-  for (const file of [...files, "workspaces/unity/Assets/Editor/UnityProfilingHarness.cs"]) {
+  for (const file of [...files, "workspaces/unity/Assets/Editor/UnityProfilingHarness.cs", "workspaces/unity/Native/scoped_ranges.cpp"]) {
     manifest[file] = createHash("sha256").update(await readFile(join(root,file))).digest("hex");
   }
   await writeFile(join(output,"source-manifest.json"),JSON.stringify({
