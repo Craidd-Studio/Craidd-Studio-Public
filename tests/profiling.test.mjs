@@ -13,12 +13,12 @@ const g=globalThis.__profileTest;g.calls.push({command,args});if(command==='prof
 const event=url(`export async function listen(name,cb){globalThis.__profileTest.handlers.set(name,cb);return()=>globalThis.__profileTest.handlers.delete(name);}`);
 async function load(file,replacements){let {outputText:s}=ts.transpileModule(await fs.readFile(new URL(file,import.meta.url),'utf8'),{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ESNext,jsx:ts.JsxEmit.ReactJSX}});for(const [name,value]of Object.entries({...replacements,react:import.meta.resolve('react'),'react/jsx-runtime':import.meta.resolve('react/jsx-runtime')}))s=s.replaceAll(JSON.stringify(name),JSON.stringify(value));return url(s);}
 const storeURL=await load('../src/store/profilingStore.ts',{zustand,'@tauri-apps/api/core':core,'@tauri-apps/api/event':event});
-const {useProfiling,listenToProfiling,receiveProfile}=await import(storeURL);
+const {useProfiling,listenToProfiling,receiveProfile,snapshotIncludesRecording,canTakeSnapshot}=await import(storeURL);
 const goldURL=await load('../src/store/goldStore.ts',{zustand,'@tauri-apps/api/core':core,'@tauri-apps/api/event':event});
 const solution=url(`import{create}from${JSON.stringify(zustand)};export const useSolution=create(()=>({activeFileId:null,tabs:[]}));`);
 // SSR uses Zustand's creation-time snapshot; project the real store's current
 // state for these presentation assertions. IPC/lifecycle tests above use the actual hook.
-const projectedStore=url(`import{useProfiling as store}from${JSON.stringify(storeURL)};export const useProfiling=selector=>selector?selector(store.getState()):store.getState();useProfiling.getState=store.getState;`);
+const projectedStore=url(`import{useProfiling as store}from${JSON.stringify(storeURL)};export const useProfiling=selector=>selector?selector(store.getState()):store.getState();useProfiling.getState=store.getState;export {canTakeSnapshot,snapshotIncludesRecording} from ${JSON.stringify(storeURL)};`);
 const selectionURL=await load('../src/lib/profilingSelection.ts',{});
 const {goldBenchmarks,resolveGoldBenchmark,resolveProfileScope,recordingStatus,timelineEntries}=await import(selectionURL);
 const componentURL=await load('../src/components/panels/ProfilerPanel.tsx',{'../../store/profilingStore':projectedStore,'../../store/goldStore':goldURL,'../../store/solutionStore':solution,'../../lib/profilingSelection':selectionURL});
@@ -151,4 +151,33 @@ test('Snapshot history stays separate from the one-entry-per-marker scope picker
 test('Timeline reserves selected capture and separates three overlapping intervals into distinct lanes',()=>{
  const p=scopedProfile(),c=p.captures[0];const entries=timelineEntries([c,{...c,id:'nested',startMs:300,endMs:500},{...c,id:'parent',startMs:0,endMs:1000}],c.id,[0,1000]);
  assert.equal(entries.length,3);assert.equal(new Set(entries.map(e=>e.lane)).size,3);assert.equal(entries[0].capture.id,c.id);
+});
+
+
+test('One live snapshot belongs to all active overlaps regardless of the historical viewing scope',()=>{
+ const p=scopedProfile(),outer=p.captures[0];p.captures.push({...outer,id:'inner',marker:'inner',startMs:500},{...outer,id:'completed',marker:'completed',endMs:600,status:'Complete'});
+ useProfiling.setState({profile:p});useProfiling.getState().focusRecording(p.id,p.captures[2]);
+ useProfiling.getState().snapshot();let state=useProfiling.getState();const first=state.snapshots[0];
+ assert.deepEqual(first.activeRecordingIds,[outer.id,'inner']);assert.equal(first.recording,null);assert.equal(state.recording.id,'completed');assert.equal(state.snapshots.length,1);
+ assert.equal(snapshotIncludesRecording(first,ref(p,outer)),true);assert.equal(snapshotIncludesRecording(first,ref(p,p.captures[1])),true);assert.equal(snapshotIncludesRecording(first,ref(p,p.captures[2])),false);
+ const html=renderToStaticMarkup(createElement(Panel));assert.ok(!html.includes('Snapshots for this recording'));assert.ok(!/aria-label="Take memory snapshot" disabled/.test(html));
+ useProfiling.getState().focusRecording(p.id,outer);useProfiling.getState().snapshot();assert.equal(useProfiling.getState().snapshots.length,2);
+ useProfiling.getState().select(first.id);const saved=JSON.stringify(first);p.nativeLiveBytes=4096;p.captures[0].endMs=1100;p.captures[1].endMs=1100;p.captures.push({...outer,id:'new',endMs:null,startMs:1200});
+ useProfiling.getState().snapshot();state=useProfiling.getState();assert.equal(state.selected,first.id);assert.equal(state.snapshots[2].profile.nativeLiveBytes,4096);assert.deepEqual(state.snapshots[2].activeRecordingIds,['new']);assert.equal(JSON.stringify(first),saved);
+ assert.equal(snapshotIncludesRecording(first,ref(p,p.captures[0])),true);assert.equal(snapshotIncludesRecording(state.snapshots[2],ref(p,p.captures[0])),false);
+ assert.equal(snapshotIncludesRecording(first,{...ref(p,p.captures[0]),profileId:'different-session'}),false);
+});
+test('Related snapshot grouping keeps every saved identity once in global history after completion',()=>{
+ const p=scopedProfile();useProfiling.setState({profile:p});useProfiling.getState().snapshot();useProfiling.getState().snapshot();p.captures[0].endMs=900;useProfiling.getState().focusRecording(p.id,p.captures[0]);useProfiling.getState().snapshot();
+ const state=useProfiling.getState(),html=renderToStaticMarkup(createElement(Panel));const menu=html.match(/<select aria-label="Profiler view"[\s\S]*?<\/select>/)[0];
+ assert.ok(menu.includes('Snapshots for this recording'));assert.ok(menu.includes('Other manual snapshots'));for(const s of state.snapshots)assert.equal(menu.split(`value="${s.id}"`).length-1,1);
+ assert.equal(state.snapshots.filter(s=>snapshotIncludesRecording(s,state.recording)).length,2);
+});
+test('Snapshot availability depends on live process rather than viewed recording',()=>{
+ const p=scopedProfile();assert.equal(canTakeSnapshot(p),true);assert.equal(canTakeSnapshot({...p,active:false}),false);assert.equal(canTakeSnapshot({...p,samples:[]}),false);
+ useProfiling.setState({profile:{...p,active:false}});useProfiling.getState().snapshot();assert.equal(useProfiling.getState().snapshots.length,0);
+});
+test('Missing open recording has an unknown End and duration rather than a fabricated zero',()=>{
+ const p=scopedProfile(),r=ref(p);p.captures=[];useProfiling.setState({profile:p,recording:r});const html=renderToStaticMarkup(createElement(Panel));
+ assert.ok(html.includes('End unavailable'));assert.ok(html.includes('Recording duration</dt><dd>—'));assert.ok(!html.includes('Recording duration</dt><dd>0.00 ms'));
 });

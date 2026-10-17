@@ -1,5 +1,5 @@
 import { useRef, useState, type PointerEvent } from "react";
-import { useProfiling, type GoldCapture, type ProfileSample } from "../../store/profilingStore";
+import { useProfiling, canTakeSnapshot, snapshotIncludesRecording, type GoldCapture, type ProfileSample } from "../../store/profilingStore";
 import { goldBenchmarks, resolveGoldBenchmark, resolveProfileScope, recordingLabel, timelineEntries } from "../../lib/profilingSelection";
 import { useGold } from "../../store/goldStore";
 import { useSolution } from "../../store/solutionStore";
@@ -115,7 +115,11 @@ export default function ProfilerPanel() {
   const nativeAvailable = !!p && (p.provider || p.captures.length>0 || !!p.counters?.disconnects);
   const cohort = scope.cohort;
   const cpuSamples = scope.cpu.map(c=>c.sample), cpu=scope.cpu.map(c=>c.value);
-  const snapshots = state.snapshots.filter(s => s.profile.id === p?.id && (!state.recording || s.activeRecordingIds?.includes(state.recording.id) || s.recording?.id===state.recording.id || ((s.capturedAtMs??s.profile.samples[s.profile.samples.length-1]?.atMs??-1)>=scope.bounds[0]&&(s.capturedAtMs??s.profile.samples[s.profile.samples.length-1]?.atMs??Infinity)<=scope.bounds[1])));
+  const relatedSnapshots = state.recording ? state.snapshots.filter(s => snapshotIncludesRecording(s,state.recording!)) : [];
+  const snapshots = state.recording ? relatedSnapshots : state.snapshots.filter(s=>s.kind!=="previousSession"&&s.profile.id===p?.id);
+  const manualSnapshots = state.snapshots.filter(s=>s.kind!=="previousSession"&&!relatedSnapshots.some(related=>related.id===s.id));
+  const snapshotEnabled = canTakeSnapshot(state.profile);
+  const duration = scope.missing&&state.recording?.endMs===null ? null : scope.bounds[1]-scope.bounds[0];
   const historyCaptures = scope.recording ? scope.captures.filter(matches) : allCaptures.filter(c=>!benchmark||c.marker===benchmark);
   const availableLive = !scope.missing&&nativeAvailable;
   const scopeMarkers = goldBenchmarks(p?.captures??[]);
@@ -136,7 +140,7 @@ export default function ProfilerPanel() {
   };
   const metricBytes = (n: number|null|undefined) => n==null?"—":bytes(n);
   const fail = (e: unknown) => setError(String(e));
-  const takeSnapshot = () => { state.snapshot(); setTab("Memory"); setSnapshotNote(state.selected ? "Snapshot saved from current session" : state.recording ? "Snapshot saved · Recording selection preserved" : state.profile?.active ? "Snapshot saved · Live continues" : "Snapshot saved"); };
+  const takeSnapshot = () => { state.snapshot(); setSnapshotNote("Snapshot saved from live process · View preserved"); };
   const filters = <div className="profiler-filters">
     <select aria-label="Capture thread" value={activeThread} onChange={e => setThread(e.target.value)} title="Filters Gold results; does not suspend threads or filter process graphs">
       <option value="all">All threads</option>{threads.map(t => <option key={t} value={t}>Thread {t || "all (solo)"}</option>)}
@@ -149,7 +153,7 @@ export default function ProfilerPanel() {
     <div className="profiler-toolbar" role="toolbar" aria-label="Profiling controls">
       <button onClick={() => window.dispatchEvent(new Event("craidd:attach-process"))}>Attach…</button>
       <span className="profiler-separator" />
-      <button title="Take snapshot of current session — saves RSS and recorded allocation cohorts, not a heap dump" aria-label="Take memory snapshot" disabled={!state.profile?.samples.length} onClick={takeSnapshot}><ProfilerIcon kind="snapshot" /></button>
+      <button title="Take snapshot of live process — saves RSS and recorded allocation cohorts, not a heap dump" aria-label="Take memory snapshot" disabled={!snapshotEnabled} onClick={takeSnapshot}><ProfilerIcon kind="snapshot" /></button>
       <button title="Snapshot and record again" aria-label="Snapshot and record again" disabled={!state.profile?.active || state.profile?.waitingForPlay} onClick={() => { state.snapshot(); void state.again(); }}><ProfilerIcon kind="again" /></button>
       <button title="Stop profiling; leave process running" aria-label="Stop profiling" disabled={!state.profile?.active} onClick={() => void state.stop().catch(fail)}><ProfilerIcon kind="stop" /></button>
       <span className="profiler-toolbar-space" />
@@ -162,7 +166,8 @@ export default function ProfilerPanel() {
     </div>
     {state.snapshots.length>0&&<div className="profiler-view-controls"><button aria-label="Return to live profiling" aria-pressed={!state.selected&&!state.recording} onClick={returnLive}>Live</button><select aria-label="Profiler view" title="Manual snapshot history; select a saved moment or return to the current session" value={state.selected??"live"} onChange={e=>{state.select(e.target.value==="live"?null:e.target.value);setRange(null);}}>
       <option value="live">Snapshots · Current session</option>
-      <optgroup label="Manual snapshots">{state.snapshots.filter(s=>s.kind!=="previousSession").map(s=><option key={s.id} value={s.id}>{s.name}</option>)}</optgroup>
+      {relatedSnapshots.length>0&&<optgroup label="Snapshots for this recording">{relatedSnapshots.map(s=><option key={s.id} value={s.id}>{s.name}</option>)}</optgroup>}
+      <optgroup label={relatedSnapshots.length?"Other manual snapshots":"Manual snapshots"}>{manualSnapshots.map(s=><option key={s.id} value={s.id}>{s.name}</option>)}</optgroup>
       <optgroup label="Previous sessions">{state.snapshots.filter(s=>s.kind==="previousSession").map(s=><option key={s.id} value={s.id}>{s.name}</option>)}</optgroup>
     </select></div>}
     <div className="profiler-benchmark profiler-scope-picker">
@@ -174,7 +179,8 @@ export default function ProfilerPanel() {
         {state.recording&&!scopeMarkers.some(m=>m.marker===state.recording!.marker)&&<option value={state.recording.marker}>{state.recording.name} · Unavailable</option>}
       </select>
     </div>
-    {state.recording&&<p className="profiler-scope-caption" role="status" data-recording-id={state.recording.id}>{state.recording.solo?"Solo":"Gold"} · {state.recording.name} · B{state.recording.batch} · T{state.recording.thread||"all"} · {scope.status} · {seconds(scope.bounds[0])} → {seconds(scope.bounds[1])}</p>}
+    {snapshotNote&&<p role="status" className="profiler-caption">{snapshotNote}</p>}
+    {state.recording&&<p className="profiler-scope-caption" role="status" data-recording-id={state.recording.id}>{state.recording.solo?"Solo":"Gold"} · {state.recording.name} · B{state.recording.batch} · T{state.recording.thread||"all"} · {scope.status} · {seconds(scope.bounds[0])} → {duration===null?"End unavailable":seconds(scope.bounds[1])}</p>}
     {scope.history&&<p role="status" className="profiler-scope-caption">{scope.history}</p>}
     {subrange&&<p className="profiler-scope-caption">Native cohort totals cover the entire recording; allocation activity for a custom subwindow is unavailable.</p>}
     {scope.coverageLost&&<p role="status" className="profiler-scope-caption">Partial source coverage · recording measurements may be incomplete.</p>}
@@ -197,7 +203,7 @@ export default function ProfilerPanel() {
       <dl className="profiler-metrics"><dt>Process CPU / RSS</dt><dd>250 ms polling</dd><dt>Native allocation cohorts</dt><dd>{p?.provider ? "Connected" : "Not connected"}</dd><dt>Managed heap / GC</dt><dd>Unavailable</dd><dt>Heap objects / stacks</dt><dd>Unavailable</dd><dt>GPU / hardware cycles</dt><dd>Planned</dd></dl>
     </div> : <>
       <div className="profiler-session">
-        <span>{state.recording?"Recording window":"Session"} <strong>{seconds(scope.bounds[1]-scope.bounds[0])}</strong>{selection ? ` · ${seconds(selection[1] - selection[0])} selected` : ""}</span>
+        <span>{state.recording?"Recording window":"Session"} <strong>{duration===null?"—":seconds(duration)}</strong>{selection ? ` · ${seconds(selection[1] - selection[0])} selected` : ""}</span>
         <button disabled={!samples.length} title="Select a time range; you can also drag across a graph" aria-label="Select time range" aria-expanded={rangeControls} onClick={() => setRangeControls(!rangeControls)}>↔</button>
         {selection && <button onClick={() => setRange(null)} title="Show full session">All</button>}
       </div>
@@ -218,12 +224,12 @@ export default function ProfilerPanel() {
         {tab === "Summary" && <>
           <h3>Diagnostics overview</h3>
           {!p && <p>Attach to a process, or start Debug to record diagnostics.</p>}
-          <dl className="profiler-metrics"><dt>{state.recording?"Recording duration":"Gold captures"}</dt><dd>{state.recording?ms(scope.bounds[1]-scope.bounds[0]):allCaptures.length}</dd>
+          <dl className="profiler-metrics"><dt>{state.recording?"Recording duration":"Gold captures"}</dt><dd>{state.recording?ms(duration):allCaptures.length}</dd>
             <dt title="Native thread CPU attributed to this invocation; process chart is whole-process context">Recording thread CPU</dt><dd>{scope.recording?ms(scope.recording.cpuMs):"—"}</dd>
             <dt>Resident memory{state.recording?" observed in window":""}</dt><dd>{latest ? bytes(latest.residentBytes) : "—"}</dd>
             <dt>Threads</dt><dd>{latest?.threadCount ?? "—"}</dd></dl>
           <h3>Memory</h3>
-          <div className="profiler-section-title"><span>Capture and compare observations</span><button disabled={!state.profile?.samples.length} onClick={takeSnapshot}>Take snapshot</button></div>
+          <div className="profiler-section-title"><span>Capture and compare observations</span><button disabled={!snapshotEnabled} onClick={takeSnapshot}>Take snapshot</button></div>
           <dl className="profiler-metrics"><dt>{state.recording?"Cohort allocated":"Observed native allocated"}</dt><dd>{metricBytes(observedCohort("allocatedBytes"))}</dd><dt>{state.recording?(scope.recording?.endMs!==null?"Cohort live at End":"Cohort live"):"Observed native live"}</dt><dd>{metricBytes(observedCohort("liveBytes"))}</dd></dl>
           <button className="profiler-link" onClick={() => setTab("Gold")}>View Gold captures ({benchmark ? captures.length : allCaptures.length}) →</button>
           <button className="profiler-link" onClick={() => setTab("Memory")}>View memory snapshots ({snapshots.length}) →</button>
@@ -251,16 +257,15 @@ export default function ProfilerPanel() {
           </>}
         </>}
         {tab === "Memory" && <>
-          <div className="profiler-section-title"><strong>Memory snapshots</strong><button disabled={!state.profile?.samples.length} onClick={takeSnapshot}>Take snapshot</button></div>
-          {snapshotNote && <p role="status" className="profiler-caption">{snapshotNote}</p>}
+          <div className="profiler-section-title"><strong>Memory snapshots{state.recording?" · Associated":""}</strong><button disabled={!snapshotEnabled} onClick={takeSnapshot}>Take snapshot</button></div>
           <p className="profiler-caption">Process RSS and instrumented native observations. Manual snapshots remain in their history dropdown. Heap object capture is unavailable.</p>
-          {snapshots.length ? <div className="profiler-table-scroll"><table><thead><tr><th>Snapshot</th><th>RSS</th><th>Δ RSS</th><th title="Sum of the selected benchmark’s capture cohorts">Live cohorts</th></tr></thead><tbody>{snapshots.map((s, i) => {
+          {snapshots.length ? <div className="profiler-table-scroll"><table><thead><tr><th>Snapshot</th><th>RSS</th><th>Δ RSS</th><th title="Unique observed native live bytes for Full session; inclusive cohort live bytes for a recording">Native live</th></tr></thead><tbody>{snapshots.map((s, i) => {
             const sample = s.profile.samples[s.profile.samples.length - 1]; const previous = snapshots[i - 1]?.profile.samples[snapshots[i - 1].profile.samples.length - 1];
             const snapshotCapture = s.profile.captures.find(c=>c.id===state.recording?.id);
             const snapshotLive = state.recording ? snapshotCapture?.liveBytes : s.profile.nativeLiveBytes;
             const delta = sample && previous ? sample.residentBytes - previous.residentBytes : null;
             return <tr key={s.id} className={state.selected === s.id ? "is-selected" : ""}><td><button title={s.name} onClick={() => state.select(s.id)}>#{i + 1} · {sample ? seconds(sample.atMs) : "—"}</button></td><td>{sample ? bytes(sample.residentBytes) : "—"}</td><td>{delta === null ? "—" : `${delta >= 0 ? "+" : "−"}${bytes(Math.abs(delta))}`}</td><td>{metricBytes(snapshotLive)}</td></tr>;
-          })}</tbody></table></div> : <p className="profiler-empty">Take a snapshot to compare memory over time.</p>}
+          })}</tbody></table></div> : <p className="profiler-empty">{state.recording?"No manual snapshots captured while this recording was active. All saved moments remain in snapshot history.":"Take a snapshot to compare memory over time."}</p>}
           <h3>{state.recording?`Native cohort · ${state.recording.name}`:"Observed native activity"}</h3>
           <dl className="profiler-metrics"><dt>Allocation count</dt><dd>{observedCohort("allocationCount")??"—"}</dd><dt>Allocated{state.recording?" (inclusive)":" (unique observed)"}</dt><dd>{metricBytes(observedCohort("allocatedBytes"))}</dd><dt>Freed{state.recording&&scope.recording?.endMs!==null?" at End":""}</dt><dd>{metricBytes(observedCohort("freedBytes"))}</dd><dt>{state.recording&&scope.recording?.endMs!==null?"Still live at End":"Still live"}</dt><dd>{metricBytes(observedCohort("liveBytes"))}</dd></dl>
           {scope.recording?.endMs!==null&&scope.recording&&<dl className="profiler-metrics"><dt>Current observed survivors{state.selected?" at snapshot":""}</dt><dd>{bytes(scope.recording.liveBytes)}</dd><dt>Freed after End{state.selected?" as of snapshot":""}</dt><dd>{cohort?bytes(Math.max(0,scope.recording.freedBytes-cohort.freedBytes)):"—"}</dd></dl>}

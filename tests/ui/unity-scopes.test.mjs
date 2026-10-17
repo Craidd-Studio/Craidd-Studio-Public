@@ -15,6 +15,7 @@ async function chooseMarker(app,marker){
  await click(app,`//select[@id='profiler-scope']/option[@value='${marker}']`);
  await app.waitFor('marker scope selected',async()=>({done:await app.wd.execute("return document.getElementById('profiler-scope').value===arguments[0]",[marker])}));
 }
+const related=app=>app.wd.execute("return [...document.querySelectorAll('optgroup[label=\"Snapshots for this recording\"] option')].map(o=>o.value)");
 const caption=app=>app.wd.execute("return document.querySelector('[data-recording-id]')?.innerText??''");
 async function metric(app,label,value){await app.waitFor(label+' '+value,async()=>({done:await app.wd.execute("return [...document.querySelectorAll('.profiler-metrics dt')].some(d=>d.textContent===arguments[0]&&d.nextElementSibling.textContent===arguments[1])",[label,value])}));}
 
@@ -30,6 +31,7 @@ test('unified scopes preserve selected Gold/Solo completion and separate manual 
  await click(app,"//button[normalize-space()='Profile only']");
  await waitProfile(app,'samples before any Gold recording',p=>p.target.pid===pid&&p.provider&&p.captures.length===0&&p.samples.length>=2);
  await click(app,"//button[@aria-label='Take memory snapshot']");
+ assert.equal(await app.wd.execute("return document.querySelector('[role=tab][aria-selected=true]').textContent"),'Summary');
  assert.equal(await app.wd.execute("return document.querySelector('select[aria-label=\"Profiler view\"]').value"),'live');
  assert.equal(await app.wd.execute("return document.querySelectorAll('optgroup[label=\"Manual snapshots\"] option').length"),1);
  app.record('manual-without-gold',{profile:await get(app)});await app.screenshot('manual-without-gold');
@@ -47,7 +49,17 @@ test('unified scopes preserve selected Gold/Solo completion and separate manual 
  await click(app,"//button[@aria-label='Take memory snapshot']");
  assert.equal(await app.wd.execute("return document.querySelector('select[aria-label=\"Profiler view\"]').value"),'live');
  assert.equal(await app.wd.execute("return document.querySelector('[data-recording-id]').getAttribute('data-recording-id')"),outer.id);
- const snapshotId=await app.wd.execute("return [...document.querySelectorAll('optgroup[label=\"Manual snapshots\"] option')].at(-1).value");
+ const snapshotId=(await related(app))[0];assert.ok(snapshotId);
+ // A second snapshot from historical Full session still belongs to both live overlaps.
+ const beforeGoldId=await app.wd.execute("return document.querySelector('optgroup[label=\"Other manual snapshots\"] option').value");
+ await click(app,`//select[@aria-label='Profiler view']/optgroup/option[@value='${beforeGoldId}']`);await tab(app,'Events');
+ await click(app,"//button[@aria-label='Take memory snapshot']");
+ assert.equal(await app.wd.execute("return document.querySelector('select[aria-label=\"Profiler view\"]').value"),beforeGoldId);
+ assert.equal(await app.wd.execute("return document.querySelector('[role=tab][aria-selected=true]').textContent"),'Events');
+ await click(app,"//button[@aria-label='Return to live profiling']");await chooseMarker(app,'harness.outer');
+ const overlapSnapshots=await related(app);assert.equal(overlapSnapshots.length,2);assert.ok(overlapSnapshots.includes(snapshotId));
+ await chooseMarker(app,'harness.inner');assert.deepEqual(await related(app),overlapSnapshots);await chooseMarker(app,'harness.outer');
+ app.record('overlapping-manual-snapshot-associations',{outerId:outer.id,innerId:inner.id,snapshotIds:overlapSnapshots,distinctSavedData:3});
  await app.screenshot('active-gold-snapshot-separate');
  await unity.command('end-inner');await unity.command('end');
  const ended=await waitProfile(app,'Gold End observed',p=>p.captures.some(c=>c.id===outer.id&&c.endMs!==null));const completed=ended.captures.find(c=>c.id===outer.id);
@@ -57,6 +69,10 @@ test('unified scopes preserve selected Gold/Solo completion and separate manual 
  await unity.command('clear');await waitProfile(app,'late free updates current survivor',p=>p.captures.find(c=>c.id===outer.id)?.liveBytes===0);
  await metric(app,'Current observed survivors','0 B');await metric(app,'Still live at End','1.00 MiB');
  await metric(app,'Native frees observed','0 B');
+ // Completed viewing scope must not acquire a new live snapshot; Solo is still active.
+ await click(app,"//button[@aria-label='Take memory snapshot']");assert.deepEqual(await related(app),overlapSnapshots);
+ assert.equal(await app.wd.execute("return document.querySelector('[data-recording-id]').getAttribute('data-recording-id')"),outer.id);
+ assert.equal(await app.wd.execute("return document.querySelector('[role=tab][aria-selected=true]').textContent"),'Memory');
  const ruler=await app.wd.execute("return document.querySelector('.profiler-ruler').innerText");
  assert.ok(ruler.includes((completed.startMs/1000).toFixed(2)+' s'));assert.ok(ruler.includes((completed.endMs/1000).toFixed(2)+' s'));
  const chartLabels=await app.wd.execute("return [...document.querySelectorAll('.profiler-chart svg')].map(s=>s.getAttribute('aria-label'))");
@@ -74,7 +90,7 @@ test('unified scopes preserve selected Gold/Solo completion and separate manual 
  app.record('timeline-and-history-focus',{outer:outer.id,inner:inner.id});await app.screenshot('timeline-and-history-focus');
  // Snapshot dropdown contains saved moments only; the scope picker lists each marker once.
  const menus=await app.wd.execute("return {snapshots:[...document.querySelectorAll('select[aria-label=\"Profiler view\"] option')].map(o=>({value:o.value,text:o.textContent})),scope:[...document.querySelectorAll('#profiler-scope option')].map(o=>({value:o.value,text:o.textContent}))}");
- assert.equal(menus.scope.filter(o=>o.value==='harness.outer').length,1);assert.ok(!menus.snapshots.some(o=>o.text.includes('Harness outer window')));assert.equal(menus.snapshots.length,3);
+ assert.equal(menus.scope.filter(o=>o.value==='harness.outer').length,1);assert.ok(!menus.snapshots.some(o=>o.text.includes('Harness outer window')));assert.equal(menus.snapshots.length,5);assert.equal(new Set(menus.snapshots.map(o=>o.value)).size,5);
  // Review the earlier live recording snapshot, then save again without changing review.
  await click(app,`//select[@aria-label='Profiler view']/optgroup/option[@value='${snapshotId}']`);
  assert.ok((await caption(app)).includes('Open at snapshot'));await tab(app,'Memory');await metric(app,'Still live','1.00 MiB');

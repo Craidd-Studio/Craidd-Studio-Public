@@ -23,7 +23,9 @@ are intervals. Recording completion does not create a manual snapshot.
 The existing snapshot history retains its saved entries and a clear Live
 button returning to the full current session in one action. It contains manual
 snapshots and distinctly labelled previous-session archives, never individual
-Gold invocations. It appears once saved views exist.
+Gold invocations. It appears once saved views exist. When a recording is
+selected, its associated snapshots form the first group; other manual snapshots
+and previous sessions remain reachable in the same history without duplicates.
 
 A separate Scope selector lists Full session and each recorded Gold/Solo
 benchmark once. It does not list every periodic hit. Choosing a benchmark
@@ -57,12 +59,26 @@ resolver supplies boundaries, samples, fully contained CPU sample intervals,
 related captures, pauses, diagnostics, native summaries and availability.
 Every tab reads this resolved view. Scope state is independent of tab state.
 
-A saved snapshot still copies collected current-session observations. Optional
-recording context and active capture IDs associate it with Gold/Solo without
-making those recordings prerequisites. Saving preserves current selection:
-Live stays Live, a recording stays selected, and an explicitly reviewed older
-snapshot remains selected. A snapshot's recording context uses only its frozen
-copy; subsequent live End/free/Play events do not rewrite it.
+Take Snapshot always copies the current live process observations when that
+process supports capture, regardless of the viewed historical scope or saved
+snapshot. It remains enabled while inspecting completed recordings. No Gold
+recording is required. The saved snapshot records every capture ID active at
+that moment, qualified by profile identity. Overlapping Gold/Solo recordings
+share the same saved identity and underlying data; there is no copy per owner.
+Each recording can have multiple associated manual snapshots. Associations
+remain after End, within the existing saved-view retention bound.
+
+Viewing a completed recording never associates a new snapshot with it. Optional
+view context is saved only for an actively selected recording; associations are
+always determined by active IDs, not view context or timestamp guesses. The
+Memory table shows associated snapshots while the global dropdown keeps all
+saved moments accessible. Automatic boundary/cohort observations remain internal
+summaries, separate from manual history; they are not heap dumps.
+
+Saving preserves current selection and tab: Live stays Live, a recording stays
+selected, and an explicitly reviewed older snapshot remains selected. A
+snapshot's context uses only its frozen copy; subsequent live End/free/Play
+events do not rewrite it.
 
 The existing eight saved-view bound remains. Evicting a reviewed snapshot
 returns to Live. Automatic previous-session archives retain their separate

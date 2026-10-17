@@ -26,6 +26,11 @@ function recordingRef(profileId: string, c: GoldCapture): RecordingRef {
  const {id,name,solo,marker,batch,thread,startMs,endMs}=c;
  return {profileId,id,name,solo,marker,batch,thread,startMs,endMs};
 }
+export const canTakeSnapshot = (profile: Profile | null) => !!profile?.active && profile.samples.length > 0;
+// Association describes what was running at capture, never the scope being
+// browsed. One saved identity can belong to several overlapping recordings.
+export const snapshotIncludesRecording = (snapshot: Snapshot, recording: RecordingRef) =>
+ snapshot.kind !== "previousSession" && snapshot.profile.id === recording.profileId && !!snapshot.activeRecordingIds?.includes(recording.id);
 export const useProfiling = create<State>((set,get) => ({
  profile: null, snapshots: [], selected: null, recording: null, bridge: "", error: null, benchmarkBySession: {},
  focusBenchmark: (session, marker) => set({benchmarkBySession: Object.fromEntries([
@@ -37,11 +42,11 @@ export const useProfiling = create<State>((set,get) => ({
  stop: async () => { await invoke("stop_profiling"); },
  again: async () => { await invoke("profile_record_again").catch(e=>set({error:String(e)})); },
  snapshot: () => {
-  const {profile:p,recording,selected}=get(); if(!p)return;
+  const {profile:p,recording,selected}=get(); if(!p||!canTakeSnapshot(p))return;
   const copy=structuredClone(p), id=crypto.randomUUID();
   const snapshots=[...get().snapshots,{id,name:`Snapshot · ${p.name} · ${new Date().toLocaleTimeString()}`,kind:"manual" as const,profile:copy,
    capturedAtMs:p.observedAtMs ?? p.samples[p.samples.length-1]?.atMs ?? 0,
-   recording:!selected&&recording?.profileId===p.id?structuredClone(recording):null,
+   recording:!selected&&recording?.profileId===p.id&&p.captures.some(c=>c.id===recording.id&&c.endMs===null)?structuredClone(recording):null,
    activeRecordingIds:p.captures.filter(c=>c.endMs===null).map(c=>c.id)}].slice(-8);
   const evicted=!!selected&&!snapshots.some(s=>s.id===selected);
   set({snapshots,...evicted?{selected:null,recording:null}:{}});

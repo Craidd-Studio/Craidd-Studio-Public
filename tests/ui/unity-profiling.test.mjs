@@ -60,6 +60,8 @@ for (const fps of [60,-1]) test(`disposable Unity profiling via real menu action
   await app.waitFor("retained value rendered before snapshot",async()=>({done:await app.wd.execute("return [...document.querySelectorAll('.profiler-metrics dt')].some(dt=>dt.textContent==='Observed native live'&&dt.nextElementSibling.textContent==='1.00 MiB')")}));
   await click(app,"//button[@aria-label='Take memory snapshot']");
   assert.equal(await app.wd.execute("return document.querySelector('select[aria-label=\"Profiler view\"]').value"),'live',"snapshot keeps Live selected");
+  assert.equal(await app.wd.execute("return document.querySelector('[role=tab][aria-selected=true]').textContent"),'Summary',"snapshot preserves the selected tab");
+  await click(app,"//button[@id='profiler-tab-Memory']");
   await app.waitFor('retained snapshot table',async()=>({done:await app.wd.execute("return document.querySelectorAll('.profiler-table-scroll tbody tr').length===1")}));
   app.record('retained-memory',{unity:allocated,profile:retained});
   await app.screenshot('retained-1MiB-live-snapshot');
