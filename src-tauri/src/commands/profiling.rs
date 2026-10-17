@@ -37,6 +37,33 @@ pub struct Sample {
     #[serde(flatten)]
     pub counters: ProcessCounters,
 }
+// Explicit native hooks only. Window activity includes frees of older tracked
+// allocations; it is distinct from a capture's inclusive allocation cohort.
+#[derive(Clone, Debug, Default, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct NativeActivity {
+    pub allocated_bytes: u64,
+    pub freed_bytes: u64,
+    pub allocation_count: u64,
+    pub free_count: u64,
+    pub unmatched_frees: u64,
+}
+#[derive(Clone, Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CohortSummary {
+    pub allocated_bytes: u64,
+    pub freed_bytes: u64,
+    pub live_bytes: u64,
+    pub allocation_count: u64,
+}
+#[derive(Clone, Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Diagnostic {
+    pub at_ms: f64,
+    pub until_ms: f64,
+    pub kind: String,
+    pub count: u64,
+}
 #[derive(Clone, Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Capture {
@@ -54,8 +81,37 @@ pub struct Capture {
     pub freed_bytes: u64,
     pub live_bytes: u64,
     pub allocation_count: u64,
+    pub process_start: Option<Sample>,
+    pub process_end: Option<Sample>,
+    pub cohort_end: Option<CohortSummary>,
+    pub window_activity: NativeActivity,
+    pub coverage_start: ProfileCounters,
+    pub coverage_end: Option<ProfileCounters>,
     #[serde(skip)]
     cpu_start: u64,
+}
+impl Capture {
+    fn finish(
+        &mut self,
+        at: f64,
+        status: &str,
+        sample: Option<Sample>,
+        coverage: &ProfileCounters,
+    ) {
+        if self.end_ms.is_some() {
+            return;
+        }
+        self.end_ms = Some(at.max(self.start_ms));
+        self.status = status.into();
+        self.process_end = sample;
+        self.coverage_end = Some(coverage.clone());
+        self.cohort_end = Some(CohortSummary {
+            allocated_bytes: self.allocated_bytes,
+            freed_bytes: self.freed_bytes,
+            live_bytes: self.live_bytes,
+            allocation_count: self.allocation_count,
+        });
+    }
 }
 #[derive(Clone, Debug, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
@@ -120,6 +176,11 @@ pub struct Profile {
     pub captures: Vec<Capture>,
     pub dropped: u64,
     pub counters: ProfileCounters,
+    pub observed_at_ms: f64,
+    pub native_activity: NativeActivity,
+    pub native_live_bytes: u64,
+    pub diagnostics: Vec<Diagnostic>,
+    pub diagnostics_evicted: u64,
     #[serde(skip)]
     discovery: Option<super::profiling_discovery::Registration>,
     #[serde(skip)]
@@ -156,6 +217,11 @@ impl Profile {
             captures: vec![],
             dropped: 0,
             counters: ProfileCounters::default(),
+            observed_at_ms: 0.,
+            native_activity: NativeActivity::default(),
+            native_live_bytes: 0,
+            diagnostics: vec![],
+            diagnostics_evicted: 0,
             start: Some(Instant::now()),
             origin: Some(monotonic_ns()),
             solo: None,
@@ -184,6 +250,15 @@ impl Profile {
             captures: self.captures.clone(),
             dropped: self.dropped,
             counters: self.counters.clone(),
+            observed_at_ms: if self.active {
+                self.at().max(self.observed_at_ms)
+            } else {
+                self.observed_at_ms
+            },
+            native_activity: self.native_activity.clone(),
+            native_live_bytes: self.native_live_bytes,
+            diagnostics: self.diagnostics.clone(),
+            diagnostics_evicted: self.diagnostics_evicted,
             discovery: None,
             start: None,
             origin: None,
@@ -196,6 +271,40 @@ impl Profile {
     }
     fn at(&self) -> f64 {
         self.start.map_or(0., |s| s.elapsed().as_secs_f64() * 1000.)
+    }
+    fn process_observation(&self, at: f64) -> Option<Sample> {
+        self.samples.iter().rev().find(|s| s.at_ms <= at).cloned()
+    }
+    fn diagnostic(&mut self, kind: &str, at: f64, count: u64) {
+        // Coalesce bursts and bound storage; never retain an unbounded raw log.
+        if let Some(last) = self.diagnostics.last_mut() {
+            if last.kind == kind && at >= last.until_ms && at - last.until_ms <= 250. {
+                last.until_ms = at;
+                last.count += count;
+                return;
+            }
+        }
+        if self.diagnostics.len() >= 256 {
+            self.diagnostics.remove(0);
+            self.diagnostics_evicted += 1;
+        }
+        self.diagnostics.push(Diagnostic {
+            at_ms: at,
+            until_ms: at,
+            kind: kind.into(),
+            count,
+        });
+    }
+    fn finish_open(&mut self, at: f64, solo_status: &str, pair_status: &str) {
+        let sample = self.process_observation(at);
+        for c in self.captures.iter_mut().filter(|c| c.end_ms.is_none()) {
+            c.finish(
+                at,
+                if c.solo { solo_status } else { pair_status },
+                sample.clone(),
+                &self.counters,
+            );
+        }
     }
     fn close(&mut self, reason: &str) {
         let at = self.at();
@@ -210,19 +319,12 @@ impl Profile {
                 pause.end_ms = Some(at);
             }
         }
-        for c in &mut self.captures {
-            if c.end_ms.is_none() {
-                c.end_ms = Some(at);
-                c.status = if c.id.starts_with("solo:") {
-                    "Session ended"
-                } else {
-                    "Incomplete: session ended"
-                }
-                .into();
-            }
-        }
+        self.observed_at_ms = at;
+        self.finish_open(at, "Session ended", "Incomplete: session ended");
+        self.diagnostic(reason, at, 1);
     }
     fn reject(&mut self) {
+        self.diagnostic("Rejected source event", self.at(), 1);
         self.counters.rejected_events += 1;
         self.dropped += 1; // compatibility: source rejection only, never history aging
     }
@@ -231,6 +333,7 @@ impl Profile {
             self.samples.remove(0);
             self.counters.aged_samples += 1;
         }
+        self.observed_at_ms = self.at();
         self.samples.push(Sample {
             at_ms: self.at(),
             counters,
@@ -286,24 +389,19 @@ impl Profile {
         self.provider = false;
         self.solo = None;
         let at = self.at();
-        for c in self.captures.iter_mut().filter(|c| c.end_ms.is_none()) {
-            c.end_ms = Some(at);
-            c.status = "Incomplete: provider disconnected".into();
-        }
+        self.finish_open(
+            at,
+            "Incomplete: provider disconnected",
+            "Incomplete: provider disconnected",
+        );
+        self.diagnostic("Provider disconnected", at, 1);
     }
     fn finish_play(&mut self, at: f64) {
-        for c in self.captures.iter_mut().filter(|c| c.end_ms.is_none()) {
-            c.end_ms = Some(at);
-            c.status = if c.solo {
-                "Unity Play ended"
-            } else {
-                "Incomplete: Unity Play ended"
-            }
-            .into();
-        }
+        self.finish_open(at, "Unity Play ended", "Incomplete: Unity Play ended");
         self.solo = None;
         self.waiting_for_play = true;
         self.reason = "Unity Play ended; armed for the next Play session".into();
+        self.diagnostic("Unity Play ended", at, 1);
     }
     fn event(&mut self, e: SourceEvent) {
         if !self.active {
@@ -325,10 +423,12 @@ impl Profile {
                     self.dropped += missing;
                     self.solo = None;
                     let at = self.at();
-                    for c in self.captures.iter_mut().filter(|c| c.end_ms.is_none()) {
-                        c.end_ms = Some(at);
-                        c.status = "Incomplete: source events missing".into();
-                    }
+                    self.finish_open(
+                        at,
+                        "Incomplete: source events missing",
+                        "Incomplete: source events missing",
+                    );
+                    self.diagnostic("Missing source events", at, missing);
                 }
             }
             self.last_sequence = Some(e.sequence);
@@ -343,6 +443,7 @@ impl Profile {
             return;
         }
         let at = e.wall_ns.saturating_sub(origin) as f64 / 1e6;
+        self.observed_at_ms = self.observed_at_ms.max(at);
         if self.unity_editor {
             if let Some(playing) = e.playing {
                 if self.play_generation.is_some_and(|old| e.generation < old) {
@@ -429,28 +530,42 @@ impl Profile {
                     freed_bytes: 0,
                     live_bytes: 0,
                     allocation_count: 0,
+                    process_start: self.process_observation(at),
+                    process_end: None,
+                    cohort_end: None,
+                    window_activity: NativeActivity::default(),
+                    coverage_start: self.counters.clone(),
+                    coverage_end: None,
                     cpu_start: e.cpu_ns,
                 });
             }
             "end" | "unwind" => {
+                let end_sample = self.process_observation(at);
                 if let Some(c) = self
                     .captures
                     .iter_mut()
                     .find(|c| c.id == key && c.end_ms.is_none())
                 {
                     if e.wall_ns < origin || at < c.start_ms || e.cpu_ns < c.cpu_start {
-                        c.status = "Invalid provider clock".into();
-                        c.end_ms = Some(at.max(c.start_ms));
+                        c.finish(
+                            at,
+                            "Invalid provider clock",
+                            end_sample.clone(),
+                            &self.counters,
+                        );
                         self.reject();
                     } else {
-                        c.end_ms = Some(at);
                         c.cpu_ms = Some((e.cpu_ns - c.cpu_start) as f64 / 1e6);
-                        c.status = if e.kind == "end" {
-                            "Complete"
-                        } else {
-                            "Incomplete: scope exited"
-                        }
-                        .into();
+                        c.finish(
+                            at,
+                            if e.kind == "end" {
+                                "Complete"
+                            } else {
+                                "Incomplete: scope exited"
+                            },
+                            end_sample.clone(),
+                            &self.counters,
+                        );
                     }
                 } else {
                     self.reject();
@@ -463,6 +578,19 @@ impl Profile {
                 if self.allocations.len() >= 20000 || self.allocations.contains_key(&e.address) {
                     self.reject();
                     return;
+                }
+                self.native_activity.allocated_bytes =
+                    self.native_activity.allocated_bytes.saturating_add(e.bytes);
+                self.native_activity.allocation_count += 1;
+                self.native_live_bytes = self.native_live_bytes.saturating_add(e.bytes);
+                for c in self
+                    .captures
+                    .iter_mut()
+                    .filter(|c| c.end_ms.is_none() && at >= c.start_ms)
+                {
+                    c.window_activity.allocated_bytes =
+                        c.window_activity.allocated_bytes.saturating_add(e.bytes);
+                    c.window_activity.allocation_count += 1;
                 }
                 let owners = self
                     .captures
@@ -481,11 +609,29 @@ impl Profile {
             }
             "free" => {
                 if let Some((bytes, owners)) = self.allocations.remove(&e.address) {
+                    self.native_activity.freed_bytes =
+                        self.native_activity.freed_bytes.saturating_add(bytes);
+                    self.native_activity.free_count += 1;
+                    self.native_live_bytes = self.native_live_bytes.saturating_sub(bytes);
                     for c in &mut self.captures {
+                        if c.end_ms.is_none() && at >= c.start_ms {
+                            c.window_activity.freed_bytes =
+                                c.window_activity.freed_bytes.saturating_add(bytes);
+                            c.window_activity.free_count += 1;
+                        }
                         if owners.contains(&c.id) {
                             c.freed_bytes = c.freed_bytes.saturating_add(bytes);
                             c.live_bytes = c.live_bytes.saturating_sub(bytes);
                         }
+                    }
+                } else {
+                    self.native_activity.unmatched_frees += 1;
+                    for c in self
+                        .captures
+                        .iter_mut()
+                        .filter(|c| c.end_ms.is_none() && at >= c.start_ms)
+                    {
+                        c.window_activity.unmatched_frees += 1;
                     }
                 }
             }
@@ -522,13 +668,13 @@ impl Profile {
                 .find(|c| c.solo && c.marker == marker)
                 .map(|c| c.name.clone())
                 .unwrap_or_else(|| "Solo".into());
+            let end_sample = self.process_observation(at);
             if let Some(c) = self
                 .captures
                 .iter_mut()
                 .find(|c| c.id.starts_with("solo:") && c.end_ms.is_none())
             {
-                c.end_ms = Some(at);
-                c.status = "Batch boundary".into();
+                c.finish(at, "Batch boundary", end_sample, &self.counters);
             }
             if self.reserve_capture(&marker, true) {
                 self.next_segment += 1;
@@ -547,6 +693,12 @@ impl Profile {
                     freed_bytes: 0,
                     live_bytes: 0,
                     allocation_count: 0,
+                    process_start: self.process_observation(at),
+                    process_end: None,
+                    cohort_end: None,
+                    window_activity: NativeActivity::default(),
+                    coverage_start: self.counters.clone(),
+                    coverage_end: None,
                     cpu_start: 0,
                 });
             }
@@ -812,10 +964,11 @@ pub fn invalidate_marker(app: &AppHandle, id: &str) {
         all.iter_mut().filter(|(_, p)| p.active).map(|(label, p)| {
             p.blocked.insert(id.into());
             let at = p.at();
+            let sample=p.process_observation(at);
             for c in p.captures.iter_mut().filter(|c| c.marker == id && c.end_ms.is_none()) {
-                c.end_ms = Some(at);
-                c.status = "Incomplete: marker edited".into();
+                c.finish(at,"Incomplete: marker edited",sample.clone(),&p.counters);
             }
+            p.diagnostic("Gold marker edited",at,1);
             p.reason = "Gold intent changed; affected compiled markers stay unarmed until rebuild/restart and a new profiling session".into();
             (label.clone(), p.view())
         }).collect::<Vec<_>>()
@@ -914,6 +1067,110 @@ mod tests {
         let mut p = Profile::new(ProcessIdentity { pid: 3, birth: 4 }, "test".into());
         p.origin = Some(0);
         p
+    }
+    #[test]
+    fn scoped_end_freezes_cohort_and_observations_but_late_free_updates_survivors() {
+        let mut p = p();
+        let sample = |at_ms, rss| Sample {
+            at_ms,
+            counters: ProcessCounters {
+                cpu_ms: at_ms,
+                resident_bytes: rss,
+                virtual_bytes: 1000,
+                thread_count: 2,
+                state: "R".into(),
+            },
+        };
+        p.samples.push(sample(1., 900));
+        p.event(e("begin", 1, 1, 2_000_000));
+        let mut alloc = e("alloc", 0, 1, 3_000_000);
+        alloc.address = 123;
+        alloc.bytes = 100;
+        p.event(alloc);
+        p.samples.push(sample(4., 950));
+        p.event(e("end", 1, 1, 5_000_000));
+        let before = p.view();
+        let c = &before.captures[0];
+        assert_eq!(c.process_start.as_ref().unwrap().at_ms, 1.);
+        assert_eq!(c.process_end.as_ref().unwrap().at_ms, 4.);
+        assert_eq!(c.cohort_end.as_ref().unwrap().live_bytes, 100);
+        assert_eq!(c.window_activity.allocated_bytes, 100);
+        let mut free = e("free", 0, 2, 6_000_000);
+        free.address = 123;
+        p.event(free);
+        let c = &p.captures[0];
+        assert_eq!(c.end_ms, Some(5.));
+        assert_eq!(c.live_bytes, 0);
+        assert_eq!(c.freed_bytes, 100);
+        assert_eq!(c.cohort_end.as_ref().unwrap().live_bytes, 100);
+        assert_eq!(c.window_activity.freed_bytes, 0);
+        assert_eq!(before.captures[0].live_bytes, 100);
+        p.samples.clear();
+        assert_eq!(
+            p.captures[0]
+                .process_start
+                .as_ref()
+                .unwrap()
+                .counters
+                .resident_bytes,
+            900
+        );
+    }
+    #[test]
+    fn native_window_frees_older_allocations_and_session_totals_do_not_double_count_nested_cohorts()
+    {
+        let mut p = p();
+        let mut old = e("alloc", 0, 1, 1);
+        old.address = 1;
+        old.bytes = 20;
+        p.event(old);
+        p.event(e("begin", 1, 1, 2));
+        p.event(e("begin", 2, 1, 3));
+        let mut new = e("alloc", 0, 1, 4);
+        new.address = 2;
+        new.bytes = 100;
+        p.event(new);
+        let mut free = e("free", 0, 2, 5);
+        free.address = 1;
+        p.event(free);
+        assert_eq!(p.native_activity.allocated_bytes, 120);
+        assert_eq!(p.native_live_bytes, 100);
+        for c in &p.captures {
+            assert_eq!(c.allocated_bytes, 100);
+            assert_eq!(c.freed_bytes, 0);
+            assert_eq!(c.window_activity.freed_bytes, 20);
+        }
+        p.event(e("end", 2, 1, 6));
+        p.event(e("end", 1, 1, 7));
+        assert_eq!(p.captures[0].cohort_end.as_ref().unwrap().live_bytes, 100);
+        let mut unknown = e("free", 0, 2, 8);
+        unknown.address = 999;
+        p.event(unknown);
+        assert_eq!(p.native_activity.unmatched_frees, 1);
+    }
+    #[test]
+    fn diagnostics_are_bounded_coalesced_and_cohort_end_exists_on_every_close_path() {
+        let mut p = p();
+        p.diagnostic("loss", 1., 1);
+        p.diagnostic("loss", 2., 2);
+        assert_eq!(p.diagnostics.len(), 1);
+        assert_eq!(p.diagnostics[0].count, 3);
+        for i in 0..400 {
+            p.diagnostic(if i % 2 == 0 { "a" } else { "b" }, 1000. + i as f64, 1);
+        }
+        assert_eq!(p.diagnostics.len(), 256);
+        assert_eq!(p.diagnostics_evicted, 145);
+        p.event(e("solo", 0, 1, 100));
+        p.again();
+        assert!(p.captures[0].cohort_end.is_some());
+        p.source_disconnected();
+        assert!(p.captures[1].cohort_end.is_some());
+        p.event(e("begin", 1, 1, 200));
+        p.finish_play(1.);
+        assert!(p.captures.last().unwrap().cohort_end.is_some());
+        p.event(e("begin", 2, 1, 300));
+        p.close("test");
+        assert!(p.captures.last().unwrap().cohort_end.is_some());
     }
     #[test]
     fn recursive_threads_and_late_end_keep_batch() {
