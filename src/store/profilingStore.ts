@@ -31,6 +31,11 @@ export const canTakeSnapshot = (profile: Profile | null) => !!profile?.active &&
 // browsed. One saved identity can belong to several overlapping recordings.
 export const snapshotIncludesRecording = (snapshot: Snapshot, recording: RecordingRef) =>
  snapshot.kind !== "previousSession" && snapshot.profile.id === recording.profileId && !!snapshot.activeRecordingIds?.includes(recording.id);
+function retainSnapshots(snapshots: Snapshot[], selected: string | null): Snapshot[] {
+ const retained=[...snapshots];
+ while(retained.length>8)retained.splice(retained.findIndex(s=>s.id!==selected),1);
+ return retained;
+}
 export const useProfiling = create<State>((set,get) => ({
  profile: null, snapshots: [], selected: null, recording: null, bridge: "", error: null, benchmarkBySession: {},
  focusBenchmark: (session, marker) => set({benchmarkBySession: Object.fromEntries([
@@ -44,10 +49,10 @@ export const useProfiling = create<State>((set,get) => ({
  snapshot: () => {
   const {profile:p,recording,selected}=get(); if(!p||!canTakeSnapshot(p))return;
   const copy=structuredClone(p), id=crypto.randomUUID();
-  const snapshots=[...get().snapshots,{id,name:`Snapshot · ${p.name} · ${new Date().toLocaleTimeString()}`,kind:"manual" as const,profile:copy,
+  const snapshots=retainSnapshots([...get().snapshots,{id,name:`Snapshot · ${p.name} · ${new Date().toLocaleTimeString()}`,kind:"manual" as const,profile:copy,
    capturedAtMs:p.observedAtMs ?? p.samples[p.samples.length-1]?.atMs ?? 0,
    recording:!selected&&recording?.profileId===p.id&&p.captures.some(c=>c.id===recording.id&&c.endMs===null)?structuredClone(recording):null,
-   activeRecordingIds:p.captures.filter(c=>c.endMs===null).map(c=>c.id)}].slice(-8);
+   activeRecordingIds:p.captures.filter(c=>c.endMs===null).map(c=>c.id)}],selected);
   const evicted=!!selected&&!snapshots.some(s=>s.id===selected);
   set({snapshots,...evicted?{selected:null,recording:null}:{}});
  },
@@ -57,7 +62,7 @@ export function receiveProfile(payload: Profile) {
  const state=useProfiling.getState(), old=state.profile;
  let snapshots=state.snapshots, recording=state.recording, selected=state.selected;
  if(old&&old.id!==payload.id&&(old.samples.length||old.captures.length)) {
-  snapshots=[...snapshots,{id:crypto.randomUUID(),name:`Previous session · ${old.name}`,kind:"previousSession" as const,profile:structuredClone(old)}].slice(-8);
+  snapshots=retainSnapshots([...snapshots,{id:crypto.randomUUID(),name:`Previous session · ${old.name}`,kind:"previousSession" as const,profile:structuredClone(old)}],selected);
  }
  if(selected&&!snapshots.some(s=>s.id===selected)){selected=null;recording=null;}
  if(!selected&&recording?.profileId===payload.id) {

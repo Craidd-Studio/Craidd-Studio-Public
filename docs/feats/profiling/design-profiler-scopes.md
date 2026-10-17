@@ -80,8 +80,9 @@ selected, and an explicitly reviewed older snapshot remains selected. A
 snapshot's context uses only its frozen copy; subsequent live End/free/Play
 events do not rewrite it.
 
-The existing eight saved-view bound remains. Evicting a reviewed snapshot
-returns to Live. Automatic previous-session archives retain their separate
+The existing eight saved-view bound remains. A reviewed snapshot stays pinned
+within that bound; new captures/archives evict the oldest other saved view so
+retention cannot interrupt explicit review. Automatic previous-session archives retain their separate
 label. No automatic Start/End snapshot feature is introduced.
 
 ## Measurement semantics

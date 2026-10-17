@@ -75,13 +75,14 @@ test('Unity between Play sessions stays armed and presents Ready for Play',()=>{
  assert.ok(/aria-label="Snapshot and record again" disabled/.test(html));
 });
 
-test('Evicting a reviewed snapshot returns to Live instead of leaving a missing view',()=>{
+test('Saving beyond the eight-view bound preserves the reviewed identity and evicts another older view',()=>{
  useProfiling.setState({profile:profile()});
  useProfiling.getState().snapshot();const oldest=useProfiling.getState().snapshots[0].id;
  useProfiling.getState().select(oldest);
  for(let i=0;i<8;i++)useProfiling.getState().snapshot();
  assert.equal(useProfiling.getState().snapshots.length,8);
- assert.equal(useProfiling.getState().selected,null);
+ assert.equal(useProfiling.getState().selected,oldest);
+ assert.ok(useProfiling.getState().snapshots.some(s=>s.id===oldest));
  assert.ok(useProfiling.getState().profile);
 });
 

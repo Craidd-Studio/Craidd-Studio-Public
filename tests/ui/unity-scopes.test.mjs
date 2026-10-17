@@ -96,6 +96,11 @@ test('unified scopes preserve selected Gold/Solo completion and separate manual 
  assert.ok((await caption(app)).includes('Open at snapshot'));await tab(app,'Memory');await metric(app,'Still live','1.00 MiB');
  const snapshotRuler=await app.wd.execute("return document.querySelector('.profiler-ruler').innerText");await click(app,"//button[@aria-label='Take memory snapshot']");
  assert.equal(await app.wd.execute("return document.querySelector('select[aria-label=\"Profiler view\"]').value"),snapshotId);assert.equal(await app.wd.execute("return document.querySelector('.profiler-ruler').innerText"),snapshotRuler);
+ // Retention stays bounded without evicting the snapshot explicitly under review.
+ for(let i=0;i<8;i++)await click(app,"//button[@aria-label='Take memory snapshot']");
+ const boundedReview=await app.wd.execute("return {selected:document.querySelector('select[aria-label=\"Profiler view\"]').value,ids:[...document.querySelectorAll('select[aria-label=\"Profiler view\"] optgroup option')].map(o=>o.value),tab:document.querySelector('.profiler-tabs [aria-selected=true]').textContent,ruler:document.querySelector('.profiler-ruler').innerText}");
+ assert.equal(boundedReview.ids.length,8);assert.equal(new Set(boundedReview.ids).size,8);assert.equal(boundedReview.selected,snapshotId);assert.equal(boundedReview.tab,'Memory');assert.equal(boundedReview.ruler,snapshotRuler);
+ app.record('bounded-snapshot-review',boundedReview);await app.screenshot('bounded-snapshot-review');
  await click(app,"//button[@aria-label='Return to live profiling']");assert.equal(await app.wd.execute("return document.getElementById('profiler-scope').value"),'session');await metric(app,'Still live','0 B');
  await chooseMarker(app,'unity.solo');const soloId=await app.wd.execute("return document.querySelector('[data-recording-id]').getAttribute('data-recording-id')");
  await unity.command('stop');await waitProfile(app,'Ready for Play',p=>p.waitingForPlay);await app.waitFor('Solo visibly Recorded',async()=>({done:(await caption(app)).includes('Recorded')}));
