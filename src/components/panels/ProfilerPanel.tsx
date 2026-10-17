@@ -179,7 +179,7 @@ export default function ProfilerPanel() {
         {state.recording&&!scopeMarkers.some(m=>m.marker===state.recording!.marker)&&<option value={state.recording.marker}>{state.recording.name} · Unavailable</option>}
       </select>
     </div>
-    {snapshotNote&&<p role="status" className="profiler-caption">{snapshotNote}</p>}
+    {snapshotNote&&<p role="status" className="profiler-scope-caption">{snapshotNote}</p>}
     {state.recording&&<p className="profiler-scope-caption" role="status" data-recording-id={state.recording.id}>{state.recording.solo?"Solo":"Gold"} · {state.recording.name} · B{state.recording.batch} · T{state.recording.thread||"all"} · {scope.status} · {seconds(scope.bounds[0])} → {duration===null?"End unavailable":seconds(scope.bounds[1])}</p>}
     {scope.history&&<p role="status" className="profiler-scope-caption">{scope.history}</p>}
     {subrange&&<p className="profiler-scope-caption">Native cohort totals cover the entire recording; allocation activity for a custom subwindow is unavailable.</p>}
