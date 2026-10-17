@@ -12,8 +12,10 @@ async function waitProfile(app,label,accept){return app.waitFor(label,async()=>{
 async function tab(app,name){await click(app,`//button[@id='profiler-tab-${name}']`);}
 async function chooseMarker(app,marker){
  await app.waitFor('scope marker available',async()=>({done:await app.wd.execute("return [...document.querySelectorAll('#profiler-scope option')].some(o=>o.value===arguments[0])",[marker])}));
- await click(app,`//select[@id='profiler-scope']/option[@value='${marker}']`);
- await app.waitFor('marker scope selected',async()=>({done:await app.wd.execute("return document.getElementById('profiler-scope').value===arguments[0]",[marker])}));
+ const index=await app.wd.execute("return [...document.getElementById('profiler-scope').options].findIndex(o=>o.value===arguments[0])",[marker]);
+ await click(app,"//select[@id='profiler-scope']");
+ await app.wd.keys('\uE011',...Array(index).fill('\uE015'),'\uE007');
+ await app.waitFor('marker scope selected',async()=>({done:await app.wd.execute("return document.getElementById('profiler-scope').value===arguments[0]&&document.querySelector('[data-recording-id]')?.getAttribute('data-recording-id').includes(arguments[0])",[marker])}));
 }
 const related=app=>app.wd.execute("return [...document.querySelectorAll('optgroup[label=\"Snapshots for this recording\"] option')].map(o=>o.value)");
 const caption=app=>app.wd.execute("return document.querySelector('[data-recording-id]')?.innerText??''");
