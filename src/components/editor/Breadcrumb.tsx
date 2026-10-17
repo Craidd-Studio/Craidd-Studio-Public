@@ -1,9 +1,10 @@
+import { isFileTab } from "../../types/project";
 import { useSolution } from "../../store/solutionStore";
 
 export default function Breadcrumb() {
   const tabs = useSolution((s) => s.tabs);
   const activeFileId = useSolution((s) => s.activeFileId);
-  const active = tabs.find((t) => t.fileId === activeFileId);
+  const active = tabs.filter(isFileTab).find((t) => t.fileId === activeFileId);
 
   if (!active) {
     return (

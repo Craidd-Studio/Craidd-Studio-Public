@@ -82,7 +82,7 @@ export function RemoteEditorPane({ context }: { context: LinkedMember }) {
       throw new Error("Save this file in its owning window before editing it here.");
     }
     await useSolution.getState().revealFile(path, line === 1 && context.pausedLine && file?.path === path ? context.pausedLine : line, 1);
-    if (useSolution.getState().tabs.some((tab) => tab.fileId === path)) {
+    if (useSolution.getState().tabs.some((tab) => tab.kind === "file" && tab.fileId === path)) {
       useLinkedWindows.getState().setRemoteEditing(true);
     }
   };

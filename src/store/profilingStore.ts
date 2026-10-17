@@ -13,7 +13,21 @@ export interface Profile { counters?: ProfileCounters; observedAtMs?: number; na
 // a user's selection. This does not pin another copy of the sample history.
 export type RecordingRef = Pick<GoldCapture,"id"|"name"|"solo"|"marker"|"batch"|"thread"|"startMs"|"endMs"> & { profileId: string };
 export interface Snapshot { id: string; name: string; profile: Profile; kind?: "manual"|"previousSession"; capturedAtMs?: number; recording?: RecordingRef | null; activeRecordingIds?: string[] }
+export interface ProfilerPresentation {
+ tab: "Summary" | "Gold" | "Memory" | "Events";
+ setup: boolean; thread: string; batch: string; rangeControls: boolean;
+ range: { id: string; span: [number, number] } | null;
+ prepared: string; error: string; snapshotNote: string;
+ hit: { profileId: string; snapshotId: string | null; id: string } | null;
+ expanded: Record<string, boolean>; scrollTop: number;
+}
+export const initialProfilerPresentation: ProfilerPresentation = {
+ tab: "Summary", setup: false, thread: "all", batch: "all", rangeControls: false,
+ range: null, prepared: "", error: "", snapshotNote: "", hit: null, expanded: {}, scrollTop: 0,
+};
 interface State {
+ presentation: ProfilerPresentation;
+ setPresentation: (patch: Partial<ProfilerPresentation>) => void;
  profile: Profile | null; snapshots: Snapshot[]; selected: string | null; recording: RecordingRef | null;
  bridge: string; error: string | null; benchmarkBySession: Record<string, string | null>;
  focusBenchmark: (session: string, marker: string | null) => void;
@@ -37,6 +51,8 @@ function retainSnapshots(snapshots: Snapshot[], selected: string | null): Snapsh
  return retained;
 }
 export const useProfiling = create<State>((set,get) => ({
+ presentation: initialProfilerPresentation,
+ setPresentation: patch => set(s => ({presentation: {...s.presentation,...patch}})),
  profile: null, snapshots: [], selected: null, recording: null, bridge: "", error: null, benchmarkBySession: {},
  focusBenchmark: (session, marker) => set({benchmarkBySession: Object.fromEntries([
   ...Object.entries(get().benchmarkBySession).filter(([id]) => id !== session), [session, marker],

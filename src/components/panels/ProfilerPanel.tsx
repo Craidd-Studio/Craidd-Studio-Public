@@ -1,4 +1,6 @@
-import { useRef, useState, type PointerEvent } from "react";
+import { openProfilerWorkspace } from "../../lib/profilerWorkspace";
+import { isFileTab } from "../../types/project";
+import { useRef, useLayoutEffect, type PointerEvent } from "react";
 import { useProfiling, canTakeSnapshot, snapshotIncludesRecording, type GoldCapture, type ProfileSample } from "../../store/profilingStore";
 import { goldBenchmarks, resolveGoldBenchmark, resolveProfileScope, recordingLabel, timelineEntries } from "../../lib/profilingSelection";
 import { useGold } from "../../store/goldStore";
@@ -70,20 +72,23 @@ function CaptureGraph({ label, hits, value, format, color }: {
   </figure>;
 }
 
-export default function ProfilerPanel() {
+export default function ProfilerPanel({ expanded = false }: { expanded?: boolean }) {
   const state = useProfiling();
   const gold = useGold(s => s.points);
-  const file = useSolution(s => s.activeFileId);
-  const dirty = useSolution(s => s.tabs.find(t => t.fileId === s.activeFileId)?.dirty ?? false);
-  const [tab, setTab] = useState<Tab>("Summary");
-  const [setup, setSetup] = useState(false);
-  const [thread, setThread] = useState("all");
-  const [batch, setBatch] = useState("all");
-  const [rangeControls, setRangeControls] = useState(false);
-  const [range, setRange] = useState<{ id: string; span: Span } | null>(null);
-  const [prepared, setPrepared] = useState("");
-  const [error, setError] = useState("");
-  const [snapshotNote, setSnapshotNote] = useState("");
+  const file = useSolution(s => s.activeFileId ?? s.lastSourceFileId);
+  const dirty = useSolution(s => s.tabs.filter(isFileTab).find(t => t.fileId === file)?.dirty ?? false);
+  const { tab, setup, thread, batch, rangeControls, range, prepared, error, snapshotNote } = state.presentation;
+  const setTab = (tab: Tab) => state.setPresentation({tab});
+  const setSetup = (setup: boolean) => state.setPresentation({setup});
+  const setThread = (thread: string) => state.setPresentation({thread});
+  const setBatch = (batch: string) => state.setPresentation({batch});
+  const setRangeControls = (rangeControls: boolean) => state.setPresentation({rangeControls});
+  const setRange = (range: { id: string; span: Span } | null) => state.setPresentation({range});
+  const setPrepared = (prepared: string) => state.setPresentation({prepared});
+  const setError = (error: string) => state.setPresentation({error});
+  const setSnapshotNote = (snapshotNote: string) => state.setPresentation({snapshotNote});
+  const resultRef = useRef<HTMLDivElement | null>(null);
+  useLayoutEffect(() => { if (resultRef.current) resultRef.current.scrollTop = useProfiling.getState().presentation.scrollTop; }, [expanded, setup, tab]);
   const p = state.selected ? state.snapshots.find(s => s.id === state.selected)?.profile : state.profile;
   const scopeKey = `${state.selected ?? p?.id}:${state.recording?.id ?? "session"}`;
   const subrange = range?.id === scopeKey ? range.span : null;
@@ -149,7 +154,25 @@ export default function ProfilerPanel() {
       <option value="all">All batches</option>{Array.from({ length: p?.batch ?? 0 }, (_, i) => <option key={i} value={i + 1}>Batch {i + 1}</option>)}
     </select>
   </div>;
-  return <div className="profiler-panel">
+  const hitSelection = state.presentation.hit;
+  const inspectedHit = p && hitSelection?.profileId === p.id && hitSelection.snapshotId === state.selected
+    ? historyCaptures.find(c => c.id === hitSelection.id) : undefined;
+  const expansion = (key: string) => ({
+    open: !!state.presentation.expanded[key],
+    onToggle: (event: React.SyntheticEvent<HTMLDetailsElement>) => {
+      const open = event.currentTarget.open;
+      if (!!useProfiling.getState().presentation.expanded[key] !== open)
+        state.setPresentation({expanded: Object.fromEntries(Object.entries({...state.presentation.expanded, [key]: open}).slice(-128))});
+    },
+  });
+  const summaryFigures = <dl className={expanded ? "profiler-summary-row" : "profiler-metrics"} aria-label="Profiling summary">
+    <div><dt>{state.recording ? "Recording duration" : "Gold captures"}</dt><dd>{state.recording ? ms(duration) : allCaptures.length}</dd></div>
+    <div><dt>Recording thread CPU</dt><dd>{scope.recording ? ms(scope.recording.cpuMs) : "—"}</dd></div>
+    <div><dt>Resident memory{state.recording ? " observed in window" : ""}</dt><dd>{latest ? bytes(latest.residentBytes) : "—"}</dd></div>
+    <div><dt>Threads</dt><dd>{latest?.threadCount ?? "—"}</dd></div>
+    <div><dt>{state.recording ? "Cohort live at End / as of window" : "Observed native live"}</dt><dd>{metricBytes(observedCohort("liveBytes"))}</dd></div>
+  </dl>;
+  return <div className={"profiler-panel" + (expanded ? " is-expanded" : "")} aria-label={expanded ? "Expanded Profiler" : "Compact Profiler"}>
     <div className="profiler-toolbar" role="toolbar" aria-label="Profiling controls">
       <button onClick={() => window.dispatchEvent(new Event("craidd:attach-process"))}>Attach…</button>
       <span className="profiler-separator" />
@@ -159,6 +182,7 @@ export default function ProfilerPanel() {
       <span className="profiler-toolbar-space" />
       <button title="Profiling settings and source markers" aria-label="Profiling settings" aria-expanded={setup} onClick={() => setSetup(!setup)}><ProfilerIcon kind="settings" /></button>
     </div>
+    {!expanded && <div className="profiler-host-actions"><button onClick={openProfilerWorkspace}>Open in Editor Panel</button></div>}
     <div className="profiler-target" title={p ? `${p.name} · PID ${p.target.pid} · start ${p.target.birth}` : "Attach to a process, or start Debug"}>
       <span className={`profiler-status ${p?.active && !state.selected ? "is-live" : ""}`} />
       <strong>{p ? `${p.name} · ${p.target.pid}` : "No process selected"}</strong>
@@ -187,7 +211,7 @@ export default function ProfilerPanel() {
     {(p?.reason.startsWith("Source discovery unavailable:") || p?.reason.startsWith("Capture storage full")) && <div role="status" className="profiler-notice">{p.reason}</div>}
     {p?.waitingForPlay && !state.selected && !state.recording && <p className="profiler-ready-hint">Press Play in Unity to record prepared Gold benchmarks.</p>}
     {(error || state.error) && <div role="alert" className="profiler-notice">{error || state.error}<button aria-label="Dismiss profiling error" onClick={() => { setError(""); useProfiling.setState({ error: null }); }}>×</button></div>}
-    {setup ? <div className="profiler-results profiler-settings">
+    {setup ? <div ref={resultRef} onScroll={e => state.setPresentation({scrollTop: e.currentTarget.scrollTop})} className="profiler-results profiler-settings">
       <div className="profiler-section-title"><strong>Profiling settings</strong><button onClick={() => setSetup(false)}>Done</button></div>
       <h3>Source markers · {gold.length}</h3>
       <p>Gold markers record automatically without pausing. Pairs end at their End marker; one solo records until the session ends.</p>
@@ -202,6 +226,7 @@ export default function ProfilerPanel() {
       <h3>Collectors</h3>
       <dl className="profiler-metrics"><dt>Process CPU / RSS</dt><dd>250 ms polling</dd><dt>Native allocation cohorts</dt><dd>{p?.provider ? "Connected" : "Not connected"}</dd><dt>Managed heap / GC</dt><dd>Unavailable</dd><dt>Heap objects / stacks</dt><dd>Unavailable</dd><dt>GPU / hardware cycles</dt><dd>Planned</dd></dl>
     </div> : <>
+      {expanded && summaryFigures}
       <div className="profiler-session">
         <span>{state.recording?"Recording window":"Session"} <strong>{duration===null?"—":seconds(duration)}</strong>{selection ? ` · ${seconds(selection[1] - selection[0])} selected` : ""}</span>
         <button disabled={!samples.length} title="Select a time range; you can also drag across a graph" aria-label="Select time range" aria-expanded={rangeControls} onClick={() => setRangeControls(!rangeControls)}>↔</button>
@@ -220,21 +245,41 @@ export default function ProfilerPanel() {
       </div>}
       <div className="profiler-tabs" role="tablist" aria-label="Profiling results">{(["Summary", "Gold", "Memory", "Events"] as Tab[]).map(t => <button key={t} id={`profiler-tab-${t}`} role="tab" aria-selected={tab === t} aria-controls="profiler-results" onClick={() => setTab(t)}>{t}</button>)}</div>
       {tab === "Gold" && !state.recording && benchmarkPicker}
-      <div id="profiler-results" className="profiler-results" role="tabpanel" aria-labelledby={`profiler-tab-${tab}`}>
+      <div ref={resultRef} onScroll={e => state.setPresentation({scrollTop: e.currentTarget.scrollTop})} id="profiler-results" className="profiler-results" role="tabpanel" aria-labelledby={`profiler-tab-${tab}`}>
         {tab === "Summary" && <>
           <h3>Diagnostics overview</h3>
           {!p && <p>Attach to a process, or start Debug to record diagnostics.</p>}
-          <dl className="profiler-metrics"><dt>{state.recording?"Recording duration":"Gold captures"}</dt><dd>{state.recording?ms(duration):allCaptures.length}</dd>
+          {!expanded && <dl className="profiler-metrics"><dt>{state.recording?"Recording duration":"Gold captures"}</dt><dd>{state.recording?ms(duration):allCaptures.length}</dd>
             <dt title="Native thread CPU attributed to this invocation; process chart is whole-process context">Recording thread CPU</dt><dd>{scope.recording?ms(scope.recording.cpuMs):"—"}</dd>
             <dt>Resident memory{state.recording?" observed in window":""}</dt><dd>{latest ? bytes(latest.residentBytes) : "—"}</dd>
-            <dt>Threads</dt><dd>{latest?.threadCount ?? "—"}</dd></dl>
+            <dt>Threads</dt><dd>{latest?.threadCount ?? "—"}</dd></dl>}
           <h3>Memory</h3>
           <div className="profiler-section-title"><span>Capture and compare observations</span><button disabled={!snapshotEnabled} onClick={takeSnapshot}>Take snapshot</button></div>
           <dl className="profiler-metrics"><dt>{state.recording?"Cohort allocated":"Observed native allocated"}</dt><dd>{metricBytes(observedCohort("allocatedBytes"))}</dd><dt>{state.recording?(scope.recording?.endMs!==null?"Cohort live at End":"Cohort live"):"Observed native live"}</dt><dd>{metricBytes(observedCohort("liveBytes"))}</dd></dl>
           <button className="profiler-link" onClick={() => setTab("Gold")}>View Gold captures ({benchmark ? captures.length : allCaptures.length}) →</button>
           <button className="profiler-link" onClick={() => setTab("Memory")}>View memory snapshots ({snapshots.length}) →</button>
         </>}
-        {tab === "Gold" && <>
+        {tab === "Gold" && expanded && <>
+          <div className="profiler-section-title"><strong>Gold recordings</strong><span>{countLabel(historyCaptures.length)}</span></div>
+          {filters}
+          <div className="profiler-gold-workspace">
+            <div className="profiler-table-scroll"><table aria-label="Gold hits"><thead><tr><th>Recording</th><th>Thread</th><th>Batch</th><th>Duration</th><th>Thread CPU</th><th>Status</th></tr></thead><tbody>
+              {historyCaptures.map(c => <tr key={c.id} className={inspectedHit?.id === c.id ? "is-selected" : ""}><td><button aria-pressed={inspectedHit?.id === c.id}
+                onClick={() => { if (p) state.setPresentation({hit: {profileId: p.id, snapshotId: state.selected, id: c.id}}); }}>{c.name}</button></td>
+                <td>{c.thread || "all (solo)"}</td><td>{c.batch}</td><td>{c.endMs === null ? state.selected ? "Open at snapshot" : "Recording" : ms(c.endMs - c.startMs)}</td><td>{ms(c.cpuMs)}</td><td>{c.status}</td></tr>)}
+            </tbody></table>{!historyCaptures.length && <p className="profiler-empty">No retained hits in this scope and filters.</p>}</div>
+            <aside className="profiler-hit-inspector" aria-label="Selected Gold hit details">
+              {inspectedHit ? <><h3>{inspectedHit.name}</h3><p>{recordingLabel(inspectedHit, !!state.selected)}</p>
+                <dl className="profiler-metrics"><dt>Status</dt><dd>{inspectedHit.status}</dd><dt>Thread CPU</dt><dd>{ms(inspectedHit.cpuMs)}</dd>
+                  <dt>Allocated</dt><dd>{bytes(inspectedHit.allocatedBytes)}</dd><dt>Allocation count</dt><dd>{inspectedHit.allocationCount}</dd>
+                  <dt>Freed as of observation</dt><dd>{bytes(inspectedHit.freedBytes)}</dd><dt>Current observed survivors</dt><dd>{bytes(inspectedHit.liveBytes)}</dd></dl>
+                <button className="profiler-link" onClick={() => focusRecording(inspectedHit)}>Focus recording</button>
+                <p className="profiler-caption">Instrumented native cohort observations. Process CPU/RSS remain whole-process context; overlapping cohorts are inclusive.</p>
+              </> : <p className="profiler-empty">{hitSelection ? "Selected hit unavailable in this view. Choose a retained hit to inspect." : "Select a hit to inspect its details. Focus recording explicitly scopes all views."}</p>}
+            </aside>
+          </div>
+        </>}
+        {tab === "Gold" && !expanded && <>
           {benchmark || state.recording ? <>
             <div className="profiler-section-title"><strong className="profiler-benchmark-name" title={focused?.name}>{focused ? `${focused.solo ? "Solo" : "Range"} · ${focused.name}` : "Selected benchmark"}</strong><span>{countLabel(captures.length, focused?.solo)}</span></div>
             {filters}
@@ -242,9 +287,9 @@ export default function ProfilerPanel() {
               <dl className="profiler-metrics"><dt title="Mean per measured capture; overlapping and nested captures are not summed">Mean capture CPU</dt><dd>{averageCpu(captures)}</dd><dt title="Inclusive cohort observations; completed recording uses fixed End values">Allocated / live {state.recording?"at End / as of window":"(inclusive sum)"}</dt><dd>{scope.recording ? `${metricBytes(cohort?.allocatedBytes)} / ${metricBytes(cohort?.liveBytes)}` : `${bytes(sum(captures,"allocatedBytes"))} / ${bytes(sum(captures,"liveBytes"))}`}</dd></dl>
               <CaptureGraph label={focused?.solo ? "Thread CPU per segment" : "Thread CPU per hit"} hits={captures} value={c => c.cpuMs} format={ms} color="#c9ba79" />
               <CaptureGraph label="Cohort live at End / open" hits={captures} value={c => c.endMs!==null?c.cohortEnd?.liveBytes??null:c.liveBytes} format={bytes} color="#80b7d7" />
-              <details key={`${scopeKey}:${benchmark}`} className="profiler-capture-group">
+              <details {...expansion(`${scopeKey}:${benchmark}`)} key={`${scopeKey}:${benchmark}`} className="profiler-capture-group">
                 <summary>Recorded {focused?.solo ? "segments" : "hits"}<span>{captures.length}</span></summary>
-                {historyCaptures.map(c => <details key={c.id} data-capture-id={c.id} className="profiler-hit"><summary>{state.recording?`${c.name} · `:""}Thread {c.thread || "all"} · batch {c.batch}<span>{c.endMs === null ? state.selected ? "Open at snapshot" : "Recording" : ms(c.endMs - c.startMs)}</span></summary>
+                {historyCaptures.map(c => <details {...expansion(`${scopeKey}:${c.id}`)} key={c.id} data-capture-id={c.id} className="profiler-hit"><summary>{state.recording?`${c.name} · `:""}Thread {c.thread || "all"} · batch {c.batch}<span>{c.endMs === null ? state.selected ? "Open at snapshot" : "Recording" : ms(c.endMs - c.startMs)}</span></summary>
                   <dl className="profiler-metrics"><dt>Status</dt><dd>{c.status}</dd><dt>Thread CPU</dt><dd>{ms(c.cpuMs)}</dd><dt>Allocation count</dt><dd>{c.allocationCount}</dd><dt>Allocated</dt><dd>{bytes(c.allocatedBytes)}</dd><dt>Freed as of observation</dt><dd>{bytes(c.freedBytes)}</dd><dt>Current observed survivors</dt><dd>{bytes(c.liveBytes)}</dd></dl>
                   <button className="profiler-link" onClick={()=>focusRecording(c)}>Focus recording</button>
                 </details>)}

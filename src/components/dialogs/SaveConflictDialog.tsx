@@ -13,7 +13,7 @@ export default function SaveConflictDialog({
   const tabs = useSolution((s) => s.tabs);
   const reloadTabFromDisk = useSolution((s) => s.reloadTabFromDisk);
   const [showDiff, setShowDiff] = useState(false);
-  const tab = tabs.find((t) => t.fileId === fileId);
+  const tab = tabs.find((t) => t.kind === "file" && t.fileId === fileId);
 
   if (!tab) {
     onClose();

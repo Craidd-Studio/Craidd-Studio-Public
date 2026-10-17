@@ -44,7 +44,7 @@ export default function DebugSidebar() {
     if (!remote) { await reveal(file, line, 1); return; }
     await dispatchLinkedWindowCommand(remote.windowLabel, "reveal_file", JSON.stringify({ file, line }));
     await reveal(file, line, 1);
-    if (useSolution.getState().tabs.some((tab) => tab.fileId === file)) {
+    if (useSolution.getState().tabs.some((tab) => tab.kind === "file" && tab.fileId === file)) {
       useLinkedWindows.getState().setRemoteEditing(true);
     }
   };

@@ -11,7 +11,7 @@ export default function DeletedFileDialog({
   const tabs = useSolution((s) => s.tabs);
   const saveFileAs = useSolution((s) => s.saveFileAs);
   const closeTab = useSolution((s) => s.closeTab);
-  const tab = tabs.find((t) => t.fileId === fileId);
+  const tab = tabs.find((t) => t.kind === "file" && t.fileId === fileId);
 
   if (!tab) {
     onClose();
