@@ -1,6 +1,6 @@
 import { openProfilerWorkspace } from "../../lib/profilerWorkspace";
 import { isFileTab } from "../../types/project";
-import { useRef, useLayoutEffect, type PointerEvent } from "react";
+import { useRef, useState, useLayoutEffect, useEffect, type PointerEvent, type ReactNode } from "react";
 import { useProfiling, canTakeSnapshot, snapshotIncludesRecording, type GoldCapture, type ProfileSample } from "../../store/profilingStore";
 import { goldBenchmarks, resolveGoldBenchmark, resolveProfileScope, recordingLabel, timelineEntries } from "../../lib/profilingSelection";
 import { useGold } from "../../store/goldStore";
@@ -17,6 +17,29 @@ const averageCpu = (captures: GoldCapture[]) => {
 const countLabel = (count: number, solo = false) => `${count} ${solo ? count === 1 ? "segment" : "segments" : count === 1 ? "hit" : "hits"}`;
 type Tab = "Summary" | "Gold" | "Memory" | "Events";
 type Span = [number, number];
+
+function ScopeSelect({ value, onChoose, children }: { value: string; onChoose: (value: string) => void; children: ReactNode }) {
+  const select = useRef<HTMLSelectElement | null>(null);
+  const nativeValue = useRef(value);
+  const restoreFocus = useRef(false);
+  const [revision, setRevision] = useState(0);
+  useLayoutEffect(() => {
+    if (nativeValue.current === value) return;
+    // WebKit can remember the last user-chosen option after a controlled Live
+    // reset and suppress input/change when that option is chosen again (R-01).
+    // Replace only on an external value change. Native keyboard changes keep
+    // the same node/focus, and incoming hits never reset the picker.
+    nativeValue.current = value;
+    restoreFocus.current = document.activeElement === select.current;
+    setRevision(n => n + 1);
+  }, [value]);
+  useLayoutEffect(() => {
+    if (restoreFocus.current) { select.current?.focus(); restoreFocus.current = false; }
+  }, [revision]);
+  return <select key={revision} ref={select} id="profiler-scope" aria-label="Profiling scope"
+    title="One entry per benchmark. Focus an individual hit from Recorded hits/segments." value={value}
+    onChange={e => { nativeValue.current = e.target.value; onChoose(e.target.value); }}>{children}</select>;
+}
 
 function ProfilerIcon({ kind }: { kind: "snapshot" | "again" | "stop" | "settings" }) {
   const paths = {
@@ -77,7 +100,7 @@ export default function ProfilerPanel({ expanded = false }: { expanded?: boolean
   const gold = useGold(s => s.points);
   const file = useSolution(s => s.activeFileId ?? s.lastSourceFileId);
   const dirty = useSolution(s => s.tabs.filter(isFileTab).find(t => t.fileId === file)?.dirty ?? false);
-  const { tab, setup, thread, batch, rangeControls, range, prepared, error, snapshotNote } = state.presentation;
+  const { tab, setup, thread, batch, rangeControls, range, prepared, error, snapshotNote, snapshotNoteUntil } = state.presentation;
   const setTab = (tab: Tab) => state.setPresentation({tab});
   const setSetup = (setup: boolean) => state.setPresentation({setup});
   const setThread = (thread: string) => state.setPresentation({thread});
@@ -86,7 +109,16 @@ export default function ProfilerPanel({ expanded = false }: { expanded?: boolean
   const setRange = (range: { id: string; span: Span } | null) => state.setPresentation({range});
   const setPrepared = (prepared: string) => state.setPresentation({prepared});
   const setError = (error: string) => state.setPresentation({error});
-  const setSnapshotNote = (snapshotNote: string) => state.setPresentation({snapshotNote});
+  // Expiration belongs to the saved presentation, so rehosting cannot restart
+  // the confirmation or resurrect feedback from a long-hidden panel.
+  useEffect(() => {
+    if (!snapshotNote) return;
+    const timer = window.setTimeout(() => {
+      if (useProfiling.getState().presentation.snapshotNoteUntil === snapshotNoteUntil)
+        useProfiling.getState().setPresentation({snapshotNote: "", snapshotNoteUntil: 0});
+    }, Math.max(0, snapshotNoteUntil - Date.now()));
+    return () => window.clearTimeout(timer);
+  }, [snapshotNote, snapshotNoteUntil]);
   const resultRef = useRef<HTMLDivElement | null>(null);
   useLayoutEffect(() => { if (resultRef.current) resultRef.current.scrollTop = useProfiling.getState().presentation.scrollTop; }, [expanded, setup, tab]);
   const p = state.selected ? state.snapshots.find(s => s.id === state.selected)?.profile : state.profile;
@@ -145,7 +177,7 @@ export default function ProfilerPanel({ expanded = false }: { expanded?: boolean
   };
   const metricBytes = (n: number|null|undefined) => n==null?"—":bytes(n);
   const fail = (e: unknown) => setError(String(e));
-  const takeSnapshot = () => { state.snapshot(); setSnapshotNote("Snapshot saved from live process · View preserved"); };
+  const takeSnapshot = () => { state.snapshot(); state.setPresentation({snapshotNote:"Snapshot saved from live process · View preserved",snapshotNoteUntil:Date.now()+4000}); };
   const filters = <div className="profiler-filters">
     <select aria-label="Capture thread" value={activeThread} onChange={e => setThread(e.target.value)} title="Filters Gold results; does not suspend threads or filter process graphs">
       <option value="all">All threads</option>{threads.map(t => <option key={t} value={t}>Thread {t || "all (solo)"}</option>)}
@@ -197,13 +229,13 @@ export default function ProfilerPanel({ expanded = false }: { expanded?: boolean
     <div className="profiler-benchmark profiler-scope-picker">
       {!state.snapshots.length&&<button aria-label="Return to live profiling" aria-pressed={!state.recording} onClick={returnLive}>Live</button>}
       <label htmlFor="profiler-scope">Scope</label>
-      <select id="profiler-scope" aria-label="Profiling scope" title="One entry per benchmark. Focus an individual hit from Recorded hits/segments." value={state.recording?.marker??"session"} onChange={e=>chooseScope(e.target.value)}>
+      <ScopeSelect value={state.recording?.marker??"session"} onChoose={chooseScope}>
         <option value="session">Full session{state.selected?" at snapshot":p?.active?" · Live":" · Stopped"}</option>
         {scopeMarkers.map(m=><option key={m.marker} value={m.marker}>{m.solo?"Solo":"Gold"} · {m.name} · {countLabel(m.hits,m.solo)}</option>)}
         {state.recording&&!scopeMarkers.some(m=>m.marker===state.recording!.marker)&&<option value={state.recording.marker}>{state.recording.name} · Unavailable</option>}
-      </select>
+      </ScopeSelect>
     </div>
-    {snapshotNote&&<p role="status" className="profiler-scope-caption">{snapshotNote}</p>}
+    {snapshotNote&&snapshotNoteUntil>Date.now()&&<p role="status" className="profiler-scope-caption">{snapshotNote}</p>}
     {state.recording&&<p className="profiler-scope-caption" role="status" data-recording-id={state.recording.id}>{state.recording.solo?"Solo":"Gold"} · {state.recording.name} · B{state.recording.batch} · T{state.recording.thread||"all"} · {scope.status} · {seconds(scope.bounds[0])} → {duration===null?"End unavailable":seconds(scope.bounds[1])}</p>}
     {scope.history&&<p role="status" className="profiler-scope-caption">{scope.history}</p>}
     {subrange&&<p className="profiler-scope-caption">Native cohort totals cover the entire recording; allocation activity for a custom subwindow is unavailable.</p>}
@@ -309,7 +341,7 @@ export default function ProfilerPanel({ expanded = false }: { expanded?: boolean
             const snapshotCapture = s.profile.captures.find(c=>c.id===state.recording?.id);
             const snapshotLive = state.recording ? snapshotCapture?.liveBytes : s.profile.nativeLiveBytes;
             const delta = sample && previous ? sample.residentBytes - previous.residentBytes : null;
-            return <tr key={s.id} className={state.selected === s.id ? "is-selected" : ""}><td><button title={s.name} onClick={() => state.select(s.id)}>#{i + 1} · {sample ? seconds(sample.atMs) : "—"}</button></td><td>{sample ? bytes(sample.residentBytes) : "—"}</td><td>{delta === null ? "—" : `${delta >= 0 ? "+" : "−"}${bytes(Math.abs(delta))}`}</td><td>{metricBytes(snapshotLive)}</td></tr>;
+            return <tr key={s.id} className={state.selected === s.id ? "is-selected" : ""}><td><button title={s.name} onClick={() => state.select(s.id)}>#{s.sequence ?? i + 1} · {sample ? seconds(sample.atMs) : "—"}</button></td><td>{sample ? bytes(sample.residentBytes) : "—"}</td><td>{delta === null ? "—" : `${delta >= 0 ? "+" : "−"}${bytes(Math.abs(delta))}`}</td><td>{metricBytes(snapshotLive)}</td></tr>;
           })}</tbody></table></div> : <p className="profiler-empty">{state.recording?"No manual snapshots captured while this recording was active. All saved moments remain in snapshot history.":"Take a snapshot to compare memory over time."}</p>}
           <h3>{state.recording?`Native cohort · ${state.recording.name}`:"Observed native activity"}</h3>
           <dl className="profiler-metrics"><dt>Allocation count</dt><dd>{observedCohort("allocationCount")??"—"}</dd><dt>Allocated{state.recording?" (inclusive)":" (unique observed)"}</dt><dd>{metricBytes(observedCohort("allocatedBytes"))}</dd><dt>Freed{state.recording&&scope.recording?.endMs!==null?" at End":""}</dt><dd>{metricBytes(observedCohort("freedBytes"))}</dd><dt>{state.recording&&scope.recording?.endMs!==null?"Still live at End":"Still live"}</dt><dd>{metricBytes(observedCohort("liveBytes"))}</dd></dl>

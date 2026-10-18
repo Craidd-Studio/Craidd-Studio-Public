@@ -397,11 +397,17 @@ impl Profile {
         self.diagnostic("Provider disconnected", at, 1);
     }
     fn finish_play(&mut self, at: f64) {
+        // Initial/idle domain reloads and repeated state heartbeats are not
+        // Play exits. Still close any open captures if lifecycle state was
+        // interrupted, including generation recovery after a lost end event.
+        let had_play = !self.waiting_for_play || self.captures.iter().any(|c| c.end_ms.is_none());
         self.finish_open(at, "Unity Play ended", "Incomplete: Unity Play ended");
         self.solo = None;
         self.waiting_for_play = true;
-        self.reason = "Unity Play ended; armed for the next Play session".into();
-        self.diagnostic("Unity Play ended", at, 1);
+        if had_play {
+            self.reason = "Unity Play ended; armed for the next Play session".into();
+            self.diagnostic("Unity Play ended", at, 1);
+        }
     }
     fn event(&mut self, e: SourceEvent) {
         if !self.active {
@@ -1297,6 +1303,37 @@ mod tests {
         assert_eq!(p.counters.evicted_captures, 0);
         assert_eq!(p.counters.rejected_events, 0);
         assert_eq!(p.dropped, 0);
+    }
+    #[test]
+    fn unity_idle_initialization_and_entry_are_not_play_exits() {
+        let mut p = p();
+        p.unity_editor = true;
+        p.waiting_for_play = true;
+        let mut state = e("state", 0, 1, 1_000_000_000);
+        state.playing = Some(false);
+        p.event(state.clone());
+        // Domain reload may repeat an inactive state and initialize a new token.
+        state.generation = 1;
+        p.event(state.clone());
+        assert!(p.diagnostics.is_empty());
+        for generation in 2..=6 {
+            state.generation = generation;
+            state.playing = Some(true);
+            state.wall_ns += 1_000_000_000;
+            p.event(state.clone());
+            let mut solo = state.clone();
+            solo.kind = "solo".into();
+            p.event(solo);
+            state.playing = Some(false);
+            state.wall_ns += 1_000_000_000;
+            p.event(state.clone());
+            p.event(state.clone());
+            // Legacy/repeated end notifications must also be idempotent.
+            p.finish_play(state.wall_ns as f64 / 1e6);
+        }
+        assert_eq!(p.diagnostics.iter().filter(|d| d.kind == "Unity Play ended").map(|d| d.count).sum::<u64>(), 5);
+        assert!(p.waiting_for_play && p.solo.is_none());
+        assert!(p.captures.iter().all(|c| c.end_ms.is_some()));
     }
     #[test]
     fn play_generation_recovers_a_lost_end_and_idle_heartbeat_finishes_play() {

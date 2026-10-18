@@ -12,23 +12,24 @@ export interface Profile { counters?: ProfileCounters; observedAtMs?: number; na
 // Keep identity plus one small descriptor, so eviction cannot silently retarget
 // a user's selection. This does not pin another copy of the sample history.
 export type RecordingRef = Pick<GoldCapture,"id"|"name"|"solo"|"marker"|"batch"|"thread"|"startMs"|"endMs"> & { profileId: string };
-export interface Snapshot { id: string; name: string; profile: Profile; kind?: "manual"|"previousSession"; capturedAtMs?: number; recording?: RecordingRef | null; activeRecordingIds?: string[] }
+export interface Snapshot { id: string; name: string; profile: Profile; sequence?: number; kind?: "manual"|"previousSession"; capturedAtMs?: number; recording?: RecordingRef | null; activeRecordingIds?: string[] }
 export interface ProfilerPresentation {
  tab: "Summary" | "Gold" | "Memory" | "Events";
  setup: boolean; thread: string; batch: string; rangeControls: boolean;
  range: { id: string; span: [number, number] } | null;
- prepared: string; error: string; snapshotNote: string;
+ prepared: string; error: string; snapshotNote: string; snapshotNoteUntil: number;
  hit: { profileId: string; snapshotId: string | null; id: string } | null;
  expanded: Record<string, boolean>; scrollTop: number;
 }
 export const initialProfilerPresentation: ProfilerPresentation = {
  tab: "Summary", setup: false, thread: "all", batch: "all", rangeControls: false,
- range: null, prepared: "", error: "", snapshotNote: "", hit: null, expanded: {}, scrollTop: 0,
+ range: null, prepared: "", error: "", snapshotNote: "", snapshotNoteUntil: 0, hit: null, expanded: {}, scrollTop: 0,
 };
 interface State {
  presentation: ProfilerPresentation;
  setPresentation: (patch: Partial<ProfilerPresentation>) => void;
  profile: Profile | null; snapshots: Snapshot[]; selected: string | null; recording: RecordingRef | null;
+ snapshotSequence: number;
  bridge: string; error: string | null; benchmarkBySession: Record<string, string | null>;
  focusBenchmark: (session: string, marker: string | null) => void;
  focusRecording: (session: string, capture: GoldCapture) => void;
@@ -53,7 +54,7 @@ function retainSnapshots(snapshots: Snapshot[], selected: string | null): Snapsh
 export const useProfiling = create<State>((set,get) => ({
  presentation: initialProfilerPresentation,
  setPresentation: patch => set(s => ({presentation: {...s.presentation,...patch}})),
- profile: null, snapshots: [], selected: null, recording: null, bridge: "", error: null, benchmarkBySession: {},
+ profile: null, snapshots: [], selected: null, recording: null, snapshotSequence: 0, bridge: "", error: null, benchmarkBySession: {},
  focusBenchmark: (session, marker) => set({benchmarkBySession: Object.fromEntries([
   ...Object.entries(get().benchmarkBySession).filter(([id]) => id !== session), [session, marker],
  ].slice(-9))}),
@@ -63,14 +64,14 @@ export const useProfiling = create<State>((set,get) => ({
  stop: async () => { await invoke("stop_profiling"); },
  again: async () => { await invoke("profile_record_again").catch(e=>set({error:String(e)})); },
  snapshot: () => {
-  const {profile:p,recording,selected}=get(); if(!p||!canTakeSnapshot(p))return;
+  const {profile:p,recording,selected,snapshotSequence}=get(); if(!p||!canTakeSnapshot(p))return;
   const copy=structuredClone(p), id=crypto.randomUUID();
-  const snapshots=retainSnapshots([...get().snapshots,{id,name:`Snapshot · ${p.name} · ${new Date().toLocaleTimeString()}`,kind:"manual" as const,profile:copy,
+  const snapshots=retainSnapshots([...get().snapshots,{id,name:`Snapshot #${snapshotSequence+1} · ${p.name} · ${new Date().toLocaleTimeString()}`,sequence:snapshotSequence+1,kind:"manual" as const,profile:copy,
    capturedAtMs:p.observedAtMs ?? p.samples[p.samples.length-1]?.atMs ?? 0,
    recording:!selected&&recording?.profileId===p.id&&p.captures.some(c=>c.id===recording.id&&c.endMs===null)?structuredClone(recording):null,
    activeRecordingIds:p.captures.filter(c=>c.endMs===null).map(c=>c.id)}],selected);
   const evicted=!!selected&&!snapshots.some(s=>s.id===selected);
-  set({snapshots,...evicted?{selected:null,recording:null}:{}});
+  set({snapshots,snapshotSequence:snapshotSequence+1,...evicted?{selected:null,recording:null}:{}});
  },
  select: selected=>set({selected,recording:selected?get().snapshots.find(s=>s.id===selected)?.recording??null:null}),
 }));

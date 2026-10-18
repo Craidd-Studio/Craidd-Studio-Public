@@ -26,7 +26,7 @@ const workspace=url(`export const openProfilerWorkspace=()=>{};`);
 const componentURL=await load('../src/components/panels/ProfilerPanel.tsx',{'../../types/project':projectTypes,'../../lib/profilerWorkspace':workspace,'../../store/profilingStore':projectedStore,'../../store/goldStore':goldURL,'../../store/solutionStore':solution,'../../lib/profilingSelection':selectionURL});
 const Panel=(await import(componentURL)).default;
 const profile=()=>({id:'process-10-100',target:{pid:10,birth:100},name:'Native probe',active:true,reason:'',batch:1,provider:true,dropped:0,pauses:[],samples:[{atMs:0,cpuMs:1,residentBytes:4096,virtualBytes:8192,threadCount:3,state:'R'},{atMs:250,cpuMs:11,residentBytes:8192,virtualBytes:16384,threadCount:3,state:'R'}],captures:[{id:'r:1:1',marker:'r',name:'Scalar work',solo:false,thread:20,batch:1,startMs:3,endMs:5,cpuMs:.4,status:'Complete',allocatedBytes:1024,freedBytes:0,liveBytes:1024,allocationCount:1}]});
-beforeEach(()=>{g.calls=[];g.handlers.clear();g.restore=null;useProfiling.setState({profile:null,snapshots:[],selected:null,recording:null,error:null,benchmarkBySession:{},presentation:structuredClone(initialProfilerPresentation)});});
+beforeEach(()=>{g.calls=[];g.handlers.clear();g.restore=null;useProfiling.setState({profile:null,snapshots:[],snapshotSequence:0,selected:null,recording:null,error:null,benchmarkBySession:{},presentation:structuredClone(initialProfilerPresentation)});});
 test('Snapshot preserves as-of allocations and rows while live results change',()=>{const p=profile();useProfiling.setState({profile:p});useProfiling.getState().snapshot();assert.equal(useProfiling.getState().selected,null,"taking a snapshot keeps Live selected");const copy=useProfiling.getState().snapshots[0].profile;p.captures[0].liveBytes=0;p.captures.push({...p.captures[0],id:'r:1:2'});assert.equal(copy.captures[0].liveBytes,1024);assert.equal(copy.captures.length,1);assert.equal(useProfiling.getState().profile.captures.length,2);});
 test('New process generation archives prior results and listener unsubscribes',async()=>{const off=await listenToProfiling();const emit=p=>g.handlers.get('craidd:profile')({payload:p});emit(profile());emit({...profile(),id:'process-10-101',target:{pid:10,birth:101}});assert.equal(useProfiling.getState().snapshots.length,1);assert.equal(useProfiling.getState().snapshots[0].profile.target.birth,100);assert.equal(useProfiling.getState().profile.target.birth,101);off();assert.equal(g.handlers.size,0);});
 test('Record again and Stop address profiling without a debugger control request',async()=>{useProfiling.setState({profile:profile()});await useProfiling.getState().again();await useProfiling.getState().stop();assert.deepEqual(g.calls.map(c=>c.command),['profile_record_again','stop_profiling']);});
@@ -86,6 +86,24 @@ test('Saving beyond the eight-view bound preserves the reviewed identity and evi
  assert.equal(useProfiling.getState().selected,oldest);
  assert.ok(useProfiling.getState().snapshots.some(s=>s.id===oldest));
  assert.ok(useProfiling.getState().profile);
+});
+test('Rapid snapshots keep distinct readable labels through retention and historical review',()=>{
+ const p=profile();useProfiling.setState({profile:p});
+ useProfiling.getState().snapshot();const reviewed=useProfiling.getState().snapshots[0];
+ useProfiling.getState().select(reviewed.id);
+ // A constant wall-clock label proves uniqueness does not depend on waiting a
+ // second, timer resolution, or finding an evicted snapshot in retained history.
+ const original=Date.prototype.toLocaleTimeString;Date.prototype.toLocaleTimeString=()=> '12:34:56';
+ try {
+  const names=[];
+  for(let i=0;i<24;i++){useProfiling.getState().snapshot();names.push(useProfiling.getState().snapshots.at(-1).name);}
+  assert.equal(new Set(names).size,24);assert.equal(useProfiling.getState().snapshots.length,8);
+  assert.equal(useProfiling.getState().selected,reviewed.id);
+  assert.ok(names.every(n=>n.includes('Native probe')&&n.includes('12:34:56')));
+  useProfiling.getState().setPresentation({tab:'Memory'});
+  const html=renderToStaticMarkup(createElement(Panel));
+  for(const s of useProfiling.getState().snapshots)assert.ok(html.includes(`#${s.sequence} ·`),'table keeps the same snapshot number after eviction');
+ } finally {Date.prototype.toLocaleTimeString=original;}
 });
 
 const counters=()=>({agedSamples:0,evictedCaptures:0,rejectedEvents:0,sourceGaps:0,disconnects:0});
