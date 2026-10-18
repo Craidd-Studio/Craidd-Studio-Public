@@ -11,7 +11,13 @@ const enabled = process.env.CRAIDD_TEST_UNITY === "1";
 const longRun = process.env.CRAIDD_TEST_LONG === "1";
 const liveBytes = (p, marker="unity.solo") => p.captures.filter(c=>c.marker===marker).reduce((n,c)=>n+c.liveBytes,0);
 const profile = app => app.invoke("get_profile");
-const click = async (app,xpath) => app.wd.click(await app.wd.find(xpath));
+const click = async (app,xpath) => {
+  // WebKit's element-click scrolling is unreliable inside nested clipped
+  // results. Reveal the actual control, then use the native WebDriver action.
+  // This changes scroll position only: never synthesize input or change.
+  await app.wd.execute("const e=document.evaluate(arguments[0],document,null,9,null).singleNodeValue;if(e)(e.tagName==='OPTION'?e.closest('select'):e).scrollIntoView({block:'center',inline:'nearest'})",[xpath]);
+  return app.wd.click(await app.wd.find(xpath));
+};
 
 async function selectBenchmark(app, marker) {
   await click(app, `//select[@aria-label='Gold benchmark']/option[@value='${marker}']`);
@@ -22,6 +28,8 @@ async function selectInspectionFilter(app, label, value) {
   // viewport. Focus the real control and use its native keyboard interaction.
   const values=await app.wd.execute("return [...document.querySelector('select[aria-label='+JSON.stringify(arguments[0])+']').options].map(o=>o.value)",[label]);
   assert.ok(values.includes(String(value)),`${label} contains ${value}`);
+  app.record('inspection-filter-before-reveal',{label,geometry:await app.wd.execute("const s=document.querySelector('select[aria-label='+JSON.stringify(arguments[0])+']'),r=s.getBoundingClientRect(),v=s.closest('.profiler-results').getBoundingClientRect();return {top:r.top,bottom:r.bottom,viewportTop:v.top,viewportBottom:v.bottom}",[label])});
+  await app.wd.execute("document.querySelector('select[aria-label='+JSON.stringify(arguments[0])+']').scrollIntoView({block:'center'})",[label]);
   await click(app,`//select[@aria-label='${label}']`);
   await app.wd.keys('\uE011',...Array(values.indexOf(String(value))).fill('\uE015'),'\uE007');
   assert.equal(await app.wd.execute("return document.querySelector('select[aria-label='+JSON.stringify(arguments[0])+']').value",[label]),String(value));
@@ -42,13 +50,20 @@ async function inspectRetainedHit(app) {
   for(let attempt=0;attempt<3;attempt++){
     const id=await app.wd.execute("return [...document.querySelectorAll('.profiler-hit[data-capture-id]')].at(-1)?.dataset.captureId");
     assert.ok(id,'a retained hit is available');
+    await app.wd.execute(`window.__hitTrace=[];window.__hitTraceId=arguments[0];if(!window.__hitTracing){window.__hitTracing=true;for(const type of ['click','toggle'])document.addEventListener(type,e=>{
+      const hit=e.target.closest?.('.profiler-hit');if(hit){window.__hitTrace.push({type,id:hit.dataset.captureId,open:hit.open,trusted:e.isTrusted,at:performance.now()});window.__hitTrace=window.__hitTrace.slice(-32)}
+    },true)}`,[id]);
     try {
       await click(app,`//details[@data-capture-id='${id}']/summary`);
-      assert.equal(await app.wd.execute("return [...document.querySelectorAll('.profiler-hit')].find(e=>e.dataset.captureId===arguments[0])?.open",[id]),true);
-      app.record('inspected-hit',{id,attempt});return;
+      await app.waitFor('chosen hit expansion committed',async()=>({done:await app.wd.execute("return [...document.querySelectorAll('.profiler-hit')].find(e=>e.dataset.captureId===arguments[0])?.open",[id])}),500,25);
+      app.record('inspected-hit',{id,attempt,trace:await app.wd.execute('return window.__hitTrace')});return;
     } catch(error) {
+      const trace=await app.wd.execute('return window.__hitTrace');
+      app.record('hit-inspection-trace',{id,attempt,trace,error:String(error)});
+      if(trace.some(event=>event.type==='click'&&event.id!==id))throw error;
       if((await profile(app)).captures.some(c=>c.id===id))throw error;
       app.record('hit-evicted-before-inspection',{id,attempt,error:String(error)});
+      await app.waitFor('next published hit identity after proved eviction',async()=>({done:await app.wd.execute("const last=[...document.querySelectorAll('.profiler-hit[data-capture-id]')].at(-1)?.dataset.captureId;return !!last&&last!==arguments[0]",[id])}),1500,25);
     }
   }
   assert.fail('no retained hit could be inspected in three attempts');
@@ -217,6 +232,7 @@ for (const fps of [60,-1]) test(`disposable Unity profiling via real menu action
   if(longRun&&fps<0){
     await click(app,"//button[@aria-label='Take memory snapshot']");
     assert.equal(await app.wd.execute(`return document.querySelector('select[aria-label="Profiler view"]').value`),tailSnapshot,'post-rollover capture from history preserves the reviewed identity');
+    await app.waitFor('post-rollover retained and released manual observations',async()=>({done:await app.wd.execute("const rows=[...document.querySelectorAll('.profiler-table-scroll tbody tr')];return rows.some(r=>r.lastElementChild.textContent==='1.00 MiB')&&rows.at(-1)?.lastElementChild.textContent==='0 B'")}));
     app.record('post-rollover-snapshot-record-again-free',{snapshotId:tailSnapshot,profile:tailFreed});
     await app.screenshot('post-rollover-historical-capture');
     await click(app,"//button[@aria-label='Return to live profiling']");
