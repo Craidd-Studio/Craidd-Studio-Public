@@ -17,8 +17,41 @@ async function selectBenchmark(app, marker) {
   await click(app, `//select[@aria-label='Gold benchmark']/option[@value='${marker}']`);
   await app.waitFor("benchmark selected",async()=>({done:await app.wd.execute("return document.getElementById('profiler-benchmark').value === arguments[0]",[marker])}));
 }
+async function selectInspectionFilter(app, label, value) {
+  // Clicking an <option> cannot scroll its offscreen <select> into the results
+  // viewport. Focus the real control and use its native keyboard interaction.
+  const values=await app.wd.execute("return [...document.querySelector('select[aria-label='+JSON.stringify(arguments[0])+']').options].map(o=>o.value)",[label]);
+  assert.ok(values.includes(String(value)),`${label} contains ${value}`);
+  await click(app,`//select[@aria-label='${label}']`);
+  await app.wd.keys('\uE011',...Array(values.indexOf(String(value))).fill('\uE015'),'\uE007');
+  assert.equal(await app.wd.execute("return document.querySelector('select[aria-label='+JSON.stringify(arguments[0])+']').value",[label]),String(value));
+}
 async function waitProfile(app, description, predicate, timeout=30000) {
   return app.waitFor(description,async()=>{const p=await profile(app);return {done:!!p&&predicate(p),value:p};},timeout);
+}
+async function openHitHistory(app) {
+  const open=await app.wd.execute("return document.querySelector('.profiler-capture-group')?.open");
+  assert.equal(typeof open,'boolean','the chosen marker has a history group');
+  if(!open)await click(app,"//details[contains(@class,'profiler-capture-group')]/summary");
+  await app.waitFor('hit group stays expanded',async()=>({done:await app.wd.execute("return document.querySelector('.profiler-capture-group')?.open")}));
+}
+async function inspectRetainedHit(app) {
+  // Oldest-first rows are evicted by the bounded live history. Choose a recent
+  // identity, then prove exactly that identity opened. Retry only a proven
+  // eviction between acquisition and click; never swallow other UI errors.
+  for(let attempt=0;attempt<3;attempt++){
+    const id=await app.wd.execute("return [...document.querySelectorAll('.profiler-hit[data-capture-id]')].at(-1)?.dataset.captureId");
+    assert.ok(id,'a retained hit is available');
+    try {
+      await click(app,`//details[@data-capture-id='${id}']/summary`);
+      assert.equal(await app.wd.execute("return [...document.querySelectorAll('.profiler-hit')].find(e=>e.dataset.captureId===arguments[0])?.open",[id]),true);
+      app.record('inspected-hit',{id,attempt});return;
+    } catch(error) {
+      if((await profile(app)).captures.some(c=>c.id===id))throw error;
+      app.record('hit-evicted-before-inspection',{id,attempt,error:String(error)});
+    }
+  }
+  assert.fail('no retained hit could be inspected in three attempts');
 }
 
 for (const fps of [60,-1]) test(`disposable Unity profiling via real menu actions at ${fps===60?'60 fps':'uncapped fps'}`, { skip:!enabled,timeout:longRun&&fps<0?1000000:480000 },async t=>{
@@ -101,9 +134,8 @@ for (const fps of [60,-1]) test(`disposable Unity profiling via real menu action
 
   await click(app,"//button[@id='profiler-tab-Gold']");
   await selectBenchmark(app,'unity.native.mix');
-  await click(app,"//details[contains(@class,'profiler-capture-group')]/summary");
-  await app.waitFor('hit groups expanded',async()=>({done:await app.wd.execute("return document.querySelector('.profiler-capture-group').open")}));
-  await click(app,"//details[contains(@class,'profiler-hit')][1]/summary");
+  await openHitHistory(app);
+  await inspectRetainedHit(app);
   await app.screenshot('range-and-expanded-hit');
   await waitProfile(app,"new hits while range selection stays deliberate",p=>p.counters.evictedCaptures>0,60000);
   assert.equal(await app.wd.execute("return document.getElementById('profiler-benchmark').value"),'unity.native.mix');
@@ -123,19 +155,19 @@ for (const fps of [60,-1]) test(`disposable Unity profiling via real menu action
     await unity.command('workers',1);
     const threaded=await waitProfile(app,'three native work threads',p=>new Set(p.captures.filter(c=>c.marker==='unity.native.mix').map(c=>c.thread)).size>=3);
     await selectBenchmark(app,'unity.native.mix');
-    await click(app,"//details[contains(@class,'profiler-capture-group')]/summary");
+    await openHitHistory(app);
     const tids=[...new Set(threaded.captures.filter(c=>c.marker==='unity.native.mix').map(c=>c.thread))];
     const chosen=tids[1];
     await app.waitFor('worker thread option rendered',async()=>({done:await app.wd.execute("return [...document.querySelectorAll('select[aria-label=\"Capture thread\"] option')].some(o=>o.value===arguments[0])",[String(chosen)])}));
-    await click(app,`//select[@aria-label='Capture thread']/option[@value='${chosen}']`);
+    await selectInspectionFilter(app,'Capture thread',chosen);
     await app.waitFor('thread inspection filter',async()=>({done:await app.wd.execute("return [...document.querySelectorAll('.profiler-hit > summary')].length>0&&[...document.querySelectorAll('.profiler-hit > summary')].every(s=>s.innerText.startsWith('Thread '+arguments[0]+' ·'))",[String(chosen)]),value:await app.wd.execute("return {selected:document.querySelector('select[aria-label=\"Capture thread\"]').value,hits:[...document.querySelectorAll('.profiler-hit > summary')].slice(0,3).map(s=>s.innerText)}")}));
     const newestOther=Math.max(...threaded.captures.filter(c=>c.marker==='unity.native.mix'&&c.thread!==chosen).map(c=>c.startMs));
     const stillRunning=await waitProfile(app,'other native threads continue while filtering',p=>p.captures.some(c=>c.marker==='unity.native.mix'&&c.thread!==chosen&&c.startMs>newestOther+250));
-    await click(app,`//select[@aria-label='Capture batch']/option[@value='${again.batch}']`);
+    await selectInspectionFilter(app,'Capture batch',again.batch);
     await app.waitFor('batch inspection filter',async()=>({done:await app.wd.execute("return [...document.querySelectorAll('.profiler-hit > summary')].length>0&&[...document.querySelectorAll('.profiler-hit > summary')].every(s=>s.innerText.includes('batch '+arguments[0]))",[String(again.batch)])}));
     app.record('thread-and-batch-inspection',{chosen,tids,profile:stillRunning});await app.screenshot('thread-and-batch-inspection');
-    await click(app,"//select[@aria-label='Capture thread']/option[@value='all']");
-    await click(app,"//select[@aria-label='Capture batch']/option[@value='all']");
+    await selectInspectionFilter(app,'Capture thread','all');
+    await selectInspectionFilter(app,'Capture batch','all');
     await unity.command('workers',0);
     await selectBenchmark(app,'unity.solo');
     await click(app,"//button[@aria-label='Profiling settings']");
@@ -155,7 +187,13 @@ for (const fps of [60,-1]) test(`disposable Unity profiling via real menu action
     assert.equal(active.counters.rejectedEvents,0);
     if(longRun){
       console.log(`${name}: sustained capture passed; continuing past the 2,400-sample window`);
-      const aged=await waitProfile(app,"real sample window rolls past ten minutes",p=>p.counters.agedSamples>0,650000);
+      let lastCounterAt=0;
+      const aged=await waitProfile(app,"real sample window rolls past ten minutes",p=>{
+        if(Date.now()-lastCounterAt>=15000){
+          lastCounterAt=Date.now();app.record('long-counter-sample',{observedAtMs:p.observedAtMs,counters:p.counters,dropped:p.dropped,samples:p.samples.length,captures:p.captures.length,batch:p.batch,generation:p.playGeneration});
+        }
+        return p.counters.agedSamples>0;
+      },650000);
       app.record('long-rolling-history',{unity:await unity.status(),profile:aged,renderedFooter:await app.wd.execute("return document.querySelector('.profiler-footer').innerText")});
       await app.screenshot('long-rolling-history');
       assert.equal(aged.counters.sourceGaps+aged.counters.rejectedEvents+aged.counters.disconnects,0);
@@ -163,9 +201,26 @@ for (const fps of [60,-1]) test(`disposable Unity profiling via real menu action
   }
   // A rare retained cohort must remain visible after the hot hit history rolls.
   await unity.command('allocate');
-  await waitProfile(app,"retained memory after history eviction",p=>liveBytes(p)===1048576);
+  const tailRetained=await waitProfile(app,"retained memory after history eviction",p=>liveBytes(p)===1048576);
+  let tailSnapshot;
+  if(longRun&&fps<0){
+    await click(app,"//button[@aria-label='Take memory snapshot']");
+    tailSnapshot=await app.wd.execute(`return [...document.querySelector('select[aria-label="Profiler view"]').options].at(-1).value`);
+    await click(app,"//button[@aria-label='Snapshot and record again']");
+    await waitProfile(app,'Record again after sample rollover retains the old cohort',p=>p.batch>tailRetained.batch&&p.captures.some(c=>c.solo&&c.endMs!==null&&c.liveBytes===1048576));
+    await click(app,`//select[@aria-label='Profiler view']/optgroup/option[@value='${tailSnapshot}']`);
+    await click(app,"//button[@id='profiler-tab-Memory']");
+    await app.waitFor('historical retained snapshot after rollover',async()=>({done:await app.wd.execute("return [...document.querySelectorAll('.profiler-table-scroll tbody tr')].some(r=>r.innerText.includes('1.00 MiB'))")}));
+  }
   await unity.command('clear');
-  await waitProfile(app,"late free after history eviction",p=>liveBytes(p)===0);
+  const tailFreed=await waitProfile(app,"late free after history eviction",p=>liveBytes(p)===0);
+  if(longRun&&fps<0){
+    await click(app,"//button[@aria-label='Take memory snapshot']");
+    assert.equal(await app.wd.execute(`return document.querySelector('select[aria-label="Profiler view"]').value`),tailSnapshot,'post-rollover capture from history preserves the reviewed identity');
+    app.record('post-rollover-snapshot-record-again-free',{snapshotId:tailSnapshot,profile:tailFreed});
+    await app.screenshot('post-rollover-historical-capture');
+    await click(app,"//button[@aria-label='Return to live profiling']");
+  }
   await unity.command('stop');
   const ended=await waitProfile(app,"Ready for Play through repeated native state",p=>p.active&&p.waitingForPlay&&p.captures.every(c=>c.endMs!==null));
   await app.screenshot('ready-after-play');

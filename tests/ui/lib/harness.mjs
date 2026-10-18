@@ -153,6 +153,16 @@ export async function launch(scenario, { port = 0, environment = {} } = {}) {
       await writeFile(join(dir, "record.json"), JSON.stringify({ records, log }, null, 2));
     },
   };
+  // `cargo test` can replace the default executable with a dev-server build.
+  // Do not send mutating IPC from an error/blank document, nor retry a window
+  // creation whose result might already have taken effect.
+  try {
+    const page=await app.waitFor('embedded frontend loaded (run npm run test:ui:build after cargo test)',async()=>{
+      const state=await wd.execute("return {url:location.href,origin:location.origin,ready:document.readyState,root:!!document.querySelector('#root')?.childElementCount,ipc:typeof window.__TAURI_INTERNALS__?.invoke==='function'}");
+      return {done:state.origin!=='null'&&state.root&&state.ipc,value:state};
+    },15000);
+    app.record('frontend-ready',page);
+  } catch(error) { app.crashed=true;await app.close();throw error; }
   return app;
 }
 
