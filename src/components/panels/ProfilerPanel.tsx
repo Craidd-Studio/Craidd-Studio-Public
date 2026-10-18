@@ -1,6 +1,6 @@
 import { openProfilerWorkspace } from "../../lib/profilerWorkspace";
 import { isFileTab } from "../../types/project";
-import { useRef, useState, useLayoutEffect, useEffect, type PointerEvent, type ReactNode } from "react";
+import { useRef, useState, useLayoutEffect, useEffect, type PointerEvent, type ReactNode, type SelectHTMLAttributes } from "react";
 import { useProfiling, canTakeSnapshot, snapshotIncludesRecording, type GoldCapture, type ProfileSample } from "../../store/profilingStore";
 import { goldBenchmarks, resolveGoldBenchmark, resolveProfileScope, recordingLabel, timelineEntries } from "../../lib/profilingSelection";
 import { useGold } from "../../store/goldStore";
@@ -18,7 +18,9 @@ const countLabel = (count: number, solo = false) => `${count} ${solo ? count ===
 type Tab = "Summary" | "Gold" | "Memory" | "Events";
 type Span = [number, number];
 
-function ScopeSelect({ value, onChoose, children }: { value: string; onChoose: (value: string) => void; children: ReactNode }) {
+function ProfilerSelect({ value, onChoose, children, ...props }: {
+  value: string; onChoose: (value: string) => void; children: ReactNode;
+} & Omit<SelectHTMLAttributes<HTMLSelectElement>, "value" | "onChange" | "children">) {
   const select = useRef<HTMLSelectElement | null>(null);
   const nativeValue = useRef(value);
   const restoreFocus = useRef(false);
@@ -36,8 +38,7 @@ function ScopeSelect({ value, onChoose, children }: { value: string; onChoose: (
   useLayoutEffect(() => {
     if (restoreFocus.current) { select.current?.focus(); restoreFocus.current = false; }
   }, [revision]);
-  return <select key={revision} ref={select} id="profiler-scope" aria-label="Profiling scope"
-    title="One entry per benchmark. Focus an individual hit from Recorded hits/segments." value={value}
+  return <select {...props} key={revision} ref={select} value={value}
     onChange={e => { nativeValue.current = e.target.value; onChoose(e.target.value); }}>{children}</select>;
 }
 
@@ -220,20 +221,20 @@ export default function ProfilerPanel({ expanded = false }: { expanded?: boolean
       <strong>{p ? `${p.name} · ${p.target.pid}` : "No process selected"}</strong>
       <span>{state.selected ? `Snapshot · ${scope.status}` : scope.status}</span>
     </div>
-    {state.snapshots.length>0&&<div className="profiler-view-controls"><button aria-label="Return to live profiling" aria-pressed={!state.selected&&!state.recording} onClick={returnLive}>Live</button><select aria-label="Profiler view" title="Manual snapshot history; select a saved moment or return to the current session" value={state.selected??"live"} onChange={e=>{state.select(e.target.value==="live"?null:e.target.value);setRange(null);}}>
+    {state.snapshots.length>0&&<div className="profiler-view-controls"><button aria-label="Return to live profiling" aria-pressed={!state.selected&&!state.recording} onClick={returnLive}>Live</button><ProfilerSelect aria-label="Profiler view" title="Manual snapshot history; select a saved moment or return to the current session" value={state.selected??"live"} onChoose={value=>{state.select(value==="live"?null:value);setRange(null);}}>
       <option value="live">Snapshots · Current session</option>
       {relatedSnapshots.length>0&&<optgroup label="Snapshots for this recording">{relatedSnapshots.map(s=><option key={s.id} value={s.id}>{s.name}</option>)}</optgroup>}
       <optgroup label={relatedSnapshots.length?"Other manual snapshots":"Manual snapshots"}>{manualSnapshots.map(s=><option key={s.id} value={s.id}>{s.name}</option>)}</optgroup>
       <optgroup label="Previous sessions">{state.snapshots.filter(s=>s.kind==="previousSession").map(s=><option key={s.id} value={s.id}>{s.name}</option>)}</optgroup>
-    </select></div>}
+    </ProfilerSelect></div>}
     <div className="profiler-benchmark profiler-scope-picker">
       {!state.snapshots.length&&<button aria-label="Return to live profiling" aria-pressed={!state.recording} onClick={returnLive}>Live</button>}
       <label htmlFor="profiler-scope">Scope</label>
-      <ScopeSelect value={state.recording?.marker??"session"} onChoose={chooseScope}>
+      <ProfilerSelect id="profiler-scope" aria-label="Profiling scope" title="One entry per benchmark. Focus an individual hit from Recorded hits/segments." value={state.recording?.marker??"session"} onChoose={chooseScope}>
         <option value="session">Full session{state.selected?" at snapshot":p?.active?" · Live":" · Stopped"}</option>
         {scopeMarkers.map(m=><option key={m.marker} value={m.marker}>{m.solo?"Solo":"Gold"} · {m.name} · {countLabel(m.hits,m.solo)}</option>)}
         {state.recording&&!scopeMarkers.some(m=>m.marker===state.recording!.marker)&&<option value={state.recording.marker}>{state.recording.name} · Unavailable</option>}
-      </ScopeSelect>
+      </ProfilerSelect>
     </div>
     {snapshotNote&&snapshotNoteUntil>Date.now()&&<p role="status" className="profiler-scope-caption">{snapshotNote}</p>}
     {state.recording&&<p className="profiler-scope-caption" role="status" data-recording-id={state.recording.id}>{state.recording.solo?"Solo":"Gold"} · {state.recording.name} · B{state.recording.batch} · T{state.recording.thread||"all"} · {scope.status} · {seconds(scope.bounds[0])} → {duration===null?"End unavailable":seconds(scope.bounds[1])}</p>}

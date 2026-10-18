@@ -34,7 +34,7 @@ test('Unity review: native scope reselection, distinct snapshots, transient conf
   app.record('before-any-stop',{diagnostics:first.diagnostics,count:endedCount(first)});
   await app.waitFor('live scope choices rendered',async()=>({done:await app.wd.execute("return [...document.querySelector('#profiler-scope').options].some(o=>o.value==='unity.solo')&&[...document.querySelector('#profiler-scope').options].some(o=>o.value==='unity.native.mix')")}));
   await app.wd.execute(`window.__scopeEvents=[];for(const type of ['pointerdown','click','input','change','focusin'])document.addEventListener(type,e=>{
-    if(e.target.id!=='profiler-scope')return;window.__scopeEvents.push({type,trusted:e.isTrusted,value:e.target.value,index:e.target.selectedIndex,at:performance.now()});
+    if(e.target.id!=='profiler-scope'&&e.target.getAttribute('aria-label')!=='Profiler view')return;window.__scopeEvents.push({type,control:e.target.id||e.target.getAttribute('aria-label'),trusted:e.isTrusted,value:e.target.value,index:e.target.selectedIndex,at:performance.now()});
     window.__scopeEvents=window.__scopeEvents.slice(-64);
   },true);`);
   await click(app,"//select[@id='profiler-scope']/option[@value='unity.solo']");
@@ -66,6 +66,18 @@ test('Unity review: native scope reselection, distinct snapshots, transient conf
   const labels=await app.wd.execute(`return [...document.querySelector('select[aria-label="Profiler view"]').options].filter(o=>o.value!=='live').map(o=>({id:o.value,label:o.textContent}));`);
   assert.equal(labels.length,3);
   await click(app,`//select[@aria-label='Profiler view']/optgroup/option[@value='${labels[0].id}']`);
+  await click(app,"//button[@aria-label='Return to live profiling']");
+  await click(app,`//select[@aria-label='Profiler view']/optgroup/option[@value='${labels[0].id}']`);
+  const historySample=(await app.invoke('get_profile')).samples.length;
+  await waitProfile('publication after native history reselection',p=>p.samples.length>historySample+1);
+  const historyRepeated=await app.wd.execute(`return {value:document.querySelector('select[aria-label="Profiler view"]').value,historical:document.querySelector('.profiler-target').innerText.includes('Snapshot'),events:window.__scopeEvents.slice()}`);
+  app.record('native-history-reselection',historyRepeated);
+  // Keep gathering independent observations if this newly covered native path
+  // fails; the final assertion still fails the scenario, with its event trace.
+  if(!historyRepeated.historical){
+    await click(app,"//select[@aria-label='Profiler view']");
+    await app.wd.keys('\uE011','\uE015','\uE007');
+  }
   await click(app,"//button[@aria-label='Take memory snapshot']");
   assert.equal(await app.wd.execute(`return document.querySelector('select[aria-label="Profiler view"]').value`),labels[0].id,'capture from history preserves selection');
   const confirmationAt=Date.now();
@@ -89,6 +101,8 @@ test('Unity review: native scope reselection, distinct snapshots, transient conf
   app.record('expanded-1280x800',layout);await app.screenshot('03-expanded-1280x800');
   // Accumulate observations before assertions so a failure retains the full trace.
   assert.ok(repeated.recording?.includes('unity.solo'),'same native option must scope again after Live');
+  assert.equal(historyRepeated.value,labels[0].id,'same manual snapshot is selectable again after Live');
+  assert.equal(historyRepeated.historical,true,'the rendered view, not only the DOM option, becomes historical');
   assert.ok(different.recording?.includes('unity.native.mix'));
   assert.equal(new Set(labels.map(s=>s.label)).size,labels.length,'rapid snapshots have distinct accessible labels');
   assert.equal(note,'','saved confirmation expires');
