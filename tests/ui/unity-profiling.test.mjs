@@ -206,6 +206,7 @@ for (const fps of [60,-1]) test(`disposable Unity profiling via real menu action
       const aged=await waitProfile(app,"real sample window rolls past ten minutes",p=>{
         if(Date.now()-lastCounterAt>=15000){
           lastCounterAt=Date.now();app.record('long-counter-sample',{observedAtMs:p.observedAtMs,counters:p.counters,dropped:p.dropped,samples:p.samples.length,captures:p.captures.length,batch:p.batch,generation:p.playGeneration});
+          console.log(`${name}: ${Math.round(p.observedAtMs/1000)} s; ${p.samples.length} samples; ${p.counters.agedSamples} aged; loss ${p.counters.sourceGaps+p.counters.rejectedEvents+p.counters.disconnects}; ${p.counters.evictedCaptures} captures rolled`);
         }
         return p.counters.agedSamples>0;
       },650000);

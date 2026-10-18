@@ -145,7 +145,25 @@ not a new human acceptance claim. They leave the master checkbox open.
 - [ ] **P09 — Physical pointer follow-up:** independently verify scope switching with the mouse after returning from snapshot history. WebDriver option-level activation was unreliable; the qualified scope scenario uses real keyboard input and rendered identity assertions.
 - [ ] **P10 — Human replay acceptance:** Stop Play → Play again without reattaching remains NOT EXPLICITLY VERIFIED by the human. Automated replay does not tick this box.
 
+## 18 October review repair gate
+
+These are separate **automated runtime (A)** and **source/unit (D)** results for
+the [review repair record](../bugs/18-10-2026/unity-profiling-review-repairs.md).
+They do not overwrite the historical results or complete the human lane.
+
+- [x] **R-06 / A — Deliberate history inspection:** repaired 60 fps flow proves a retained hit opens, matching thread/batch rows remain visible, other threads continue, and coverage limits are reached. Nested controls are explicitly revealed before native keyboard selection.
+- [x] **R-01 / A — Scope reselection:** a before/after passive native event trace proves selecting the same marker after Live works after the fix. Successive keyboard choices retain focus. Physical mouse acceptance remains below.
+- [x] **R-02 / A+D — Distinct snapshot labels:** rapid same-second captures have unique readable numbers; retained Memory rows keep those numbers after eviction. Historical selection, live capture and the eight-view bound are preserved.
+- [x] **R-03 / A+D — Play diagnostics:** idle initialization is not a Play exit; two actual runtime exits yield two diagnostics. Duplicate notifications and lost-end generation recovery have separate regressions.
+- [x] **R-08 / A — Transient feedback:** snapshot confirmation is initially visible, survives immediate rehosting and expires. Capture from a historical view preserves selection.
+- [x] **S01 / A — One sustained repeat:** 616.406 s at rollover, 2,400 samples, 10,014,304 ordinary capture evictions and zero loss counters; post-rollover allocation, manual snapshots, Record again, late free and automated replay pass. This single isolated repeat does not resolve K01.
+- [ ] **R-04 / A+M — Expanded vertical usability:** 1280×800 geometry still puts result tabs below the fold. Minimal layout proposal is recorded; no redesign is implied.
+- [ ] **R-05 / M — Moving live history rows:** identity-based automation does not qualify human pointer usability. A bounded paused-inspection proposal remains for design review.
+- [ ] **K01 — Sustained zero-loss qualification:** an intermittent earlier loss has no established root cause/resolution. A passing repeat cannot close this item.
+- [ ] **K02 / M — Physical scope/snapshot pointer acceptance:** automated native input is not human manual acceptance.
+- [ ] **K03 / M — Human Stop Play → Play without reattaching:** remains NOT EXPLICITLY VERIFIED.
+
 ---
 
-*Last updated: Phase 3.x / 3.5, 17 October 2026. Author(s): ShinkuKira21.*
+*Last updated: Phase 3.x / 3.5, 18 October 2026. Author(s): ShinkuKira21.*
 *This document is a record.*
