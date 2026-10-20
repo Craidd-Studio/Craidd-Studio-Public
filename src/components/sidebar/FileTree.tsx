@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import type { FileNode } from "../../types/project";
 import { useSolution, type TreeSource } from "../../store/solutionStore";
-import { dispatchLinkedWindowCommand, useLinkedWindows } from "../../store/linkedWindowsStore";
+import { openWorkspaceFile } from "../../lib/openWorkspaceFile";
+import { useLayout } from "../../store/layoutStore";
 
 interface Props {
   node: FileNode;
@@ -33,7 +34,8 @@ export default function FileTree({
 
   const isFolder = node.kind === "folder";
   const absPath = buildAbs(basePath, node);
-  const openFile = useSolution((s) => s.openFile);
+  const rowRef = useRef<HTMLDivElement>(null);
+  const reveal = useLayout((s) => s.discoveryReveal);
   const isActive = useSolution((s) => s.activeFileId === absPath);
   const renamingRequest = useSolution((s) => s.renamingRequest);
   const setFocusedTreeTarget = useSolution((s) => s.setFocusedTreeTarget);
@@ -86,27 +88,22 @@ export default function FileTree({
     }
   }, [renaming, node.name, isFolder]);
 
+  useEffect(() => {
+    if (source !== "discovery" || !reveal) return;
+    if (isFolder && reveal.path.startsWith(`${absPath.replace(/\/$/, "")}/`)) setOpen(true);
+    if (reveal.path === absPath) {
+      setFocusedTreeTarget({ path: absPath, source });
+      rowRef.current?.scrollIntoView({ block: "nearest" });
+      rowRef.current?.focus();
+      useLayout.setState({ discoveryReveal: null });
+    }
+  }, [reveal, source, absPath, isFolder, setFocusedTreeTarget]);
+
   const handleClick = () => {
     setFocusedTreeTarget({ path: absPath, source });
     if (renaming) return;
     if (isFolder) { setOpen((v) => !v); return; }
-    const linked = useLinkedWindows.getState();
-    const hidden = linked.windows.find((item) => item.windowLabel === linked.viewedWindowLabel
-      && item.windowLabel !== linked.ownWindowLabel && !item.visible && !item.restoring);
-    if (hidden && (hidden.tabs.some((tab) => tab.path === absPath && tab.dirty)
-      || (hidden.activeFile?.path === absPath && hidden.activeFile.dirty))) {
-      alert("Save this file in its owning window before editing it here.");
-      return;
-    }
-    void (async () => {
-      await openFile(absPath, node.name);
-      if (hidden && useSolution.getState().tabs.some((tab) => tab.fileId === absPath)) {
-        // A owns the editable tab; the parked session remembers the file
-        // to show again when its window is restored.
-        linked.setRemoteEditing(true);
-        await dispatchLinkedWindowCommand(hidden.windowLabel, "reveal_file", JSON.stringify({ file: absPath, line: 1 }));
-      }
-    })().catch((error) => console.error("[craidd] Could not open hidden file:", error));
+    void openWorkspaceFile(absPath).catch((error) => alert(String(error)));
   };
 
   const handleDoubleClick = (e: React.MouseEvent) => {
@@ -160,6 +157,8 @@ export default function FileTree({
   return (
     <>
       <div
+        ref={rowRef}
+        tabIndex={-1}
         onClick={handleClick}
         onDoubleClick={handleDoubleClick}
         onContextMenu={(e) => {

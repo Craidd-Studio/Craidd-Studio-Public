@@ -27,7 +27,7 @@ class ProfileDemo
         GC.Collect();
     }
 }`;
-useSolution.setState({rootPath:"/fixture",clnPath:"/fixture/fixture.cln",activeFileId:file,tabs:[{fileId:file,name:"ProfileDemo.cs",language:"csharp",monacoLanguage:"csharp",content,originalContent:content,dirty:false,diskState:"inSync",mtimeAtLastSync:0}]});
+useSolution.setState({rootPath:"/fixture",clnPath:"/fixture/fixture.cln",activeTabId:file,activeFileId:file,lastSourceFileId:file,tabs:[{kind:"file",id:file,fileId:file,name:"ProfileDemo.cs",language:"csharp",monacoLanguage:"csharp",content,originalContent:content,dirty:false,diskState:"inSync",mtimeAtLastSync:0}]});
 useBreakpoints.setState({solutionPath:"/fixture/fixture.cln",points:[{file,line:6,scope:"all"}]});
 useGold.setState({solutionPath:"/fixture/fixture.cln",points:[{id:"pair",file,start:6,end:11,solo:false,condition:""},{id:"solo",file,start:13,end:null,solo:true,condition:""}]});
 const addSolo=()=>{const p=useProfiling.getState().profile!;if(p.captures.some(c=>c.solo))return;useProfiling.setState({profile:{...p,captures:[...p.captures,{id:"solo:session:1",marker:"session",name:"Session overview",solo:true,thread:0,batch:p.batch,startMs:0,endMs:null,cpuMs:null,status:"Recording",allocatedBytes:49152,freedBytes:45056,liveBytes:4096,allocationCount:12}]}});};

@@ -127,7 +127,7 @@ export default function BottomPanel() {
                   await revealLinkedProblem(problem.windowLabel, problem);
                   if (remote?.windowLabel === problem.windowLabel && !remote.visible) {
                     await revealFile(problem.file, problem.line, problem.column);
-                    if (useSolution.getState().tabs.some((item) => item.fileId === problem.file)) {
+                    if (useSolution.getState().tabs.some((item) => item.kind === "file" && item.fileId === problem.file)) {
                       useLinkedWindows.getState().setRemoteEditing(true);
                     }
                   }

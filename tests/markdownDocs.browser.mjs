@@ -1,0 +1,105 @@
+// Run against npm run dev. Set CRAIDD_PLAYWRIGHT_MODULE to an installed
+// playwright module entrypoint when it is outside this checkout.
+import assert from "node:assert/strict";
+const { chromium } = await import(process.env.CRAIDD_PLAYWRIGHT_MODULE || "playwright");
+const browser = await chromium.launch({ executablePath: process.env.CRAIDD_CHROME || "/usr/bin/chrome", headless: true, args: ["--no-sandbox"] });
+try {
+  const page = await browser.newPage({ viewport: { width: 1360, height: 950 } });
+  const errors = [];
+  page.on("pageerror", (error) => { errors.push(String(error)); console.error("Browser error:", String(error)); });
+  await page.goto(`${process.env.CRAIDD_DOCS_URL || "http://127.0.0.1:1420"}/tests/fixtures/markdown-docs/index.html`);
+  // The preview is a focusable document container rather than an ARIA region.
+  const document = page.getByLabel("Markdown preview", { exact: true });
+  await document.getByRole("heading", { name: "Markdown Docs", exact: true }).waitFor();
+  await page.getByLabel("Edit block at line 3", { exact: true }).waitFor({ state: "attached" });
+  await page.waitForFunction(() => !document.querySelector('button[aria-label="Edit block at line 3"]').disabled);
+  assert.equal(await document.locator("table").count(), 1);
+  assert.equal(await document.locator(".hljs-keyword").count(), 1);
+  assert.equal(await page.evaluate(() => window.bad), undefined);
+  await document.locator('img[alt="Local"]').waitFor();
+  assert.equal(await document.locator('img[alt="Local"]').evaluate((image) => image.naturalWidth), 1);
+  assert.equal(await document.locator('img[src^="https:"]').count(), 0);
+  await page.getByLabel("Filter Docs by filename or path").fill("deep/Guide");
+  await page.getByRole("button", { name: "Guide.MARKDOWN", exact: true }).waitFor();
+  await page.getByLabel("Filter Docs by filename or path").fill("");
+  await page.getByLabel("Edit block at line 3", { exact: true }).click();
+  const field = page.getByRole("textbox", { name: "Edit Markdown block", exact: true });
+  await field.fill("Editable paragraph");
+  await field.evaluate((element) => element.setSelectionRange(0, 8));
+  await field.press("Control+b");
+  assert.equal(await field.inputValue(), "**Editable** paragraph");
+  assert.equal(await page.evaluate(() => window.docsTest.preferences.getState().sidebarVisible), true);
+  const changed = await page.evaluate(() => window.docsTest.solution.getState().tabs[0].content);
+  assert.match(changed, /\*\*Editable\*\* paragraph\r\n/);
+  const original = await page.evaluate(() => window.docsTest.original);
+  const before = "A **bold** paragraph with [guide](docs/deep/Guide.MARKDOWN#details).";
+  assert.equal(changed, original.replace(before, "**Editable** paragraph"));
+  assert.equal(await page.evaluate(() => window.docsTest.solution.getState().tabs[0].dirty), true);
+  await field.press("Control+Enter");
+  await page.getByRole("button", { name: "View Source", exact: true }).click();
+  const sourceEditor = page.locator(".monaco-editor textarea").first();
+  await sourceEditor.waitFor({ state: "visible" });
+  await page.locator(".monaco-editor").first().click({ position: { x: 180, y: 80 } });
+  await page.keyboard.press("Control+End");
+  await page.keyboard.press("Enter");
+  await page.keyboard.press("Enter");
+  await page.keyboard.type("Source addition");
+  await page.waitForFunction(() => window.docsTest.solution.getState().tabs[0].content.includes("Source addition"));
+  await page.getByRole("button", { name: "View Preview", exact: true }).click();
+  await document.getByText("Source addition", { exact: true }).waitFor();
+  // Monaco may group the newline keys separately from subsequent typing.
+  for (let attempt = 0; attempt < 5 && await page.evaluate(() => window.docsTest.solution.getState().tabs[0].content) !== changed; attempt++) {
+    await page.getByRole("button", { name: "Menu Undo", exact: true }).click();
+    await page.waitForTimeout(30);
+  }
+  assert.equal(await page.evaluate(() => window.docsTest.solution.getState().tabs[0].content), changed);
+  await page.getByRole("button", { name: "Menu Undo", exact: true }).click();
+  await page.waitForFunction((expected) => window.docsTest.solution.getState().tabs[0].content === expected, original);
+  await page.getByRole("button", { name: "Menu Redo", exact: true }).click();
+  await page.waitForFunction((expected) => window.docsTest.solution.getState().tabs[0].content === expected, changed);
+  await page.getByRole("button", { name: "Close README.md", exact: true }).click();
+  await page.getByText("Unsaved changes", { exact: true }).waitFor();
+  await page.getByRole("button", { name: "Cancel", exact: true }).click();
+  assert.equal(await page.evaluate(() => window.docsTest.solution.getState().tabs[0].content), changed);
+  await page.evaluate(() => { window.docsTest.mtimes["/lab/README.md"] = 100; });
+  await page.getByRole("button", { name: "Save document", exact: true }).click();
+  await page.getByText("Newer version exists on disk", { exact: true }).waitFor();
+  assert.equal(await page.evaluate(() => window.docsTest.files["/lab/README.md"]), original);
+  await page.getByRole("button", { name: "Cancel", exact: true }).click();
+  await page.evaluate(() => { window.docsTest.mtimes["/lab/README.md"] = 1; });
+  await page.getByRole("button", { name: "Save document", exact: true }).click();
+  await page.waitForFunction(() => !window.docsTest.solution.getState().tabs[0].dirty);
+  assert.equal(await page.evaluate(() => window.docsTest.files["/lab/README.md"]), changed);
+  await page.getByRole("link", { name: "Unsafe", exact: true }).click();
+  await page.getByRole("alert").filter({ hasText: "unsupported URL" }).waitFor();
+  await page.getByRole("button", { name: "Dismiss", exact: true }).click();
+  // Reopen original content to exercise relative links using the shared buffer.
+  await page.evaluate(() => { const s = window.docsTest.solution.getState(); s.updateTabContent("/lab/README.md", window.docsTest.original); });
+  await document.getByRole("link", { name: "guide", exact: true }).click();
+  await document.getByRole("heading", { name: "Details", exact: true }).waitFor();
+  assert.equal(await page.evaluate(() => window.docsTest.solution.getState().activeFileId), "/lab/docs/deep/Guide.MARKDOWN");
+  await document.getByRole("link", { name: "missing link", exact: true }).click();
+  await page.getByRole("alert").filter({ hasText: "File not found" }).waitFor();
+  await page.getByRole("button", { name: "Dismiss", exact: true }).click();
+  await page.getByLabel("Filter Docs by filename or path").fill("Guide");
+  await page.getByRole("button", { name: "Reveal Guide.MARKDOWN in File Discovery", exact: true }).click();
+  await page.waitForFunction(() => document.activeElement?.getAttribute("title") === "/lab/docs/deep/Guide.MARKDOWN");
+  await page.getByRole("button", { name: "Docs", exact: true }).click();
+  await page.getByLabel("Filter Docs by filename or path").fill("design.md");
+  await page.getByRole("button", { name: "design.md", exact: true }).click();
+  await document.getByRole("heading", { name: "Design: Markdown preview and documentation browsing", exact: true }).waitFor();
+  await page.evaluate(() => { document.documentElement.dataset.editorTheme = "vs-light"; document.documentElement.dataset.ideTheme = "light"; });
+  await page.screenshot({ path: "/tmp/craidd-docs-light.png" });
+  await page.evaluate(() => { document.documentElement.dataset.editorTheme = "craidd-dark"; document.documentElement.dataset.ideTheme = "craidd-dark"; });
+  await page.screenshot({ path: "/tmp/craidd-docs-dark.png" });
+  await page.getByLabel("Filter Docs by filename or path").fill("empty.md");
+  await page.getByRole("button", { name: "empty.md", exact: true }).click();
+  await page.getByRole("button", { name: "Write Markdown…", exact: true }).click();
+  await page.getByRole("textbox", { name: "Edit Markdown block", exact: true }).fill("# A new document");
+  await page.getByRole("button", { name: "Done", exact: true }).click();
+  await document.getByRole("heading", { name: "A new document", exact: true }).waitFor();
+  assert.equal(await page.evaluate(() => window.docsTest.solution.getState().tabs.find((tab) => tab.fileId === "/lab/empty.md").content), "# A new document");
+  assert(!await page.evaluate(() => window.docsTest.calls.some(({ cmd }) => ["write_file", "create_folder", "rename_path", "delete_path"].includes(cmd))));
+  assert.deepEqual(errors, []);
+  console.log("PASS: mocked-IPC browser smoke — GFM, local images, formatting, exact CRLF preservation, Source/Preview, shared undo/redo across source and preview edits, dirty close, save conflicts, save, relative links/fragments, broken links, reveal, real design document, themes, empty-document editing.");
+} finally { await browser.close(); }

@@ -2,9 +2,11 @@
 
 **Roadmap track:** Phase 3.x / 3.5, native attach and profiling usability.
 
-**Status:** Initial local findings, 16 October 2026. Implementation acceptance
-remains open. This is not an Opus review; the requested external review has
-not run because the available Claude Code session is logged out.
+**Status:** Historical initial local findings, recorded 16 October 2026.
+The external review had not run in that session. The user subsequently supplied
+an independent Claude Opus 5.5 review; the [repair report](unity-profiling-final-report.md)
+records the continuation, fresh runtime results and remaining acceptance gaps.
+The observations below retain their original scope.
 
 **Scope:** `feat/unity/profiling-a-to-p` at `af2af04`, Unity 6000.5.10f1 on
 Linux. Evidence combines user desktop screenshots, reported interaction,
@@ -78,5 +80,5 @@ the implementation, verification and final report expected from that review.
 
 ---
 
-*Last updated: Phase 3.x / 3.5, 16 October 2026. Author(s): ShinkuKira21.*
+*Last updated: Phase 3.x / 3.5, 17 October 2026. Author(s): ShinkuKira21.*
 *This document is a record.*

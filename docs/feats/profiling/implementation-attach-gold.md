@@ -1,7 +1,42 @@
 # Attach and Gold profiling implementation record
 
-**Status:** Experimental implementation, 15 October 2026. This record distinguishes source,
-automated checks and real adapter/desktop acceptance.
+**Status:** Experimental implementation, updated 17 October 2026. This record
+distinguishes source, automated checks and real adapter/desktop acceptance.
+The [17 October repair report](../../bugs/16-10-2026/unity-profiling-final-report.md)
+supersedes the historical counter, retention, snapshot, transport and discovery
+limitations below. Earlier dated sections describe their observed revisions.
+
+## Unified scopes follow-up, 17 October
+
+The [scope contract](design-profiler-scopes.md) supersedes the earlier automatic
+Solo default and session-wide chart presentation. It preserves the panel and
+native lifecycle, adds a shared scope resolver and frozen boundary summaries,
+and keeps manual snapshot history separate from the one-entry-per-benchmark
+Scope picker. The [scope report](../../bugs/17-10-2026/profiler-scopes-report.md)
+records implementation/automated evidence and the separately supplied human
+baseline. A completed selected recording remains selected as Recorded.
+
+## Native profiling repair qualification, 17 October
+
+The real harness is imported from `uiux/ui-harness` at `280b1d8`. Disposable
+Unity 6000.5.10f1 runs cover native menu allocation/free, snapshots, repeated
+Play, provider reconnect, abrupt host cleanup and sustained uncapped traffic.
+Toolbar actions use SVG under the unchanged embedded CSP. Game-view controls
+expose the fixture actions without hidden menus. The runtime and numerical
+evidence, commands and unrun cases are in the linked report/checklist.
+
+Play generations and heartbeats replace dependence on a single Play-end event;
+sequence gaps are explicit. Solo and live cohort history is pinned, ordinary
+completed hits are limited fairly per marker, and retention counters are
+separate from source errors. Snapshots save without leaving Live. Publication
+and process reads happen outside the collector lock; parsing is batched.
+Private discovery respects XDG/HOME and an explicit test namespace, validates
+process incarnations and cleans dead owned routes/sockets. Small scope lock
+files intentionally remain.
+
+This qualifies a native fixture path, not Unity C# attach/LDI, arbitrary plugin
+reload, full heap capture or a public release. Monaco runtime styles remain a
+[separate CSP proposal](../../uiux/proposal-monaco-csp-styles.md) pending approval.
 
 ## Baseline observations before changes
 
@@ -325,11 +360,11 @@ This is a foundation for working on the feature, not completion of every
   CPU time is unavailable; paired CPU is measured on the triggering native
   thread. RSS and explicit allocation cohorts are shown separately.
 - Result retention is bounded and in memory. Persistent export/import, persistent
-  timeline history, thread-incarnation/reload provenance and complete
-  dropped-event sequence accounting remain work. Fork during multithreaded
+  timeline history, thread-incarnation/reload provenance and a complete
+  event-loss recovery protocol remain work (sequence gaps are now counted). Fork during multithreaded
   provider calls and arbitrary plugin reloads are not qualified.
 - CoreCLR attach is a routed candidate, not Unity C# support. Unity Mono/IL2CPP
-  adapters, Editor Play/reload workflows and Unity LDI reproduction/ABI gates
+  adapters, arbitrary Editor plugin reload workflows and Unity LDI reproduction/ABI gates
   remain separate. Existing LDI implementations are not broadened by this work.
 - Tauri desktop Attach/Stop/window-close/group-stop/crash/transport-failure
   acceptance remains open. Standalone real adapter probes and browser mocked
@@ -339,5 +374,5 @@ This is a foundation for working on the feature, not completion of every
 
 ---
 
-*Last updated: Phase 3.x / 3.5, 16 October 2026. Author(s): ShinkuKira21.*
+*Last updated: Phase 3.x / 3.5, 17 October 2026. Author(s): ShinkuKira21.*
 *This document is a record.*

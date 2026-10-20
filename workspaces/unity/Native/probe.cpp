@@ -51,4 +51,6 @@ __attribute__((visibility("default"))) void craidd_probe_workers_start(){
 }
 __attribute__((visibility("default"))) void craidd_probe_workers_stop(){running=false;for(auto& worker:workers)if(worker.joinable())worker.join();workers.clear();}
 __attribute__((visibility("default"))) void craidd_probe_play_end(){craidd_gold::play_end();}
+__attribute__((visibility("default"))) void craidd_probe_disconnect_source(){craidd_gold::disconnect_source();}
+__attribute__((visibility("default"))) void craidd_probe_play_state(unsigned long long generation,int active){craidd_gold::play_state(generation,active!=0);}
 }

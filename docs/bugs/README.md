@@ -5,9 +5,13 @@
 - [Backend core review, 7 October 2026](07-10-2026/claude-backend-core-review.md) records the original static findings.
 - [Backend core fix status](07-10-2026/backend-core-fix-status.md) maps those findings to the bug-fix branch and its validation.
 
+- [Unity profiling repair report, 17 October 2026](16-10-2026/unity-profiling-final-report.md) records the supplied independent review, native fixture fixes, real harness evidence and remaining gates.
+
+- [Unified Profiler scopes, Phase 2](17-10-2026/profiler-scopes-report.md) records scope-aware charts/views, related manual snapshots, automated disposable Unity evidence and the separate human acceptance boundary.
+
 Keep findings separate from implementation evidence. A successful build or unit test does not confirm behavior in a running desktop app.
 
 ---
 
-*Last updated: Phase 3.x. Author: ShinkuKira21.*
+*Last updated: Phase 3.x / 3.5, 17 October 2026. Author: ShinkuKira21.*
 *This document is a index.*

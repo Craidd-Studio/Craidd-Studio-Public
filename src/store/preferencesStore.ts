@@ -76,6 +76,8 @@ interface PreferencesState {
   bottomPanelVisible: boolean;
   toggleBottomPanel: () => void;
 
+  rightPanelTab: "debugger" | "profiler";
+  setRightPanelTab: (tab: "debugger" | "profiler") => void;
   rightPanelVisible: boolean;
   toggleRightPanel: () => void;
   breakpointFocusMode: BreakpointFocusMode;
@@ -123,6 +125,11 @@ export const usePreferences = create<PreferencesState>((set) => ({
   bottomPanelVisible: true,
   toggleBottomPanel: () => set((s) => ({ bottomPanelVisible: !s.bottomPanelVisible })),
 
+  rightPanelTab: (() => { try { return localStorage.getItem("craidd:right-panel-tab") === "profiler" ? "profiler" : "debugger"; } catch { return "debugger"; } })(),
+  setRightPanelTab: (rightPanelTab) => {
+    try { localStorage.setItem("craidd:right-panel-tab", rightPanelTab); } catch { /* Keep this window's selection. */ }
+    set({ rightPanelTab });
+  },
   rightPanelVisible: true,
   toggleRightPanel: () => set((s) => ({ rightPanelVisible: !s.rightPanelVisible })),
   breakpointFocusMode: readBreakpointFocusMode(),

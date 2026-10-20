@@ -139,12 +139,23 @@ unobserved pauses. A linked participant can still run while another is held.
 Unity may already be open or playing when Craidd starts. Explicit target
 selection publishes a private per-process-incarnation rendezvous for prepared
 native source providers. The provider discovers and reconnects without a launch
-environment variable. An unambiguous matching Editor can be preselected in
+environment variable. Discovery uses a private XDG runtime directory (HOME
+cache fallback), scoped by HOME or an explicit shared test namespace; routes
+include the target PID and start identity. Dead-host routes/sockets are removed
+by a live provider or the next host startup in that scope. A small lock file
+and namespace directory remain intentionally. An unambiguous matching Editor can be preselected in
 Attach from its executable, project argument and Unity version declaration;
 preselection does not attach a debugger. No managed adapter support is inferred.
 
 An Editor context remains armed between Play runs. Verified Play end closes
 captures and preserves results; the next source start belongs to a fresh batch.
+Native providers repeat the current Play generation and playing/idle state on
+every event and a periodic heartbeat. A missed single Play-end event cannot
+strand the context; a new generation closes old captures and opens a new batch.
+A disconnected stream closes open results as incomplete, clears pending Solo
+state, and permits a fresh segment on reconnection. Late frees keep their
+original cohort ownership. Sequence gaps are coverage loss, separately counted.
+
 Explicit Stop/close disarms routing and cannot automatically rearm later. A
 player's application end finishes its context. Target exit/PID reuse invalidates
 the selection. Old provider binaries need rebuilding/reloading once to gain
@@ -155,28 +166,28 @@ runtime discovery. Process gauges remain available without source coverage.
 Profiler lives in the **right panel beside Debugger**, per
 [the public-release layout](../../uiux/design-public-release-sweep.md#3-profiling-layout-only).
 It identifies the selected process/session, loaded module and capture state.
-A **Gold benchmark dropdown** selects one recorded solo or paired range for
-CPU/memory detail. Solo is the automatic default when recorded. Without Solo,
-the initial view is Process overview. An explicit range or Process overview
-choice takes precedence and survives new hits, batches and snapshot switching
-within that process session. New hits never override an explicit choice. A
-Solo shortcut returns to its overview; a different process gets its own default.
+A **Scope dropdown** selects Full session or a recorded Gold/Solo benchmark.
+Full session is the default under the approved
+[unified scope contract](design-profiler-scopes.md). Selecting a benchmark
+focuses its latest retained invocation/segment once. New hits never retarget
+that chosen capture. When it completes, the same selection visibly becomes
+Recorded with fixed boundaries. Individual retained hits can be focused from
+the existing collapsed history or the Gold timeline. The selector lists a
+benchmark once; repeated hits do not become dozens of duplicate menu entries.
 
-The selected benchmark's graphs are visible directly. Repeated hits or Solo
-batch segments live in a collapsible list with expandable per-hit details.
-All Gold markers continue recording independently of this view selection.
-Benchmark choices come from recorded capture metadata, not names or later
-source edits. A selected benchmark absent from a historical/filtered view stays
-selected and reports no captures rather than silently switching to Solo.
-Source navigation reveals the marker endpoints in their owner context.
+**Manual snapshot history remains a separate dropdown**, preserving saved
+moments, comparison and one-click Live return. Gold intervals are never called
+snapshots. Source names/identities come from recorded metadata. Missing/evicted
+recordings remain explicitly unavailable; a later hit cannot silently replace
+the selected capture. Source navigation and gutter pairing remain unchanged.
 
-CPU, memory, contributing threads and GPU sections report their selected
-scope. Process-wide CPU/RSS graphs remain labelled as process context; changing
-the benchmark does not turn RSS into range memory or attribute process CPU to
-that range. Capture-level CPU means avoid summing nested invocations; native
-allocation cohort sums are inclusive and labelled because cohorts can overlap.
-Snapshot RSS remains process-wide while its native cohort column follows the
-selected benchmark and filters. Missing collectors remain Unavailable/Planned.
+All existing tabs share the resolved scope. CPU/RSS charts show process-wide
+observations inside its window, with sampled boundary limitations; they are
+not function-exclusive metrics. Gold's Marker filter is only a history browser.
+Capture cohorts remain inclusive. Frozen End values and later survivor/free
+observations are separately labelled. Full-session native totals count accepted
+explicit allocation events once, independently of nested owners. Missing
+collectors/observations remain unavailable rather than measured zero.
 
 The public target is CPU and memory tooling with per-thread inspection.
 Whole-process sampling alone is an earlier checkpoint, not completion of
@@ -233,7 +244,10 @@ qualification. A missing collector produces no invented chart.
 These are result controls; neither starts the program or replaces automatic
 arming. **Snapshot** preserves an immutable view of current observations while
 Live continues. Open intervals in that view are partial, with an as-of time;
-later data cannot rewrite the snapshot. This is not a solo point marker.
+later data cannot rewrite the snapshot. Saving keeps Live selected; reviewing
+a saved snapshot is explicit, with a visible Live control to return. If a
+reviewed snapshot ages out of the eight-view bound, return to Live. This is not
+a solo point marker.
 
 **Record again** preserves the previous batch and starts a fresh measurement
 batch without restarting the target or altering user counters. Already-open
@@ -242,10 +256,14 @@ new batch. If the solo is open, split its recording into labelled batch
 segments at the boundary, without pretending the solo source line was hit
 again. Events completing late retain their original batch/capture identity.
 
-Storage is bounded by count/size; overflow, dropped events and truncation are
-visible. Explicitly pinned/exported results need defined retention. The final
-storage format and numerical limits are open; indefinite runs cannot imply
-unbounded memory use by the IDE.
+The current native collector retains at most 128 ordinary completed hits per
+marker, 2,000 total captures and 2,400 process samples. Solo segments, open
+captures and cohorts with live allocations are pinned; a hot range cannot evict
+them. When all slots are pinned, admission fails visibly and Record again
+keeps the current recording intact. Pinned history is still bounded. Sample
+aging and capture eviction are expected rolling retention; source rejections,
+sequence gaps and disconnects are separate coverage counters. Eight snapshots
+are retained in memory. Persistent export/storage remains future work.
 
 ## Acceptance before implementation is called complete
 
@@ -271,5 +289,5 @@ unbounded memory use by the IDE.
 
 ---
 
-*Last updated: Phase 3.5, 16 October 2026. Author(s): ShinkuKira21.*
+*Last updated: Phase 3.5, 17 October 2026. Author(s): ShinkuKira21.*
 *This document is a design.*

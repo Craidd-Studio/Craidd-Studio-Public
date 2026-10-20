@@ -1,3 +1,4 @@
+import { isFileTab } from "../types/project";
 import { create } from "zustand";
 import { useSolution } from "./solutionStore";
 import { appendBuildProblem, decodeBuildLine, type BuildProblem } from "../lib/buildDiagnostics";
@@ -367,7 +368,7 @@ export const useBuild = create<BuildState>((set, get) => ({
 
     // The launched program must match the source currently visible in the
     // editor. A conflict blocks launch instead of overwriting another view.
-    for (const tab of useSolution.getState().tabs.filter((tab) => tab.dirty)) {
+    for (const tab of useSolution.getState().tabs.filter(isFileTab).filter((tab) => tab.dirty)) {
       const result = await useSolution.getState().saveFile(tab.fileId);
       if (result !== "saved") {
         set({ status: "failed", output: `${result === "conflict" ? "Disk conflict" : "Could not save"}: ${tab.name}. Resolve it before ${action}.\n` });
@@ -379,7 +380,7 @@ export const useBuild = create<BuildState>((set, get) => ({
     // Refresh clean copies before rebuilding so the editor shows the source
     // corresponding to the new executable; dirty copies were checked above.
     await useSolution.getState().refreshDiskStates();
-    for (const tab of useSolution.getState().tabs.filter((tab) => !tab.dirty && tab.diskState === "newer")) {
+    for (const tab of useSolution.getState().tabs.filter(isFileTab).filter((tab) => !tab.dirty && tab.diskState === "newer")) {
       await useSolution.getState().reloadTabFromDisk(tab.fileId);
     }
 

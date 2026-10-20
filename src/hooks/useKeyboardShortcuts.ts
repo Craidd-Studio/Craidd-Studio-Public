@@ -1,3 +1,4 @@
+import { isFileTab } from "../types/project";
 import { useEffect } from "react";
 import { usePreferences } from "../store/preferencesStore";
 import { useSolution } from "../store/solutionStore";
@@ -9,6 +10,7 @@ import { useSessionFeedback } from "../store/sessionFeedbackStore";
 import { focusAreaOf, isChordPrefix, matchShortcut, type ShortcutId } from "../lib/shortcuts";
 import { openFolderDialog, openSolutionDialog } from "../lib/workspaceActions";
 import { getActiveEditor, getActiveEditorFile } from "../lib/activeEditor";
+import { markdownFormatKey } from "../lib/markdownPreview";
 import { useBreakpoints } from "../store/breakpointStore";
 
 const CHORD_WINDOW_MS = 1500;
@@ -62,7 +64,7 @@ export function useKeyboardShortcuts(
           return;
         case "saveAs":
           if (!canEditViewed()) return;
-          try { await saveActiveFileAs(); } catch (error) {
+          try { await saveActiveFileAs(useSplit.getState().sideFocused ? useSplit.getState().sideFileId : useSolution.getState().activeFileId); } catch (error) {
             console.error("[craidd] Save As failed:", error);
             report("Save As", error);
           }
@@ -91,8 +93,9 @@ export function useKeyboardShortcuts(
           if (useSplit.getState().sideFocused && useSplit.getState().sideFileId) { useSplit.getState().closeSide(); return; }
           // A dirty or deleted tab goes through the pane's close prompt.
           const s = useSolution.getState();
-          if (!s.activeFileId) return;
-          const tab = s.tabs.find((t) => t.fileId === s.activeFileId);
+          if (!s.activeTabId) return;
+          if (!s.activeFileId) { s.closeTab(s.activeTabId); return; }
+          const tab = s.tabs.filter(isFileTab).find((t) => t.fileId === s.activeFileId);
           if (tab && (tab.dirty || tab.diskState === "deleted")) {
             window.dispatchEvent(new CustomEvent("craidd:request-close", { detail: s.activeFileId }));
           } else {
@@ -109,6 +112,15 @@ export function useKeyboardShortcuts(
     const onKey = (e: KeyboardEvent) => {
       if (useSessionFeedback.getState().savePrompt) return;
       if (["Control", "Shift", "Alt", "Meta"].includes(e.key)) return;
+      // The Markdown surface handles formatting in Preview, block fields and
+      // Source. Ctrl+K retains the IDE's chord except inside a block field.
+      const target = e.target as HTMLElement | null;
+      const format = markdownFormatKey(e);
+      if (target?.closest?.("[data-markdown-document]") && format
+        && (format !== "link" || target.closest("[data-markdown-edit]"))) {
+        chordAt = 0;
+        return;
+      }
       if (isChordPrefix(e)) { chordAt = Date.now(); return; }
       const afterChord = chordAt > 0 && Date.now() - chordAt < CHORD_WINDOW_MS;
       chordAt = 0;

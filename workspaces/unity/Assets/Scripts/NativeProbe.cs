@@ -15,16 +15,51 @@ public sealed class NativeProbe : MonoBehaviour
     [DllImport(Library)] public static extern void craidd_probe_workers_start();
     [DllImport(Library)] public static extern void craidd_probe_workers_stop();
     [DllImport(Library)] public static extern void craidd_probe_play_end();
+    [DllImport(Library)] public static extern void craidd_probe_disconnect_source();
+    [DllImport(Library)] public static extern void craidd_probe_play_state(ulong generation, int active);
     public int seed = 7;
     public int iterations = 20000;
     public bool runWorkers;
     public bool retainNativeAllocations;
+    public bool runPeriodicAllocations = true;
     public int result;
     public ulong nativeLiveBytes;
     public long managedLiveBytes;
+    public bool showProfilerOverlay = true;
+    public int targetFrameRate = 60;
     byte[] managedRetained;
     bool workersActive;
     int frames;
+    string lastAction = "Ready";
+    public int FrameCount { get { return frames; } }
+    public int OverlayDrawCount { get; private set; }
+
+    void OnEnable()
+    {
+        Application.runInBackground = true;
+        QualitySettings.vSyncCount = 0;
+        Application.targetFrameRate = targetFrameRate;
+    }
+
+    void OnGUI()
+    {
+        if (!showProfilerOverlay) return;
+        if (Event.current.type == EventType.Repaint) OverlayDrawCount++;
+        var area = new Rect(12, 12, 310, 150);
+        Color previous = GUI.color;
+        GUI.color = new Color(.08f, .09f, .1f, 1f);
+        GUI.DrawTexture(area, Texture2D.whiteTexture);
+        GUI.color = previous;
+        GUILayout.BeginArea(area, GUI.skin.box);
+        GUILayout.Label("Craidd native profiling probe");
+        GUILayout.Label($"Native live: {nativeLiveBytes:N0} bytes · Frames: {frames}");
+        GUILayout.BeginHorizontal();
+        if (GUILayout.Button("Allocate 1 MiB", GUILayout.Height(28))) AllocateNative();
+        if (GUILayout.Button("Clear", GUILayout.Height(28))) ClearNative();
+        GUILayout.EndHorizontal();
+        GUILayout.Label(lastAction);
+        GUILayout.EndArea();
+    }
 
     void Awake()
     {
@@ -44,7 +79,7 @@ public sealed class NativeProbe : MonoBehaviour
             if (runWorkers) craidd_probe_workers_start(); else craidd_probe_workers_stop();
             workersActive = runWorkers;
         }
-        if (++frames % 120 == 0) craidd_probe_allocate(4096, retainNativeAllocations ? 1 : 0);
+        if (++frames % 120 == 0 && runPeriodicAllocations) craidd_probe_allocate(4096, retainNativeAllocations ? 1 : 0);
         nativeLiveBytes = craidd_probe_live();
         managedLiveBytes = GC.GetTotalMemory(false); // gauge, never a retained-object proof
         // Headless player smoke exits itself, allowing repeatable noninteractive validation.
@@ -69,6 +104,7 @@ public sealed class NativeProbe : MonoBehaviour
         ulong before = craidd_probe_live();
         craidd_probe_allocate(1024 * 1024, 1);
         nativeLiveBytes = craidd_probe_live();
+        lastAction = $"Allocate: {before:N0} → {nativeLiveBytes:N0} bytes";
         Debug.Log($"[Craidd Probe] Allocate retained native 1 MiB: {before} -> {nativeLiveBytes} bytes (Play={Application.isPlaying}, active={isActiveAndEnabled})", this);
     }
     [ContextMenu("Probe/Clear native allocations")]
@@ -77,6 +113,7 @@ public sealed class NativeProbe : MonoBehaviour
         ulong before = craidd_probe_live();
         craidd_probe_clear();
         nativeLiveBytes = craidd_probe_live();
+        lastAction = $"Clear: {before:N0} → {nativeLiveBytes:N0} bytes";
         Debug.Log($"[Craidd Probe] Clear native allocations: {before} -> {nativeLiveBytes} bytes", this);
     }
     [ContextMenu("Probe/Stateful call - not value LDI")] public void Stateful() { Debug.Log(craidd_probe_stateful(1)); }

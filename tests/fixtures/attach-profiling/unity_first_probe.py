@@ -3,7 +3,7 @@
 Uses a disposable project copy; never closes or rebuilds a user's open Editor.
 The socket host implements the same published rendezvous contract as the Rust tests.
 """
-import argparse, json, os, pathlib, shutil, socket, struct, subprocess, tempfile, time
+import argparse, json, os, pathlib, shutil, socket, struct, subprocess, tempfile, time, uuid
 
 
 def birth(pid):
@@ -41,7 +41,7 @@ public static class UnityFirstSmoke {
 }''')
         for name in ['editor.ready', 'stop']:
             (output / name).unlink(missing_ok=True)
-        env = dict(os.environ, CRAIDD_UNITY_FIRST_PROOF=str(output)); env.pop('CRAIDD_PROFILE_SOCKET', None)
+        env = dict(os.environ, CRAIDD_UNITY_FIRST_PROOF=str(output), CRAIDD_PROFILE_NAMESPACE='unity-first-' + uuid.uuid4().hex); env.pop('CRAIDD_PROFILE_SOCKET', None)
         log = output / 'unity.log'
         child = subprocess.Popen(['unity', 'run', str(project), '--timeout', '300', '--', '-nographics', '-executeMethod', 'UnityFirstSmoke.Run'], env=env, stdout=log.open('w'), stderr=subprocess.STDOUT)
         route = None; body = None
@@ -52,8 +52,12 @@ public static class UnityFirstSmoke {
                 if time.monotonic() >= deadline: raise TimeoutError('Editor readiness; see ' + str(log))
                 time.sleep(.1)
             pid = int((output / 'editor.ready').read_text()); incarnation = birth(pid)
-            runtime = pathlib.Path(f'/run/user/{os.geteuid()}/craidd-profiling')
-            runtime.mkdir(mode=0o700, exist_ok=True)
+            base = pathlib.Path(env.get('XDG_RUNTIME_DIR', str(pathlib.Path(env['HOME']) / '.cache/craidd-studio')))
+            base.mkdir(mode=0o700, parents=True, exist_ok=True)
+            parent = base / 'craidd-profiling'; parent.mkdir(mode=0o700, exist_ok=True)
+            value = 0xcbf29ce484222325
+            for byte in env['CRAIDD_PROFILE_NAMESPACE'].encode(): value = ((value ^ byte) * 0x100000001b3) & ((1 << 64) - 1)
+            runtime = parent / f'n{value:016x}'; runtime.mkdir(mode=0o700, exist_ok=True)
             assert runtime.stat().st_uid == os.geteuid() and runtime.stat().st_mode & 0o077 == 0
             route = runtime / f'{pid}-{incarnation}.endpoint'
             events = []

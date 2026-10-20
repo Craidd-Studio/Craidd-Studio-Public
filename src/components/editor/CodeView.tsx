@@ -1,7 +1,8 @@
+import { isFileTab } from "../../types/project";
 import Editor from "@monaco-editor/react";
 import type { Monaco } from "@monaco-editor/react";
 import type { editor } from "monaco-editor";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSolution } from "../../store/solutionStore";
 import { usePreferences } from "../../store/preferencesStore";
 import { useBreakpoints } from "../../store/breakpointStore";
@@ -95,7 +96,7 @@ function revealCurrentNavigation(instance: editor.IStandaloneCodeEditor) {
   instance.focus();
 }
 
-export default function CodeView() {
+function CodeView({ onReady }: { onReady?: (instance: editor.IStandaloneCodeEditor) => void }) {
   const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
   const monacoRef = useRef<Monaco | null>(null);
   const decorationsRef = useRef<editor.IEditorDecorationsCollection | null>(null);
@@ -109,9 +110,9 @@ export default function CodeView() {
   const [callSites, setCallSites] = useState<LdiCallSite[]>([]);
   const [breakpointError, setBreakpointError] = useState<string | null>(null);
   const activeFileId = useSolution((s) => s.activeFileId);
-  const activeDirty = useSolution((s) => s.tabs.find((tab) => tab.fileId === s.activeFileId)?.dirty ?? false);
+  const activeDirty = useSolution((s) => s.tabs.filter(isFileTab).find((tab) => tab.fileId === s.activeFileId)?.dirty ?? false);
   const solution = useSolution((s) => s.solution);
-  const savedContent = useSolution((s) => s.tabs.find((tab) => tab.fileId === s.activeFileId)?.originalContent ?? "");
+  const savedContent = useSolution((s) => s.tabs.filter(isFileTab).find((tab) => tab.fileId === s.activeFileId)?.originalContent ?? "");
   const points = useBreakpoints((s) => s.points);
   const blues = useLdi((s) => s.blues);
   const nativeSourceVersion = useLdi((s) => s.nativeSourceVersion);
@@ -136,7 +137,7 @@ export default function CodeView() {
   // change for Save, but React only needs to rerender on a tab switch or a
   // disk reload (which changes originalContent).
   const updateTabContent = useSolution((s) => s.updateTabContent);
-  const active = useSolution.getState().tabs.find((t) => t.fileId === activeFileId);
+  const active = useSolution.getState().tabs.filter(isFileTab).find((t) => t.fileId === activeFileId);
 
   useEffect(() => {
     const clear = () => { callSitesRef.current = []; setCallSites([]); };
@@ -229,14 +230,14 @@ export default function CodeView() {
     trackedPointsRef.current = currentPoints.filter((point) => point.file === file)
       .filter((point, index, all) => all.findIndex((item) => item.line === point.line) === index);
     trackedBluesRef.current = useLdi.getState().blues.filter((blue) => blue.file === file && blue.originLabel === linked.ownWindowLabel);
-    const dirty = useSolution.getState().tabs.find((tab) => tab.fileId === file)?.dirty ?? false;
+    const dirty = useSolution.getState().tabs.filter(isFileTab).find((tab) => tab.fileId === file)?.dirty ?? false;
     decorations.set(breakpointDecorations(monaco, currentPoints, file, currentPausedLine, callSitesRef.current, dirty, liveBlueLines, liveRedLines));
   }, []);
 
   const refreshGold = useCallback(() => {
     const monaco=monacoRef.current;const instance=editorRef.current;if(!monaco||!instance)return;
     const file=useSolution.getState().activeFileId;
-    const dirty=useSolution.getState().tabs.find(t=>t.fileId===file)?.dirty;
+    const dirty=useSolution.getState().tabs.filter(isFileTab).find(t=>t.fileId===file)?.dirty;
     const points = useGold.getState().points.filter(p => p.file === file);
     // Reserve both lanes for the whole model so diamonds do not change sides
     // on lines without a red marker. Removing Gold also releases the extra lane.
@@ -284,6 +285,7 @@ export default function CodeView() {
     <div className="relative flex-1 min-h-0 bg-editor-bg">
       <Editor
         height="100%"
+        keepCurrentModel
         path={active.fileId}
         language={active.monacoLanguage}
         value={active.content}
@@ -292,6 +294,7 @@ export default function CodeView() {
         onChange={onChange}
         onMount={(instance: editor.IStandaloneCodeEditor, monaco: Monaco) => {
           editorRef.current = instance;
+          onReady?.(instance);
           const mainFile = () => useSolution.getState().activeFileId;
           setActiveEditor(instance, mainFile);
           instance.onDidFocusEditorText(() => { useSplit.getState().setSideFocused(false); setActiveEditor(instance, mainFile); });
@@ -358,3 +361,5 @@ export default function CodeView() {
     </div>
   );
 }
+
+export default memo(CodeView);

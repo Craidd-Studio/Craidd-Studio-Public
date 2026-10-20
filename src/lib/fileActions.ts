@@ -1,3 +1,4 @@
+import { isFileTab } from "../types/project";
 import { useSolution } from "../store/solutionStore";
 import { useSessionFeedback } from "../store/sessionFeedbackStore";
 import { planFileRestart } from "./sessionRestart";
@@ -6,7 +7,7 @@ let planningSave = false;
 
 async function saveFile(fileId: string, force = false): Promise<boolean> {
   const state = useSolution.getState();
-  const tab = state.tabs.find((item) => item.fileId === fileId);
+  const tab = state.tabs.filter(isFileTab).find((item) => item.fileId === fileId);
   if (!tab) throw new Error("The file is no longer open.");
   const result = await state.saveFile(fileId, force);
   if (result === "conflict") state.setPendingSave({ fileId, kind: "newer" });
@@ -18,7 +19,7 @@ export async function requestFileSave(fileId: string, force = false, onSaved?: (
   if (useSessionFeedback.getState().savePrompt || planningSave) return;
   planningSave = true;
   try {
-    const tab = useSolution.getState().tabs.find((item) => item.fileId === fileId);
+    const tab = useSolution.getState().tabs.filter(isFileTab).find((item) => item.fileId === fileId);
     if (!tab) return;
     const performSave = async () => {
       const saved = await saveFile(fileId, force);
@@ -43,7 +44,7 @@ export async function saveActiveFile(): Promise<void> {
 export async function saveOpenFile(fileId: string): Promise<void> {
   if (useSessionFeedback.getState().savePrompt) return;
   const state = useSolution.getState();
-  const tab = state.tabs.find((t) => t.fileId === fileId);
+  const tab = state.tabs.filter(isFileTab).find((t) => t.fileId === fileId);
   if (!tab) return;
   if (tab.diskState === "deleted" || tab.diskState === "newer") {
     state.setPendingSave({ fileId: tab.fileId, kind: tab.diskState });
@@ -52,10 +53,10 @@ export async function saveOpenFile(fileId: string): Promise<void> {
   await requestFileSave(tab.fileId);
 }
 
-export async function saveActiveFileAs(): Promise<void> {
+export async function saveActiveFileAs(fileId: string | null = useSolution.getState().activeFileId): Promise<void> {
   if (useSessionFeedback.getState().savePrompt) return;
   const state = useSolution.getState();
-  const tab = state.tabs.find((t) => t.fileId === state.activeFileId);
+  const tab = state.tabs.filter(isFileTab).find((t) => t.fileId === fileId);
   if (!tab) return;
   const { save } = await import("@tauri-apps/plugin-dialog");
   const chosen = await save({ defaultPath: tab.fileId });

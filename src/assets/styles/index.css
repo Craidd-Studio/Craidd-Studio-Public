@@ -309,6 +309,10 @@ select {
 .profiler-status.is-live { background:#7eb397; }
 .profiler-panel select { background:#262930; border:1px solid #484e59; border-radius:0; padding:3px; min-width:0; }
 .profiler-view { margin:0 8px 5px; }
+.profiler-view-controls { display:flex; gap:5px; margin:0 8px 5px; min-width:0; }
+.profiler-view-controls select { flex:1; min-width:0; }
+.profiler-view-controls button { border-color:#484e59; flex-shrink:0; }
+.profiler-view-controls button[aria-pressed="true"] { color:#a6d5f7; border-color:#608eae; }
 .profiler-session { display:flex; gap:3px; align-items:center; padding:1px 8px 3px; font-size:10px; }
 .profiler-session > span { flex:1; }
 .profiler-session strong { color:#e1e3e7; font-weight:500; }
@@ -336,6 +340,8 @@ select {
 .profiler-metrics dd { text-align:right; margin:0; color:#e0e3e8; }
 .profiler-section-title { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:7px; }
 .profiler-section-title > span { color:#a6aeba; }
+.profiler-section-title > span:first-child { flex:1; min-width:0; }
+.profiler-ready-hint { margin:0 8px 6px; font-size:10px; color:#a6aeba; }
 .profiler-section-title button, .profiler-settings > button { border:1px solid #505865; background:#2d323a; font-size:10px; }
 .profiler-link { display:block; color:#8bc3ed !important; padding-left:0 !important; margin-top:6px; }
 .profiler-filters { display:flex; gap:6px; margin:0 0 8px; }
@@ -374,3 +380,36 @@ select {
 .profiler-benchmark button { font-size:10px; color:#d5bf89; }
 .profiler-benchmark-name { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .profiler-section-title > span { flex-shrink:0; }
+
+/* Shared scope navigation keeps the existing compact Profiler structure. */
+.profiler-scope-caption { margin:0 8px 5px; font-size:10px; line-height:1.4; overflow-wrap:anywhere; color:#b6c7d4; }
+.profiler-event-track { height:23px; }
+.profiler-event-track > button { position:absolute; height:5px; min-width:3px; padding:0; border:0; border-radius:1px; background:#b99b57; }
+.profiler-event-track > button[aria-pressed="true"] { background:#a8d9fa; outline:1px solid #e4f4ff; z-index:2; }
+.profiler-event-track > button:focus-visible { outline:2px solid #fff; z-index:3; }
+.profiler-event-track small { pointer-events:none; }
+.profiler-metrics dt { min-width:0; overflow-wrap:anywhere; }
+
+/* The editor workspace uses the same observations with room for analysis. */
+.profiler-panel.is-expanded { container-type:inline-size; overflow:auto; }
+.is-expanded .profiler-toolbar { flex-wrap:wrap; }
+.is-expanded .profiler-results { min-height:180px; }
+.is-expanded .profiler-timelines { padding:0 16px; }
+.is-expanded .profiler-chart svg { height:76px; }
+.profiler-summary-row { display:grid; grid-template-columns:repeat(auto-fit,minmax(125px,1fr)); gap:8px 16px; margin:4px 16px 12px; flex-shrink:0; font-variant-numeric:tabular-nums; }
+.profiler-summary-row > div { min-width:0; padding:8px 0; border-bottom:1px solid #41464f; }
+.profiler-summary-row dt { color:#a6aeba; overflow-wrap:anywhere; }
+.profiler-summary-row dd { margin:4px 0 0; color:#e0e3e8; font-size:16px; }
+.profiler-gold-workspace { display:grid; grid-template-columns:minmax(0,2fr) minmax(220px,1fr); gap:16px; align-items:start; }
+.profiler-gold-workspace .profiler-table-scroll { margin:0; }
+.profiler-gold-workspace th { position:sticky; top:0; }
+.profiler-hit-inspector { min-width:0; padding:0 12px; border-left:1px solid #41464f; }
+.profiler-hit-inspector > p { overflow-wrap:anywhere; }
+@container (max-width:760px) {
+  .profiler-gold-workspace { grid-template-columns:minmax(0,1fr); }
+  .profiler-hit-inspector { border-left:0; border-top:1px solid #41464f; padding:8px 0 0; }
+}
+
+.profiler-host-actions { display:flex; justify-content:flex-end; padding:2px 5px; flex-shrink:0; border-bottom:1px solid #353941; }
+
+.profiler-gold-workspace .profiler-table-scroll { max-height:min(46vh,420px); overflow:auto; }

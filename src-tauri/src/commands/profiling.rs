@@ -2,10 +2,11 @@
 //! No process signals, debugger requests, or heap/cycle inference occur here.
 use super::processes::{self, ProcessCounters, ProcessIdentity};
 use serde::{Deserialize, Serialize};
+#[cfg(test)]
+use std::io::{BufRead, BufReader};
 use std::{
     collections::{HashMap, HashSet},
     fs,
-    io::{BufRead, BufReader},
     os::unix::{
         fs::PermissionsExt,
         io::AsRawFd,
@@ -36,6 +37,33 @@ pub struct Sample {
     #[serde(flatten)]
     pub counters: ProcessCounters,
 }
+// Explicit native hooks only. Window activity includes frees of older tracked
+// allocations; it is distinct from a capture's inclusive allocation cohort.
+#[derive(Clone, Debug, Default, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct NativeActivity {
+    pub allocated_bytes: u64,
+    pub freed_bytes: u64,
+    pub allocation_count: u64,
+    pub free_count: u64,
+    pub unmatched_frees: u64,
+}
+#[derive(Clone, Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CohortSummary {
+    pub allocated_bytes: u64,
+    pub freed_bytes: u64,
+    pub live_bytes: u64,
+    pub allocation_count: u64,
+}
+#[derive(Clone, Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Diagnostic {
+    pub at_ms: f64,
+    pub until_ms: f64,
+    pub kind: String,
+    pub count: u64,
+}
 #[derive(Clone, Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Capture {
@@ -53,8 +81,37 @@ pub struct Capture {
     pub freed_bytes: u64,
     pub live_bytes: u64,
     pub allocation_count: u64,
+    pub process_start: Option<Sample>,
+    pub process_end: Option<Sample>,
+    pub cohort_end: Option<CohortSummary>,
+    pub window_activity: NativeActivity,
+    pub coverage_start: ProfileCounters,
+    pub coverage_end: Option<ProfileCounters>,
     #[serde(skip)]
     cpu_start: u64,
+}
+impl Capture {
+    fn finish(
+        &mut self,
+        at: f64,
+        status: &str,
+        sample: Option<Sample>,
+        coverage: &ProfileCounters,
+    ) {
+        if self.end_ms.is_some() {
+            return;
+        }
+        self.end_ms = Some(at.max(self.start_ms));
+        self.status = status.into();
+        self.process_end = sample;
+        self.coverage_end = Some(coverage.clone());
+        self.cohort_end = Some(CohortSummary {
+            allocated_bytes: self.allocated_bytes,
+            freed_bytes: self.freed_bytes,
+            live_bytes: self.live_bytes,
+            allocation_count: self.allocation_count,
+        });
+    }
 }
 #[derive(Clone, Debug, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
@@ -76,6 +133,12 @@ pub struct SourceEvent {
     pub address: u64,
     #[serde(default)]
     pub bytes: u64,
+    #[serde(default)]
+    pub sequence: u64,
+    #[serde(default)]
+    pub generation: u64,
+    #[serde(default)]
+    pub playing: Option<bool>,
 }
 #[derive(Clone, Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -86,6 +149,15 @@ pub struct Pause {
     pub thread: Option<i64>,
     pub reason: String,
 }
+#[derive(Clone, Debug, Default, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ProfileCounters {
+    pub aged_samples: u64,
+    pub evicted_captures: u64,
+    pub rejected_events: u64,
+    pub disconnects: u64,
+    pub source_gaps: u64,
+}
 #[derive(Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Profile {
@@ -95,6 +167,7 @@ pub struct Profile {
     pub active: bool,
     pub unity_editor: bool,
     pub waiting_for_play: bool,
+    pub play_generation: Option<u64>,
     pub reason: String,
     pub batch: u64,
     pub provider: bool,
@@ -102,6 +175,12 @@ pub struct Profile {
     pub samples: Vec<Sample>,
     pub captures: Vec<Capture>,
     pub dropped: u64,
+    pub counters: ProfileCounters,
+    pub observed_at_ms: f64,
+    pub native_activity: NativeActivity,
+    pub native_live_bytes: u64,
+    pub diagnostics: Vec<Diagnostic>,
+    pub diagnostics_evicted: u64,
     #[serde(skip)]
     discovery: Option<super::profiling_discovery::Registration>,
     #[serde(skip)]
@@ -110,6 +189,10 @@ pub struct Profile {
     origin: Option<u64>,
     #[serde(skip)]
     solo: Option<String>,
+    #[serde(skip)]
+    next_segment: u64,
+    #[serde(skip)]
+    last_sequence: Option<u64>,
     #[serde(skip)]
     allocations: HashMap<u64, (u64, Vec<String>)>,
     #[serde(skip)]
@@ -124,6 +207,7 @@ impl Profile {
             active: true,
             unity_editor: false,
             waiting_for_play: false,
+            play_generation: None,
             discovery: None,
             reason: String::new(),
             batch: 1,
@@ -132,15 +216,95 @@ impl Profile {
             samples: vec![],
             captures: vec![],
             dropped: 0,
+            counters: ProfileCounters::default(),
+            observed_at_ms: 0.,
+            native_activity: NativeActivity::default(),
+            native_live_bytes: 0,
+            diagnostics: vec![],
+            diagnostics_evicted: 0,
             start: Some(Instant::now()),
             origin: Some(monotonic_ns()),
             solo: None,
+            next_segment: 0,
+            last_sequence: None,
+            allocations: HashMap::new(),
+            blocked: HashSet::new(),
+        }
+    }
+    fn view(&self) -> Self {
+        // Only public presentation data is copied; allocator ownership and
+        // discovery registrations stay with the collector, not every UI tick.
+        Self {
+            id: self.id.clone(),
+            target: self.target.clone(),
+            name: self.name.clone(),
+            active: self.active,
+            unity_editor: self.unity_editor,
+            waiting_for_play: self.waiting_for_play,
+            play_generation: self.play_generation,
+            reason: self.reason.clone(),
+            batch: self.batch,
+            provider: self.provider,
+            pauses: self.pauses.clone(),
+            samples: self.samples.clone(),
+            captures: self.captures.clone(),
+            dropped: self.dropped,
+            counters: self.counters.clone(),
+            observed_at_ms: if self.active {
+                self.at().max(self.observed_at_ms)
+            } else {
+                self.observed_at_ms
+            },
+            native_activity: self.native_activity.clone(),
+            native_live_bytes: self.native_live_bytes,
+            diagnostics: self.diagnostics.clone(),
+            diagnostics_evicted: self.diagnostics_evicted,
+            discovery: None,
+            start: None,
+            origin: None,
+            solo: None,
+            next_segment: 0,
+            last_sequence: None,
             allocations: HashMap::new(),
             blocked: HashSet::new(),
         }
     }
     fn at(&self) -> f64 {
         self.start.map_or(0., |s| s.elapsed().as_secs_f64() * 1000.)
+    }
+    fn process_observation(&self, at: f64) -> Option<Sample> {
+        self.samples.iter().rev().find(|s| s.at_ms <= at).cloned()
+    }
+    fn diagnostic(&mut self, kind: &str, at: f64, count: u64) {
+        // Coalesce bursts and bound storage; never retain an unbounded raw log.
+        if let Some(last) = self.diagnostics.last_mut() {
+            if last.kind == kind && at >= last.until_ms && at - last.until_ms <= 250. {
+                last.until_ms = at;
+                last.count += count;
+                return;
+            }
+        }
+        if self.diagnostics.len() >= 256 {
+            self.diagnostics.remove(0);
+            self.diagnostics_evicted += 1;
+        }
+        self.diagnostics.push(Diagnostic {
+            at_ms: at,
+            until_ms: at,
+            kind: kind.into(),
+            count,
+        });
+    }
+    fn finish_open(&mut self, at: f64, solo_status: &str, pair_status: &str) {
+        let sample = self.process_observation(at);
+        for c in self.captures.iter_mut().filter(|c| c.end_ms.is_none()) {
+            c.finish(
+                at,
+                if c.solo { solo_status } else { pair_status },
+                sample.clone(),
+                &self.counters,
+            );
+        }
     }
     fn close(&mut self, reason: &str) {
         let at = self.at();
@@ -155,32 +319,95 @@ impl Profile {
                 pause.end_ms = Some(at);
             }
         }
-        for c in &mut self.captures {
-            if c.end_ms.is_none() {
-                c.end_ms = Some(at);
-                c.status = if c.id.starts_with("solo:") {
-                    "Session ended"
-                } else {
-                    "Incomplete: session ended"
+        self.observed_at_ms = at;
+        self.finish_open(at, "Session ended", "Incomplete: session ended");
+        self.diagnostic(reason, at, 1);
+    }
+    fn reject(&mut self) {
+        self.diagnostic("Rejected source event", self.at(), 1);
+        self.counters.rejected_events += 1;
+        self.dropped += 1; // compatibility: source rejection only, never history aging
+    }
+    fn sample(&mut self, counters: ProcessCounters) {
+        if self.samples.len() >= 2400 {
+            self.samples.remove(0);
+            self.counters.aged_samples += 1;
+        }
+        self.observed_at_ms = self.at();
+        self.samples.push(Sample {
+            at_ms: self.at(),
+            counters,
+        });
+    }
+    fn reserve_capture(&mut self, marker: &str, solo: bool) -> bool {
+        // Keep a bounded recent history per marker. Hot per-frame markers
+        // cannot displace a rare allocation benchmark, Solo, or a live cohort.
+        const HITS_PER_MARKER: usize = 128;
+        let eligible = |c: &Capture| !c.solo && c.end_ms.is_some() && c.live_bytes == 0;
+        let same_marker = self
+            .captures
+            .iter()
+            .filter(|c| !c.solo && c.marker == marker)
+            .count();
+        let mut victim = if !solo && same_marker >= HITS_PER_MARKER {
+            self.captures
+                .iter()
+                .position(|c| c.marker == marker && eligible(c))
+        } else {
+            None
+        };
+        if victim.is_none() && self.captures.len() >= 2000 {
+            let mut counts = HashMap::<&str, usize>::new();
+            for c in &self.captures {
+                if !c.solo {
+                    *counts.entry(&c.marker).or_default() += 1;
                 }
-                .into();
+            }
+            let largest = self
+                .captures
+                .iter()
+                .filter(|c| eligible(c))
+                .map(|c| counts[c.marker.as_str()])
+                .max();
+            victim = largest.and_then(|n| {
+                self.captures
+                    .iter()
+                    .position(|c| eligible(c) && counts[c.marker.as_str()] == n)
+            });
+            if victim.is_none() {
+                return false;
             }
         }
-    }
-    fn reserve_capture(&mut self) -> bool {
-        if self.captures.len() < 2000 {
-            return true;
+        if let Some(index) = victim {
+            self.captures.remove(index);
+            self.counters.evicted_captures += 1;
         }
-        self.dropped += 1;
-        let Some(index) = self.captures.iter().position(|c| c.end_ms.is_some()) else {
-            return false;
-        };
-        let old = self.captures.remove(index).id;
-        self.allocations.retain(|_, (_, owners)| {
-            owners.retain(|id| id != &old);
-            !owners.is_empty()
-        });
         true
+    }
+    fn source_disconnected(&mut self) {
+        self.counters.disconnects += 1;
+        self.provider = false;
+        self.solo = None;
+        let at = self.at();
+        self.finish_open(
+            at,
+            "Incomplete: provider disconnected",
+            "Incomplete: provider disconnected",
+        );
+        self.diagnostic("Provider disconnected", at, 1);
+    }
+    fn finish_play(&mut self, at: f64) {
+        // Initial/idle domain reloads and repeated state heartbeats are not
+        // Play exits. Still close any open captures if lifecycle state was
+        // interrupted, including generation recovery after a lost end event.
+        let had_play = !self.waiting_for_play || self.captures.iter().any(|c| c.end_ms.is_none());
+        self.finish_open(at, "Unity Play ended", "Incomplete: Unity Play ended");
+        self.solo = None;
+        self.waiting_for_play = true;
+        if had_play {
+            self.reason = "Unity Play ended; armed for the next Play session".into();
+            self.diagnostic("Unity Play ended", at, 1);
+        }
     }
     fn event(&mut self, e: SourceEvent) {
         if !self.active {
@@ -190,18 +417,75 @@ impl Profile {
             return;
         }
         self.provider = true;
+        if e.sequence > 0 {
+            if let Some(previous) = self.last_sequence {
+                if e.sequence <= previous {
+                    self.reject();
+                    return;
+                }
+                let missing = e.sequence - previous - 1;
+                if missing > 0 {
+                    self.counters.source_gaps += missing;
+                    self.dropped += missing;
+                    self.solo = None;
+                    let at = self.at();
+                    self.finish_open(
+                        at,
+                        "Incomplete: source events missing",
+                        "Incomplete: source events missing",
+                    );
+                    self.diagnostic("Missing source events", at, missing);
+                }
+            }
+            self.last_sequence = Some(e.sequence);
+        }
         // Both endpoints use the same host CLOCK_MONOTONIC. Never infer wall/CPU equivalence.
         let origin = *self.origin.get_or_insert_with(|| {
             e.wall_ns
                 .saturating_sub((self.start.unwrap().elapsed().as_secs_f64() * 1e9) as u64)
         });
         if e.wall_ns < origin {
-            self.dropped += 1;
+            self.reject();
             return;
         }
         let at = e.wall_ns.saturating_sub(origin) as f64 / 1e6;
+        self.observed_at_ms = self.observed_at_ms.max(at);
+        if self.unity_editor {
+            if let Some(playing) = e.playing {
+                if self.play_generation.is_some_and(|old| e.generation < old) {
+                    self.reject();
+                    return;
+                }
+                if self.play_generation != Some(e.generation) {
+                    let had_play = self.play_generation.is_some_and(|old| old > 0)
+                        || !self.captures.is_empty();
+                    self.finish_play(at);
+                    self.play_generation = Some(e.generation);
+                    if playing && had_play {
+                        self.batch += 1;
+                    }
+                }
+                if playing {
+                    self.waiting_for_play = false;
+                    if self.reason.starts_with("Unity Play ended") {
+                        self.reason.clear();
+                    }
+                } else {
+                    if !self.waiting_for_play {
+                        self.finish_play(at);
+                    }
+                    // Late frees still belong to their original retained cohorts.
+                    if e.kind != "free" && e.kind != "state" {
+                        return;
+                    }
+                }
+            }
+        }
         let key = format!("{}:{}:{}", e.marker, e.thread, e.invocation);
-        if self.unity_editor && self.waiting_for_play && matches!(e.kind.as_str(), "begin" | "solo")
+        if self.unity_editor
+            && e.playing.is_none()
+            && self.waiting_for_play
+            && matches!(e.kind.as_str(), "begin" | "solo")
         {
             self.waiting_for_play = false;
             if !self.captures.is_empty() {
@@ -212,25 +496,28 @@ impl Profile {
         match e.kind.as_str() {
             "begin" | "solo" => {
                 if e.marker.len() > 128 || e.name.len() > 256 || e.marker.is_empty() {
-                    self.dropped += 1;
+                    self.reject();
                     return;
                 }
                 if e.kind == "solo" && self.solo.is_some() {
                     if self.solo.as_ref() != Some(&e.marker) {
-                        self.dropped += 1;
+                        self.reject();
                     }
                     return;
                 }
                 if e.kind == "begin" && self.captures.iter().any(|c| c.id == key) {
-                    self.dropped += 1;
+                    self.reject();
                     return;
                 }
-                if !self.reserve_capture() {
+                if !self.reserve_capture(&e.marker, e.kind == "solo") {
+                    self.reject();
+                    self.reason = "Capture storage full of pinned Solo segments or live cohorts; start a new profiling session".into();
                     return;
                 }
                 let id = if e.kind == "solo" {
                     self.solo = Some(e.marker.clone());
-                    format!("solo:{}:{}", e.marker, self.batch)
+                    self.next_segment += 1;
+                    format!("solo:{}:{}:{}", e.marker, self.batch, self.next_segment)
                 } else {
                     key
                 };
@@ -249,31 +536,45 @@ impl Profile {
                     freed_bytes: 0,
                     live_bytes: 0,
                     allocation_count: 0,
+                    process_start: self.process_observation(at),
+                    process_end: None,
+                    cohort_end: None,
+                    window_activity: NativeActivity::default(),
+                    coverage_start: self.counters.clone(),
+                    coverage_end: None,
                     cpu_start: e.cpu_ns,
                 });
             }
             "end" | "unwind" => {
+                let end_sample = self.process_observation(at);
                 if let Some(c) = self
                     .captures
                     .iter_mut()
                     .find(|c| c.id == key && c.end_ms.is_none())
                 {
                     if e.wall_ns < origin || at < c.start_ms || e.cpu_ns < c.cpu_start {
-                        c.status = "Invalid provider clock".into();
-                        c.end_ms = Some(at.max(c.start_ms));
-                        self.dropped += 1;
+                        c.finish(
+                            at,
+                            "Invalid provider clock",
+                            end_sample.clone(),
+                            &self.counters,
+                        );
+                        self.reject();
                     } else {
-                        c.end_ms = Some(at);
                         c.cpu_ms = Some((e.cpu_ns - c.cpu_start) as f64 / 1e6);
-                        c.status = if e.kind == "end" {
-                            "Complete"
-                        } else {
-                            "Incomplete: scope exited"
-                        }
-                        .into();
+                        c.finish(
+                            at,
+                            if e.kind == "end" {
+                                "Complete"
+                            } else {
+                                "Incomplete: scope exited"
+                            },
+                            end_sample.clone(),
+                            &self.counters,
+                        );
                     }
                 } else {
-                    self.dropped += 1;
+                    self.reject();
                 }
             }
             "alloc" => {
@@ -281,8 +582,21 @@ impl Profile {
                     return;
                 }
                 if self.allocations.len() >= 20000 || self.allocations.contains_key(&e.address) {
-                    self.dropped += 1;
+                    self.reject();
                     return;
+                }
+                self.native_activity.allocated_bytes =
+                    self.native_activity.allocated_bytes.saturating_add(e.bytes);
+                self.native_activity.allocation_count += 1;
+                self.native_live_bytes = self.native_live_bytes.saturating_add(e.bytes);
+                for c in self
+                    .captures
+                    .iter_mut()
+                    .filter(|c| c.end_ms.is_none() && at >= c.start_ms)
+                {
+                    c.window_activity.allocated_bytes =
+                        c.window_activity.allocated_bytes.saturating_add(e.bytes);
+                    c.window_activity.allocation_count += 1;
                 }
                 let owners = self
                     .captures
@@ -301,36 +615,52 @@ impl Profile {
             }
             "free" => {
                 if let Some((bytes, owners)) = self.allocations.remove(&e.address) {
+                    self.native_activity.freed_bytes =
+                        self.native_activity.freed_bytes.saturating_add(bytes);
+                    self.native_activity.free_count += 1;
+                    self.native_live_bytes = self.native_live_bytes.saturating_sub(bytes);
                     for c in &mut self.captures {
+                        if c.end_ms.is_none() && at >= c.start_ms {
+                            c.window_activity.freed_bytes =
+                                c.window_activity.freed_bytes.saturating_add(bytes);
+                            c.window_activity.free_count += 1;
+                        }
                         if owners.contains(&c.id) {
                             c.freed_bytes = c.freed_bytes.saturating_add(bytes);
                             c.live_bytes = c.live_bytes.saturating_sub(bytes);
                         }
                     }
-                }
-            }
-            "play-end" if self.unity_editor => {
-                for c in self.captures.iter_mut().filter(|c| c.end_ms.is_none()) {
-                    c.end_ms = Some(at);
-                    c.status = if c.solo {
-                        "Unity Play ended"
-                    } else {
-                        "Incomplete: Unity Play ended"
+                } else {
+                    self.native_activity.unmatched_frees += 1;
+                    for c in self
+                        .captures
+                        .iter_mut()
+                        .filter(|c| c.end_ms.is_none() && at >= c.start_ms)
+                    {
+                        c.window_activity.unmatched_frees += 1;
                     }
-                    .into();
                 }
-                self.solo = None;
-                self.waiting_for_play = true;
-                self.reason = "Unity Play ended; armed for the next Play session".into();
             }
+            "play-end" if self.unity_editor => self.finish_play(at),
             "play-end" => self.close("Verified instrumented Unity player end"),
-            "hello" => {}
+            "hello" | "state" => {}
             _ => {
-                self.dropped += 1;
+                self.reject();
             }
         }
     }
-    fn again(&mut self) {
+    fn again(&mut self) -> bool {
+        if let Some(marker) = self
+            .solo
+            .clone()
+            .filter(|marker| !self.blocked.contains(marker))
+        {
+            // Reserve before closing the current segment: an all-pinned
+            // capacity limit must not silently disarm the active recording.
+            if !self.reserve_capture(&marker, true) {
+                return false;
+            }
+        }
         self.batch += 1;
         let at = self.at();
         if let Some(marker) = self
@@ -344,17 +674,18 @@ impl Profile {
                 .find(|c| c.solo && c.marker == marker)
                 .map(|c| c.name.clone())
                 .unwrap_or_else(|| "Solo".into());
+            let end_sample = self.process_observation(at);
             if let Some(c) = self
                 .captures
                 .iter_mut()
                 .find(|c| c.id.starts_with("solo:") && c.end_ms.is_none())
             {
-                c.end_ms = Some(at);
-                c.status = "Batch boundary".into();
+                c.finish(at, "Batch boundary", end_sample, &self.counters);
             }
-            if self.reserve_capture() {
+            if self.reserve_capture(&marker, true) {
+                self.next_segment += 1;
                 self.captures.push(Capture {
-                    id: format!("solo:{}:{}", marker, self.batch),
+                    id: format!("solo:{}:{}:{}", marker, self.batch, self.next_segment),
                     marker,
                     name,
                     solo: true,
@@ -368,10 +699,17 @@ impl Profile {
                     freed_bytes: 0,
                     live_bytes: 0,
                     allocation_count: 0,
+                    process_start: self.process_observation(at),
+                    process_end: None,
+                    cohort_end: None,
+                    window_activity: NativeActivity::default(),
+                    coverage_start: self.counters.clone(),
+                    coverage_end: None,
                     cpu_start: 0,
                 });
             }
         }
+        true
     }
 }
 #[derive(Default)]
@@ -379,22 +717,47 @@ pub struct ProfileManager {
     pub profiles: Arc<Mutex<HashMap<String, Profile>>>,
     socket: Mutex<Option<PathBuf>>,
 }
-impl Drop for ProfileManager {
-    fn drop(&mut self) {
+impl ProfileManager {
+    pub fn shutdown(&self) {
         if let Ok(mut profiles) = self.profiles.lock() {
             for p in profiles.values_mut() {
                 p.close("Profiler host closed");
             }
         }
-        if let Ok(path) = self.socket.get_mut() {
-            if let Some(path) = path {
+        if let Ok(mut socket) = self.socket.lock() {
+            if let Some(path) = socket.take() {
                 let _ = fs::remove_file(path);
             }
         }
     }
 }
+impl Drop for ProfileManager {
+    fn drop(&mut self) {
+        self.shutdown();
+    }
+}
+pub fn shutdown(app: &AppHandle) {
+    if let Some(state) = app.try_state::<ProfileManager>() {
+        state.shutdown();
+    }
+}
+
 fn publish(app: &AppHandle, label: &str, p: &Profile) {
     let _ = app.emit_to(label, "craidd:profile", p);
+}
+fn change_profile(app: &AppHandle, label: &str, action: impl FnOnce(&mut Profile)) {
+    let view = {
+        let state = app.state::<ProfileManager>();
+        let Ok(mut all) = state.profiles.lock() else {
+            return;
+        };
+        let Some(p) = all.get_mut(label).filter(|p| p.active) else {
+            return;
+        };
+        action(p);
+        p.view()
+    };
+    publish(app, label, &view);
 }
 fn peer(stream: &UnixStream) -> Result<ProcessIdentity, String> {
     let mut cred: libc::ucred = unsafe { std::mem::zeroed() };
@@ -420,11 +783,9 @@ pub fn ensure_bridge(app: &AppHandle) -> Result<String, String> {
     if let Some(p) = slot.as_ref() {
         return Ok(p.to_string_lossy().into());
     }
-    let path = std::env::temp_dir().join(format!(
-        "craidd-profile-{}-{}.sock",
-        std::process::id(),
-        stamp()
-    ));
+    let owner = processes::identity(std::process::id() as i32)?;
+    let path = super::profiling_discovery::directory()?
+        .join(format!("host-{}-{}.sock", owner.pid, owner.birth));
     let listener = UnixListener::bind(&path).map_err(|e| e.to_string())?;
     fs::set_permissions(&path, fs::Permissions::from_mode(0o600)).map_err(|e| e.to_string())?;
     let profiles = state.profiles.clone();
@@ -444,38 +805,67 @@ pub fn ensure_bridge(app: &AppHandle) -> Result<String, String> {
             drop(active);
             thread::spawn(move || {
                 let _ = stream.set_read_timeout(Some(Duration::from_secs(2)));
-                let mut reader = BufReader::new(stream);
+                use std::io::Read;
+                let mut stream = stream;
+                let mut buffer = [0_u8; 16384];
+                let mut pending = Vec::with_capacity(20480);
+                let mut verified_at = Instant::now();
                 loop {
-                    let mut line = String::new();
-                    use std::io::Read;
-                    let result = reader.by_ref().take(4097).read_line(&mut line);
-                    match result {
+                    let count = match stream.read(&mut buffer) {
                         Ok(0) => break,
-                        Ok(_) if line.len() <= 4096 => {}
+                        Ok(n) => n,
                         Err(ref e)
-                            if line.is_empty()
-                                && [
-                                    std::io::ErrorKind::WouldBlock,
-                                    std::io::ErrorKind::TimedOut,
-                                ]
-                                .contains(&e.kind()) =>
+                            if matches!(
+                                e.kind(),
+                                std::io::ErrorKind::WouldBlock | std::io::ErrorKind::TimedOut
+                            ) =>
                         {
                             if processes::verify(&target).is_err() {
                                 break;
                             }
+                            verified_at = Instant::now();
                             continue;
                         }
-                        _ => break,
+                        Err(_) => break,
                     };
-                    if processes::verify(&target).is_err() {
+                    // The authenticated socket has a fixed peer. Check its
+                    // process incarnation at a bounded cadence, not per event.
+                    if verified_at.elapsed() >= Duration::from_millis(250) {
+                        if processes::verify(&target).is_err() {
+                            break;
+                        }
+                        verified_at = Instant::now();
+                    }
+                    pending.extend_from_slice(&buffer[..count]);
+                    let Some(last) = pending.iter().rposition(|b| *b == b'\n') else {
+                        if pending.len() > 4096 {
+                            break;
+                        }
+                        continue;
+                    };
+                    let mut events = Vec::new();
+                    let mut rejected = 0;
+                    let mut oversized = false;
+                    for line in pending[..last].split(|b| *b == b'\n') {
+                        if line.len() > 4096 {
+                            oversized = true;
+                            break;
+                        }
+                        match serde_json::from_slice::<SourceEvent>(line) {
+                            Ok(event) => events.push(event),
+                            Err(_) => rejected += 1,
+                        }
+                    }
+                    pending.drain(..=last);
+                    if oversized || pending.len() > 4096 {
                         break;
                     }
-                    if let Ok(event) = serde_json::from_str::<SourceEvent>(&line) {
-                        if let Ok(mut all) = profiles.lock() {
-                            for (_, p) in all
-                                .iter_mut()
-                                .filter(|(_, p)| p.target == target && p.active)
-                            {
+                    if let Ok(mut all) = profiles.lock() {
+                        for p in all.values_mut().filter(|p| p.target == target && p.active) {
+                            for _ in 0..rejected {
+                                p.reject();
+                            }
+                            for event in &events {
                                 p.event(event.clone());
                             }
                         }
@@ -483,15 +873,7 @@ pub fn ensure_bridge(app: &AppHandle) -> Result<String, String> {
                 }
                 if let Ok(mut all) = profiles.lock() {
                     for p in all.values_mut().filter(|p| p.target == target && p.active) {
-                        p.dropped += 1;
-                        p.provider = false;
-                        let at = p.at();
-                        for c in &mut p.captures {
-                            if c.end_ms.is_none() {
-                                c.end_ms = Some(at);
-                                c.status = "Incomplete: provider disconnected".into();
-                            }
-                        }
+                        p.source_disconnected();
                     }
                 }
                 CONNECTIONS.lock().unwrap().retain(|p| p != &target);
@@ -540,34 +922,34 @@ pub fn start(app: &AppHandle, label: &str, target: ProcessIdentity) -> Result<St
             Ok(route) => p.discovery = Some(route),
             Err(error) => p.reason = format!("Source discovery unavailable: {error}"),
         }
+    } else if let Err(error) = bridge {
+        p.reason = format!("Source discovery unavailable: {error}");
     }
     let id = p.id.clone();
     let result_id = id.clone();
-    publish(app, label, &p);
+    let view = p.view();
     all.insert(label.into(), p);
     drop(all);
+    publish(app, label, &view);
     let profiles = state.profiles.clone();
     let app = app.clone();
     let label = label.to_owned();
     thread::spawn(move || loop {
         thread::sleep(Duration::from_millis(250));
-        let Ok(mut all) = profiles.lock() else { break };
-        let Some(p) = all.get_mut(&label) else { break };
-        if p.id != id || !p.active {
-            break;
-        }
-        match processes::counters(&target) {
-            Ok(counters) => {
-                let at_ms = p.at();
-                if p.samples.len() >= 2400 {
-                    p.samples.remove(0);
-                    p.dropped += 1;
-                }
-                p.samples.push(Sample { at_ms, counters });
+        let counters = processes::counters(&target);
+        let view = {
+            let Ok(mut all) = profiles.lock() else { break };
+            let Some(p) = all.get_mut(&label) else { break };
+            if p.id != id || !p.active {
+                break;
             }
-            Err(_) => p.close("Target exited or became inaccessible"),
+            match counters {
+                Ok(counters) => p.sample(counters),
+                Err(_) => p.close("Target exited or became inaccessible"),
+            }
+            p.view()
         };
-        publish(&app, &label, p);
+        publish(&app, &label, &view);
     });
     Ok(result_id)
 }
@@ -580,65 +962,60 @@ pub fn start_profiling(
     start(&app, w.label(), target)
 }
 pub fn invalidate_marker(app: &AppHandle, id: &str) {
-    if let Ok(mut all) = app.state::<ProfileManager>().profiles.lock() {
-        for (label, p) in all.iter_mut().filter(|(_, p)| p.active) {
+    let views = {
+        let state = app.state::<ProfileManager>();
+        let Ok(mut all) = state.profiles.lock() else {
+            return;
+        };
+        all.iter_mut().filter(|(_, p)| p.active).map(|(label, p)| {
             p.blocked.insert(id.into());
             let at = p.at();
-            for c in p
-                .captures
-                .iter_mut()
-                .filter(|c| c.marker == id && c.end_ms.is_none())
-            {
-                c.end_ms = Some(at);
-                c.status = "Incomplete: marker edited".into();
+            let sample=p.process_observation(at);
+            for c in p.captures.iter_mut().filter(|c| c.marker == id && c.end_ms.is_none()) {
+                c.finish(at,"Incomplete: marker edited",sample.clone(),&p.counters);
             }
-            p.reason="Gold intent changed; affected compiled markers stay unarmed until rebuild/restart and a new profiling session".into();
-            publish(app, label, p);
-        }
+            p.diagnostic("Gold marker edited",at,1);
+            p.reason = "Gold intent changed; affected compiled markers stay unarmed until rebuild/restart and a new profiling session".into();
+            (label.clone(), p.view())
+        }).collect::<Vec<_>>()
+    };
+    for (label, view) in views {
+        publish(app, &label, &view);
     }
 }
 pub fn stop_session(app: &AppHandle, label: &str, id: &str, reason: &str) {
-    if let Ok(mut all) = app.state::<ProfileManager>().profiles.lock() {
-        if let Some(p) = all.get_mut(label).filter(|p| p.active && p.id == id) {
+    change_profile(app, label, |p| {
+        if p.id == id {
             p.close(reason);
-            publish(app, label, p);
         }
-    }
+    });
 }
 pub fn stop(app: &AppHandle, label: &str, reason: &str) {
-    if let Ok(mut all) = app.state::<ProfileManager>().profiles.lock() {
-        if let Some(p) = all.get_mut(label).filter(|p| p.active) {
-            p.close(reason);
-            publish(app, label, p);
-        }
-    }
+    change_profile(app, label, |p| p.close(reason));
 }
 pub fn debug_pause(app: &AppHandle, label: &str, body: &serde_json::Value, stopped: bool) {
-    if let Ok(mut all) = app.state::<ProfileManager>().profiles.lock() {
-        if let Some(p) = all.get_mut(label).filter(|p| p.active) {
-            let at = p.at();
-            if stopped {
-                if p.pauses.len() < 2000 {
-                    p.pauses.push(Pause {
-                        start_ms: at,
-                        end_ms: None,
-                        all_threads: body["allThreadsStopped"] == true,
-                        thread: body["threadId"].as_i64(),
-                        reason: body["reason"].as_str().unwrap_or("debugger stop").into(),
-                    });
-                }
-            } else {
-                let all_continued = body["allThreadsContinued"] == true;
-                let tid = body["threadId"].as_i64();
-                for pause in p.pauses.iter_mut().filter(|s| s.end_ms.is_none()) {
-                    if all_continued || (!pause.all_threads && pause.thread == tid) {
-                        pause.end_ms = Some(at);
-                    }
+    change_profile(app, label, |p| {
+        let at = p.at();
+        if stopped {
+            if p.pauses.len() < 2000 {
+                p.pauses.push(Pause {
+                    start_ms: at,
+                    end_ms: None,
+                    all_threads: body["allThreadsStopped"] == true,
+                    thread: body["threadId"].as_i64(),
+                    reason: body["reason"].as_str().unwrap_or("debugger stop").into(),
+                });
+            }
+        } else {
+            let all_continued = body["allThreadsContinued"] == true;
+            let tid = body["threadId"].as_i64();
+            for pause in p.pauses.iter_mut().filter(|s| s.end_ms.is_none()) {
+                if all_continued || (!pause.all_threads && pause.thread == tid) {
+                    pause.end_ms = Some(at);
                 }
             }
-            publish(app, label, p);
         }
-    }
+    });
 }
 #[tauri::command]
 pub fn stop_profiling(app: AppHandle, w: tauri::WebviewWindow) {
@@ -655,8 +1032,12 @@ pub fn profile_record_again(app: AppHandle, w: tauri::WebviewWindow) -> Result<(
     if p.waiting_for_play {
         return Err("Unity is ready; press Play to begin the next recording".into());
     }
-    p.again();
-    publish(&app, w.label(), p);
+    if !p.again() {
+        return Err("Capture storage is full of pinned Solo segments/live cohorts; the current recording continues. Start a new profiling session to create more segments.".into());
+    }
+    let view = p.view();
+    drop(all);
+    publish(&app, w.label(), &view);
     Ok(())
 }
 #[tauri::command]
@@ -666,7 +1047,7 @@ pub fn get_profile(app: AppHandle, w: tauri::WebviewWindow) -> Option<Profile> {
         .lock()
         .ok()?
         .get(w.label())
-        .cloned()
+        .map(Profile::view)
 }
 
 #[cfg(test)]
@@ -683,12 +1064,119 @@ mod tests {
             cpu_ns: wall / 2,
             address: 0,
             bytes: 0,
+            sequence: 0,
+            generation: 0,
+            playing: None,
         }
     }
     fn p() -> Profile {
         let mut p = Profile::new(ProcessIdentity { pid: 3, birth: 4 }, "test".into());
         p.origin = Some(0);
         p
+    }
+    #[test]
+    fn scoped_end_freezes_cohort_and_observations_but_late_free_updates_survivors() {
+        let mut p = p();
+        let sample = |at_ms, rss| Sample {
+            at_ms,
+            counters: ProcessCounters {
+                cpu_ms: at_ms,
+                resident_bytes: rss,
+                virtual_bytes: 1000,
+                thread_count: 2,
+                state: "R".into(),
+            },
+        };
+        p.samples.push(sample(1., 900));
+        p.event(e("begin", 1, 1, 2_000_000));
+        let mut alloc = e("alloc", 0, 1, 3_000_000);
+        alloc.address = 123;
+        alloc.bytes = 100;
+        p.event(alloc);
+        p.samples.push(sample(4., 950));
+        p.event(e("end", 1, 1, 5_000_000));
+        let before = p.view();
+        let c = &before.captures[0];
+        assert_eq!(c.process_start.as_ref().unwrap().at_ms, 1.);
+        assert_eq!(c.process_end.as_ref().unwrap().at_ms, 4.);
+        assert_eq!(c.cohort_end.as_ref().unwrap().live_bytes, 100);
+        assert_eq!(c.window_activity.allocated_bytes, 100);
+        let mut free = e("free", 0, 2, 6_000_000);
+        free.address = 123;
+        p.event(free);
+        let c = &p.captures[0];
+        assert_eq!(c.end_ms, Some(5.));
+        assert_eq!(c.live_bytes, 0);
+        assert_eq!(c.freed_bytes, 100);
+        assert_eq!(c.cohort_end.as_ref().unwrap().live_bytes, 100);
+        assert_eq!(c.window_activity.freed_bytes, 0);
+        assert_eq!(before.captures[0].live_bytes, 100);
+        p.samples.clear();
+        assert_eq!(
+            p.captures[0]
+                .process_start
+                .as_ref()
+                .unwrap()
+                .counters
+                .resident_bytes,
+            900
+        );
+    }
+    #[test]
+    fn native_window_frees_older_allocations_and_session_totals_do_not_double_count_nested_cohorts()
+    {
+        let mut p = p();
+        let mut old = e("alloc", 0, 1, 1);
+        old.address = 1;
+        old.bytes = 20;
+        p.event(old);
+        p.event(e("begin", 1, 1, 2));
+        p.event(e("begin", 2, 1, 3));
+        let mut new = e("alloc", 0, 1, 4);
+        new.address = 2;
+        new.bytes = 100;
+        p.event(new);
+        let mut free = e("free", 0, 2, 5);
+        free.address = 1;
+        p.event(free);
+        assert_eq!(p.native_activity.allocated_bytes, 120);
+        assert_eq!(p.native_live_bytes, 100);
+        for c in &p.captures {
+            assert_eq!(c.allocated_bytes, 100);
+            assert_eq!(c.freed_bytes, 0);
+            assert_eq!(c.window_activity.freed_bytes, 20);
+        }
+        p.event(e("end", 2, 1, 6));
+        p.event(e("end", 1, 1, 7));
+        assert_eq!(p.captures[0].cohort_end.as_ref().unwrap().live_bytes, 100);
+        let mut unknown = e("free", 0, 2, 8);
+        unknown.address = 999;
+        p.event(unknown);
+        assert_eq!(p.native_activity.unmatched_frees, 1);
+    }
+    #[test]
+    fn diagnostics_are_bounded_coalesced_and_cohort_end_exists_on_every_close_path() {
+        let mut p = p();
+        p.diagnostic("loss", 1., 1);
+        p.diagnostic("loss", 2., 2);
+        assert_eq!(p.diagnostics.len(), 1);
+        assert_eq!(p.diagnostics[0].count, 3);
+        for i in 0..400 {
+            p.diagnostic(if i % 2 == 0 { "a" } else { "b" }, 1000. + i as f64, 1);
+        }
+        assert_eq!(p.diagnostics.len(), 256);
+        assert_eq!(p.diagnostics_evicted, 145);
+        p.event(e("solo", 0, 1, 100));
+        p.again();
+        assert!(p.captures[0].cohort_end.is_some());
+        p.source_disconnected();
+        assert!(p.captures[1].cohort_end.is_some());
+        p.event(e("begin", 1, 1, 200));
+        p.finish_play(1.);
+        assert!(p.captures.last().unwrap().cohort_end.is_some());
+        p.event(e("begin", 2, 1, 300));
+        p.close("test");
+        assert!(p.captures.last().unwrap().cohort_end.is_some());
     }
     #[test]
     fn recursive_threads_and_late_end_keep_batch() {
@@ -722,6 +1210,252 @@ mod tests {
         let wire = serde_json::to_value(&p).unwrap();
         assert_eq!(wire["captures"][0]["solo"], true);
         assert_eq!(wire["captures"][1]["solo"], true);
+    }
+    #[test]
+    fn reconnect_reopens_solo_and_accounts_for_new_native_allocations() {
+        let mut p = p();
+        p.event(e("solo", 0, 1, 100));
+        p.source_disconnected();
+        assert!(!p.provider && p.solo.is_none());
+        p.event(e("solo", 0, 1, 200));
+        let mut alloc = e("alloc", 0, 1, 210);
+        alloc.address = 123;
+        alloc.bytes = 1048576;
+        p.event(alloc);
+        let open = p
+            .captures
+            .iter()
+            .find(|c| c.solo && c.end_ms.is_none())
+            .unwrap();
+        assert!(p.provider);
+        assert_ne!(p.captures[0].id, open.id);
+        assert_eq!(open.live_bytes, 1048576);
+        assert_eq!(p.captures.iter().filter(|c| c.end_ms.is_none()).count(), 1);
+    }
+    #[test]
+    fn hot_marker_history_pins_solo_and_live_cohorts_until_late_free() {
+        let mut p = p();
+        p.event(e("solo", 0, 1, 100));
+        let mut begin = e("begin", 1, 1, 110);
+        begin.marker = "allocation".into();
+        p.event(begin.clone());
+        let mut alloc = e("alloc", 0, 1, 120);
+        alloc.address = 123;
+        alloc.bytes = 1048576;
+        p.event(alloc);
+        let mut end = begin;
+        end.kind = "end".into();
+        end.wall_ns = 130;
+        p.event(end);
+        p.source_disconnected();
+        p.event(e("solo", 0, 1, 200));
+        for i in 0..5000 {
+            p.event(e("begin", i + 2, 1, 300 + i * 2));
+            p.event(e("end", i + 2, 1, 301 + i * 2));
+        }
+        assert_eq!(
+            p.captures
+                .iter()
+                .filter(|c| !c.solo && c.marker == "work")
+                .count(),
+            128
+        );
+        assert_eq!(p.captures.iter().filter(|c| c.solo).count(), 2);
+        assert_eq!(
+            p.captures
+                .iter()
+                .find(|c| c.marker == "allocation")
+                .unwrap()
+                .live_bytes,
+            1048576
+        );
+        let mut free = e("free", 0, 2, 20000);
+        free.address = 123;
+        p.event(free);
+        let old_solo = &p.captures[0];
+        assert_eq!((old_solo.live_bytes, old_solo.freed_bytes), (0, 1048576));
+        let cohort = p
+            .captures
+            .iter()
+            .find(|c| c.marker == "allocation")
+            .unwrap();
+        assert_eq!((cohort.live_bytes, cohort.freed_bytes), (0, 1048576));
+        assert!(p.captures.iter().any(|c| c.solo && c.end_ms.is_none()));
+        assert_eq!(p.counters.evicted_captures, 5000 - 128);
+        assert_eq!(p.counters.disconnects, 1);
+        assert_eq!(p.counters.rejected_events, 0);
+        assert_eq!(p.dropped, 0);
+    }
+    #[test]
+    fn process_sample_aging_is_not_a_source_error() {
+        let mut p = p();
+        for _ in 0..3000 {
+            p.sample(ProcessCounters {
+                cpu_ms: 1.,
+                resident_bytes: 100,
+                virtual_bytes: 200,
+                thread_count: 1,
+                state: "R".into(),
+            });
+        }
+        assert_eq!(p.samples.len(), 2400);
+        assert_eq!(p.counters.aged_samples, 600);
+        assert_eq!(p.counters.evicted_captures, 0);
+        assert_eq!(p.counters.rejected_events, 0);
+        assert_eq!(p.dropped, 0);
+    }
+    #[test]
+    fn unity_idle_initialization_and_entry_are_not_play_exits() {
+        let mut p = p();
+        p.unity_editor = true;
+        p.waiting_for_play = true;
+        let mut state = e("state", 0, 1, 1_000_000_000);
+        state.playing = Some(false);
+        p.event(state.clone());
+        // Domain reload may repeat an inactive state and initialize a new token.
+        state.generation = 1;
+        p.event(state.clone());
+        assert!(p.diagnostics.is_empty());
+        for generation in 2..=6 {
+            state.generation = generation;
+            state.playing = Some(true);
+            state.wall_ns += 1_000_000_000;
+            p.event(state.clone());
+            let mut solo = state.clone();
+            solo.kind = "solo".into();
+            p.event(solo);
+            state.playing = Some(false);
+            state.wall_ns += 1_000_000_000;
+            p.event(state.clone());
+            p.event(state.clone());
+            // Legacy/repeated end notifications must also be idempotent.
+            p.finish_play(state.wall_ns as f64 / 1e6);
+        }
+        assert_eq!(p.diagnostics.iter().filter(|d| d.kind == "Unity Play ended").map(|d| d.count).sum::<u64>(), 5);
+        assert!(p.waiting_for_play && p.solo.is_none());
+        assert!(p.captures.iter().all(|c| c.end_ms.is_some()));
+    }
+    #[test]
+    fn play_generation_recovers_a_lost_end_and_idle_heartbeat_finishes_play() {
+        let mut p = p();
+        p.unity_editor = true;
+        p.waiting_for_play = true;
+        let mut state = e("state", 0, 1, 100);
+        state.generation = 1;
+        state.playing = Some(true);
+        p.event(state.clone());
+        let mut solo = state.clone();
+        solo.kind = "solo".into();
+        p.event(solo.clone());
+        // No Play-end event is delivered. A later generation closes the old
+        // recording before the first marker from the new Play can be recorded.
+        solo.generation = 2;
+        solo.wall_ns = 200;
+        p.event(solo);
+        assert_eq!(p.batch, 2);
+        assert_eq!(p.captures.iter().filter(|c| c.end_ms.is_none()).count(), 1);
+        assert_eq!(p.captures[0].status, "Unity Play ended");
+        state.generation = 2;
+        state.wall_ns = 300;
+        state.playing = Some(false);
+        p.event(state.clone());
+        p.event(state);
+        assert!(p.waiting_for_play && p.active && p.solo.is_none());
+        assert!(p.captures.iter().all(|c| c.end_ms.is_some()));
+        assert_eq!(p.batch, 2);
+    }
+    #[test]
+    fn play_heartbeat_preserves_an_existing_marker_warning() {
+        let mut p = p();
+        p.unity_editor = true;
+        p.play_generation = Some(1);
+        p.reason = "Gold intent changed; rebuild the prepared marker".into();
+        let mut state = e("state", 0, 1, 100);
+        state.marker.clear();
+        state.generation = 1;
+        state.playing = Some(true);
+        p.event(state);
+        assert!(p.reason.starts_with("Gold intent changed"));
+    }
+    #[test]
+    fn missing_sequence_reopens_solo_without_discarding_owned_cohorts() {
+        let mut p = p();
+        let mut solo = e("solo", 0, 1, 100);
+        solo.sequence = 20;
+        p.event(solo.clone());
+        solo.sequence = 22;
+        solo.wall_ns = 200;
+        p.event(solo);
+        assert_eq!(p.counters.source_gaps, 1);
+        assert_eq!(p.counters.disconnects, 0);
+        assert_eq!(p.counters.rejected_events, 0);
+        assert_eq!(p.captures.len(), 2);
+        assert_eq!(p.captures[0].status, "Incomplete: source events missing");
+        assert!(p.captures[1].end_ms.is_none());
+        let snapshot = p.view();
+        assert!(snapshot.allocations.is_empty() && snapshot.discovery.is_none());
+        assert_eq!(snapshot.counters.source_gaps, 1);
+    }
+    #[test]
+    fn explicit_host_shutdown_unlinks_socket_and_never_signals_a_foreign_target() {
+        let dir = std::env::temp_dir().join(format!("craidd-shutdown-{}", stamp()));
+        fs::create_dir(&dir).unwrap();
+        let path = dir.join("socket");
+        let listener = UnixListener::bind(&path).unwrap();
+        let manager = ProfileManager::default();
+        *manager.socket.lock().unwrap() = Some(path.clone());
+        let target = processes::identity(std::process::id() as i32).unwrap();
+        manager.profiles.lock().unwrap().insert(
+            "test".into(),
+            Profile::new(target.clone(), "foreign".into()),
+        );
+        manager.shutdown();
+        manager.shutdown();
+        assert!(!path.exists());
+        assert!(!manager.profiles.lock().unwrap()["test"].active);
+        processes::verify(&target).unwrap();
+        drop(listener);
+        fs::remove_dir_all(dir).unwrap();
+    }
+    #[test]
+    fn global_history_bound_preserves_pins_and_rare_markers() {
+        let mut p = p();
+        p.event(e("solo", 0, 1, 100));
+        let mut alloc = e("alloc", 0, 1, 110);
+        alloc.address = 123;
+        alloc.bytes = 1048576;
+        p.event(alloc);
+        for i in 0..2500 {
+            let mut begin = e("begin", i + 1, 1, 120 + i * 2);
+            begin.marker = format!("marker-{i}");
+            let mut end = begin.clone();
+            end.kind = "end".into();
+            end.wall_ns += 1;
+            p.event(begin);
+            p.event(end);
+        }
+        assert_eq!(p.captures.len(), 2000);
+        assert!(p.captures[0].solo && p.captures[0].live_bytes == 1048576);
+        assert_eq!(p.counters.rejected_events, 0);
+        assert_eq!(p.counters.evicted_captures, 501);
+        let mut free = e("free", 0, 2, 6000);
+        free.address = 123;
+        p.event(free);
+        assert_eq!(p.captures[0].live_bytes, 0);
+        assert_eq!(p.captures[0].freed_bytes, 1048576);
+    }
+    #[test]
+    fn record_again_at_an_all_pinned_limit_keeps_the_current_recording() {
+        let mut p = p();
+        p.event(e("solo", 0, 1, 100));
+        for _ in 1..2000 {
+            p.again();
+        }
+        let batch = p.batch;
+        let id = p.captures.last().unwrap().id.clone();
+        p.again();
+        assert_eq!(p.batch, batch);
+        assert!(p.captures.iter().any(|c| c.id == id && c.end_ms.is_none()));
     }
     #[test]
     fn allocation_cohort_survives_end_and_ignores_older_free() {
@@ -775,11 +1509,12 @@ mod tests {
             p.event(e("begin", i + 1, 1, 101 + i * 2));
             p.event(e("end", i + 1, 1, 102 + i * 2));
         }
-        assert_eq!(p.captures.len(), 2000);
-        assert!(p.dropped > 0);
+        assert!(p.captures.len() <= 2000);
+        assert!(p.counters.evicted_captures > 0);
+        assert_eq!(p.dropped, 0);
         p.event(e("play-end", 0, 1, 5000));
         p.event(e("solo", 0, 1, 6000));
-        assert_eq!(p.captures.len(), 2000);
+        assert!(p.captures.len() <= 2000);
         assert!(p.captures.last().unwrap().solo);
         assert_eq!(p.captures.last().unwrap().batch, 2);
         p.again();

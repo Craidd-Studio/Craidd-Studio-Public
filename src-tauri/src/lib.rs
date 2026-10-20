@@ -6,7 +6,7 @@ pub use process_supervisor::entry as process_supervisor_entry;
 
 use tauri::Manager;
 
-use commands::fs::{read_dir_tree, read_dir_children, read_dir_tree_filtered, read_file, write_file, create_folder, stat_files, overwrite_file, delete_path, rename_path};
+use commands::fs::{resolve_document_path, read_document_image, read_dir_tree, read_dir_children, read_dir_tree_filtered, read_file, write_file, create_folder, stat_files, overwrite_file, delete_path, rename_path};
 use commands::search::search_in_path;
 use commands::toolchain::{get_toolchain, scan_toolchain, ensure_project_toolchain, set_tool_default, preferences_file_path, read_project_tool_override, write_project_tool_override};
 use commands::build::{BuildManager, start_cargo, stop_cargo};
@@ -89,6 +89,8 @@ pub fn run() {
         .plugin(tauri_plugin_dialog::init())
         .invoke_handler(tauri::generate_handler![
             read_file,
+            resolve_document_path,
+            read_document_image,
             read_dir_tree,
             read_dir_children,
             read_dir_tree_filtered,
@@ -206,8 +208,8 @@ pub fn run() {
         ])
         .build(tauri::generate_context!())
         .expect("error while building tauri application")
-        .run(|_, event| {
-            if matches!(event, tauri::RunEvent::Exit) { process_supervisor::shutdown(); }
+        .run(|app, event| {
+            if matches!(event, tauri::RunEvent::Exit) { commands::profiling::shutdown(app); process_supervisor::shutdown(); }
         });
     process_supervisor::shutdown();
 }

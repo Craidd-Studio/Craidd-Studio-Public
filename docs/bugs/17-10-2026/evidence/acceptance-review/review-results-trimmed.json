@@ -1,0 +1,1421 @@
+{
+ "note": "Trimmed review-run evidence. Diagnostics arrays removed except the final list; machine paths retained only for disposable /tmp copies.",
+ "revision": "f06c51e186d7848ec3f469cb25538039ef2858ab",
+ "reviewUnity": [
+  {
+   "id": "ENV",
+   "outcome": "INFO",
+   "value": {
+    "editorPid": 81127,
+    "birth": 81889,
+    "project": "/tmp/cui-dGhwd8/workspaces/unity",
+    "version": "6000.5.10f1",
+    "namespace": "review-46c2b7e0-2ec3-4083-b9fd-17cc858ea2b4",
+    "evidence": "<worktree>/test-results/ui/2026-10-17T21-52-19-661Z/review-unity"
+   }
+  },
+  {
+   "id": "UP-RUN-06",
+   "description": "open disposable unity.cln",
+   "outcome": "PASS",
+   "ms": 1056,
+   "value": "workspace-1"
+  },
+  {
+   "id": "UP-RUN-10",
+   "description": "opening solution does not attach or start profiling",
+   "outcome": "PASS",
+   "ms": 2,
+   "value": {
+    "profile": null
+   }
+  },
+  {
+   "id": "UP-ATT-01",
+   "description": "toolbar glyphs visible before attach",
+   "outcome": "PASS",
+   "ms": 92,
+   "value": [
+    {
+     "label": "Take memory snapshot",
+     "w": 16,
+     "disabled": true
+    },
+    {
+     "label": "Snapshot and record again",
+     "w": 16,
+     "disabled": true
+    },
+    {
+     "label": "Stop profiling",
+     "w": 16,
+     "disabled": true
+    },
+    {
+     "label": "Profiling settings",
+     "w": 16,
+     "disabled": false
+    }
+   ]
+  },
+  {
+   "id": "UP-ATT-02/03",
+   "description": "attach dialog lists processes and preselects only our Editor",
+   "outcome": "PASS",
+   "ms": 229,
+   "value": {
+    "unityRows": [
+     {
+      "selected": "true",
+      "text": "81127 Unity EditorUnity \u00b7 this project ~/Unity/Hub/Editor/6000.5.10f1/Editor/Unity Unity Editor \u00b7 native C++ / profiling"
+     },
+     {
+      "selected": "false",
+      "text": "82717 AssetImportWork ~/Unity/Hub/Editor/6000.5.10f1/Editor/Unity Mono/Unity \u00b7 native LLDB; managed unqualified"
+     },
+     {
+      "selected": "false",
+      "text": "82839 AssetImportWork ~/Unity/Hub/Editor/6000.5.10f1/Editor/Unity Mono/Unity \u00b7 native LLDB; managed unqualified"
+     },
+     {
+      "selected": "false",
+      "text": "83170 AssetImportWork ~/Unity/Hub/Editor/6000.5.10f1/Editor/Unity Mono/Unity \u00b7 native LLDB; managed unqualified"
+     },
+     {
+      "selected": "false",
+      "text": "82579 dotnet ~/Unity/Hub/Editor/6000.5.10f1/Editor/Data/DotNetSdk/dotnet netcoredbg \u00b7 CoreCLR"
+     },
+     {
+      "selected": "false",
+      "text": "81163 MainThread ~/Unity/Hub/Editor/6000.5.10f1/Editor/Data/Resources/PackageManager/Server/UnityPackageManager LLDB-DAP \u00b7 native candidate"
+     },
+     {
+      "selected": "false",
+      "text": "81302 Unity.ILPP.Runn ~/Unity/Hub/Editor/6000.5.10f1/Editor/Data/Tools/BuildPipeline/Compilation/Unity.ILPP.Runner/Unity.ILPP.Runner netcoredbg \u00b7 Co"
+     },
+     {
+      "selected": "false",
+      "text": "81162 Unity.Licensing ~/Unity/Hub/Editor/6000.5.10f1/Editor/Data/Resources/Licensing/Client/Unity.Licensing.Client netcoredbg \u00b7 CoreCLR"
+     },
+     {
+      "selected": "false",
+      "text": "81303 UnityAutoQuitte ~/Unity/Hub/Editor/6000.5.10f1/Editor/Data/Tools/UnityAutoQuitter LLDB-DAP \u00b7 native candidate"
+     },
+     {
+      "selected": "false",
+      "text": "82718 UnityAutoQuitte ~/Unity/Hub/Editor/6000.5.10f1/Editor/Data/Tools/UnityAutoQuitter LLDB-DAP \u00b7 native candidate"
+     },
+     {
+      "selected": "false",
+      "text": "82841 UnityAutoQuitte ~/Unity/Hub/Editor/6000.5.10f1/Editor/Data/Tools/UnityAutoQuitter LLDB-DAP \u00b7 native candidate"
+     },
+     {
+      "selected": "false",
+      "text": "83171 UnityAutoQuitte ~/Unity/Hub/Editor/6000.5.10f1/Editor/Data/Tools/UnityAutoQuitter LLDB-DAP \u00b7 native candidate"
+     }
+    ],
+    "selected": [
+     {
+      "selected": "true",
+      "text": "81127 Unity EditorUnity \u00b7 this project ~/Unity/Hub/Editor/6000.5.10f1/Editor/Unity Unity Editor \u00b7 native C++ / profiling"
+     }
+    ]
+   }
+  },
+  {
+   "id": "UP-JNY-02",
+   "description": "Profile only arms the prepared provider without a debugger",
+   "outcome": "PASS",
+   "ms": 1104,
+   "value": {
+    "profileId": "81127-81889-1792273947849106806",
+    "target": {
+     "pid": 81127,
+     "birth": 81889
+    },
+    "unityEditor": true,
+    "captures": 0,
+    "pausedText": false
+   }
+  },
+  {
+   "id": "UP-JNY-03",
+   "description": "Play opens Solo; Full session stays the initial scope",
+   "outcome": "PASS",
+   "ms": 952,
+   "value": {
+    "batch": 1,
+    "generation": 1,
+    "solo": "solo:unity.solo:1:1"
+   }
+  },
+  {
+   "id": "UP-JNY-04",
+   "description": "allocate 1 MiB: direct 0 -> 1048576 and Solo cohort 1 MiB",
+   "outcome": "PASS",
+   "ms": 460,
+   "value": {
+    "unityNativeLiveBytes": 1048576,
+    "soloLive": 1048576,
+    "allocCohort": 1048576
+   }
+  },
+  {
+   "id": "UP-JNY-05",
+   "description": "one snapshot keeps Live, scope and tab",
+   "outcome": "PASS",
+   "ms": 103,
+   "value": {
+    "snapshot": {
+     "text": "Snapshot \u00b7 Unity Editor \u00b7 22:52:30",
+     "id": "2bc30840-f7ef-40fa-a2ce-1facb814cb6e"
+    },
+    "view": "live",
+    "scope": "session",
+    "tab": "Summary"
+   }
+  },
+  {
+   "id": "UP-JNY-06",
+   "description": "Clear: direct 0, freed rises, snapshot keeps 1 MiB",
+   "outcome": "PASS",
+   "ms": 209,
+   "value": {
+    "unityNativeLiveBytes": 0,
+    "soloLive": 0
+   }
+  },
+  {
+   "id": "UP-JNY-07",
+   "description": "second snapshot; compare; one Live action returns",
+   "outcome": "PASS",
+   "ms": 438,
+   "value": {
+    "snapshots": [
+     {
+      "text": "Snapshot \u00b7 Unity Editor \u00b7 22:52:30",
+      "id": "2bc30840-f7ef-40fa-a2ce-1facb814cb6e"
+     },
+     {
+      "text": "Snapshot \u00b7 Unity Editor \u00b7 22:52:30",
+      "id": "85fdfe88-0f77-4957-b286-fc652d89ff4c"
+     }
+    ],
+    "rows": [
+     "#1 \u00b7 2.50 s 501.23 MiB \u2014 1.00 MiB",
+     "#2 \u00b7 2.76 s 501.23 MiB +0 B 0 B"
+    ],
+    "reviewing": "2bc30840-f7ef-40fa-a2ce-1facb814cb6e",
+    "back": {
+     "view": "live",
+     "scope": "session"
+    }
+   }
+  },
+  {
+   "id": "K02-option-click",
+   "description": "after History->Live, WebDriver click on the scope <option> activates the rendered recording",
+   "outcome": "PASS",
+   "ms": 1339,
+   "value": {
+    "historySelected": "2bc30840-f7ef-40fa-a2ce-1facb814cb6e",
+    "scope": "unity.solo",
+    "recordingId": "solo:unity.solo:1:1",
+    "caption": "Solo \u00b7 Unity native recording \u00b7 B1 \u00b7 T81127 \u00b7 Recording \u00b7 1.71 s \u2192 4.27 s"
+   }
+  },
+  {
+   "id": "K02-repeat-same",
+   "description": "re-selecting the same benchmark after Live returns keeps a defined identity",
+   "outcome": "FAIL",
+   "ms": 1350,
+   "error": "Error: {\"afterLive\":\"session\",\"scope\":\"session\",\"recordingId\":null,\"caption\":\"\"}\n    at file://<scratchpad>/review-unity.mjs:159:94\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async step (file://<scratchpad>/review-unity.mjs:23:19)\n    at async file://<scratchpad>/review-unity.mjs:153:3"
+  },
+  {
+   "id": "K02-pointer-keyboard",
+   "description": "pointer-open the scope select then keyboard choose after History->Live",
+   "outcome": "PASS",
+   "ms": 1453,
+   "value": {
+    "scope": "unity.solo",
+    "recordingId": "solo:unity.solo:1:1",
+    "caption": "Solo \u00b7 Unity native recording \u00b7 B1 \u00b7 T81127 \u00b7 Recording \u00b7 1.71 s \u2192 7.31 s"
+   }
+  },
+  {
+   "id": "K05",
+   "description": "three rapid snapshots stay individually selectable; record label collisions",
+   "outcome": "PASS",
+   "ms": 303,
+   "value": {
+    "last3": [
+     {
+      "text": "Snapshot \u00b7 Unity Editor \u00b7 22:52:35",
+      "id": "015b182b-49da-45dc-bc85-3ffae7b02c66"
+     },
+     {
+      "text": "Snapshot \u00b7 Unity Editor \u00b7 22:52:35",
+      "id": "0136c691-da67-4a77-bc35-28278e536f53"
+     },
+     {
+      "text": "Snapshot \u00b7 Unity Editor \u00b7 22:52:35",
+      "id": "ad962a6e-b907-4695-9d26-37bc063e59fd"
+     }
+    ],
+    "uniqueIds": 3,
+    "uniqueLabels": 1,
+    "labelCollision": true,
+    "selectable": [
+     true,
+     true,
+     true
+    ]
+   }
+  },
+  {
+   "id": "UP-HOST-01/02/15",
+   "description": "Open in Editor Panel: one Profiling tab, right host suppressed, no Linked Window",
+   "outcome": "PASS",
+   "ms": 183,
+   "value": {
+    "tabs": [
+     "Profiling"
+    ],
+    "summaryRow": true,
+    "linked": false,
+    "rightPanel": false,
+    "fileDiscovery": true,
+    "openInEditor": false,
+    "latencyMs": 111
+   }
+  },
+  {
+   "id": "UP-HOST-04",
+   "description": "Gold table row inspects only; Focus recording changes scope",
+   "outcome": "FAIL",
+   "ms": 43,
+   "error": "Error: POST /session/a72e9fc3-c170-402c-875f-d214a92aef03/actions: element not interactable\n    at request (file://<worktree>/tests/ui/lib/webdriver.mjs:89:11)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async file://<scratchpad>/review-unity.mjs:203:5\n    at async step (file://<scratchpad>/review-unity.mjs:23:19)\n    at async file://<scratchpad>/review-unity.mjs:202:3"
+  },
+  {
+   "id": "UP-HOST-05/06",
+   "description": "switch to source restores right host; return keeps inspection",
+   "outcome": "PASS",
+   "ms": 519,
+   "value": {
+    "insp": {
+     "view": "live",
+     "rec": null,
+     "tab": "Memory"
+    },
+    "after": {
+     "view": "live",
+     "rec": null,
+     "tab": "Memory"
+    }
+   }
+  },
+  {
+   "id": "UP-HOST-01-repeat",
+   "description": "repeating Open in Editor Panel from the sidebar does not duplicate the tab",
+   "outcome": "PASS",
+   "ms": 229,
+   "value": {
+    "profilingTabs": 1
+   }
+  },
+  {
+   "id": "UP-HOST-14",
+   "description": "close Profiling during recording keeps the same active owner",
+   "outcome": "PASS",
+   "ms": 1136,
+   "value": {
+    "sameId": true,
+    "active": true,
+    "rightPanel": true
+   }
+  },
+  {
+   "id": "UP-MT-01/03/04",
+   "description": "three native threads; thread filter shows only that thread; others keep progressing; expansion persists",
+   "outcome": "PASS",
+   "ms": 967,
+   "value": {
+    "tids": [
+     81127,
+     83351,
+     83352
+    ],
+    "chosen": 83351,
+    "groupWasAlreadyOpen": false,
+    "filteredSample": [
+     "Thread 83351 \u00b7 batch 10.02 ms",
+     "Thread 83351 \u00b7 batch 10.02 ms",
+     "Thread 83351 \u00b7 batch 10.02 ms"
+    ],
+    "stillOpen": {
+     "thread": "83351",
+     "open": true
+    }
+   }
+  },
+  {
+   "id": "UP-LIFE-02-cycle-1",
+   "description": "select live Solo, Stop Play -> same ID Recorded, Play -> new batch/generation and new Solo; old view fixed",
+   "outcome": "PASS",
+   "ms": 1361,
+   "value": {
+    "profileId": "81127-81889-1792273947849106806",
+    "oldSolo": "solo:unity.solo:1:1",
+    "newSolo": "solo:unity.solo:2:2",
+    "batch": [
+     1,
+     2
+    ],
+    "generation": [
+     1,
+     2
+    ],
+    "counters": {
+     "evictedCaptures": 473,
+     "agedSamples": 0,
+     "rejectedEvents": 0,
+     "disconnects": 0,
+     "sourceGaps": 0,
+     "dropped": 0,
+     "samples": 47,
+     "captures": 131,
+     "batch": 2,
+     "playGeneration": 2,
+     "observedAtMs": 12096.958559,
+     "diagnosticsEvicted": 0,
+     "active": true,
+     "waitingForPlay": false,
+     "reason": ""
+    }
+   }
+  },
+  {
+   "id": "UP-LIFE-02-cycle-2",
+   "description": "select live Solo, Stop Play -> same ID Recorded, Play -> new batch/generation and new Solo; old view fixed",
+   "outcome": "PASS",
+   "ms": 1618,
+   "value": {
+    "profileId": "81127-81889-1792273947849106806",
+    "oldSolo": "solo:unity.solo:2:2",
+    "newSolo": "solo:unity.solo:3:3",
+    "batch": [
+     2,
+     3
+    ],
+    "generation": [
+     2,
+     3
+    ],
+    "counters": {
+     "evictedCaptures": 513,
+     "agedSamples": 0,
+     "rejectedEvents": 0,
+     "disconnects": 0,
+     "sourceGaps": 0,
+     "dropped": 0,
+     "samples": 54,
+     "captures": 132,
+     "batch": 3,
+     "playGeneration": 3,
+     "observedAtMs": 13714.739855,
+     "diagnosticsEvicted": 0,
+     "active": true,
+     "waitingForPlay": false,
+     "reason": ""
+    }
+   }
+  },
+  {
+   "id": "UP-LIFE-02-cycle-3",
+   "description": "select live Solo, Stop Play -> same ID Recorded, Play -> new batch/generation and new Solo; old view fixed",
+   "outcome": "PASS",
+   "ms": 1510,
+   "value": {
+    "profileId": "81127-81889-1792273947849106806",
+    "oldSolo": "solo:unity.solo:3:3",
+    "newSolo": "solo:unity.solo:4:4",
+    "batch": [
+     3,
+     4
+    ],
+    "generation": [
+     3,
+     4
+    ],
+    "counters": {
+     "evictedCaptures": 551,
+     "agedSamples": 0,
+     "rejectedEvents": 0,
+     "disconnects": 0,
+     "sourceGaps": 0,
+     "dropped": 0,
+     "samples": 60,
+     "captures": 133,
+     "batch": 4,
+     "playGeneration": 4,
+     "observedAtMs": 15183.700932000002,
+     "diagnosticsEvicted": 0,
+     "active": true,
+     "waitingForPlay": false,
+     "reason": ""
+    }
+   }
+  },
+  {
+   "id": "UP-LOAD-03-setup",
+   "description": "Stop Play and restart uncapped",
+   "outcome": "PASS",
+   "ms": 837,
+   "value": {
+    "evictedCaptures": 563,
+    "agedSamples": 0,
+    "rejectedEvents": 0,
+    "disconnects": 0,
+    "sourceGaps": 0,
+    "dropped": 0,
+    "samples": 63,
+    "captures": 133,
+    "batch": 5,
+    "playGeneration": 5,
+    "observedAtMs": 16099.090354000002,
+    "diagnosticsEvicted": 0,
+    "active": true,
+    "waitingForPlay": false,
+    "reason": ""
+   }
+  },
+  {
+   "id": "UP-LOAD-03",
+   "description": "counters at rollover, saved before assertion",
+   "outcome": "PASS",
+   "value": {
+    "aged": {
+     "at": "2026-10-17T22:02:46.133Z",
+     "elapsedMs": 602173,
+     "unityFrames": 9716209,
+     "unityPlaying": true,
+     "uiRoundTripMs": 12,
+     "footer": "\u25c6 Gold connected\nRolling history",
+     "evictedCaptures": 9718375,
+     "agedSamples": 8,
+     "rejectedEvents": 0,
+     "disconnects": 0,
+     "sourceGaps": 0,
+     "dropped": 0,
+     "samples": 2400,
+     "captures": 134,
+     "batch": 5,
+     "playGeneration": 5,
+     "observedAtMs": 618221.26803,
+     "diagnosticsEvicted": 0,
+     "active": true,
+     "waitingForPlay": false,
+     "reason": "",
+     "diagnosticsTail": [
+      {
+       "untilMs": 13419.015583,
+       "kind": "Unity Play ended",
+       "atMs": 13419.015583,
+       "count": 1
+      },
+      {
+       "untilMs": 14105.792045,
+       "kind": "Unity Play ended",
+       "atMs": 14105.792045,
+       "count": 1
+      },
+      {
+       "untilMs": 14882.051598,
+       "kind": "Unity Play ended",
+       "atMs": 14882.051598,
+       "count": 1
+      },
+      {
+       "untilMs": 15412.645339,
+       "kind": "Unity Play ended",
+       "atMs": 15412.645339,
+       "count": 1
+      },
+      {
+       "untilMs": 16062.060759,
+       "kind": "Unity Play ended",
+       "atMs": 16062.060759,
+       "count": 1
+      }
+     ]
+    },
+    "firstGap": null,
+    "durationMs": 602173
+   }
+  },
+  {
+   "id": "UP-LOAD-04-allocate",
+   "description": "allocate after rollover",
+   "outcome": "PASS",
+   "ms": 129,
+   "value": {
+    "unity": 1048576,
+    "solo": 1048576,
+    "counters": {
+     "evictedCaptures": 9721369,
+     "agedSamples": 8,
+     "rejectedEvents": 0,
+     "disconnects": 0,
+     "sourceGaps": 0,
+     "dropped": 0,
+     "samples": 2400,
+     "captures": 135,
+     "batch": 5,
+     "playGeneration": 5,
+     "observedAtMs": 618420.331862,
+     "diagnosticsEvicted": 0,
+     "active": true,
+     "waitingForPlay": false,
+     "reason": ""
+    }
+   }
+  },
+  {
+   "id": "UP-LOAD-04-snapshot",
+   "description": "create and review a snapshot after rollover",
+   "outcome": "PASS",
+   "ms": 458,
+   "value": {
+    "tailSnap": "11373dd0-3ce8-4f13-be06-e4a58f4b3440",
+    "live": [
+     "Still live=1.00 MiB"
+    ],
+    "retainedCount": 6
+   }
+  },
+  {
+   "id": "UP-LOAD-04-clear",
+   "description": "clear after rollover",
+   "outcome": "PASS",
+   "ms": 332,
+   "value": {
+    "unity": 0,
+    "solo": 0
+   }
+  },
+  {
+   "id": "UP-LOAD-04-record-again",
+   "description": "Snapshot and record again after rollover",
+   "outcome": "PASS",
+   "ms": 180,
+   "value": {
+    "batch": [
+     5,
+     6
+    ]
+   }
+  },
+  {
+   "id": "UP-LOAD-04-play-again",
+   "description": "Stop Play -> Play after rollover",
+   "outcome": "PASS",
+   "ms": 772,
+   "value": {
+    "batch": [
+     6,
+     7
+    ],
+    "generation": [
+     5,
+     6
+    ],
+    "counters": {
+     "evictedCaptures": 9737019,
+     "agedSamples": 15,
+     "rejectedEvents": 0,
+     "disconnects": 0,
+     "sourceGaps": 0,
+     "dropped": 0,
+     "samples": 2400,
+     "captures": 136,
+     "batch": 7,
+     "playGeneration": 6,
+     "observedAtMs": 620162.8689939999,
+     "diagnosticsEvicted": 0,
+     "active": true,
+     "waitingForPlay": false,
+     "reason": ""
+    }
+   }
+  },
+  {
+   "id": "UP-JNY-10",
+   "description": "Stop profiling leaves the disposable Editor alive and playing",
+   "outcome": "PASS",
+   "ms": 177,
+   "value": {
+    "before": {
+     "evictedCaptures": 9737020,
+     "agedSamples": 15,
+     "rejectedEvents": 0,
+     "disconnects": 0,
+     "sourceGaps": 0,
+     "dropped": 0,
+     "samples": 2400,
+     "captures": 137,
+     "batch": 7,
+     "playGeneration": 6,
+     "observedAtMs": 620191.9252579999,
+     "diagnosticsEvicted": 0,
+     "active": true,
+     "waitingForPlay": false,
+     "reason": ""
+    },
+    "after": {
+     "evictedCaptures": 9738920,
+     "agedSamples": 16,
+     "rejectedEvents": 0,
+     "disconnects": 0,
+     "sourceGaps": 0,
+     "dropped": 0,
+     "samples": 2400,
+     "captures": 137,
+     "batch": 7,
+     "playGeneration": 6,
+     "observedAtMs": 620315.8895599999,
+     "diagnosticsEvicted": 0,
+     "active": false,
+     "waitingForPlay": false,
+     "reason": "Profiling stopped; target left running"
+    },
+    "unityPlaying": true,
+    "frames": 1
+   }
+  }
+ ],
+ "counterTimeline": [
+  {
+   "at": "2026-10-17T21:52:44.014Z",
+   "elapsedMs": 54,
+   "unityFrames": 1,
+   "samples": 63,
+   "agedSamples": 0,
+   "evictedCaptures": 563,
+   "sourceGaps": 0,
+   "rejectedEvents": 0,
+   "disconnects": 0,
+   "dropped": 0,
+   "uiRoundTripMs": 43
+  },
+  {
+   "at": "2026-10-17T21:52:59.093Z",
+   "elapsedMs": 15133,
+   "unityFrames": 246639,
+   "samples": 123,
+   "agedSamples": 0,
+   "evictedCaptures": 247180,
+   "sourceGaps": 0,
+   "rejectedEvents": 0,
+   "disconnects": 0,
+   "dropped": 0,
+   "uiRoundTripMs": 43
+  },
+  {
+   "at": "2026-10-17T21:53:14.148Z",
+   "elapsedMs": 30188,
+   "unityFrames": 487311,
+   "samples": 182,
+   "agedSamples": 0,
+   "evictedCaptures": 491362,
+   "sourceGaps": 0,
+   "rejectedEvents": 0,
+   "disconnects": 0,
+   "dropped": 0,
+   "uiRoundTripMs": 41
+  },
+  {
+   "at": "2026-10-17T21:53:29.204Z",
+   "elapsedMs": 45244,
+   "unityFrames": 737002,
+   "samples": 241,
+   "agedSamples": 0,
+   "evictedCaptures": 739984,
+   "sourceGaps": 0,
+   "rejectedEvents": 0,
+   "disconnects": 0,
+   "dropped": 0,
+   "uiRoundTripMs": 42
+  },
+  {
+   "at": "2026-10-17T21:53:44.269Z",
+   "elapsedMs": 60309,
+   "unityFrames": 986106,
+   "samples": 301,
+   "agedSamples": 0,
+   "evictedCaptures": 987905,
+   "sourceGaps": 0,
+   "rejectedEvents": 0,
+   "disconnects": 0,
+   "dropped": 0,
+   "uiRoundTripMs": 42
+  },
+  {
+   "at": "2026-10-17T21:53:59.326Z",
+   "elapsedMs": 75366,
+   "unityFrames": 1235260,
+   "samples": 360,
+   "agedSamples": 0,
+   "evictedCaptures": 1236053,
+   "sourceGaps": 0,
+   "rejectedEvents": 0,
+   "disconnects": 0,
+   "dropped": 0,
+   "uiRoundTripMs": 42
+  },
+  {
+   "at": "2026-10-17T21:54:14.384Z",
+   "elapsedMs": 90424,
+   "unityFrames": 1482576,
+   "samples": 419,
+   "agedSamples": 0,
+   "evictedCaptures": 1486771,
+   "sourceGaps": 0,
+   "rejectedEvents": 0,
+   "disconnects": 0,
+   "dropped": 0,
+   "uiRoundTripMs": 43
+  },
+  {
+   "at": "2026-10-17T21:54:29.442Z",
+   "elapsedMs": 105482,
+   "unityFrames": 1732932,
+   "samples": 478,
+   "agedSamples": 0,
+   "evictedCaptures": 1736074,
+   "sourceGaps": 0,
+   "rejectedEvents": 0,
+   "disconnects": 0,
+   "dropped": 0,
+   "uiRoundTripMs": 42
+  },
+  {
+   "at": "2026-10-17T21:54:44.459Z",
+   "elapsedMs": 120499,
+   "unityFrames": 1980584,
+   "samples": 537,
+   "agedSamples": 0,
+   "evictedCaptures": 1982878,
+   "sourceGaps": 0,
+   "rejectedEvents": 0,
+   "disconnects": 0,
+   "dropped": 0,
+   "uiRoundTripMs": 1
+  },
+  {
+   "at": "2026-10-17T21:54:59.522Z",
+   "elapsedMs": 135562,
+   "unityFrames": 2226733,
+   "samples": 596,
+   "agedSamples": 0,
+   "evictedCaptures": 2227346,
+   "sourceGaps": 0,
+   "rejectedEvents": 0,
+   "disconnects": 0,
+   "dropped": 0,
+   "uiRoundTripMs": 43
+  },
+  {
+   "at": "2026-10-17T21:55:14.543Z",
+   "elapsedMs": 150583,
+   "unityFrames": 2463775,
+   "samples": 655,
+   "agedSamples": 0,
+   "evictedCaptures": 2467666,
+   "sourceGaps": 0,
+   "rejectedEvents": 0,
+   "disconnects": 0,
+   "dropped": 0,
+   "uiRoundTripMs": 1
+  },
+  {
+   "at": "2026-10-17T21:55:29.604Z",
+   "elapsedMs": 165644,
+   "unityFrames": 2704987,
+   "samples": 714,
+   "agedSamples": 0,
+   "evictedCaptures": 2707494,
+   "sourceGaps": 0,
+   "rejectedEvents": 0,
+   "disconnects": 0,
+   "dropped": 0,
+   "uiRoundTripMs": 42
+  },
+  {
+   "at": "2026-10-17T21:55:44.625Z",
+   "elapsedMs": 180665,
+   "unityFrames": 2945280,
+   "samples": 773,
+   "agedSamples": 0,
+   "evictedCaptures": 2946994,
+   "sourceGaps": 0,
+   "rejectedEvents": 0,
+   "disconnects": 0,
+   "dropped": 0,
+   "uiRoundTripMs": 2
+  },
+  {
+   "at": "2026-10-17T21:55:59.695Z",
+   "elapsedMs": 195735,
+   "unityFrames": 3186999,
+   "samples": 832,
+   "agedSamples": 0,
+   "evictedCaptures": 3187287,
+   "sourceGaps": 0,
+   "rejectedEvents": 0,
+   "disconnects": 0,
+   "dropped": 0,
+   "uiRoundTripMs": 44
+  },
+  {
+   "at": "2026-10-17T21:56:14.759Z",
+   "elapsedMs": 210799,
+   "unityFrames": 3423847,
+   "samples": 891,
+   "agedSamples": 0,
+   "evictedCaptures": 3427483,
+   "sourceGaps": 0,
+   "rejectedEvents": 0,
+   "disconnects": 0,
+   "dropped": 0,
+   "uiRoundTripMs": 43
+  },
+  {
+   "at": "2026-10-17T21:56:29.843Z",
+   "elapsedMs": 225883,
+   "unityFrames": 3665833,
+   "samples": 950,
+   "agedSamples": 0,
+   "evictedCaptures": 3669000,
+   "sourceGaps": 0,
+   "rejectedEvents": 0,
+   "disconnects": 0,
+   "dropped": 0,
+   "uiRoundTripMs": 42
+  },
+  {
+   "at": "2026-10-17T21:56:44.944Z",
+   "elapsedMs": 240984,
+   "unityFrames": 3908720,
+   "samples": 1009,
+   "agedSamples": 0,
+   "evictedCaptures": 3911510,
+   "sourceGaps": 0,
+   "rejectedEvents": 0,
+   "disconnects": 0,
+   "dropped": 0,
+   "uiRoundTripMs": 43
+  },
+  {
+   "at": "2026-10-17T21:57:00.007Z",
+   "elapsedMs": 256047,
+   "unityFrames": 4151949,
+   "samples": 1067,
+   "agedSamples": 0,
+   "evictedCaptures": 4154075,
+   "sourceGaps": 0,
+   "rejectedEvents": 0,
+   "disconnects": 0,
+   "dropped": 0,
+   "uiRoundTripMs": 42
+  },
+  {
+   "at": "2026-10-17T21:57:15.071Z",
+   "elapsedMs": 271111,
+   "unityFrames": 4396588,
+   "samples": 1126,
+   "agedSamples": 0,
+   "evictedCaptures": 4397823,
+   "sourceGaps": 0,
+   "rejectedEvents": 0,
+   "disconnects": 0,
+   "dropped": 0,
+   "uiRoundTripMs": 43
+  },
+  {
+   "at": "2026-10-17T21:57:30.092Z",
+   "elapsedMs": 286132,
+   "unityFrames": 4640705,
+   "samples": 1185,
+   "agedSamples": 0,
+   "evictedCaptures": 4641023,
+   "sourceGaps": 0,
+   "rejectedEvents": 0,
+   "disconnects": 0,
+   "dropped": 0,
+   "uiRoundTripMs": 1
+  },
+  {
+   "at": "2026-10-17T21:57:45.157Z",
+   "elapsedMs": 301197,
+   "unityFrames": 4880459,
+   "samples": 1243,
+   "agedSamples": 0,
+   "evictedCaptures": 4883492,
+   "sourceGaps": 0,
+   "rejectedEvents": 0,
+   "disconnects": 0,
+   "dropped": 0,
+   "uiRoundTripMs": 43
+  },
+  {
+   "at": "2026-10-17T21:58:00.179Z",
+   "elapsedMs": 316219,
+   "unityFrames": 5121211,
+   "samples": 1302,
+   "agedSamples": 0,
+   "evictedCaptures": 5123406,
+   "sourceGaps": 0,
+   "rejectedEvents": 0,
+   "disconnects": 0,
+   "dropped": 0,
+   "uiRoundTripMs": 1
+  },
+  {
+   "at": "2026-10-17T21:58:15.204Z",
+   "elapsedMs": 331244,
+   "unityFrames": 5365234,
+   "samples": 1360,
+   "agedSamples": 0,
+   "evictedCaptures": 5365818,
+   "sourceGaps": 0,
+   "rejectedEvents": 0,
+   "disconnects": 0,
+   "dropped": 0,
+   "uiRoundTripMs": 2
+  },
+  {
+   "at": "2026-10-17T21:58:30.229Z",
+   "elapsedMs": 346269,
+   "unityFrames": 5603068,
+   "samples": 1419,
+   "agedSamples": 0,
+   "evictedCaptures": 5606480,
+   "sourceGaps": 0,
+   "rejectedEvents": 0,
+   "disconnects": 0,
+   "dropped": 0,
+   "uiRoundTripMs": 2
+  },
+  {
+   "at": "2026-10-17T21:58:45.256Z",
+   "elapsedMs": 361296,
+   "unityFrames": 5844690,
+   "samples": 1477,
+   "agedSamples": 0,
+   "evictedCaptures": 5846660,
+   "sourceGaps": 0,
+   "rejectedEvents": 0,
+   "disconnects": 0,
+   "dropped": 0,
+   "uiRoundTripMs": 1
+  },
+  {
+   "at": "2026-10-17T21:59:00.321Z",
+   "elapsedMs": 376361,
+   "unityFrames": 6088152,
+   "samples": 1535,
+   "agedSamples": 0,
+   "evictedCaptures": 6088762,
+   "sourceGaps": 0,
+   "rejectedEvents": 0,
+   "disconnects": 0,
+   "dropped": 0,
+   "uiRoundTripMs": 41
+  },
+  {
+   "at": "2026-10-17T21:59:15.349Z",
+   "elapsedMs": 391389,
+   "unityFrames": 6328084,
+   "samples": 1594,
+   "agedSamples": 0,
+   "evictedCaptures": 6332066,
+   "sourceGaps": 0,
+   "rejectedEvents": 0,
+   "disconnects": 0,
+   "dropped": 0,
+   "uiRoundTripMs": 1
+  },
+  {
+   "at": "2026-10-17T21:59:30.417Z",
+   "elapsedMs": 406457,
+   "unityFrames": 6570201,
+   "samples": 1652,
+   "agedSamples": 0,
+   "evictedCaptures": 6572648,
+   "sourceGaps": 0,
+   "rejectedEvents": 0,
+   "disconnects": 0,
+   "dropped": 0,
+   "uiRoundTripMs": 42
+  },
+  {
+   "at": "2026-10-17T21:59:45.526Z",
+   "elapsedMs": 421566,
+   "unityFrames": 6811512,
+   "samples": 1711,
+   "agedSamples": 0,
+   "evictedCaptures": 6813652,
+   "sourceGaps": 0,
+   "rejectedEvents": 0,
+   "disconnects": 0,
+   "dropped": 0,
+   "uiRoundTripMs": 42
+  },
+  {
+   "at": "2026-10-17T22:00:00.595Z",
+   "elapsedMs": 436635,
+   "unityFrames": 7053501,
+   "samples": 1769,
+   "agedSamples": 0,
+   "evictedCaptures": 7055048,
+   "sourceGaps": 0,
+   "rejectedEvents": 0,
+   "disconnects": 0,
+   "dropped": 0,
+   "uiRoundTripMs": 43
+  },
+  {
+   "at": "2026-10-17T22:00:15.664Z",
+   "elapsedMs": 451704,
+   "unityFrames": 7297077,
+   "samples": 1827,
+   "agedSamples": 0,
+   "evictedCaptures": 7297888,
+   "sourceGaps": 0,
+   "rejectedEvents": 0,
+   "disconnects": 0,
+   "dropped": 0,
+   "uiRoundTripMs": 43
+  },
+  {
+   "at": "2026-10-17T22:00:30.715Z",
+   "elapsedMs": 466755,
+   "unityFrames": 7540644,
+   "samples": 1886,
+   "agedSamples": 0,
+   "evictedCaptures": 7540834,
+   "sourceGaps": 0,
+   "rejectedEvents": 0,
+   "disconnects": 0,
+   "dropped": 0,
+   "uiRoundTripMs": 2
+  },
+  {
+   "at": "2026-10-17T22:00:45.785Z",
+   "elapsedMs": 481825,
+   "unityFrames": 7780777,
+   "samples": 1944,
+   "agedSamples": 0,
+   "evictedCaptures": 7783737,
+   "sourceGaps": 0,
+   "rejectedEvents": 0,
+   "disconnects": 0,
+   "dropped": 0,
+   "uiRoundTripMs": 44
+  },
+  {
+   "at": "2026-10-17T22:01:00.813Z",
+   "elapsedMs": 496853,
+   "unityFrames": 8021729,
+   "samples": 2002,
+   "agedSamples": 0,
+   "evictedCaptures": 8024177,
+   "sourceGaps": 0,
+   "rejectedEvents": 0,
+   "disconnects": 0,
+   "dropped": 0,
+   "uiRoundTripMs": 1
+  },
+  {
+   "at": "2026-10-17T22:01:15.885Z",
+   "elapsedMs": 511925,
+   "unityFrames": 8264511,
+   "samples": 2060,
+   "agedSamples": 0,
+   "evictedCaptures": 8265586,
+   "sourceGaps": 0,
+   "rejectedEvents": 0,
+   "disconnects": 0,
+   "dropped": 0,
+   "uiRoundTripMs": 42
+  },
+  {
+   "at": "2026-10-17T22:01:30.917Z",
+   "elapsedMs": 526957,
+   "unityFrames": 8505669,
+   "samples": 2118,
+   "agedSamples": 0,
+   "evictedCaptures": 8506028,
+   "sourceGaps": 0,
+   "rejectedEvents": 0,
+   "disconnects": 0,
+   "dropped": 0,
+   "uiRoundTripMs": 2
+  },
+  {
+   "at": "2026-10-17T22:01:45.948Z",
+   "elapsedMs": 541988,
+   "unityFrames": 8744874,
+   "samples": 2176,
+   "agedSamples": 0,
+   "evictedCaptures": 8747995,
+   "sourceGaps": 0,
+   "rejectedEvents": 0,
+   "disconnects": 0,
+   "dropped": 0,
+   "uiRoundTripMs": 2
+  },
+  {
+   "at": "2026-10-17T22:02:00.980Z",
+   "elapsedMs": 557020,
+   "unityFrames": 8989227,
+   "samples": 2234,
+   "agedSamples": 0,
+   "evictedCaptures": 8990951,
+   "sourceGaps": 0,
+   "rejectedEvents": 0,
+   "disconnects": 0,
+   "dropped": 0,
+   "uiRoundTripMs": 2
+  },
+  {
+   "at": "2026-10-17T22:02:16.010Z",
+   "elapsedMs": 572050,
+   "unityFrames": 9232049,
+   "samples": 2292,
+   "agedSamples": 0,
+   "evictedCaptures": 9232401,
+   "sourceGaps": 0,
+   "rejectedEvents": 0,
+   "disconnects": 0,
+   "dropped": 0,
+   "uiRoundTripMs": 1
+  },
+  {
+   "at": "2026-10-17T22:02:31.066Z",
+   "elapsedMs": 587106,
+   "unityFrames": 9472267,
+   "samples": 2350,
+   "agedSamples": 0,
+   "evictedCaptures": 9475848,
+   "sourceGaps": 0,
+   "rejectedEvents": 0,
+   "disconnects": 0,
+   "dropped": 0,
+   "uiRoundTripMs": 1
+  },
+  {
+   "at": "2026-10-17T22:02:46.133Z",
+   "elapsedMs": 602173,
+   "unityFrames": 9716209,
+   "samples": 2400,
+   "agedSamples": 8,
+   "evictedCaptures": 9718375,
+   "sourceGaps": 0,
+   "rejectedEvents": 0,
+   "disconnects": 0,
+   "dropped": 0,
+   "uiRoundTripMs": 12
+  }
+ ],
+ "finalDiagnostics": [
+  {
+   "untilMs": 891.658445,
+   "kind": "Unity Play ended",
+   "atMs": 891.658445,
+   "count": 1
+  },
+  {
+   "untilMs": 1653.206803,
+   "kind": "Unity Play ended",
+   "atMs": 1653.206803,
+   "count": 1
+  },
+  {
+   "untilMs": 11078.391877,
+   "kind": "Unity Play ended",
+   "atMs": 11078.391877,
+   "count": 1
+  },
+  {
+   "untilMs": 11990.726633,
+   "kind": "Unity Play ended",
+   "atMs": 11990.726633,
+   "count": 1
+  },
+  {
+   "untilMs": 12521.791527,
+   "kind": "Unity Play ended",
+   "atMs": 12521.791527,
+   "count": 1
+  },
+  {
+   "untilMs": 13419.015583,
+   "kind": "Unity Play ended",
+   "atMs": 13419.015583,
+   "count": 1
+  },
+  {
+   "untilMs": 14105.792045,
+   "kind": "Unity Play ended",
+   "atMs": 14105.792045,
+   "count": 1
+  },
+  {
+   "untilMs": 14882.051598,
+   "kind": "Unity Play ended",
+   "atMs": 14882.051598,
+   "count": 1
+  },
+  {
+   "untilMs": 15412.645339,
+   "kind": "Unity Play ended",
+   "atMs": 15412.645339,
+   "count": 1
+  },
+  {
+   "untilMs": 16062.060759,
+   "kind": "Unity Play ended",
+   "atMs": 16062.060759,
+   "count": 1
+  },
+  {
+   "untilMs": 619449.966963,
+   "kind": "Unity Play ended",
+   "atMs": 619449.966963,
+   "count": 1
+  },
+  {
+   "untilMs": 620129.751714,
+   "kind": "Unity Play ended",
+   "atMs": 620129.751714,
+   "count": 1
+  },
+  {
+   "untilMs": 620315.8895599999,
+   "kind": "Profiling stopped; target left running",
+   "atMs": 620315.8895599999,
+   "count": 1
+  }
+ ],
+ "probeHost04": {
+  "fold": {
+   "goldTabTop": 612.5,
+   "viewport": {
+    "w": 1280,
+    "h": 800
+   },
+   "hostScrollHeight": 687,
+   "hostHeight": 419
+  },
+  "before": {
+   "selectedIndex": 0,
+   "selectedFlags": [
+    "session:true:false",
+    "unity.solo:false:false",
+    "unity.native.mix:false:false"
+   ],
+   "value": "session",
+   "rec": null
+  },
+  "afterRow": {
+   "selectedIndex": 0,
+   "selectedFlags": [
+    "session:true:false",
+    "unity.solo:false:false",
+    "unity.native.mix:false:false"
+   ],
+   "value": "session",
+   "rec": null
+  },
+  "detail": "Unity native recording\n\nSolo \u00b7 Unity native recording \u00b7 B1 \u00b7 T86870 \u00b7 1.727s \u00b7 Recording\n\nStatus\nRecording\nThread CPU\n\u2014\nAllocated\n0 B\nAllocation count\n0\nFreed as of observation\n0 B\nCurrent observed survivors\n0 B\nFocus recording\n\nInstrumented native cohort observations. Process CPU/RSS remain whole-p",
+  "afterFocus": {
+   "selectedIndex": 1,
+   "selectedFlags": [
+    "session:false:false",
+    "unity.solo:true:false",
+    "unity.native.mix:false:false"
+   ],
+   "value": "unity.solo",
+   "rec": "solo:unity.solo:1:1"
+  }
+ },
+ "probeK02Trace": [
+  {
+   "step": "first option click",
+   "selectedIndex": 1,
+   "selectedFlags": [
+    "session:false:false",
+    "unity.solo:true:false",
+    "unity.native.mix:false:false"
+   ],
+   "value": "unity.solo",
+   "rec": "solo:unity.solo:1:1"
+  },
+  {
+   "step": "after Live",
+   "selectedIndex": 0,
+   "selectedFlags": [
+    "session:true:false",
+    "unity.solo:false:false",
+    "unity.native.mix:false:false"
+   ],
+   "value": "session",
+   "rec": null
+  },
+  {
+   "step": "same option click again",
+   "selectedIndex": 0,
+   "selectedFlags": [
+    "session:true:false",
+    "unity.solo:false:false",
+    "unity.native.mix:false:false"
+   ],
+   "value": "session",
+   "rec": null
+  },
+  {
+   "step": "different option click",
+   "selectedIndex": 2,
+   "selectedFlags": [
+    "session:false:false",
+    "unity.solo:false:false",
+    "unity.native.mix:true:false"
+   ],
+   "value": "unity.native.mix",
+   "rec": "unity.native.mix:89442:157"
+  },
+  {
+   "step": "after Live 2",
+   "selectedIndex": 0,
+   "selectedFlags": [
+    "session:true:false",
+    "unity.solo:false:false",
+    "unity.native.mix:false:false"
+   ],
+   "value": "session",
+   "rec": null
+  },
+  {
+   "step": "same marker by pointer-open + keyboard",
+   "selectedIndex": 2,
+   "selectedFlags": [
+    "session:false:false",
+    "unity.solo:false:false",
+    "unity.native.mix:true:false"
+   ],
+   "value": "unity.native.mix",
+   "rec": "unity.native.mix:89442:264"
+  }
+ ]
+}

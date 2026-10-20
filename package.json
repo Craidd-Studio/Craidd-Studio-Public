@@ -14,7 +14,14 @@
     "test:exit": "node --test tests/exitBlockers.test.mjs",
     "preview": "vite preview",
     "tauri": "tauri",
-    "test:profiling": "node --test tests/profiling.test.mjs"
+    "test:docs": "node --test tests/markdownDocs.test.mjs",
+    "test:profiling": "node --test tests/profiling.test.mjs",
+    "test:ui:build": "tauri build --debug --no-bundle",
+    "test:ui": "node --test --test-concurrency=1 tests/ui/*.test.mjs",
+    "test:ui:profiling": "CRAIDD_TEST_UNITY=1 node --test --test-concurrency=1 tests/ui/profiler-icons.test.mjs tests/ui/unity-profiling.test.mjs tests/ui/unity-scopes.test.mjs tests/ui/unity-recovery.test.mjs tests/ui/unity-overlay.test.mjs tests/ui/unity-review-regressions.test.mjs",
+    "test:ui:profiling:long": "CRAIDD_TEST_LONG=1 npm run test:ui:profiling",
+    "test:profiler-workspace": "node tests/profilerWorkspace.test.mjs",
+    "test:ui:profiler-workspace": "node tests/ui/profiler-workspace.test.mjs"
   },
   "dependencies": {
     "@monaco-editor/react": "^4.7.0",
@@ -25,6 +32,9 @@
     "monaco-editor": "^0.56.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
+    "react-markdown": "^10.1.0",
+    "rehype-highlight": "^7.0.2",
+    "remark-gfm": "^4.0.1",
     "tailwindcss": "^4.3.3",
     "zustand": "^5.0.15"
   },
@@ -34,6 +44,7 @@
     "@types/react-dom": "^19.1.6",
     "@vitejs/plugin-react": "^6.0.2",
     "typescript": "~6.0.3",
-    "vite": "^8.0.16"
+    "vite": "^8.0.16",
+    "@types/hast": "^3.0.5"
   }
 }

@@ -17,10 +17,22 @@ native attach, future Unity C# / LDI qualification, non-stopping Gold capture
 and runtime lifecycle. Start with the [Gold capture contract](feats/profiling/design-gold-capture.md)
 for the single solo, paired ranges and Profiler result rules. The experimental
 implementation includes process gauges and prepared native hooks; complete
-Unity usability acceptance remains open in the
-[UI/UX harness checklist](uiux/unity-profiling-harness-checklist.md), with
-[initial findings](bugs/16-10-2026/unity-profiling-uiux-report.md) and an
+Unity fixture qualification and remaining usability gates are recorded in the
+[UI/UX harness checklist](uiux/unity-profiling-harness-checklist.md) and
+[repair report](bugs/16-10-2026/unity-profiling-final-report.md), following the
+[initial findings](bugs/16-10-2026/unity-profiling-uiux-report.md) and
 [Opus review handoff](handoffs/handoff-unity-profiling-uiux-2026-10-16.md).
+
+The [unified scope contract](feats/profiling/design-profiler-scopes.md) and
+[Phase 2 report](bugs/17-10-2026/profiler-scopes-report.md) cover shared
+Gold/Solo windows, separate manual snapshot history and subsequent verification.
+Human baseline acceptance remains separately attributed in that report.
+
+The [detailed Unity UI/UX acceptance runbook](uiux/unity-profiling-manual-acceptance-checklist.md)
+starts a fresh joint review of native profiling and the Profiling editor tab.
+The [language extension plan](uiux/profiling-language-extension-plan.md) describes
+C++/C#/Rust, MT and distinct managed-LDI/live-native gates for a later reviewed
+`feat/profiling` checkpoint. These are unexecuted plans, not new acceptance results.
 
 The rest of the docs are grouped by purpose:
 
@@ -39,9 +51,15 @@ The philosophy documents are grouped by topic. Start with the [philosophy index]
 
 The [future MT debugging investigations](feats/mt-debugging/future/README.md) cover Python/CPython, Java/JNI, assembly/disassembly, and maintenance of the optional patched Samsung netcoredbg experiment. They do not expand the current support claim.
 
-The [Docs viewer design collection](feats/editor/docs-viewer/README.md) records editable Markdown Preview with View Source / View Preview controls and a preferred Docs sidebar direction backed by File Discovery. It retains docs-as-project as an alternative, explores potential HTML/PDF viewers, and identifies the editing, discovery and document-management decisions needed before implementation. It is unscheduled design work.
+The [Docs viewer collection](feats/editor/docs-viewer/README.md) now includes an
+[initial Markdown / Docs implementation record](feats/editor/docs-viewer/implementation-markdown-docs.md):
+a Docs sidebar, View Source / View Preview, source-preserving block editing and
+formatting shortcuts. Automated/browser checks are recorded separately from
+remaining native desktop acceptance. Full rich text editing, docs-as-project,
+and HTML/PDF viewers remain future work. Session context is in the
+[Markdown / Docs handoff](handoffs/handoff-markdown-docs.md).
 
 ---
 
-*Last updated: Phase 3.x / 3.5, 16 October 2026. Author(s): ShinkuKira21.*
+*Last updated: Phase 3.x / 3.5, 20 October 2026. Author(s): ShinkuKira21.*
 *This document is a record.*
