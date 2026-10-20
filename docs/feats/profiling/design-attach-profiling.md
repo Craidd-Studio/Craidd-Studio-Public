@@ -16,6 +16,16 @@ the current layout-only Profiler.
 
 The [experimental implementation](implementation-attach-gold.md) supplies Linux process gauges and opt-in C++ source events. These are separate from the proposed perf stack/module checkpoint below.
 
+The proposed [generic profiling revisions](revisions/README.md) extend this
+design: [GR-001](revisions/gr-001-metric-csv-import.md) adds imported/live CSV
+metric sources, and [GR-002](revisions/gr-002-external-pid-sampling-perf.md)
+specifies the PID sampling checkpoint for large native and JIT workloads.
+The [accepted decisions](revisions/implementation-decisions.md) stage delivery.
+[GR-001 M1](revisions/gr-001-m1-results.md) passes automated release gates and
+awaits human acceptance. [GR-002 qualification](revisions/perf-qualification-results.md)
+records the installed native timed checkpoint. In-IDE timed perf is next in
+priority, with M2 then M3 waiting; neither full revision is delivered.
+
 ## Target ownership and capture mechanism are separate
 
 A profile targets either a process Craidd launched or a foreign process the
@@ -185,5 +195,5 @@ Unity acceptance is recorded separately against an actual Editor/player.
 
 ---
 
-*Last updated: Phase 3.5, 15 October 2026. Author(s): ShinkuKira21.*
+*Last updated: Phase 3.5, 20 October 2026. Author(s): ShinkuKira21.*
 *This document is a design.*

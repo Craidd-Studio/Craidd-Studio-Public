@@ -1,0 +1,5 @@
+/target/
+*.csv
+*.crmetrics
+__pycache__/
+!fixtures/*.csv

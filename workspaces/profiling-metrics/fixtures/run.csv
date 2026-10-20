@@ -1,0 +1,11 @@
+elapsed_s,p99_ms,objects,note
+0,10,40,start
+1,70,44,slow
+2,bad,44,rejected numeric
+3,20,46,unjoined companion
+4,30
+5,,49,empty percentile
+6,40,50,"unsupported multiline
+7,999,999,continuation is not a row
+end"
+8,50,52,"last, quoted"

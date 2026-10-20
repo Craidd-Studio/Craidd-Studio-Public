@@ -47,3 +47,5 @@ CLAUDE.md
 
 # Lightweight Unity interop fixture; its own ignore excludes caches and binaries.
 !workspaces/unity/
+!workspaces/profiling-metrics/
+!workspaces/profiling-perf-qualification/

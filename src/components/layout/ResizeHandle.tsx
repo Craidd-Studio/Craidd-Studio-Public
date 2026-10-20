@@ -13,27 +13,30 @@ interface Props {
  * We use pointer capture so drag works even when the pointer leaves the handle.
  */
 export default function ResizeHandle({ orientation, onDrag, className = "" }: Props) {
-  const dragging = useRef(false);
+  const draggingPointer = useRef<number | null>(null);
   const lastPos = useRef(0);
 
+  const endDrag = useCallback((e: React.PointerEvent) => {
+    if (draggingPointer.current !== e.pointerId) return;
+    draggingPointer.current = null;
+    try { e.currentTarget.releasePointerCapture(e.pointerId); } catch {}
+  }, []);
+
   const onPointerDown = useCallback((e: React.PointerEvent) => {
-    dragging.current = true;
+    if (e.button !== 0 || e.isPrimary === false || draggingPointer.current !== null) return;
+    draggingPointer.current = e.pointerId;
     lastPos.current = orientation === "vertical" ? e.clientX : e.clientY;
-    (e.target as HTMLElement).setPointerCapture(e.pointerId);
+    e.currentTarget.setPointerCapture(e.pointerId);
   }, [orientation]);
 
   const onPointerMove = useCallback((e: React.PointerEvent) => {
-    if (!dragging.current) return;
+    if (draggingPointer.current !== e.pointerId) return;
+    if (!(e.buttons & 1)) { endDrag(e); return; }
     const pos = orientation === "vertical" ? e.clientX : e.clientY;
     const delta = pos - lastPos.current;
     lastPos.current = pos;
-    onDrag(delta);
-  }, [orientation, onDrag]);
-
-  const onPointerUp = useCallback((e: React.PointerEvent) => {
-    dragging.current = false;
-    try { (e.target as HTMLElement).releasePointerCapture(e.pointerId); } catch {}
-  }, []);
+    if (delta) onDrag(delta);
+  }, [orientation, onDrag, endDrag]);
 
   const isVertical = orientation === "vertical";
 
@@ -41,7 +44,9 @@ export default function ResizeHandle({ orientation, onDrag, className = "" }: Pr
     <div
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}
-      onPointerUp={onPointerUp}
+      onPointerUp={endDrag}
+      onPointerCancel={endDrag}
+      onLostPointerCapture={endDrag}
       className={
         "group relative shrink-0 " +
         (isVertical

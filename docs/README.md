@@ -28,6 +28,17 @@ The [unified scope contract](feats/profiling/design-profiler-scopes.md) and
 Gold/Solo windows, separate manual snapshot history and subsequent verification.
 Human baseline acceptance remains separately attributed in that report.
 
+The [generic profiling revisions](feats/profiling/revisions/README.md) retain
+[GR-001: metric CSV import and live follow](feats/profiling/revisions/gr-001-metric-csv-import.md)
+and [GR-002: external PID sampling with perf](feats/profiling/revisions/gr-002-external-pid-sampling-perf.md).
+They apply beyond Unity and retain baseline `8bac01e`. The
+[accepted decisions](feats/profiling/revisions/implementation-decisions.md) stage
+delivery: [GR-001 M1 results](feats/profiling/revisions/gr-001-m1-results.md)
+pass automated release gates and await [human acceptance](feats/profiling/revisions/gr-001-m1-human-acceptance.md);
+[perf qualification](feats/profiling/revisions/perf-qualification-results.md) now
+records the installed native timed checkpoint. In-IDE perf remains proposed;
+M2 then M3 wait behind that delivery. Neither full revision is delivered.
+
 The [detailed Unity UI/UX acceptance runbook](uiux/unity-profiling-manual-acceptance-checklist.md)
 starts a fresh joint review of native profiling and the Profiling editor tab.
 The [language extension plan](uiux/profiling-language-extension-plan.md) describes

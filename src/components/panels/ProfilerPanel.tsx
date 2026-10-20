@@ -5,6 +5,8 @@ import { useProfiling, canTakeSnapshot, snapshotIncludesRecording, type GoldCapt
 import { goldBenchmarks, resolveGoldBenchmark, resolveProfileScope, recordingLabel, timelineEntries } from "../../lib/profilingSelection";
 import { useGold } from "../../store/goldStore";
 import { useSolution } from "../../store/solutionStore";
+import { useMetrics } from "../../store/metricStore";
+import MetricImportPanel from "./MetricImportPanel";
 
 const bytes = (n: number) => n >= 1048576 ? `${(n / 1048576).toFixed(2)} MiB` : n >= 1024 ? `${(n / 1024).toFixed(1)} KiB` : `${n} B`;
 const ms = (n: number | null) => n === null ? "—" : `${n.toFixed(2)} ms`;
@@ -97,6 +99,19 @@ function CaptureGraph({ label, hits, value, format, color }: {
 }
 
 export default function ProfilerPanel({ expanded = false }: { expanded?: boolean }) {
+  const active = useMetrics(s => s.active) && expanded;
+  const setActive = useMetrics(s => s.setActive);
+  return <div className="profiler-source-host" aria-label={expanded ? "Profiler editor" : "Profiler sidebar"}>
+    {expanded && <nav className="profiler-source-picker" aria-label="Profiler sources">
+      <button aria-pressed={!active} onClick={() => setActive(false)}>Process / Gold</button>
+      <button aria-pressed={active} onClick={() => setActive(true)}>Imported metrics</button>
+    </nav>}
+    {!expanded && <div className="profiler-host-actions"><button onClick={() => { setActive(false); openProfilerWorkspace(); }}>Open in Editor Panel</button><button onClick={() => { setActive(true); openProfilerWorkspace(); }}>Open metric imports</button></div>}
+    {active ? <MetricImportPanel /> : <ProcessProfilerPanel expanded={expanded} />}
+  </div>;
+}
+
+function ProcessProfilerPanel({ expanded = false }: { expanded?: boolean }) {
   const state = useProfiling();
   const gold = useGold(s => s.points);
   const file = useSolution(s => s.activeFileId ?? s.lastSourceFileId);
@@ -215,7 +230,6 @@ export default function ProfilerPanel({ expanded = false }: { expanded?: boolean
       <span className="profiler-toolbar-space" />
       <button title="Profiling settings and source markers" aria-label="Profiling settings" aria-expanded={setup} onClick={() => setSetup(!setup)}><ProfilerIcon kind="settings" /></button>
     </div>
-    {!expanded && <div className="profiler-host-actions"><button onClick={openProfilerWorkspace}>Open in Editor Panel</button></div>}
     <div className="profiler-target" title={p ? `${p.name} · PID ${p.target.pid} · start ${p.target.birth}` : "Attach to a process, or start Debug"}>
       <span className={`profiler-status ${p?.active && !state.selected ? "is-live" : ""}`} />
       <strong>{p ? `${p.name} · ${p.target.pid}` : "No process selected"}</strong>

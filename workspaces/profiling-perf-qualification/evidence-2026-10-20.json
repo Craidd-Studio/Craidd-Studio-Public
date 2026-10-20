@@ -1,0 +1,270 @@
+{
+  "machine": {
+    "uname": [
+      "Linux",
+      "sk27",
+      "7.2.11-arch1-1",
+      "#1 SMP PREEMPT_DYNAMIC Fri, 16 Oct 2026 00:28:58 +0000",
+      "x86_64",
+      ""
+    ],
+    "cpu": "AMD Ryzen 9 9950X3D 16-Core Processor",
+    "memory": "MemTotal:       63297788 kB"
+  },
+  "sourceSha256": "e227090c754aa4a33d7315c54fcd70660e79450be18d583c391671013bd72bab",
+  "runnerSha256": "450020040e972d8a807eacbb8dc40749d52ba706b154198705c0528fa06ae6f0",
+  "baseline": "8bac01edf9bf1f0a0b84b55441b5638bc1233a29",
+  "sysctls": {
+    "kernel.perf_event_paranoid": "2",
+    "kernel.kptr_restrict": "0",
+    "kernel.yama.ptrace_scope": "1"
+  },
+  "credentials": [
+    "Uid:\t1000\t1000\t1000\t1000",
+    "Gid:\t1000\t1000\t1000\t1000",
+    "CapInh:\t0000000000000000",
+    "CapPrm:\t0000000000000000",
+    "CapEff:\t0000000000000000",
+    "CapBnd:\t0000000000000000",
+    "CapAmb:\t0000000000000000",
+    "NoNewPrivs:\t1",
+    "Seccomp:\t2"
+  ],
+  "perfPath": null,
+  "alternativePaths": {
+    "/usr/bin/perf": false,
+    "/usr/libexec/perf": false
+  },
+  "captureSettings": {
+    "event": "cpu-clock:u",
+    "frequency": 99,
+    "seconds": 3,
+    "note": "qualification settings, not accepted product defaults"
+  },
+  "tools": {
+    "g++": {
+      "command": [
+        "g++",
+        "--version"
+      ],
+      "exitCode": 0,
+      "seconds": 0.0006667390043730848,
+      "version": "g++ (GCC) 16.2.1 20260810"
+    },
+    "readelf": {
+      "command": [
+        "readelf",
+        "--version"
+      ],
+      "exitCode": 0,
+      "seconds": 0.0020620969953597523,
+      "version": "GNU readelf (GNU Binutils) 2.47"
+    },
+    "nm": {
+      "command": [
+        "nm",
+        "--version"
+      ],
+      "exitCode": 0,
+      "seconds": 0.0005825789994560182,
+      "version": "GNU nm (GNU Binutils) 2.47"
+    },
+    "objdump": {
+      "command": [
+        "objdump",
+        "--version"
+      ],
+      "exitCode": 0,
+      "seconds": 0.0020755559962708503,
+      "version": "GNU objdump (GNU Binutils) 2.47"
+    }
+  },
+  "modes": {
+    "fp": {
+      "binarySha256": "a61e431f10e2c8f39fc719a5c5256490f99dfaab6ad6cb498b93e6216bc7512f",
+      "commands": {
+        "build": {
+          "command": [
+            "g++",
+            "-std=c++17",
+            "-O2",
+            "-g",
+            "-pthread",
+            "-Wl,--build-id",
+            "-fno-omit-frame-pointer",
+            "-mno-omit-leaf-frame-pointer",
+            "/home/skira24/.codex/worktrees/9b33/Craidd-Studio/workspaces/profiling-perf-qualification/fixture.cpp",
+            "-o",
+            "/tmp/craidd-perf-gr002-20261020-v3/fixture-fp"
+          ],
+          "exitCode": 0,
+          "seconds": 0.28924707100668456
+        },
+        "symbols": {
+          "command": [
+            "nm",
+            "-C",
+            "/tmp/craidd-perf-gr002-20261020-v3/fixture-fp"
+          ],
+          "exitCode": 0,
+          "seconds": 0.005884320002223831
+        },
+        "sections": {
+          "command": [
+            "readelf",
+            "-S",
+            "/tmp/craidd-perf-gr002-20261020-v3/fixture-fp"
+          ],
+          "exitCode": 0,
+          "seconds": 0.001870576998044271
+        },
+        "build-id": {
+          "command": [
+            "readelf",
+            "-n",
+            "/tmp/craidd-perf-gr002-20261020-v3/fixture-fp"
+          ],
+          "exitCode": 0,
+          "seconds": 0.002115876995958388
+        },
+        "known-hot-asm": {
+          "command": [
+            "objdump",
+            "-d",
+            "--disassemble=known_hot",
+            "/tmp/craidd-perf-gr002-20261020-v3/fixture-fp"
+          ],
+          "exitCode": 0,
+          "seconds": 0.002607474998512771
+        }
+      },
+      "targetPid": 18,
+      "targetBirth": "4045143",
+      "tasks": {
+        "18": "fixture-fp",
+        "19": "hot-worker",
+        "20": "pool-worker",
+        "21": "pool-worker"
+      },
+      "buildAndSmoke": "PASS",
+      "binaryEvidence": {
+        "knownSymbolsPresent": true,
+        "debugInfoPresent": true,
+        "knownHotFramePointerPresent": true,
+        "buildId": "fc145315e72705f87e513770ecf0c281f4733ca9"
+      },
+      "capture": "BLOCKED",
+      "reason": "perf executable not found",
+      "safeCollectorStop": "BLOCKED",
+      "samples": "BLOCKED",
+      "symbols": "BLOCKED",
+      "loss": "BLOCKED",
+      "fixtureAliveBeforeNormalShutdown": true
+    },
+    "dwarf": {
+      "binarySha256": "83aa2e2bcce25561eeee8f59807c31ed0156719d665eb665b11e94c74b824fef",
+      "commands": {
+        "build": {
+          "command": [
+            "g++",
+            "-std=c++17",
+            "-O2",
+            "-g",
+            "-pthread",
+            "-Wl,--build-id",
+            "-fomit-frame-pointer",
+            "/home/skira24/.codex/worktrees/9b33/Craidd-Studio/workspaces/profiling-perf-qualification/fixture.cpp",
+            "-o",
+            "/tmp/craidd-perf-gr002-20261020-v3/fixture-dwarf"
+          ],
+          "exitCode": 0,
+          "seconds": 0.3106172650004737
+        },
+        "symbols": {
+          "command": [
+            "nm",
+            "-C",
+            "/tmp/craidd-perf-gr002-20261020-v3/fixture-dwarf"
+          ],
+          "exitCode": 0,
+          "seconds": 0.007254437994561158
+        },
+        "sections": {
+          "command": [
+            "readelf",
+            "-S",
+            "/tmp/craidd-perf-gr002-20261020-v3/fixture-dwarf"
+          ],
+          "exitCode": 0,
+          "seconds": 0.0021803569979965687
+        },
+        "build-id": {
+          "command": [
+            "readelf",
+            "-n",
+            "/tmp/craidd-perf-gr002-20261020-v3/fixture-dwarf"
+          ],
+          "exitCode": 0,
+          "seconds": 0.00159424699813826
+        },
+        "known-hot-asm": {
+          "command": [
+            "objdump",
+            "-d",
+            "--disassemble=known_hot",
+            "/tmp/craidd-perf-gr002-20261020-v3/fixture-dwarf"
+          ],
+          "exitCode": 0,
+          "seconds": 0.002455945999827236
+        }
+      },
+      "targetPid": 31,
+      "targetBirth": "4045179",
+      "tasks": {
+        "31": "fixture-dwarf",
+        "32": "hot-worker",
+        "33": "pool-worker",
+        "34": "pool-worker"
+      },
+      "buildAndSmoke": "PASS",
+      "binaryEvidence": {
+        "knownSymbolsPresent": true,
+        "debugInfoPresent": true,
+        "knownHotFramePointerPresent": false,
+        "buildId": "514262a4b67788b1665c4984a3b133b2e849ca32"
+      },
+      "capture": "BLOCKED",
+      "reason": "perf executable not found",
+      "safeCollectorStop": "BLOCKED",
+      "samples": "BLOCKED",
+      "symbols": "BLOCKED",
+      "loss": "BLOCKED",
+      "fixtureAliveBeforeNormalShutdown": true
+    }
+  },
+  "gates": {
+    "nativeFixtureBuildAndSmoke": "PASS",
+    "perfDiscovery": "BLOCKED",
+    "captureQualification": "BLOCKED",
+    "desktopBehaviour": "NOT TESTED",
+    "flightRecording": "NOT TESTED",
+    "jitAndSymbolScale": "NOT TESTED"
+  },
+  "sysctlsAfter": {
+    "kernel.perf_event_paranoid": "2",
+    "kernel.kptr_restrict": "0",
+    "kernel.yama.ptrace_scope": "1"
+  },
+  "sysctlsUnchanged": true,
+  "normalUserDesktopHostDiscovery": {
+    "uid": 1000,
+    "perf": null,
+    "perfVersion": null,
+    "paranoid": "2",
+    "status": [
+      "CapEff:\t0000000000000000",
+      "NoNewPrivs:\t0",
+      "Seccomp:\t0"
+    ]
+  }
+}

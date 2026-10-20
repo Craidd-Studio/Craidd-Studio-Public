@@ -49,6 +49,24 @@ continue this work with fixed Gold/Solo windows, independent snapshot history
 and explicit native memory semantics. Their automated checks do not change the
 separate human manual acceptance record.
 
+## Generic profiling revisions
+
+The [profiling revisions collection](../feats/profiling/revisions/README.md)
+records two proposals arising from this work that apply to any compatible program:
+
+- [GR-001: Metric CSV import and live follow](../feats/profiling/revisions/gr-001-metric-csv-import.md)
+  — finished/live file sets, window semantics, clock mapping and comparisons.
+- [GR-002: External PID sampling with perf](../feats/profiling/revisions/gr-002-external-pid-sampling-perf.md)
+  — the PID sampling checkpoint, large-symbol/JIT handling and safe collector lifecycle.
+
+Both retain reviewed baseline `8bac01e`. The
+[accepted decisions](../feats/profiling/revisions/implementation-decisions.md)
+stage delivery: [GR-001 M1](../feats/profiling/revisions/gr-001-m1-results.md)
+passes automated release gates and awaits [human acceptance](../feats/profiling/revisions/gr-001-m1-human-acceptance.md);
+native [perf qualification](../feats/profiling/revisions/perf-qualification-results.md)
+now records the installed timed checkpoint. In-IDE timed perf has priority next;
+M2 then M3 wait. These later application features are not delivered.
+
 ## Next acceptance run
 
 Use the [detailed Unity UI/UX checklist](../uiux/unity-profiling-manual-acceptance-checklist.md)

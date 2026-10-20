@@ -1,6 +1,7 @@
 mod commands;
 mod types;
 mod process_supervisor;
+mod metric_csv;
 
 pub use process_supervisor::entry as process_supervisor_entry;
 
@@ -62,12 +63,16 @@ pub fn run() {
         .manage(commands::tauri_dev::TauriDevServers::default())
         .manage(DebugManager::default())
         .manage(commands::profiling::ProfileManager::default())
+        .manage(commands::metrics::MetricManager::default())
         .manage(DebugBuildManager::default())
         .manage(commands::ldi::LdiManager::default())
         .manage(commands::native_debug::NativeDebugManager::default())
         .manage(commands::build_order::OrderManager::default())
         .manage(LinkedWindowRegistry::default())
         .on_window_event(|window, event| {
+            if matches!(event, tauri::WindowEvent::Destroyed) {
+                window.state::<commands::metrics::MetricManager>().close(window.label());
+            }
             if let tauri::WindowEvent::CloseRequested { api, .. } = event {
                 if !prepare_native_close(window) {
                     api.prevent_close();
@@ -81,6 +86,7 @@ pub fn run() {
                     commands::runner::cancel_window_run(&closing_window);
                     commands::debug::cancel_window_debug(&closing_window);
                     commands::profiling::stop(&closing_window.app_handle(),closing_window.label(),"Profiling window closed");
+                    closing_window.state::<commands::metrics::MetricManager>().close(closing_window.label());
                 });
                 remove_linked_window(window);
             }
@@ -88,6 +94,7 @@ pub fn run() {
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
         .invoke_handler(tauri::generate_handler![
+            commands::metrics::metric_action,
             read_file,
             resolve_document_path,
             read_document_image,

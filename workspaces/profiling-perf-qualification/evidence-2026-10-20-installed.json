@@ -1,0 +1,2966 @@
+{
+  "formatVersion": 1,
+  "scope": "native timed installed-version qualification and single-TID overwrite experiments; not product integration acceptance",
+  "historicalMissingToolEvidence": "evidence-2026-10-20.json",
+  "timed": {
+    "run": {
+      "timestampUtc": "2026-10-20T22:14:32.048265+00:00",
+      "machine": {
+        "uname": [
+          "Linux",
+          "sk27",
+          "7.2.11-arch1-1",
+          "#1 SMP PREEMPT_DYNAMIC Fri, 16 Oct 2026 00:28:58 +0000",
+          "x86_64",
+          ""
+        ],
+        "cpu": "AMD Ryzen 9 9950X3D 16-Core Processor",
+        "memory": "MemTotal:       63297788 kB"
+      },
+      "sourceSha256": "e227090c754aa4a33d7315c54fcd70660e79450be18d583c391671013bd72bab",
+      "runnerSha256": "3ed911d93721ae9c24d9050c0a4d97ef8ee1ea63b9aba4f440852cd37112d6f6",
+      "baseline": "8bac01edf9bf1f0a0b84b55441b5638bc1233a29",
+      "sysctls": {
+        "kernel.perf_event_paranoid": "2",
+        "kernel.kptr_restrict": "0",
+        "kernel.yama.ptrace_scope": "1"
+      },
+      "credentials": [
+        "Uid:\t1000\t1000\t1000\t1000",
+        "Gid:\t1000\t1000\t1000\t1000",
+        "CapInh:\t0000000800000000",
+        "CapPrm:\t0000000000000000",
+        "CapEff:\t0000000000000000",
+        "CapBnd:\t000001ffffffffff",
+        "CapAmb:\t0000000000000000",
+        "NoNewPrivs:\t0",
+        "Seccomp:\t0"
+      ],
+      "perfPath": "/usr/bin/perf",
+      "alternativePaths": {
+        "/usr/bin/perf": true,
+        "/usr/libexec/perf": false
+      },
+      "captureSettings": {
+        "event": "cpu-clock:u",
+        "frequency": 99,
+        "seconds": 3,
+        "note": "qualification settings, not accepted product defaults"
+      },
+      "tools": {
+        "g++": {
+          "command": [
+            "g++",
+            "--version"
+          ],
+          "exitCode": 0,
+          "seconds": 0.0007196500009740703,
+          "version": "g++ (GCC) 16.2.1 20260810"
+        },
+        "readelf": {
+          "command": [
+            "readelf",
+            "--version"
+          ],
+          "exitCode": 0,
+          "seconds": 0.002605800997116603,
+          "version": "GNU readelf (GNU Binutils) 2.47"
+        },
+        "nm": {
+          "command": [
+            "nm",
+            "--version"
+          ],
+          "exitCode": 0,
+          "seconds": 0.0007738900021649897,
+          "version": "GNU nm (GNU Binutils) 2.47"
+        },
+        "objdump": {
+          "command": [
+            "objdump",
+            "--version"
+          ],
+          "exitCode": 0,
+          "seconds": 0.002497510999091901,
+          "version": "GNU objdump (GNU Binutils) 2.47"
+        },
+        "perf": {
+          "command": [
+            "/usr/bin/perf",
+            "--version"
+          ],
+          "exitCode": 0,
+          "seconds": 0.0045854019990656525,
+          "version": "perf version 7.2.11-1"
+        }
+      },
+      "modes": {
+        "fp": {
+          "binarySha256": "a61e431f10e2c8f39fc719a5c5256490f99dfaab6ad6cb498b93e6216bc7512f",
+          "commands": {
+            "build": {
+              "command": [
+                "g++",
+                "-std=c++17",
+                "-O2",
+                "-g",
+                "-pthread",
+                "-Wl,--build-id",
+                "-fno-omit-frame-pointer",
+                "-mno-omit-leaf-frame-pointer",
+                "/home/skira24/.codex/worktrees/9b33/Craidd-Studio/workspaces/profiling-perf-qualification/fixture.cpp",
+                "-o",
+                "/tmp/craidd-perf-gr002-20261020-installed-timed-v4/fixture-fp"
+              ],
+              "exitCode": 0,
+              "seconds": 0.3049741860013455
+            },
+            "symbols": {
+              "command": [
+                "nm",
+                "-C",
+                "/tmp/craidd-perf-gr002-20261020-installed-timed-v4/fixture-fp"
+              ],
+              "exitCode": 0,
+              "seconds": 0.005359192000469193
+            },
+            "sections": {
+              "command": [
+                "readelf",
+                "-S",
+                "/tmp/craidd-perf-gr002-20261020-installed-timed-v4/fixture-fp"
+              ],
+              "exitCode": 0,
+              "seconds": 0.0023508710000896826
+            },
+            "build-id": {
+              "command": [
+                "readelf",
+                "-n",
+                "/tmp/craidd-perf-gr002-20261020-installed-timed-v4/fixture-fp"
+              ],
+              "exitCode": 0,
+              "seconds": 0.0019890799958375283
+            },
+            "known-hot-asm": {
+              "command": [
+                "objdump",
+                "-d",
+                "--disassemble=known_hot",
+                "/tmp/craidd-perf-gr002-20261020-installed-timed-v4/fixture-fp"
+              ],
+              "exitCode": 0,
+              "seconds": 0.003080462003708817
+            },
+            "record": {
+              "command": [
+                "/usr/bin/perf",
+                "record",
+                "--no-buildid-cache",
+                "--clockid",
+                "mono",
+                "--timestamp",
+                "--per-thread",
+                "--no-inherit",
+                "--user-callchains",
+                "-e",
+                "cpu-clock:u",
+                "-F",
+                "99",
+                "--call-graph",
+                "fp",
+                "-p",
+                "955806",
+                "-o",
+                "/tmp/craidd-perf-gr002-20261020-installed-timed-v4/fp.data"
+              ],
+              "exitCode": -2,
+              "sigintSentToCollector": true
+            },
+            "script": {
+              "command": [
+                "/usr/bin/perf",
+                "script",
+                "--ns",
+                "--show-lost-events",
+                "-i",
+                "/tmp/craidd-perf-gr002-20261020-installed-timed-v4/fp.data"
+              ],
+              "exitCode": 0,
+              "seconds": 0.017032736002875026
+            },
+            "leaves": {
+              "command": [
+                "/usr/bin/perf",
+                "script",
+                "--ns",
+                "-G",
+                "-F",
+                "comm,pid,tid,time,period,event,ip,sym,dso",
+                "-i",
+                "/tmp/craidd-perf-gr002-20261020-installed-timed-v4/fp.data"
+              ],
+              "exitCode": 0,
+              "seconds": 0.004144591999647673
+            },
+            "report": {
+              "command": [
+                "/usr/bin/perf",
+                "report",
+                "--stdio",
+                "-i",
+                "/tmp/craidd-perf-gr002-20261020-installed-timed-v4/fp.data",
+                "--no-children",
+                "--sort",
+                "pid,symbol",
+                "--percent-limit",
+                "0",
+                "-n"
+              ],
+              "exitCode": 0,
+              "seconds": 0.01004072299838299
+            },
+            "raw-records": {
+              "command": [
+                "/usr/bin/perf",
+                "script",
+                "-D",
+                "-i",
+                "/tmp/craidd-perf-gr002-20261020-installed-timed-v4/fp.data"
+              ],
+              "exitCode": 0,
+              "seconds": 0.01339877499412978
+            },
+            "build-ids": {
+              "command": [
+                "/usr/bin/perf",
+                "buildid-list",
+                "-i",
+                "/tmp/craidd-perf-gr002-20261020-installed-timed-v4/fp.data"
+              ],
+              "exitCode": 0,
+              "seconds": 0.0034935910007334314
+            },
+            "source-lines": {
+              "command": [
+                "/usr/bin/perf",
+                "script",
+                "--ns",
+                "--full-source-path",
+                "-F",
+                "+srcline",
+                "-i",
+                "/tmp/craidd-perf-gr002-20261020-installed-timed-v4/fp.data"
+              ],
+              "exitCode": 0,
+              "seconds": 1.3207831590043497
+            }
+          },
+          "targetPid": 955806,
+          "targetBirth": "4463215",
+          "tasks": {
+            "955806": "fixture-fp",
+            "955807": "hot-worker",
+            "955808": "pool-worker",
+            "955809": "pool-worker"
+          },
+          "buildAndSmoke": "PASS",
+          "binaryEvidence": {
+            "knownSymbolsPresent": true,
+            "debugInfoPresent": true,
+            "knownHotFramePointerPresent": true,
+            "buildId": "fc145315e72705f87e513770ecf0c281f4733ca9"
+          },
+          "targetAliveAfterCollectorStop": true,
+          "expectedCollectorStopExit": true,
+          "capture": "PASS",
+          "safeCollectorStop": "PASS",
+          "samples": "PARTIAL",
+          "symbols": "PARTIAL",
+          "loss": "PARTIAL",
+          "reviewRequired": "Inspect raw attribution, callchains, symbols and loss; these are not parser acceptance results",
+          "rawDataBytes": 69524,
+          "fixtureAliveBeforeNormalShutdown": true
+        },
+        "dwarf": {
+          "binarySha256": "83aa2e2bcce25561eeee8f59807c31ed0156719d665eb665b11e94c74b824fef",
+          "commands": {
+            "build": {
+              "command": [
+                "g++",
+                "-std=c++17",
+                "-O2",
+                "-g",
+                "-pthread",
+                "-Wl,--build-id",
+                "-fomit-frame-pointer",
+                "/home/skira24/.codex/worktrees/9b33/Craidd-Studio/workspaces/profiling-perf-qualification/fixture.cpp",
+                "-o",
+                "/tmp/craidd-perf-gr002-20261020-installed-timed-v4/fixture-dwarf"
+              ],
+              "exitCode": 0,
+              "seconds": 0.28848728299635695
+            },
+            "symbols": {
+              "command": [
+                "nm",
+                "-C",
+                "/tmp/craidd-perf-gr002-20261020-installed-timed-v4/fixture-dwarf"
+              ],
+              "exitCode": 0,
+              "seconds": 0.00487632099975599
+            },
+            "sections": {
+              "command": [
+                "readelf",
+                "-S",
+                "/tmp/craidd-perf-gr002-20261020-installed-timed-v4/fixture-dwarf"
+              ],
+              "exitCode": 0,
+              "seconds": 0.002770011000393424
+            },
+            "build-id": {
+              "command": [
+                "readelf",
+                "-n",
+                "/tmp/craidd-perf-gr002-20261020-installed-timed-v4/fixture-dwarf"
+              ],
+              "exitCode": 0,
+              "seconds": 0.0018214910014648922
+            },
+            "known-hot-asm": {
+              "command": [
+                "objdump",
+                "-d",
+                "--disassemble=known_hot",
+                "/tmp/craidd-perf-gr002-20261020-installed-timed-v4/fixture-dwarf"
+              ],
+              "exitCode": 0,
+              "seconds": 0.0030515909966197796
+            },
+            "record": {
+              "command": [
+                "/usr/bin/perf",
+                "record",
+                "--no-buildid-cache",
+                "--clockid",
+                "mono",
+                "--timestamp",
+                "--per-thread",
+                "--no-inherit",
+                "--user-callchains",
+                "-e",
+                "cpu-clock:u",
+                "-F",
+                "99",
+                "--call-graph",
+                "dwarf,8192",
+                "-p",
+                "955868",
+                "-o",
+                "/tmp/craidd-perf-gr002-20261020-installed-timed-v4/dwarf.data"
+              ],
+              "exitCode": -2,
+              "sigintSentToCollector": true
+            },
+            "script": {
+              "command": [
+                "/usr/bin/perf",
+                "script",
+                "--ns",
+                "--show-lost-events",
+                "-i",
+                "/tmp/craidd-perf-gr002-20261020-installed-timed-v4/dwarf.data"
+              ],
+              "exitCode": 0,
+              "seconds": 0.012932395002280828
+            },
+            "leaves": {
+              "command": [
+                "/usr/bin/perf",
+                "script",
+                "--ns",
+                "-G",
+                "-F",
+                "comm,pid,tid,time,period,event,ip,sym,dso",
+                "-i",
+                "/tmp/craidd-perf-gr002-20261020-installed-timed-v4/dwarf.data"
+              ],
+              "exitCode": 0,
+              "seconds": 0.005534911993891001
+            },
+            "report": {
+              "command": [
+                "/usr/bin/perf",
+                "report",
+                "--stdio",
+                "-i",
+                "/tmp/craidd-perf-gr002-20261020-installed-timed-v4/dwarf.data",
+                "--no-children",
+                "--sort",
+                "pid,symbol",
+                "--percent-limit",
+                "0",
+                "-n"
+              ],
+              "exitCode": 0,
+              "seconds": 0.010300693000317551
+            },
+            "raw-records": {
+              "command": [
+                "/usr/bin/perf",
+                "script",
+                "-D",
+                "-i",
+                "/tmp/craidd-perf-gr002-20261020-installed-timed-v4/dwarf.data"
+              ],
+              "exitCode": 0,
+              "seconds": 0.14943784500064794
+            },
+            "build-ids": {
+              "command": [
+                "/usr/bin/perf",
+                "buildid-list",
+                "-i",
+                "/tmp/craidd-perf-gr002-20261020-installed-timed-v4/dwarf.data"
+              ],
+              "exitCode": 0,
+              "seconds": 0.010899683999014087
+            },
+            "source-lines": {
+              "command": [
+                "/usr/bin/perf",
+                "script",
+                "--ns",
+                "--full-source-path",
+                "-F",
+                "+srcline",
+                "-i",
+                "/tmp/craidd-perf-gr002-20261020-installed-timed-v4/dwarf.data"
+              ],
+              "exitCode": 0,
+              "seconds": 0.017667635998805054
+            }
+          },
+          "targetPid": 955868,
+          "targetBirth": "4463688",
+          "tasks": {
+            "955868": "fixture-dwarf",
+            "955869": "hot-worker",
+            "955870": "pool-worker",
+            "955871": "pool-worker"
+          },
+          "buildAndSmoke": "PASS",
+          "binaryEvidence": {
+            "knownSymbolsPresent": true,
+            "debugInfoPresent": true,
+            "knownHotFramePointerPresent": false,
+            "buildId": "514262a4b67788b1665c4984a3b133b2e849ca32"
+          },
+          "targetAliveAfterCollectorStop": true,
+          "expectedCollectorStopExit": true,
+          "capture": "PASS",
+          "safeCollectorStop": "PASS",
+          "samples": "PARTIAL",
+          "symbols": "PARTIAL",
+          "loss": "PARTIAL",
+          "reviewRequired": "Inspect raw attribution, callchains, symbols and loss; these are not parser acceptance results",
+          "rawDataBytes": 2730260,
+          "fixtureAliveBeforeNormalShutdown": true
+        }
+      },
+      "gates": {
+        "nativeFixtureBuildAndSmoke": "PASS",
+        "perfDiscovery": "PASS",
+        "captureQualification": "PARTIAL",
+        "desktopBehaviour": "NOT TESTED",
+        "flightRecording": "NOT TESTED",
+        "jitAndSymbolScale": "NOT TESTED"
+      },
+      "sysctlsAfter": {
+        "kernel.perf_event_paranoid": "2",
+        "kernel.kptr_restrict": "0",
+        "kernel.yama.ptrace_scope": "1"
+      },
+      "sysctlsUnchanged": true
+    },
+    "analysis": {
+      "fp": {
+        "sampleCount": 319,
+        "unparsedLineCount": 0,
+        "unparsedExamples": [],
+        "firstTime": 44632.204741139,
+        "lastTime": 44635.176474672,
+        "spanSeconds": 2.971733532998769,
+        "events": {
+          "cpu-clock:u": 319
+        },
+        "modules": {
+          "/tmp/craidd-perf-gr002-20261020-installed-timed-v4/fixture-fp": 319
+        },
+        "unresolvedSampleCount": 0,
+        "unresolvedStackFrameCount": 957,
+        "unresolvedStackFrameExamples": [
+          "7f4a44eea859 [unknown] (/usr/lib/libstdc++.so.6.0.36)",
+          "7f4a44a98042 [unknown] (/usr/lib/libc.so.6)",
+          "7f4a44b2072c [unknown] (/usr/lib/libc.so.6)",
+          "7f4a44eea859 [unknown] (/usr/lib/libstdc++.so.6.0.36)",
+          "7f4a44a98042 [unknown] (/usr/lib/libc.so.6)"
+        ],
+        "threads": {
+          "955807": {
+            "comm": "hot-worker",
+            "samples": 295,
+            "firstTime": 44632.204741139,
+            "lastTime": 44635.176474672,
+            "observedSpanSeconds": 2.971733532998769,
+            "observedSamplesPerWallSecond": 98.932154156946,
+            "periodSum": 2979797950,
+            "topSampledFunctions": [
+              {
+                "symbol": "known_hot",
+                "sampleCount": 295,
+                "period": 2979797950,
+                "sampledEventSharePct": 100.0
+              }
+            ]
+          },
+          "955809": {
+            "comm": "pool-worker",
+            "samples": 12,
+            "firstTime": 44632.428231547,
+            "lastTime": 44635.041138014,
+            "observedSpanSeconds": 2.612906467002176,
+            "observedSamplesPerWallSecond": 4.209871321042905,
+            "periodSum": 121212120,
+            "topSampledFunctions": [
+              {
+                "symbol": "known_pool",
+                "sampleCount": 12,
+                "period": 121212120,
+                "sampledEventSharePct": 100.0
+              }
+            ]
+          },
+          "955808": {
+            "comm": "pool-worker",
+            "samples": 12,
+            "firstTime": 44632.438408951,
+            "lastTime": 44635.144822421,
+            "observedSpanSeconds": 2.706413470004918,
+            "observedSamplesPerWallSecond": 4.064419617295213,
+            "periodSum": 121212120,
+            "topSampledFunctions": [
+              {
+                "symbol": "known_pool",
+                "sampleCount": 12,
+                "period": 121212120,
+                "sampledEventSharePct": 100.0
+              }
+            ]
+          }
+        },
+        "hotParentChainBlocks": 295,
+        "lostRecordCount": 0,
+        "lostRecordExamples": [],
+        "lostCountsParsed": [],
+        "lostCountSum": 0,
+        "lostSampleCounterRecordCount": 0,
+        "lostSampleCounterSum": 0,
+        "lostSampleCounterExamples": [],
+        "lossAccounting": "LOST records and LOST_SAMPLES counters are separate, potentially overlapping reports; never summed together",
+        "note": "sampled event/period shares; no exact self-time or causal attribution"
+      },
+      "dwarf": {
+        "sampleCount": 319,
+        "unparsedLineCount": 0,
+        "unparsedExamples": [],
+        "firstTime": 44636.936786568,
+        "lastTime": 44639.909126528,
+        "spanSeconds": 2.9723399599970435,
+        "events": {
+          "cpu-clock:u": 319
+        },
+        "modules": {
+          "/tmp/craidd-perf-gr002-20261020-installed-timed-v4/fixture-dwarf": 319
+        },
+        "unresolvedSampleCount": 0,
+        "unresolvedStackFrameCount": 957,
+        "unresolvedStackFrameExamples": [
+          "7f3ccb0ea858 [unknown] (/usr/lib/libstdc++.so.6.0.36)",
+          "7f3ccac98041 [unknown] (/usr/lib/libc.so.6)",
+          "7f3ccad2072b [unknown] (/usr/lib/libc.so.6)",
+          "7f3ccb0ea858 [unknown] (/usr/lib/libstdc++.so.6.0.36)",
+          "7f3ccac98041 [unknown] (/usr/lib/libc.so.6)"
+        ],
+        "threads": {
+          "955869": {
+            "comm": "hot-worker",
+            "samples": 295,
+            "firstTime": 44636.936786568,
+            "lastTime": 44639.909126528,
+            "observedSpanSeconds": 2.9723399599970435,
+            "observedSamplesPerWallSecond": 98.91196967936752,
+            "periodSum": 2979797950,
+            "topSampledFunctions": [
+              {
+                "symbol": "known_hot",
+                "sampleCount": 295,
+                "period": 2979797950,
+                "sampledEventSharePct": 100.0
+              }
+            ]
+          },
+          "955871": {
+            "comm": "pool-worker",
+            "samples": 12,
+            "firstTime": 44637.101946657,
+            "lastTime": 44639.77635331,
+            "observedSpanSeconds": 2.674406653000915,
+            "observedSamplesPerWallSecond": 4.1130618590321895,
+            "periodSum": 121212120,
+            "topSampledFunctions": [
+              {
+                "symbol": "known_pool",
+                "sampleCount": 12,
+                "period": 121212120,
+                "sampledEventSharePct": 100.0
+              }
+            ]
+          },
+          "955870": {
+            "comm": "pool-worker",
+            "samples": 12,
+            "firstTime": 44637.180838565,
+            "lastTime": 44639.791371015,
+            "observedSpanSeconds": 2.6105324500022107,
+            "observedSamplesPerWallSecond": 4.2136997760708494,
+            "periodSum": 121212120,
+            "topSampledFunctions": [
+              {
+                "symbol": "known_pool",
+                "sampleCount": 12,
+                "period": 121212120,
+                "sampledEventSharePct": 100.0
+              }
+            ]
+          }
+        },
+        "hotParentChainBlocks": 295,
+        "lostRecordCount": 0,
+        "lostRecordExamples": [],
+        "lostCountsParsed": [],
+        "lostCountSum": 0,
+        "lostSampleCounterRecordCount": 0,
+        "lostSampleCounterSum": 0,
+        "lostSampleCounterExamples": [],
+        "lossAccounting": "LOST records and LOST_SAMPLES counters are separate, potentially overlapping reports; never summed together",
+        "note": "sampled event/period shares; no exact self-time or causal attribution"
+      }
+    },
+    "rawData": {
+      "fp": {
+        "path": "/tmp/craidd-perf-gr002-20261020-installed-timed-v4/fp.data",
+        "bytes": 69524,
+        "sha256": "2ef893fd7ad5e3c5db68dfd2ab9d23d7e3d3632c8329ef5b08954e56294e002c"
+      },
+      "dwarf": {
+        "path": "/tmp/craidd-perf-gr002-20261020-installed-timed-v4/dwarf.data",
+        "bytes": 2730260,
+        "sha256": "2f3e4f9b0d991ee772256f27227e8fbdcae34e7a491654392c033b338b77a76b"
+      }
+    },
+    "recordStderr": {
+      "fp": "[ perf record: Woken up 1 times to write data ]\n[ perf record: Captured and wrote 0.031 MB /tmp/craidd-perf-gr002-20261020-installed-timed-v4/fp.data ]\n",
+      "dwarf": "[ perf record: Woken up 10 times to write data ]\n[ perf record: Captured and wrote 2.568 MB /tmp/craidd-perf-gr002-20261020-installed-timed-v4/dwarf.data ]\n"
+    },
+    "capturedBuildIds": {
+      "fp": "fc145315e72705f87e513770ecf0c281f4733ca9 /tmp/craidd-perf-gr002-20261020-installed-timed-v4/fixture-fp\nd320029ad1a23be2f4bce117fd321cbd23a2014b /usr/lib/libc.so.6\n5b8d3de442de987b24d0e3679533068f2ae62497 /usr/lib/libstdc++.so.6.0.36\n",
+      "dwarf": "514262a4b67788b1665c4984a3b133b2e849ca32 /tmp/craidd-perf-gr002-20261020-installed-timed-v4/fixture-dwarf\nd320029ad1a23be2f4bce117fd321cbd23a2014b /usr/lib/libc.so.6\n5b8d3de442de987b24d0e3679533068f2ae62497 /usr/lib/libstdc++.so.6.0.36\n"
+    },
+    "sourceLineExamples": {
+      "fp": [
+        "hot-worker  955807 44632.204741139:   10101010 cpu-clock:u: ",
+        "\t    55b5c170890d known_hot+0x4d (/tmp/craidd-perf-gr002-20261020-installed-timed-v4/fixture-fp)",
+        "  /home/skira24/.codex/worktrees/9b33/Craidd-Studio/workspaces/profiling-perf-qualification/fixture.cpp:25",
+        "\t    55b5c17089e5 hot_parent+0x25 (/tmp/craidd-perf-gr002-20261020-installed-timed-v4/fixture-fp)",
+        "  /home/skira24/.codex/worktrees/9b33/Craidd-Studio/workspaces/profiling-perf-qualification/fixture.cpp:42",
+        "\t    7f4a44eea859 [unknown] (/usr/lib/libstdc++.so.6.0.36)",
+        "  /usr/src/debug/gcc/gcc-build/x86_64-pc-linux-gnu/libstdc++-v3/include/bits/unique_ptr.h:92",
+        "\t    7f4a44a98042 [unknown] (/usr/lib/libc.so.6)",
+        "  /usr/src/debug/glibc/glibc/nptl/pthread_create.c:454",
+        "\t    7f4a44b2072c [unknown] (/usr/lib/libc.so.6)",
+        "  ../sysdeps/unix/sysv/linux/x86_64/clone3.S:80",
+        "",
+        "hot-worker  955807 44632.214850633:   10101010 cpu-clock:u: ",
+        "\t    55b5c1708903 known_hot+0x43 (/tmp/craidd-perf-gr002-20261020-installed-timed-v4/fixture-fp)",
+        "  /home/skira24/.codex/worktrees/9b33/Craidd-Studio/workspaces/profiling-perf-qualification/fixture.cpp:24",
+        "\t    55b5c17089e5 hot_parent+0x25 (/tmp/craidd-perf-gr002-20261020-installed-timed-v4/fixture-fp)",
+        "  /home/skira24/.codex/worktrees/9b33/Craidd-Studio/workspaces/profiling-perf-qualification/fixture.cpp:42",
+        "\t    7f4a44eea859 [unknown] (/usr/lib/libstdc++.so.6.0.36)"
+      ],
+      "dwarf": [
+        "hot-worker  955869 44636.936786568:   10101010 cpu-clock:u: ",
+        "\t    55e919ab5957 known_hot+0x57 (/tmp/craidd-perf-gr002-20261020-installed-timed-v4/fixture-dwarf)",
+        "  /home/skira24/.codex/worktrees/9b33/Craidd-Studio/workspaces/profiling-perf-qualification/fixture.cpp:26",
+        "\t    55e919ab5a24 hot_parent+0x24 (/tmp/craidd-perf-gr002-20261020-installed-timed-v4/fixture-dwarf)",
+        "  /home/skira24/.codex/worktrees/9b33/Craidd-Studio/workspaces/profiling-perf-qualification/fixture.cpp:42",
+        "\t    7f3ccb0ea858 [unknown] (/usr/lib/libstdc++.so.6.0.36)",
+        "  ../../../../../gcc/libstdc++-v3/src/c++11/thread.cc:105",
+        "\t    7f3ccac98041 [unknown] (/usr/lib/libc.so.6)",
+        "  /usr/src/debug/glibc/glibc/nptl/pthread_create.c:454",
+        "\t    7f3ccad2072b [unknown] (/usr/lib/libc.so.6)",
+        "  ../sysdeps/unix/sysv/linux/x86_64/clone3.S:78",
+        "",
+        "hot-worker  955869 44636.946886492:   10101010 cpu-clock:u: ",
+        "\t    55e919ab594d known_hot+0x4d (/tmp/craidd-perf-gr002-20261020-installed-timed-v4/fixture-dwarf)",
+        "  /home/skira24/.codex/worktrees/9b33/Craidd-Studio/workspaces/profiling-perf-qualification/fixture.cpp:25",
+        "\t    55e919ab5a24 hot_parent+0x24 (/tmp/craidd-perf-gr002-20261020-installed-timed-v4/fixture-dwarf)",
+        "  /home/skira24/.codex/worktrees/9b33/Craidd-Studio/workspaces/profiling-perf-qualification/fixture.cpp:42",
+        "\t    7f3ccb0ea858 [unknown] (/usr/lib/libstdc++.so.6.0.36)"
+      ]
+    }
+  },
+  "retention": [
+    {
+      "run": {
+        "kind": "retention",
+        "settings": {
+          "kind": "retention",
+          "binary": "/tmp/craidd-perf-gr002-20261020-installed-timed-v4/fixture-fp",
+          "output": "/tmp/craidd-perf-gr002-20261020-ring-99-1-v1",
+          "frequency": 99,
+          "pages": 1,
+          "seconds": 8.0
+        },
+        "sysctlsBefore": {
+          "kernel.perf_event_paranoid": "2",
+          "kernel.kptr_restrict": "0",
+          "kernel.yama.ptrace_scope": "1"
+        },
+        "uid": 1000,
+        "credentials": [
+          "Uid:\t1000\t1000\t1000\t1000",
+          "CapEff:\t0000000000000000",
+          "NoNewPrivs:\t0",
+          "Seccomp:\t0"
+        ],
+        "binarySha256": "a61e431f10e2c8f39fc719a5c5256490f99dfaab6ad6cb498b93e6216bc7512f",
+        "runnerSha256": "1451505488080f24ef8e63b2c838334201d8a133a9042c073e3fa42639d49a18",
+        "perfVersion": "perf version 7.2.11-1",
+        "pageBytes": 4096,
+        "signals": [
+          {
+            "signal": "SIGUSR2",
+            "pid": 956490,
+            "monotonicNs": 44685921280119
+          },
+          {
+            "signal": "SIGINT",
+            "pid": 956490,
+            "monotonicNs": 44686271838985
+          }
+        ],
+        "commands": {
+          "record": {
+            "command": [
+              "/usr/bin/perf",
+              "record",
+              "--no-buildid-cache",
+              "--clockid",
+              "mono",
+              "--timestamp",
+              "--per-thread",
+              "--no-inherit",
+              "--user-callchains",
+              "-e",
+              "cpu-clock:u",
+              "-F",
+              "99",
+              "-m",
+              "1",
+              "--call-graph",
+              "fp",
+              "-o",
+              "/tmp/craidd-perf-gr002-20261020-ring-99-1-v1/capture.data",
+              "-t",
+              "956487",
+              "--overwrite",
+              "--switch-output=signal"
+            ],
+            "exitCode": -2
+          },
+          "leaves": {
+            "command": [
+              "/usr/bin/perf",
+              "script",
+              "--ns",
+              "-G",
+              "-F",
+              "comm,pid,tid,time,period,event,ip,sym,dso",
+              "-i",
+              "/tmp/craidd-perf-gr002-20261020-ring-99-1-v1/capture.data.2026102023152616"
+            ],
+            "exitCode": 0,
+            "seconds": 0.005124502000398934
+          },
+          "stacks": {
+            "command": [
+              "/usr/bin/perf",
+              "script",
+              "--ns",
+              "--show-lost-events",
+              "-i",
+              "/tmp/craidd-perf-gr002-20261020-ring-99-1-v1/capture.data.2026102023152616"
+            ],
+            "exitCode": 0,
+            "seconds": 0.012058675994921941
+          },
+          "raw-records": {
+            "command": [
+              "/usr/bin/perf",
+              "script",
+              "-D",
+              "-i",
+              "/tmp/craidd-perf-gr002-20261020-ring-99-1-v1/capture.data.2026102023152616"
+            ],
+            "exitCode": 0,
+            "seconds": 0.012566814999445342
+          }
+        },
+        "note": "single hot TID scope for retention; target PID scope for positive LOST; experimental settings only",
+        "targetPid": 956486,
+        "targetBirth": "4467789",
+        "tasks": {
+          "956486": "fixture-fp",
+          "956487": "hot-worker",
+          "956488": "pool-worker",
+          "956489": "pool-worker"
+        },
+        "selectedHotTid": 956487,
+        "collectorPid": 956490,
+        "collectorStartMonotonicNs": 44677921196526,
+        "triggerMonotonicNs": 44685921280119,
+        "snapshotCandidatesBeforeStop": [
+          "/tmp/craidd-perf-gr002-20261020-ring-99-1-v1/capture.data.2026102023152616"
+        ],
+        "targetAliveAfterCollectorStop": true,
+        "rawFiles": [
+          {
+            "path": "/tmp/craidd-perf-gr002-20261020-ring-99-1-v1/capture.data.2026102023152616",
+            "bytes": 42620
+          },
+          {
+            "path": "/tmp/craidd-perf-gr002-20261020-ring-99-1-v1/capture.data.2026102023152649",
+            "bytes": 43100
+          }
+        ],
+        "expectedCollectorStopExit": true,
+        "selectedDataFile": "/tmp/craidd-perf-gr002-20261020-ring-99-1-v1/capture.data.2026102023152616",
+        "targetAliveBeforeNormalShutdown": true,
+        "targetNormalExitCode": 0,
+        "sysctlsAfter": {
+          "kernel.perf_event_paranoid": "2",
+          "kernel.kptr_restrict": "0",
+          "kernel.yama.ptrace_scope": "1"
+        },
+        "sysctlsUnchanged": true
+      },
+      "analysis": {
+        "sampleCount": 42,
+        "unparsedLineCount": 0,
+        "unparsedExamples": [],
+        "firstTime": 44685.506243713,
+        "lastTime": 44685.920590228,
+        "spanSeconds": 0.4143465150045813,
+        "events": {
+          "cpu-clock:u": 42
+        },
+        "modules": {
+          "/tmp/craidd-perf-gr002-20261020-installed-timed-v4/fixture-fp": 42
+        },
+        "unresolvedSampleCount": 0,
+        "unresolvedStackFrameCount": 126,
+        "unresolvedStackFrameExamples": [
+          "7f62442ea859 [unknown] (/usr/lib/libstdc++.so.6.0.36)",
+          "7f6243e98042 [unknown] (/usr/lib/libc.so.6)",
+          "7f6243f2072c [unknown] (/usr/lib/libc.so.6)",
+          "7f62442ea859 [unknown] (/usr/lib/libstdc++.so.6.0.36)",
+          "7f6243e98042 [unknown] (/usr/lib/libc.so.6)"
+        ],
+        "threads": {
+          "956487": {
+            "comm": "hot-worker",
+            "samples": 42,
+            "firstTime": 44685.506243713,
+            "lastTime": 44685.920590228,
+            "observedSpanSeconds": 0.4143465150045813,
+            "observedSamplesPerWallSecond": 98.95099515811464,
+            "periodSum": 424242420,
+            "topSampledFunctions": [
+              {
+                "symbol": "known_hot",
+                "sampleCount": 42,
+                "period": 424242420,
+                "sampledEventSharePct": 100.0
+              }
+            ]
+          }
+        },
+        "hotParentChainBlocks": 42,
+        "lostRecordCount": 0,
+        "lostRecordExamples": [],
+        "lostCountsParsed": [],
+        "lostCountSum": 0,
+        "lostSampleCounterRecordCount": 0,
+        "lostSampleCounterSum": 0,
+        "lostSampleCounterExamples": [],
+        "lossAccounting": "LOST records and LOST_SAMPLES counters are separate, potentially overlapping reports; never summed together",
+        "note": "sampled event/period shares; no exact self-time or causal attribution",
+        "oldestSampleAgeAtTriggerSeconds": 0.4150364060042193,
+        "newestSampleAgeAtTriggerSeconds": 0.0006898909996380098,
+        "nominalRingDataBytes": 4096,
+        "scope": "single hot TID, per-thread ring",
+        "firstSampleDelayAfterCollectorStartSeconds": 7.585047186999873,
+        "wrappedDuringExperiment": true,
+        "capacityClaim": "observed retained history after wrap in this single trial, not a guaranteed duration"
+      },
+      "rawData": {
+        "path": "/tmp/craidd-perf-gr002-20261020-ring-99-1-v1/capture.data.2026102023152616",
+        "bytes": 42620,
+        "sha256": "31a83f5587eebcc77f140a6d6295a7ee6016b56b5f1caf7b6a7f731794e190c9"
+      },
+      "recordStderr": "[ perf record: dump data: Woken up 1 times ]\n[ perf record: Dump /tmp/craidd-perf-gr002-20261020-ring-99-1-v1/capture.data.2026102023152616 ]\n[ perf record: Woken up 1 times to write data ]\n[ perf record: Dump /tmp/craidd-perf-gr002-20261020-ring-99-1-v1/capture.data.2026102023152649 ]\n[ perf record: Captured and wrote 0.006 MB /tmp/craidd-perf-gr002-20261020-ring-99-1-v1/capture.data.<timestamp> ]\n",
+      "captureState": "rolling / intentionally truncated history",
+      "gate": "PASS"
+    },
+    {
+      "run": {
+        "kind": "retention",
+        "settings": {
+          "kind": "retention",
+          "binary": "/tmp/craidd-perf-gr002-20261020-installed-timed-v4/fixture-fp",
+          "output": "/tmp/craidd-perf-gr002-20261020-ring-99-4-v1",
+          "frequency": 99,
+          "pages": 4,
+          "seconds": 8.0
+        },
+        "sysctlsBefore": {
+          "kernel.perf_event_paranoid": "2",
+          "kernel.kptr_restrict": "0",
+          "kernel.yama.ptrace_scope": "1"
+        },
+        "uid": 1000,
+        "credentials": [
+          "Uid:\t1000\t1000\t1000\t1000",
+          "CapEff:\t0000000000000000",
+          "NoNewPrivs:\t0",
+          "Seccomp:\t0"
+        ],
+        "binarySha256": "a61e431f10e2c8f39fc719a5c5256490f99dfaab6ad6cb498b93e6216bc7512f",
+        "runnerSha256": "1451505488080f24ef8e63b2c838334201d8a133a9042c073e3fa42639d49a18",
+        "perfVersion": "perf version 7.2.11-1",
+        "pageBytes": 4096,
+        "signals": [
+          {
+            "signal": "SIGUSR2",
+            "pid": 956705,
+            "monotonicNs": 44708084230578
+          },
+          {
+            "signal": "SIGINT",
+            "pid": 956705,
+            "monotonicNs": 44708434739619
+          }
+        ],
+        "commands": {
+          "record": {
+            "command": [
+              "/usr/bin/perf",
+              "record",
+              "--no-buildid-cache",
+              "--clockid",
+              "mono",
+              "--timestamp",
+              "--per-thread",
+              "--no-inherit",
+              "--user-callchains",
+              "-e",
+              "cpu-clock:u",
+              "-F",
+              "99",
+              "-m",
+              "4",
+              "--call-graph",
+              "fp",
+              "-o",
+              "/tmp/craidd-perf-gr002-20261020-ring-99-4-v1/capture.data",
+              "-t",
+              "956702",
+              "--overwrite",
+              "--switch-output=signal"
+            ],
+            "exitCode": -2
+          },
+          "leaves": {
+            "command": [
+              "/usr/bin/perf",
+              "script",
+              "--ns",
+              "-G",
+              "-F",
+              "comm,pid,tid,time,period,event,ip,sym,dso",
+              "-i",
+              "/tmp/craidd-perf-gr002-20261020-ring-99-4-v1/capture.data.2026102023154833"
+            ],
+            "exitCode": 0,
+            "seconds": 0.00485083300009137
+          },
+          "stacks": {
+            "command": [
+              "/usr/bin/perf",
+              "script",
+              "--ns",
+              "--show-lost-events",
+              "-i",
+              "/tmp/craidd-perf-gr002-20261020-ring-99-4-v1/capture.data.2026102023154833"
+            ],
+            "exitCode": 0,
+            "seconds": 0.011754645005567
+          },
+          "raw-records": {
+            "command": [
+              "/usr/bin/perf",
+              "script",
+              "-D",
+              "-i",
+              "/tmp/craidd-perf-gr002-20261020-ring-99-4-v1/capture.data.2026102023154833"
+            ],
+            "exitCode": 0,
+            "seconds": 0.011641376004263293
+          }
+        },
+        "note": "single hot TID scope for retention; target PID scope for positive LOST; experimental settings only",
+        "targetPid": 956701,
+        "targetBirth": "4470005",
+        "tasks": {
+          "956701": "fixture-fp",
+          "956702": "hot-worker",
+          "956703": "pool-worker",
+          "956704": "pool-worker"
+        },
+        "selectedHotTid": 956702,
+        "collectorPid": 956705,
+        "collectorStartMonotonicNs": 44700084145209,
+        "triggerMonotonicNs": 44708084230578,
+        "snapshotCandidatesBeforeStop": [
+          "/tmp/craidd-perf-gr002-20261020-ring-99-4-v1/capture.data.2026102023154833"
+        ],
+        "targetAliveAfterCollectorStop": true,
+        "rawFiles": [
+          {
+            "path": "/tmp/craidd-perf-gr002-20261020-ring-99-4-v1/capture.data.2026102023154833",
+            "bytes": 54908
+          },
+          {
+            "path": "/tmp/craidd-perf-gr002-20261020-ring-99-4-v1/capture.data.2026102023154866",
+            "bytes": 43196
+          }
+        ],
+        "expectedCollectorStopExit": true,
+        "selectedDataFile": "/tmp/craidd-perf-gr002-20261020-ring-99-4-v1/capture.data.2026102023154833",
+        "targetAliveBeforeNormalShutdown": true,
+        "targetNormalExitCode": 0,
+        "sysctlsAfter": {
+          "kernel.perf_event_paranoid": "2",
+          "kernel.kptr_restrict": "0",
+          "kernel.yama.ptrace_scope": "1"
+        },
+        "sysctlsUnchanged": true
+      },
+      "analysis": {
+        "sampleCount": 170,
+        "unparsedLineCount": 0,
+        "unparsedExamples": [],
+        "firstTime": 44706.370169059,
+        "lastTime": 44708.077978245,
+        "spanSeconds": 1.7078091859948472,
+        "events": {
+          "cpu-clock:u": 170
+        },
+        "modules": {
+          "/tmp/craidd-perf-gr002-20261020-installed-timed-v4/fixture-fp": 170
+        },
+        "unresolvedSampleCount": 0,
+        "unresolvedStackFrameCount": 510,
+        "unresolvedStackFrameExamples": [
+          "7f879f2ea859 [unknown] (/usr/lib/libstdc++.so.6.0.36)",
+          "7f879ee98042 [unknown] (/usr/lib/libc.so.6)",
+          "7f879ef2072c [unknown] (/usr/lib/libc.so.6)",
+          "7f879f2ea859 [unknown] (/usr/lib/libstdc++.so.6.0.36)",
+          "7f879ee98042 [unknown] (/usr/lib/libc.so.6)"
+        ],
+        "threads": {
+          "956702": {
+            "comm": "hot-worker",
+            "samples": 170,
+            "firstTime": 44706.370169059,
+            "lastTime": 44708.077978245,
+            "observedSpanSeconds": 1.7078091859948472,
+            "observedSamplesPerWallSecond": 98.95719111122635,
+            "periodSum": 1717171700,
+            "topSampledFunctions": [
+              {
+                "symbol": "known_hot",
+                "sampleCount": 170,
+                "period": 1717171700,
+                "sampledEventSharePct": 100.0
+              }
+            ]
+          }
+        },
+        "hotParentChainBlocks": 170,
+        "lostRecordCount": 0,
+        "lostRecordExamples": [],
+        "lostCountsParsed": [],
+        "lostCountSum": 0,
+        "lostSampleCounterRecordCount": 0,
+        "lostSampleCounterSum": 0,
+        "lostSampleCounterExamples": [],
+        "lossAccounting": "LOST records and LOST_SAMPLES counters are separate, potentially overlapping reports; never summed together",
+        "note": "sampled event/period shares; no exact self-time or causal attribution",
+        "oldestSampleAgeAtTriggerSeconds": 1.7140615190000972,
+        "newestSampleAgeAtTriggerSeconds": 0.006252333005249966,
+        "nominalRingDataBytes": 16384,
+        "scope": "single hot TID, per-thread ring",
+        "firstSampleDelayAfterCollectorStartSeconds": 6.286023849999765,
+        "wrappedDuringExperiment": true,
+        "capacityClaim": "observed retained history after wrap in this single trial, not a guaranteed duration"
+      },
+      "rawData": {
+        "path": "/tmp/craidd-perf-gr002-20261020-ring-99-4-v1/capture.data.2026102023154833",
+        "bytes": 54908,
+        "sha256": "c12dbacdbee8a2409c2c29cfa27088b77dfdb89f95484ba6dc0f077886e698c4"
+      },
+      "recordStderr": "[ perf record: dump data: Woken up 1 times ]\n[ perf record: Dump /tmp/craidd-perf-gr002-20261020-ring-99-4-v1/capture.data.2026102023154833 ]\n[ perf record: Woken up 1 times to write data ]\n[ perf record: Dump /tmp/craidd-perf-gr002-20261020-ring-99-4-v1/capture.data.2026102023154866 ]\n[ perf record: Captured and wrote 0.006 MB /tmp/craidd-perf-gr002-20261020-ring-99-4-v1/capture.data.<timestamp> ]\n",
+      "captureState": "rolling / intentionally truncated history",
+      "gate": "PASS"
+    },
+    {
+      "run": {
+        "kind": "retention",
+        "settings": {
+          "kind": "retention",
+          "binary": "/tmp/craidd-perf-gr002-20261020-installed-timed-v4/fixture-fp",
+          "output": "/tmp/craidd-perf-gr002-20261020-ring-99-16-v1",
+          "frequency": 99,
+          "pages": 16,
+          "seconds": 8.0
+        },
+        "sysctlsBefore": {
+          "kernel.perf_event_paranoid": "2",
+          "kernel.kptr_restrict": "0",
+          "kernel.yama.ptrace_scope": "1"
+        },
+        "uid": 1000,
+        "credentials": [
+          "Uid:\t1000\t1000\t1000\t1000",
+          "CapEff:\t0000000000000000",
+          "NoNewPrivs:\t0",
+          "Seccomp:\t0"
+        ],
+        "binarySha256": "a61e431f10e2c8f39fc719a5c5256490f99dfaab6ad6cb498b93e6216bc7512f",
+        "runnerSha256": "1451505488080f24ef8e63b2c838334201d8a133a9042c073e3fa42639d49a18",
+        "perfVersion": "perf version 7.2.11-1",
+        "pageBytes": 4096,
+        "signals": [
+          {
+            "signal": "SIGUSR2",
+            "pid": 957087,
+            "monotonicNs": 44726107217967
+          },
+          {
+            "signal": "SIGINT",
+            "pid": 957087,
+            "monotonicNs": 44726457722437
+          }
+        ],
+        "commands": {
+          "record": {
+            "command": [
+              "/usr/bin/perf",
+              "record",
+              "--no-buildid-cache",
+              "--clockid",
+              "mono",
+              "--timestamp",
+              "--per-thread",
+              "--no-inherit",
+              "--user-callchains",
+              "-e",
+              "cpu-clock:u",
+              "-F",
+              "99",
+              "-m",
+              "16",
+              "--call-graph",
+              "fp",
+              "-o",
+              "/tmp/craidd-perf-gr002-20261020-ring-99-16-v1/capture.data",
+              "-t",
+              "957084",
+              "--overwrite",
+              "--switch-output=signal"
+            ],
+            "exitCode": -2
+          },
+          "leaves": {
+            "command": [
+              "/usr/bin/perf",
+              "script",
+              "--ns",
+              "-G",
+              "-F",
+              "comm,pid,tid,time,period,event,ip,sym,dso",
+              "-i",
+              "/tmp/craidd-perf-gr002-20261020-ring-99-16-v1/capture.data.2026102023160635"
+            ],
+            "exitCode": 0,
+            "seconds": 0.005448892996355426
+          },
+          "stacks": {
+            "command": [
+              "/usr/bin/perf",
+              "script",
+              "--ns",
+              "--show-lost-events",
+              "-i",
+              "/tmp/craidd-perf-gr002-20261020-ring-99-16-v1/capture.data.2026102023160635"
+            ],
+            "exitCode": 0,
+            "seconds": 0.01162985600240063
+          },
+          "raw-records": {
+            "command": [
+              "/usr/bin/perf",
+              "script",
+              "-D",
+              "-i",
+              "/tmp/craidd-perf-gr002-20261020-ring-99-16-v1/capture.data.2026102023160635"
+            ],
+            "exitCode": 0,
+            "seconds": 0.016739979000703897
+          }
+        },
+        "note": "single hot TID scope for retention; target PID scope for positive LOST; experimental settings only",
+        "targetPid": 957083,
+        "targetBirth": "4471808",
+        "tasks": {
+          "957083": "fixture-fp",
+          "957084": "hot-worker",
+          "957085": "pool-worker",
+          "957086": "pool-worker"
+        },
+        "selectedHotTid": 957084,
+        "collectorPid": 957087,
+        "collectorStartMonotonicNs": 44718107125178,
+        "triggerMonotonicNs": 44726107217967,
+        "snapshotCandidatesBeforeStop": [
+          "/tmp/craidd-perf-gr002-20261020-ring-99-16-v1/capture.data.2026102023160635"
+        ],
+        "targetAliveAfterCollectorStop": true,
+        "rawFiles": [
+          {
+            "path": "/tmp/craidd-perf-gr002-20261020-ring-99-16-v1/capture.data.2026102023160635",
+            "bytes": 104060
+          },
+          {
+            "path": "/tmp/craidd-perf-gr002-20261020-ring-99-16-v1/capture.data.2026102023160668",
+            "bytes": 43196
+          }
+        ],
+        "expectedCollectorStopExit": true,
+        "selectedDataFile": "/tmp/craidd-perf-gr002-20261020-ring-99-16-v1/capture.data.2026102023160635",
+        "targetAliveBeforeNormalShutdown": true,
+        "targetNormalExitCode": 0,
+        "sysctlsAfter": {
+          "kernel.perf_event_paranoid": "2",
+          "kernel.kptr_restrict": "0",
+          "kernel.yama.ptrace_scope": "1"
+        },
+        "sysctlsUnchanged": true
+      },
+      "analysis": {
+        "sampleCount": 682,
+        "unparsedLineCount": 0,
+        "unparsedExamples": [],
+        "firstTime": 44719.223246289,
+        "lastTime": 44726.103569025,
+        "spanSeconds": 6.880322735996742,
+        "events": {
+          "cpu-clock:u": 682
+        },
+        "modules": {
+          "/tmp/craidd-perf-gr002-20261020-installed-timed-v4/fixture-fp": 682
+        },
+        "unresolvedSampleCount": 0,
+        "unresolvedStackFrameCount": 2046,
+        "unresolvedStackFrameExamples": [
+          "7f67ce0ea859 [unknown] (/usr/lib/libstdc++.so.6.0.36)",
+          "7f67cdc98042 [unknown] (/usr/lib/libc.so.6)",
+          "7f67cdd2072c [unknown] (/usr/lib/libc.so.6)",
+          "7f67ce0ea859 [unknown] (/usr/lib/libstdc++.so.6.0.36)",
+          "7f67cdc98042 [unknown] (/usr/lib/libc.so.6)"
+        ],
+        "threads": {
+          "957084": {
+            "comm": "hot-worker",
+            "samples": 682,
+            "firstTime": 44719.223246289,
+            "lastTime": 44726.103569025,
+            "observedSpanSeconds": 6.880322735996742,
+            "observedSamplesPerWallSecond": 98.97791515463621,
+            "periodSum": 6888888820,
+            "topSampledFunctions": [
+              {
+                "symbol": "known_hot",
+                "sampleCount": 682,
+                "period": 6888888820,
+                "sampledEventSharePct": 100.0
+              }
+            ]
+          }
+        },
+        "hotParentChainBlocks": 682,
+        "lostRecordCount": 0,
+        "lostRecordExamples": [],
+        "lostCountsParsed": [],
+        "lostCountSum": 0,
+        "lostSampleCounterRecordCount": 0,
+        "lostSampleCounterSum": 0,
+        "lostSampleCounterExamples": [],
+        "lossAccounting": "LOST records and LOST_SAMPLES counters are separate, potentially overlapping reports; never summed together",
+        "note": "sampled event/period shares; no exact self-time or causal attribution",
+        "oldestSampleAgeAtTriggerSeconds": 6.883971677998488,
+        "newestSampleAgeAtTriggerSeconds": 0.003648942001746036,
+        "nominalRingDataBytes": 65536,
+        "scope": "single hot TID, per-thread ring",
+        "firstSampleDelayAfterCollectorStartSeconds": 1.1161211110011209,
+        "wrappedDuringExperiment": true,
+        "capacityClaim": "observed retained history after wrap in this single trial, not a guaranteed duration"
+      },
+      "rawData": {
+        "path": "/tmp/craidd-perf-gr002-20261020-ring-99-16-v1/capture.data.2026102023160635",
+        "bytes": 104060,
+        "sha256": "d1aac00104d7f68e74bccefe5e6a3fb0664d9f44abc102c1361885e3473627d1"
+      },
+      "recordStderr": "[ perf record: dump data: Woken up 1 times ]\n[ perf record: Dump /tmp/craidd-perf-gr002-20261020-ring-99-16-v1/capture.data.2026102023160635 ]\n[ perf record: Woken up 1 times to write data ]\n[ perf record: Dump /tmp/craidd-perf-gr002-20261020-ring-99-16-v1/capture.data.2026102023160668 ]\n[ perf record: Captured and wrote 0.006 MB /tmp/craidd-perf-gr002-20261020-ring-99-16-v1/capture.data.<timestamp> ]\n",
+      "captureState": "rolling / intentionally truncated history",
+      "gate": "PASS"
+    },
+    {
+      "run": {
+        "kind": "retention",
+        "settings": {
+          "kind": "retention",
+          "binary": "/tmp/craidd-perf-gr002-20261020-installed-timed-v4/fixture-fp",
+          "output": "/tmp/craidd-perf-gr002-20261020-ring-999-1-v1",
+          "frequency": 999,
+          "pages": 1,
+          "seconds": 8.0
+        },
+        "sysctlsBefore": {
+          "kernel.perf_event_paranoid": "2",
+          "kernel.kptr_restrict": "0",
+          "kernel.yama.ptrace_scope": "1"
+        },
+        "uid": 1000,
+        "credentials": [
+          "Uid:\t1000\t1000\t1000\t1000",
+          "CapEff:\t0000000000000000",
+          "NoNewPrivs:\t0",
+          "Seccomp:\t0"
+        ],
+        "binarySha256": "a61e431f10e2c8f39fc719a5c5256490f99dfaab6ad6cb498b93e6216bc7512f",
+        "runnerSha256": "1451505488080f24ef8e63b2c838334201d8a133a9042c073e3fa42639d49a18",
+        "perfVersion": "perf version 7.2.11-1",
+        "pageBytes": 4096,
+        "signals": [
+          {
+            "signal": "SIGUSR2",
+            "pid": 957149,
+            "monotonicNs": 44736238438898
+          },
+          {
+            "signal": "SIGINT",
+            "pid": 957149,
+            "monotonicNs": 44736588967835
+          }
+        ],
+        "commands": {
+          "record": {
+            "command": [
+              "/usr/bin/perf",
+              "record",
+              "--no-buildid-cache",
+              "--clockid",
+              "mono",
+              "--timestamp",
+              "--per-thread",
+              "--no-inherit",
+              "--user-callchains",
+              "-e",
+              "cpu-clock:u",
+              "-F",
+              "999",
+              "-m",
+              "1",
+              "--call-graph",
+              "fp",
+              "-o",
+              "/tmp/craidd-perf-gr002-20261020-ring-999-1-v1/capture.data",
+              "-t",
+              "957146",
+              "--overwrite",
+              "--switch-output=signal"
+            ],
+            "exitCode": -2
+          },
+          "leaves": {
+            "command": [
+              "/usr/bin/perf",
+              "script",
+              "--ns",
+              "-G",
+              "-F",
+              "comm,pid,tid,time,period,event,ip,sym,dso",
+              "-i",
+              "/tmp/craidd-perf-gr002-20261020-ring-999-1-v1/capture.data.2026102023161648"
+            ],
+            "exitCode": 0,
+            "seconds": 0.0043627220002235845
+          },
+          "stacks": {
+            "command": [
+              "/usr/bin/perf",
+              "script",
+              "--ns",
+              "--show-lost-events",
+              "-i",
+              "/tmp/craidd-perf-gr002-20261020-ring-999-1-v1/capture.data.2026102023161648"
+            ],
+            "exitCode": 0,
+            "seconds": 0.011248746006458532
+          },
+          "raw-records": {
+            "command": [
+              "/usr/bin/perf",
+              "script",
+              "-D",
+              "-i",
+              "/tmp/craidd-perf-gr002-20261020-ring-999-1-v1/capture.data.2026102023161648"
+            ],
+            "exitCode": 0,
+            "seconds": 0.010253025000565685
+          }
+        },
+        "note": "single hot TID scope for retention; target PID scope for positive LOST; experimental settings only",
+        "targetPid": 957145,
+        "targetBirth": "4472821",
+        "tasks": {
+          "957145": "fixture-fp",
+          "957146": "hot-worker",
+          "957147": "pool-worker",
+          "957148": "pool-worker"
+        },
+        "selectedHotTid": 957146,
+        "collectorPid": 957149,
+        "collectorStartMonotonicNs": 44728238348988,
+        "triggerMonotonicNs": 44736238438898,
+        "snapshotCandidatesBeforeStop": [
+          "/tmp/craidd-perf-gr002-20261020-ring-999-1-v1/capture.data.2026102023161648"
+        ],
+        "targetAliveAfterCollectorStop": true,
+        "rawFiles": [
+          {
+            "path": "/tmp/craidd-perf-gr002-20261020-ring-999-1-v1/capture.data.2026102023161648",
+            "bytes": 42620
+          },
+          {
+            "path": "/tmp/craidd-perf-gr002-20261020-ring-999-1-v1/capture.data.2026102023161681",
+            "bytes": 43868
+          }
+        ],
+        "expectedCollectorStopExit": true,
+        "selectedDataFile": "/tmp/craidd-perf-gr002-20261020-ring-999-1-v1/capture.data.2026102023161648",
+        "targetAliveBeforeNormalShutdown": true,
+        "targetNormalExitCode": 0,
+        "sysctlsAfter": {
+          "kernel.perf_event_paranoid": "2",
+          "kernel.kptr_restrict": "0",
+          "kernel.yama.ptrace_scope": "1"
+        },
+        "sysctlsUnchanged": true
+      },
+      "analysis": {
+        "sampleCount": 42,
+        "unparsedLineCount": 0,
+        "unparsedExamples": [],
+        "firstTime": 44736.196697156,
+        "lastTime": 44736.237745738,
+        "spanSeconds": 0.041048581995710265,
+        "events": {
+          "cpu-clock:u": 42
+        },
+        "modules": {
+          "/tmp/craidd-perf-gr002-20261020-installed-timed-v4/fixture-fp": 42
+        },
+        "unresolvedSampleCount": 0,
+        "unresolvedStackFrameCount": 126,
+        "unresolvedStackFrameExamples": [
+          "7fb29b6ea859 [unknown] (/usr/lib/libstdc++.so.6.0.36)",
+          "7fb29b298042 [unknown] (/usr/lib/libc.so.6)",
+          "7fb29b32072c [unknown] (/usr/lib/libc.so.6)",
+          "7fb29b6ea859 [unknown] (/usr/lib/libstdc++.so.6.0.36)",
+          "7fb29b298042 [unknown] (/usr/lib/libc.so.6)"
+        ],
+        "threads": {
+          "957146": {
+            "comm": "hot-worker",
+            "samples": 42,
+            "firstTime": 44736.196697156,
+            "lastTime": 44736.237745738,
+            "observedSpanSeconds": 0.041048581995710265,
+            "observedSamplesPerWallSecond": 998.8164756649733,
+            "periodSum": 42042042,
+            "topSampledFunctions": [
+              {
+                "symbol": "known_hot",
+                "sampleCount": 42,
+                "period": 42042042,
+                "sampledEventSharePct": 100.0
+              }
+            ]
+          }
+        },
+        "hotParentChainBlocks": 42,
+        "lostRecordCount": 0,
+        "lostRecordExamples": [],
+        "lostCountsParsed": [],
+        "lostCountSum": 0,
+        "lostSampleCounterRecordCount": 0,
+        "lostSampleCounterSum": 0,
+        "lostSampleCounterExamples": [],
+        "lossAccounting": "LOST records and LOST_SAMPLES counters are separate, potentially overlapping reports; never summed together",
+        "note": "sampled event/period shares; no exact self-time or causal attribution",
+        "oldestSampleAgeAtTriggerSeconds": 0.041741741995792836,
+        "newestSampleAgeAtTriggerSeconds": 0.0006931600000825711,
+        "nominalRingDataBytes": 4096,
+        "scope": "single hot TID, per-thread ring",
+        "firstSampleDelayAfterCollectorStartSeconds": 7.958348168001976,
+        "wrappedDuringExperiment": true,
+        "capacityClaim": "observed retained history after wrap in this single trial, not a guaranteed duration"
+      },
+      "rawData": {
+        "path": "/tmp/craidd-perf-gr002-20261020-ring-999-1-v1/capture.data.2026102023161648",
+        "bytes": 42620,
+        "sha256": "7a6998f40ec5446c1f8fdaa7634da5724ec951b05250eccc63e54d26402a9386"
+      },
+      "recordStderr": "[ perf record: dump data: Woken up 1 times ]\n[ perf record: Dump /tmp/craidd-perf-gr002-20261020-ring-999-1-v1/capture.data.2026102023161648 ]\n[ perf record: Woken up 1 times to write data ]\n[ perf record: Dump /tmp/craidd-perf-gr002-20261020-ring-999-1-v1/capture.data.2026102023161681 ]\n[ perf record: Captured and wrote 0.007 MB /tmp/craidd-perf-gr002-20261020-ring-999-1-v1/capture.data.<timestamp> ]\n",
+      "captureState": "rolling / intentionally truncated history",
+      "gate": "PASS"
+    },
+    {
+      "run": {
+        "kind": "retention",
+        "settings": {
+          "kind": "retention",
+          "binary": "/tmp/craidd-perf-gr002-20261020-installed-timed-v4/fixture-fp",
+          "output": "/tmp/craidd-perf-gr002-20261020-ring-999-4-v1",
+          "frequency": 999,
+          "pages": 4,
+          "seconds": 8.0
+        },
+        "sysctlsBefore": {
+          "kernel.perf_event_paranoid": "2",
+          "kernel.kptr_restrict": "0",
+          "kernel.yama.ptrace_scope": "1"
+        },
+        "uid": 1000,
+        "credentials": [
+          "Uid:\t1000\t1000\t1000\t1000",
+          "CapEff:\t0000000000000000",
+          "NoNewPrivs:\t0",
+          "Seccomp:\t0"
+        ],
+        "binarySha256": "a61e431f10e2c8f39fc719a5c5256490f99dfaab6ad6cb498b93e6216bc7512f",
+        "runnerSha256": "1451505488080f24ef8e63b2c838334201d8a133a9042c073e3fa42639d49a18",
+        "perfVersion": "perf version 7.2.11-1",
+        "pageBytes": 4096,
+        "signals": [
+          {
+            "signal": "SIGUSR2",
+            "pid": 957265,
+            "monotonicNs": 44751653837037
+          },
+          {
+            "signal": "SIGINT",
+            "pid": 957265,
+            "monotonicNs": 44752004228572
+          }
+        ],
+        "commands": {
+          "record": {
+            "command": [
+              "/usr/bin/perf",
+              "record",
+              "--no-buildid-cache",
+              "--clockid",
+              "mono",
+              "--timestamp",
+              "--per-thread",
+              "--no-inherit",
+              "--user-callchains",
+              "-e",
+              "cpu-clock:u",
+              "-F",
+              "999",
+              "-m",
+              "4",
+              "--call-graph",
+              "fp",
+              "-o",
+              "/tmp/craidd-perf-gr002-20261020-ring-999-4-v1/capture.data",
+              "-t",
+              "957262",
+              "--overwrite",
+              "--switch-output=signal"
+            ],
+            "exitCode": -2
+          },
+          "leaves": {
+            "command": [
+              "/usr/bin/perf",
+              "script",
+              "--ns",
+              "-G",
+              "-F",
+              "comm,pid,tid,time,period,event,ip,sym,dso",
+              "-i",
+              "/tmp/craidd-perf-gr002-20261020-ring-999-4-v1/capture.data.2026102023163190"
+            ],
+            "exitCode": 0,
+            "seconds": 0.004630643001291901
+          },
+          "stacks": {
+            "command": [
+              "/usr/bin/perf",
+              "script",
+              "--ns",
+              "--show-lost-events",
+              "-i",
+              "/tmp/craidd-perf-gr002-20261020-ring-999-4-v1/capture.data.2026102023163190"
+            ],
+            "exitCode": 0,
+            "seconds": 0.011405625999032054
+          },
+          "raw-records": {
+            "command": [
+              "/usr/bin/perf",
+              "script",
+              "-D",
+              "-i",
+              "/tmp/craidd-perf-gr002-20261020-ring-999-4-v1/capture.data.2026102023163190"
+            ],
+            "exitCode": 0,
+            "seconds": 0.01162389700039057
+          }
+        },
+        "note": "single hot TID scope for retention; target PID scope for positive LOST; experimental settings only",
+        "targetPid": 957261,
+        "targetBirth": "4474362",
+        "tasks": {
+          "957261": "fixture-fp",
+          "957262": "hot-worker",
+          "957263": "pool-worker",
+          "957264": "pool-worker"
+        },
+        "selectedHotTid": 957262,
+        "collectorPid": 957265,
+        "collectorStartMonotonicNs": 44743653765972,
+        "triggerMonotonicNs": 44751653837037,
+        "snapshotCandidatesBeforeStop": [
+          "/tmp/craidd-perf-gr002-20261020-ring-999-4-v1/capture.data.2026102023163190"
+        ],
+        "targetAliveAfterCollectorStop": true,
+        "rawFiles": [
+          {
+            "path": "/tmp/craidd-perf-gr002-20261020-ring-999-4-v1/capture.data.2026102023163190",
+            "bytes": 54908
+          },
+          {
+            "path": "/tmp/craidd-perf-gr002-20261020-ring-999-4-v1/capture.data.2026102023163223",
+            "bytes": 56156
+          }
+        ],
+        "expectedCollectorStopExit": true,
+        "selectedDataFile": "/tmp/craidd-perf-gr002-20261020-ring-999-4-v1/capture.data.2026102023163190",
+        "targetAliveBeforeNormalShutdown": true,
+        "targetNormalExitCode": 0,
+        "sysctlsAfter": {
+          "kernel.perf_event_paranoid": "2",
+          "kernel.kptr_restrict": "0",
+          "kernel.yama.ptrace_scope": "1"
+        },
+        "sysctlsUnchanged": true
+      },
+      "analysis": {
+        "sampleCount": 170,
+        "unparsedLineCount": 0,
+        "unparsedExamples": [],
+        "firstTime": 44751.483910443,
+        "lastTime": 44751.653079537,
+        "spanSeconds": 0.16916909399878932,
+        "events": {
+          "cpu-clock:u": 170
+        },
+        "modules": {
+          "/tmp/craidd-perf-gr002-20261020-installed-timed-v4/fixture-fp": 170
+        },
+        "unresolvedSampleCount": 0,
+        "unresolvedStackFrameCount": 510,
+        "unresolvedStackFrameExamples": [
+          "7f1b910ea859 [unknown] (/usr/lib/libstdc++.so.6.0.36)",
+          "7f1b90c98042 [unknown] (/usr/lib/libc.so.6)",
+          "7f1b90d2072c [unknown] (/usr/lib/libc.so.6)",
+          "7f1b910ea859 [unknown] (/usr/lib/libstdc++.so.6.0.36)",
+          "7f1b90c98042 [unknown] (/usr/lib/libc.so.6)"
+        ],
+        "threads": {
+          "957262": {
+            "comm": "hot-worker",
+            "samples": 170,
+            "firstTime": 44751.483910443,
+            "lastTime": 44751.653079537,
+            "observedSpanSeconds": 0.16916909399878932,
+            "observedSamplesPerWallSecond": 999.0004439061988,
+            "periodSum": 170170170,
+            "topSampledFunctions": [
+              {
+                "symbol": "known_hot",
+                "sampleCount": 170,
+                "period": 170170170,
+                "sampledEventSharePct": 100.0
+              }
+            ]
+          }
+        },
+        "hotParentChainBlocks": 170,
+        "lostRecordCount": 0,
+        "lostRecordExamples": [],
+        "lostCountsParsed": [],
+        "lostCountSum": 0,
+        "lostSampleCounterRecordCount": 0,
+        "lostSampleCounterSum": 0,
+        "lostSampleCounterExamples": [],
+        "lossAccounting": "LOST records and LOST_SAMPLES counters are separate, potentially overlapping reports; never summed together",
+        "note": "sampled event/period shares; no exact self-time or causal attribution",
+        "oldestSampleAgeAtTriggerSeconds": 0.16992659400420962,
+        "newestSampleAgeAtTriggerSeconds": 0.0007575000054202974,
+        "nominalRingDataBytes": 16384,
+        "scope": "single hot TID, per-thread ring",
+        "firstSampleDelayAfterCollectorStartSeconds": 7.830144471001404,
+        "wrappedDuringExperiment": true,
+        "capacityClaim": "observed retained history after wrap in this single trial, not a guaranteed duration"
+      },
+      "rawData": {
+        "path": "/tmp/craidd-perf-gr002-20261020-ring-999-4-v1/capture.data.2026102023163190",
+        "bytes": 54908,
+        "sha256": "d69b4b810d642ca980ce5282e25fa6c5344e3caeb1d17daa3f00916f256baee2"
+      },
+      "recordStderr": "[ perf record: dump data: Woken up 1 times ]\n[ perf record: Dump /tmp/craidd-perf-gr002-20261020-ring-999-4-v1/capture.data.2026102023163190 ]\n[ perf record: Woken up 1 times to write data ]\n[ perf record: Dump /tmp/craidd-perf-gr002-20261020-ring-999-4-v1/capture.data.2026102023163223 ]\n[ perf record: Captured and wrote 0.018 MB /tmp/craidd-perf-gr002-20261020-ring-999-4-v1/capture.data.<timestamp> ]\n",
+      "captureState": "rolling / intentionally truncated history",
+      "gate": "PASS"
+    },
+    {
+      "run": {
+        "kind": "retention",
+        "settings": {
+          "kind": "retention",
+          "binary": "/tmp/craidd-perf-gr002-20261020-installed-timed-v4/fixture-fp",
+          "output": "/tmp/craidd-perf-gr002-20261020-ring-999-16-v1",
+          "frequency": 999,
+          "pages": 16,
+          "seconds": 8.0
+        },
+        "sysctlsBefore": {
+          "kernel.perf_event_paranoid": "2",
+          "kernel.kptr_restrict": "0",
+          "kernel.yama.ptrace_scope": "1"
+        },
+        "uid": 1000,
+        "credentials": [
+          "Uid:\t1000\t1000\t1000\t1000",
+          "CapEff:\t0000000000000000",
+          "NoNewPrivs:\t0",
+          "Seccomp:\t0"
+        ],
+        "binarySha256": "a61e431f10e2c8f39fc719a5c5256490f99dfaab6ad6cb498b93e6216bc7512f",
+        "runnerSha256": "1451505488080f24ef8e63b2c838334201d8a133a9042c073e3fa42639d49a18",
+        "perfVersion": "perf version 7.2.11-1",
+        "pageBytes": 4096,
+        "signals": [
+          {
+            "signal": "SIGUSR2",
+            "pid": 957356,
+            "monotonicNs": 44766905054098
+          },
+          {
+            "signal": "SIGINT",
+            "pid": 957356,
+            "monotonicNs": 44767255697831
+          }
+        ],
+        "commands": {
+          "record": {
+            "command": [
+              "/usr/bin/perf",
+              "record",
+              "--no-buildid-cache",
+              "--clockid",
+              "mono",
+              "--timestamp",
+              "--per-thread",
+              "--no-inherit",
+              "--user-callchains",
+              "-e",
+              "cpu-clock:u",
+              "-F",
+              "999",
+              "-m",
+              "16",
+              "--call-graph",
+              "fp",
+              "-o",
+              "/tmp/craidd-perf-gr002-20261020-ring-999-16-v1/capture.data",
+              "-t",
+              "957353",
+              "--overwrite",
+              "--switch-output=signal"
+            ],
+            "exitCode": -2
+          },
+          "leaves": {
+            "command": [
+              "/usr/bin/perf",
+              "script",
+              "--ns",
+              "-G",
+              "-F",
+              "comm,pid,tid,time,period,event,ip,sym,dso",
+              "-i",
+              "/tmp/craidd-perf-gr002-20261020-ring-999-16-v1/capture.data.2026102023164715"
+            ],
+            "exitCode": 0,
+            "seconds": 0.005001613004424144
+          },
+          "stacks": {
+            "command": [
+              "/usr/bin/perf",
+              "script",
+              "--ns",
+              "--show-lost-events",
+              "-i",
+              "/tmp/craidd-perf-gr002-20261020-ring-999-16-v1/capture.data.2026102023164715"
+            ],
+            "exitCode": 0,
+            "seconds": 0.011031127003661823
+          },
+          "raw-records": {
+            "command": [
+              "/usr/bin/perf",
+              "script",
+              "-D",
+              "-i",
+              "/tmp/craidd-perf-gr002-20261020-ring-999-16-v1/capture.data.2026102023164715"
+            ],
+            "exitCode": 0,
+            "seconds": 0.016400378997786902
+          }
+        },
+        "note": "single hot TID scope for retention; target PID scope for positive LOST; experimental settings only",
+        "targetPid": 957352,
+        "targetBirth": "4475887",
+        "tasks": {
+          "957352": "fixture-fp",
+          "957353": "hot-worker",
+          "957354": "pool-worker",
+          "957355": "pool-worker"
+        },
+        "selectedHotTid": 957353,
+        "collectorPid": 957356,
+        "collectorStartMonotonicNs": 44758904957856,
+        "triggerMonotonicNs": 44766905054098,
+        "snapshotCandidatesBeforeStop": [
+          "/tmp/craidd-perf-gr002-20261020-ring-999-16-v1/capture.data.2026102023164715"
+        ],
+        "targetAliveAfterCollectorStop": true,
+        "rawFiles": [
+          {
+            "path": "/tmp/craidd-perf-gr002-20261020-ring-999-16-v1/capture.data.2026102023164715",
+            "bytes": 104060
+          },
+          {
+            "path": "/tmp/craidd-perf-gr002-20261020-ring-999-16-v1/capture.data.2026102023164748",
+            "bytes": 73532
+          }
+        ],
+        "expectedCollectorStopExit": true,
+        "selectedDataFile": "/tmp/craidd-perf-gr002-20261020-ring-999-16-v1/capture.data.2026102023164715",
+        "targetAliveBeforeNormalShutdown": true,
+        "targetNormalExitCode": 0,
+        "sysctlsAfter": {
+          "kernel.perf_event_paranoid": "2",
+          "kernel.kptr_restrict": "0",
+          "kernel.yama.ptrace_scope": "1"
+        },
+        "sysctlsUnchanged": true
+      },
+      "analysis": {
+        "sampleCount": 682,
+        "unparsedLineCount": 0,
+        "unparsedExamples": [],
+        "firstTime": 44766.221659193,
+        "lastTime": 44766.904361458,
+        "spanSeconds": 0.6827022650031722,
+        "events": {
+          "cpu-clock:u": 682
+        },
+        "modules": {
+          "/tmp/craidd-perf-gr002-20261020-installed-timed-v4/fixture-fp": 682
+        },
+        "unresolvedSampleCount": 0,
+        "unresolvedStackFrameCount": 2046,
+        "unresolvedStackFrameExamples": [
+          "7fc7818ea859 [unknown] (/usr/lib/libstdc++.so.6.0.36)",
+          "7fc781498042 [unknown] (/usr/lib/libc.so.6)",
+          "7fc78152072c [unknown] (/usr/lib/libc.so.6)",
+          "7fc7818ea859 [unknown] (/usr/lib/libstdc++.so.6.0.36)",
+          "7fc781498042 [unknown] (/usr/lib/libc.so.6)"
+        ],
+        "threads": {
+          "957353": {
+            "comm": "hot-worker",
+            "samples": 682,
+            "firstTime": 44766.221659193,
+            "lastTime": 44766.904361458,
+            "observedSpanSeconds": 0.6827022650031722,
+            "observedSamplesPerWallSecond": 997.5065777712568,
+            "periodSum": 682682682,
+            "topSampledFunctions": [
+              {
+                "symbol": "known_hot",
+                "sampleCount": 682,
+                "period": 682682682,
+                "sampledEventSharePct": 100.0
+              }
+            ]
+          }
+        },
+        "hotParentChainBlocks": 682,
+        "lostRecordCount": 0,
+        "lostRecordExamples": [],
+        "lostCountsParsed": [],
+        "lostCountSum": 0,
+        "lostSampleCounterRecordCount": 0,
+        "lostSampleCounterSum": 0,
+        "lostSampleCounterExamples": [],
+        "lossAccounting": "LOST records and LOST_SAMPLES counters are separate, potentially overlapping reports; never summed together",
+        "note": "sampled event/period shares; no exact self-time or causal attribution",
+        "oldestSampleAgeAtTriggerSeconds": 0.683394905005116,
+        "newestSampleAgeAtTriggerSeconds": 0.0006926400019438006,
+        "nominalRingDataBytes": 65536,
+        "scope": "single hot TID, per-thread ring",
+        "firstSampleDelayAfterCollectorStartSeconds": 7.31670133699663,
+        "wrappedDuringExperiment": true,
+        "capacityClaim": "observed retained history after wrap in this single trial, not a guaranteed duration"
+      },
+      "rawData": {
+        "path": "/tmp/craidd-perf-gr002-20261020-ring-999-16-v1/capture.data.2026102023164715",
+        "bytes": 104060,
+        "sha256": "ff76f89ed019f7ddfebf5699a5b1e05fdfd443b5790781f295fa0db292331e9d"
+      },
+      "recordStderr": "[ perf record: dump data: Woken up 1 times ]\n[ perf record: Dump /tmp/craidd-perf-gr002-20261020-ring-999-16-v1/capture.data.2026102023164715 ]\n[ perf record: Woken up 1 times to write data ]\n[ perf record: Dump /tmp/craidd-perf-gr002-20261020-ring-999-16-v1/capture.data.2026102023164748 ]\n[ perf record: Captured and wrote 0.035 MB /tmp/craidd-perf-gr002-20261020-ring-999-16-v1/capture.data.<timestamp> ]\n",
+      "captureState": "rolling / intentionally truncated history",
+      "gate": "PASS"
+    }
+  ],
+  "diagnostics": {
+    "uid": 1000,
+    "diagnostics": [
+      {
+        "name": "self-stat",
+        "command": [
+          "perf",
+          "stat",
+          "-e",
+          "cpu-clock:u",
+          "--",
+          "sleep",
+          ".01"
+        ],
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": "\n Performance counter stats for 'sleep .01':\n\n              0.35 msec cpu-clock:u                                                           \n\n       0.010515026 seconds time elapsed\n\n       0.000525000 seconds user\n       0.000000000 seconds sys\n\n\n"
+      },
+      {
+        "name": "self-record",
+        "command": [
+          "perf",
+          "record",
+          "-vvv",
+          "--no-buildid-cache",
+          "-e",
+          "cpu-clock:u",
+          "--call-graph",
+          "fp",
+          "-o",
+          "/tmp/craidd-perf-gr002-20261020-permission-diagnostics/self.data",
+          "--",
+          "sleep",
+          ".01"
+        ],
+        "exitCode": 255,
+        "stdout": "",
+        "stderr": "hwmon_pmu: not a hwmon file 'cpu-clock'\nUsing CPUID AuthenticAMD-26-44-0\nAttempt to add: software/cpu-clock/\n..after resolving event: software/config=0/\ncpu-clock -> software/cpu-clock/\ncallchain: type FP\nDEBUGINFOD_URLS=\nAttempt to add: software/cpu-clock/\n..after resolving event: software/config=0/\nnr_cblocks: 0\naffinity: SYS\nmmap flush: 1\ncomp level: 0\nProblems creating module maps, continuing anyway...\nAttempt to add: software/cpu-clock/\n..after resolving event: software/config=0/\nperf record opening and mmapping events\nOpening: cpu-clock:u\n------------------------------------------------------------\nperf_event_attr:\n  type                             1 (PERF_TYPE_SOFTWARE)\n  size                             144\n  config                           0 (PERF_COUNT_SW_CPU_CLOCK)\n  { sample_period, sample_freq }   4000\n  sample_type                      IP|TID|TIME|CALLCHAIN|PERIOD\n  read_format                      ID|LOST\n  disabled                         1\n  inherit                          1\n  exclude_kernel                   1\n  exclude_hv                       1\n  mmap                             1\n  comm                             1\n  freq                             1\n  enable_on_exec                   1\n  task                             1\n  sample_id_all                    1\n  mmap2                            1\n  comm_exec                        1\n  ksymbol                          1\n  bpf_event                        1\n  build_id                         1\n------------------------------------------------------------\nsys_perf_event_open: pid 951283  cpu 0  group_fd -1  flags 0x8\nsys_perf_event_open failed, error -13\nError:\nFailure to open event 'cpu-clock:u' on PMU 'software' which will be removed.\nAccess to performance monitoring and observability operations is limited.\nConsider adjusting /proc/sys/kernel/perf_event_paranoid setting to open\naccess to performance monitoring and observability operations for processes\nwithout CAP_PERFMON, CAP_SYS_PTRACE or CAP_SYS_ADMIN Linux capability.\nMore information can be found at 'Perf events and tool security' document:\nhttps://www.kernel.org/doc/html/latest/admin-guide/perf-security.html\nperf_event_paranoid setting is 2:\n  -1: Allow use of (almost) all events by all users\n      Ignore mlock limit after perf_event_mlock_kb without CAP_IPC_LOCK\n>= 0: Disallow raw and ftrace function tracepoint access\n>= 1: Disallow CPU event access\n>= 2: Disallow kernel profiling\nTo make the adjusted perf_event_paranoid setting permanent preserve it\nin /etc/sysctl.conf (e.g. kernel.perf_event_paranoid = <setting>)\nError:\nFailure to open any events for recording.\n"
+      }
+    ],
+    "directSelfPerfEventOpen": {
+      "fd": 3,
+      "errno": 0,
+      "error": "Success",
+      "event": "cpu-clock, exclude_kernel, exclude_hv, disabled, self pid0, cpu-1",
+      "attrSize": 128
+    },
+    "perThreadWithoutUserCallchainsStderr": "hwmon_pmu: not a hwmon file 'cpu-clock'\nUsing CPUID AuthenticAMD-26-44-0\nAttempt to add: software/cpu-clock/\n..after resolving event: software/config=0/\ncpu-clock -> software/cpu-clock/\ncallchain: type FP\nDEBUGINFOD_URLS=\nAttempt to add: software/cpu-clock/\n..after resolving event: software/config=0/\nnr_cblocks: 0\naffinity: SYS\nmmap flush: 1\ncomp level: 0\nProblems creating module maps, continuing anyway...\nAttempt to add: software/cpu-clock/\n..after resolving event: software/config=0/\nperf record opening and mmapping events\nOpening: cpu-clock:u\n------------------------------------------------------------\nperf_event_attr:\n  type                             1 (PERF_TYPE_SOFTWARE)\n  size                             144\n  config                           0 (PERF_COUNT_SW_CPU_CLOCK)\n  { sample_period, sample_freq }   4000\n  sample_type                      IP|TID|CALLCHAIN|PERIOD\n  read_format                      ID|LOST\n  disabled                         1\n  exclude_kernel                   1\n  exclude_hv                       1\n  mmap                             1\n  comm                             1\n  freq                             1\n  enable_on_exec                   1\n  task                             1\n  sample_id_all                    1\n  mmap2                            1\n  comm_exec                        1\n  ksymbol                          1\n  bpf_event                        1\n  build_id                         1\n------------------------------------------------------------\nsys_perf_event_open: pid 951489  cpu -1  group_fd -1  flags 0x8\nsys_perf_event_open failed, error -13\nError:\nFailure to open event 'cpu-clock:u' on PMU 'software' which will be removed.\nAccess to performance monitoring and observability operations is limited.\nConsider adjusting /proc/sys/kernel/perf_event_paranoid setting to open\naccess to performance monitoring and observability operations for processes\nwithout CAP_PERFMON, CAP_SYS_PTRACE or CAP_SYS_ADMIN Linux capability.\nMore information can be found at 'Perf events and tool security' document:\nhttps://www.kernel.org/doc/html/latest/admin-guide/perf-security.html\nperf_event_paranoid setting is 2:\n  -1: Allow use of (almost) all events by all users\n      Ignore mlock limit after perf_event_mlock_kb without CAP_IPC_LOCK\n>= 0: Disallow raw and ftrace function tracepoint access\n>= 1: Disallow CPU event access\n>= 2: Disallow kernel profiling\nTo make the adjusted perf_event_paranoid setting permanent preserve it\nin /etc/sysctl.conf (e.g. kernel.perf_event_paranoid = <setting>)\nError:\nFailure to open any events for recording.\n",
+    "perThreadWithUserCallchainsStderr": "hwmon_pmu: not a hwmon file 'cpu-clock'\nUsing CPUID AuthenticAMD-26-44-0\nAttempt to add: software/cpu-clock/\n..after resolving event: software/config=0/\ncpu-clock -> software/cpu-clock/\ncallchain: type FP\nDEBUGINFOD_URLS=\nAttempt to add: software/cpu-clock/\n..after resolving event: software/config=0/\nnr_cblocks: 0\naffinity: SYS\nmmap flush: 1\ncomp level: 0\nProblems creating module maps, continuing anyway...\nAttempt to add: software/cpu-clock/\n..after resolving event: software/config=0/\nperf record opening and mmapping events\nOpening: cpu-clock:u\n------------------------------------------------------------\nperf_event_attr:\n  type                             1 (PERF_TYPE_SOFTWARE)\n  size                             144\n  config                           0 (PERF_COUNT_SW_CPU_CLOCK)\n  { sample_period, sample_freq }   4000\n  sample_type                      IP|TID|CALLCHAIN|PERIOD\n  read_format                      ID|LOST\n  disabled                         1\n  exclude_kernel                   1\n  exclude_hv                       1\n  mmap                             1\n  comm                             1\n  freq                             1\n  enable_on_exec                   1\n  task                             1\n  sample_id_all                    1\n  exclude_callchain_kernel         1\n  mmap2                            1\n  comm_exec                        1\n  ksymbol                          1\n  bpf_event                        1\n  build_id                         1\n------------------------------------------------------------\nsys_perf_event_open: pid 951541  cpu -1  group_fd -1  flags 0x8 = 5\nmmap size 528384B\nlibperf: mmap_per_thread: nr cpu values (may include -1) 1 nr threads 1\nlibperf: idx 0: mmapping fd 5\nControl descriptor is not initialized\nthread_data[0x559c072f7840]: nr_mmaps=1, maps=0x559c072ff860, ow_maps=(nil)\nthread_data[0x559c072f7840]: cpu-1: maps[0] -> mmap[0]\nthread_data[0x559c072f7840]: pollfd[0] <- event_fd=5\nthread_data[0x559c072f7840]: pollfd[1] <- non_perf_event fd=4\nperf record done opening and mmapping events\nSynthesizing TSC conversion information\nSynthesizing id index\nperf record has started\n[ perf record: Woken up 1 times to write data ]\nUnhandled DRM PMU fdinfo line match 'drm-memory-vram:\t67048 KiB\n'\nUnhandled DRM PMU fdinfo line match 'drm-memory-gtt: \t71604 KiB\n'\nUnhandled DRM PMU fdinfo line match 'drm-memory-cpu: \t0 KiB\n'\nfailed to write feature HYBRID_TOPOLOGY\n[ perf record: Captured and wrote 0.001 MB /tmp/craidd-perf-gr002-20261020-permission-diagnostics/user-callchains-self.data ]\n"
+  },
+  "positiveLoss": {
+    "run": {
+      "kind": "loss",
+      "settings": {
+        "kind": "loss",
+        "binary": "/tmp/craidd-perf-gr002-20261020-installed-timed-v4/fixture-dwarf",
+        "output": "/tmp/craidd-perf-gr002-20261020-loss-v1",
+        "frequency": 999,
+        "pages": 4,
+        "seconds": 3.0
+      },
+      "sysctlsBefore": {
+        "kernel.perf_event_paranoid": "2",
+        "kernel.kptr_restrict": "0",
+        "kernel.yama.ptrace_scope": "1"
+      },
+      "uid": 1000,
+      "credentials": [
+        "Uid:\t1000\t1000\t1000\t1000",
+        "CapEff:\t0000000000000000",
+        "NoNewPrivs:\t0",
+        "Seccomp:\t0"
+      ],
+      "binarySha256": "83aa2e2bcce25561eeee8f59807c31ed0156719d665eb665b11e94c74b824fef",
+      "runnerSha256": "1451505488080f24ef8e63b2c838334201d8a133a9042c073e3fa42639d49a18",
+      "perfVersion": "perf version 7.2.11-1",
+      "pageBytes": 4096,
+      "signals": [
+        {
+          "signal": "SIGSTOP",
+          "pid": 956432,
+          "monotonicNs": 44671849258168
+        },
+        {
+          "signal": "SIGCONT",
+          "pid": 956432,
+          "monotonicNs": 44672449358282
+        },
+        {
+          "signal": "SIGINT",
+          "pid": 956432,
+          "monotonicNs": 44674149447225
+        }
+      ],
+      "commands": {
+        "record": {
+          "command": [
+            "/usr/bin/perf",
+            "record",
+            "--no-buildid-cache",
+            "--clockid",
+            "mono",
+            "--timestamp",
+            "--per-thread",
+            "--no-inherit",
+            "--user-callchains",
+            "-e",
+            "cpu-clock:u",
+            "-F",
+            "999",
+            "-m",
+            "4",
+            "--call-graph",
+            "dwarf,8192",
+            "-o",
+            "/tmp/craidd-perf-gr002-20261020-loss-v1/capture.data",
+            "-p",
+            "956428"
+          ],
+          "exitCode": -2
+        },
+        "leaves": {
+          "command": [
+            "/usr/bin/perf",
+            "script",
+            "--ns",
+            "-G",
+            "-F",
+            "comm,pid,tid,time,period,event,ip,sym,dso",
+            "-i",
+            "/tmp/craidd-perf-gr002-20261020-loss-v1/capture.data"
+          ],
+          "exitCode": 0,
+          "seconds": 0.008237633999669924
+        },
+        "stacks": {
+          "command": [
+            "/usr/bin/perf",
+            "script",
+            "--ns",
+            "--show-lost-events",
+            "-i",
+            "/tmp/craidd-perf-gr002-20261020-loss-v1/capture.data"
+          ],
+          "exitCode": 0,
+          "seconds": 0.02249378899432486
+        },
+        "raw-records": {
+          "command": [
+            "/usr/bin/perf",
+            "script",
+            "-D",
+            "-i",
+            "/tmp/craidd-perf-gr002-20261020-loss-v1/capture.data"
+          ],
+          "exitCode": 0,
+          "seconds": 1.0938751379944733
+        }
+      },
+      "note": "single hot TID scope for retention; target PID scope for positive LOST; experimental settings only",
+      "targetPid": 956428,
+      "targetBirth": "4467112",
+      "tasks": {
+        "956428": "fixture-dwarf",
+        "956429": "hot-worker",
+        "956430": "pool-worker",
+        "956431": "pool-worker"
+      },
+      "selectedHotTid": 956429,
+      "collectorPid": 956432,
+      "collectorStartMonotonicNs": 44671149143843,
+      "targetAliveAfterCollectorStop": true,
+      "rawFiles": [
+        {
+          "path": "/tmp/craidd-perf-gr002-20261020-loss-v1/capture.data",
+          "bytes": 21662676
+        }
+      ],
+      "expectedCollectorStopExit": true,
+      "selectedDataFile": "/tmp/craidd-perf-gr002-20261020-loss-v1/capture.data",
+      "targetAliveBeforeNormalShutdown": true,
+      "targetNormalExitCode": 0,
+      "sysctlsAfter": {
+        "kernel.perf_event_paranoid": "2",
+        "kernel.kptr_restrict": "0",
+        "kernel.yama.ptrace_scope": "1"
+      },
+      "sysctlsUnchanged": true
+    },
+    "analysis": {
+      "sampleCount": 2564,
+      "unparsedLineCount": 0,
+      "unparsedExamples": [],
+      "firstTime": 44671.168767872,
+      "lastTime": 44674.148947284,
+      "spanSeconds": 2.9801794119994156,
+      "events": {
+        "cpu-clock:u": 2564
+      },
+      "modules": {
+        "/tmp/craidd-perf-gr002-20261020-installed-timed-v4/fixture-dwarf": 2564
+      },
+      "unresolvedSampleCount": 0,
+      "unresolvedStackFrameCount": 7692,
+      "unresolvedStackFrameExamples": [
+        "7f296d4ea858 [unknown] (/usr/lib/libstdc++.so.6.0.36)",
+        "7f296d098041 [unknown] (/usr/lib/libc.so.6)",
+        "7f296d12072b [unknown] (/usr/lib/libc.so.6)",
+        "7f296d4ea858 [unknown] (/usr/lib/libstdc++.so.6.0.36)",
+        "7f296d098041 [unknown] (/usr/lib/libc.so.6)"
+      ],
+      "threads": {
+        "956429": {
+          "comm": "hot-worker",
+          "samples": 2377,
+          "firstTime": 44671.168767872,
+          "lastTime": 44674.148947284,
+          "observedSpanSeconds": 2.9801794119994156,
+          "observedSamplesPerWallSecond": 797.2674364614616,
+          "periodSum": 2379379377,
+          "topSampledFunctions": [
+            {
+              "symbol": "known_hot",
+              "sampleCount": 2377,
+              "period": 2379379377,
+              "sampledEventSharePct": 100.0
+            }
+          ]
+        },
+        "956431": {
+          "comm": "pool-worker",
+          "samples": 95,
+          "firstTime": 44671.1897735,
+          "lastTime": 44674.143733213,
+          "observedSpanSeconds": 2.953959712998767,
+          "observedSamplesPerWallSecond": 31.82169329742624,
+          "periodSum": 95095095,
+          "topSampledFunctions": [
+            {
+              "symbol": "known_pool",
+              "sampleCount": 95,
+              "period": 95095095,
+              "sampledEventSharePct": 100.0
+            }
+          ]
+        },
+        "956430": {
+          "comm": "pool-worker",
+          "samples": 92,
+          "firstTime": 44671.191235801,
+          "lastTime": 44674.135873879,
+          "observedSpanSeconds": 2.944638077999116,
+          "observedSamplesPerWallSecond": 30.90362808248224,
+          "periodSum": 92092092,
+          "topSampledFunctions": [
+            {
+              "symbol": "known_pool",
+              "sampleCount": 92,
+              "period": 92092092,
+              "sampledEventSharePct": 100.0
+            }
+          ]
+        }
+      },
+      "hotParentChainBlocks": 2377,
+      "lostRecordCount": 3,
+      "lostRecordExamples": [
+        "44672450124703 0x5f4c30 [0x28]: PERF_RECORD_LOST: id:275: lost:599",
+        "44672464507959 0x613a68 [0x28]: PERF_RECORD_LOST: id:277: lost:29",
+        "44672474668753 0x62a4e0 [0x28]: PERF_RECORD_LOST: id:276: lost:24"
+      ],
+      "lostCountsParsed": [
+        599,
+        29,
+        24
+      ],
+      "lostCountSum": 652,
+      "lostSampleCounterRecordCount": 3,
+      "lostSampleCounterSum": 652,
+      "lostSampleCounterExamples": [
+        "0 0x149faa8 [0x20]: PERF_RECORD_LOST_SAMPLES: id:18446744073709551615: lost samples :599",
+        "0 0x149fac8 [0x20]: PERF_RECORD_LOST_SAMPLES: id:18446744073709551615: lost samples :24",
+        "0 0x149fae8 [0x20]: PERF_RECORD_LOST_SAMPLES: id:18446744073709551615: lost samples :29"
+      ],
+      "lossAccounting": "LOST records and LOST_SAMPLES counters are separate, potentially overlapping reports; never summed together",
+      "note": "sampled event/period shares; no exact self-time or causal attribution"
+    },
+    "rawData": {
+      "path": "/tmp/craidd-perf-gr002-20261020-loss-v1/capture.data",
+      "bytes": 21662676,
+      "sha256": "5f97353c5aa6a8a6115bc819dea9875a2405391d2d77cb61a07370db4ee6d16a"
+    },
+    "recordStderr": "[ perf record: Woken up 2563 times to write data ]\n[ perf record: Captured and wrote 20.624 MB /tmp/craidd-perf-gr002-20261020-loss-v1/capture.data ]\n",
+    "captureState": "PARTIAL",
+    "lossReportingGate": "PASS",
+    "reason": "652 LOST, matching counter652 stored separately, not added"
+  },
+  "refusedAttachedRuns": {
+    "v1": {
+      "run": {
+        "timestampUtc": "2026-10-20T22:05:04.304171+00:00",
+        "machine": {
+          "uname": [
+            "Linux",
+            "sk27",
+            "7.2.11-arch1-1",
+            "#1 SMP PREEMPT_DYNAMIC Fri, 16 Oct 2026 00:28:58 +0000",
+            "x86_64",
+            ""
+          ],
+          "cpu": "AMD Ryzen 9 9950X3D 16-Core Processor",
+          "memory": "MemTotal:       63297788 kB"
+        },
+        "sourceSha256": "e227090c754aa4a33d7315c54fcd70660e79450be18d583c391671013bd72bab",
+        "runnerSha256": "4e56ce8bb54a91d9e14421465d3073a73920e9e5968e5acd5659254b201b1b17",
+        "baseline": "8bac01edf9bf1f0a0b84b55441b5638bc1233a29",
+        "sysctls": {
+          "kernel.perf_event_paranoid": "2",
+          "kernel.kptr_restrict": "0",
+          "kernel.yama.ptrace_scope": "1"
+        },
+        "credentials": [
+          "Uid:\t1000\t1000\t1000\t1000",
+          "Gid:\t1000\t1000\t1000\t1000",
+          "CapInh:\t0000000800000000",
+          "CapPrm:\t0000000000000000",
+          "CapEff:\t0000000000000000",
+          "CapBnd:\t000001ffffffffff",
+          "CapAmb:\t0000000000000000",
+          "NoNewPrivs:\t0",
+          "Seccomp:\t0"
+        ],
+        "perfPath": "/usr/bin/perf",
+        "alternativePaths": {
+          "/usr/bin/perf": true,
+          "/usr/libexec/perf": false
+        },
+        "captureSettings": {
+          "event": "cpu-clock:u",
+          "frequency": 99,
+          "seconds": 3.0,
+          "note": "qualification settings, not accepted product defaults"
+        },
+        "tools": {
+          "g++": {
+            "command": [
+              "g++",
+              "--version"
+            ],
+            "exitCode": 0,
+            "seconds": 0.0008258309972006828,
+            "version": "g++ (GCC) 16.2.1 20260810"
+          },
+          "readelf": {
+            "command": [
+              "readelf",
+              "--version"
+            ],
+            "exitCode": 0,
+            "seconds": 0.003768326001591049,
+            "version": "GNU readelf (GNU Binutils) 2.47"
+          },
+          "nm": {
+            "command": [
+              "nm",
+              "--version"
+            ],
+            "exitCode": 0,
+            "seconds": 0.0011993820007774048,
+            "version": "GNU nm (GNU Binutils) 2.47"
+          },
+          "objdump": {
+            "command": [
+              "objdump",
+              "--version"
+            ],
+            "exitCode": 0,
+            "seconds": 0.0052144379951641895,
+            "version": "GNU objdump (GNU Binutils) 2.47"
+          },
+          "perf": {
+            "command": [
+              "/usr/bin/perf",
+              "--version"
+            ],
+            "exitCode": 0,
+            "seconds": 0.004281117006030399,
+            "version": "perf version 7.2.11-1"
+          }
+        },
+        "modes": {
+          "fp": {
+            "binarySha256": "a61e431f10e2c8f39fc719a5c5256490f99dfaab6ad6cb498b93e6216bc7512f",
+            "commands": {
+              "build": {
+                "command": [
+                  "g++",
+                  "-std=c++17",
+                  "-O2",
+                  "-g",
+                  "-pthread",
+                  "-Wl,--build-id",
+                  "-fno-omit-frame-pointer",
+                  "-mno-omit-leaf-frame-pointer",
+                  "/home/skira24/.codex/worktrees/9b33/Craidd-Studio/workspaces/profiling-perf-qualification/fixture.cpp",
+                  "-o",
+                  "/tmp/craidd-perf-gr002-20261020-installed-timed-v1/fixture-fp"
+                ],
+                "exitCode": 0,
+                "seconds": 0.31052932199963834
+              },
+              "symbols": {
+                "command": [
+                  "nm",
+                  "-C",
+                  "/tmp/craidd-perf-gr002-20261020-installed-timed-v1/fixture-fp"
+                ],
+                "exitCode": 0,
+                "seconds": 0.005712489000870846
+              },
+              "sections": {
+                "command": [
+                  "readelf",
+                  "-S",
+                  "/tmp/craidd-perf-gr002-20261020-installed-timed-v1/fixture-fp"
+                ],
+                "exitCode": 0,
+                "seconds": 0.002111653004249092
+              },
+              "build-id": {
+                "command": [
+                  "readelf",
+                  "-n",
+                  "/tmp/craidd-perf-gr002-20261020-installed-timed-v1/fixture-fp"
+                ],
+                "exitCode": 0,
+                "seconds": 0.0018545630009612069
+              },
+              "known-hot-asm": {
+                "command": [
+                  "objdump",
+                  "-d",
+                  "--disassemble=known_hot",
+                  "/tmp/craidd-perf-gr002-20261020-installed-timed-v1/fixture-fp"
+                ],
+                "exitCode": 0,
+                "seconds": 0.002563344001828227
+              },
+              "record": {
+                "command": [
+                  "/usr/bin/perf",
+                  "record",
+                  "--no-buildid-cache",
+                  "--clockid",
+                  "mono",
+                  "-e",
+                  "cpu-clock:u",
+                  "-F",
+                  "99",
+                  "--call-graph",
+                  "fp",
+                  "-p",
+                  "950772",
+                  "-o",
+                  "/tmp/craidd-perf-gr002-20261020-installed-timed-v1/fp.data"
+                ],
+                "exitCode": 255,
+                "sigintSentToCollector": false
+              }
+            },
+            "targetPid": 950772,
+            "targetBirth": "4406442",
+            "tasks": {
+              "950772": "fixture-fp",
+              "950773": "hot-worker",
+              "950774": "pool-worker",
+              "950775": "pool-worker"
+            },
+            "buildAndSmoke": "PASS",
+            "binaryEvidence": {
+              "knownSymbolsPresent": true,
+              "debugInfoPresent": true,
+              "knownHotFramePointerPresent": true,
+              "buildId": "fc145315e72705f87e513770ecf0c281f4733ca9"
+            },
+            "targetAliveAfterCollectorStop": true,
+            "capture": "BLOCKED",
+            "reason": "perf refused/failed; inspect raw stderr",
+            "safeCollectorStop": "PARTIAL",
+            "samples": "BLOCKED",
+            "symbols": "BLOCKED",
+            "loss": "BLOCKED",
+            "fixtureAliveBeforeNormalShutdown": true
+          },
+          "dwarf": {
+            "binarySha256": "83aa2e2bcce25561eeee8f59807c31ed0156719d665eb665b11e94c74b824fef",
+            "commands": {
+              "build": {
+                "command": [
+                  "g++",
+                  "-std=c++17",
+                  "-O2",
+                  "-g",
+                  "-pthread",
+                  "-Wl,--build-id",
+                  "-fomit-frame-pointer",
+                  "/home/skira24/.codex/worktrees/9b33/Craidd-Studio/workspaces/profiling-perf-qualification/fixture.cpp",
+                  "-o",
+                  "/tmp/craidd-perf-gr002-20261020-installed-timed-v1/fixture-dwarf"
+                ],
+                "exitCode": 0,
+                "seconds": 0.29339407400402706
+              },
+              "symbols": {
+                "command": [
+                  "nm",
+                  "-C",
+                  "/tmp/craidd-perf-gr002-20261020-installed-timed-v1/fixture-dwarf"
+                ],
+                "exitCode": 0,
+                "seconds": 0.004376676995889284
+              },
+              "sections": {
+                "command": [
+                  "readelf",
+                  "-S",
+                  "/tmp/craidd-perf-gr002-20261020-installed-timed-v1/fixture-dwarf"
+                ],
+                "exitCode": 0,
+                "seconds": 0.0023094739954103716
+              },
+              "build-id": {
+                "command": [
+                  "readelf",
+                  "-n",
+                  "/tmp/craidd-perf-gr002-20261020-installed-timed-v1/fixture-dwarf"
+                ],
+                "exitCode": 0,
+                "seconds": 0.0018114530030288734
+              },
+              "known-hot-asm": {
+                "command": [
+                  "objdump",
+                  "-d",
+                  "--disassemble=known_hot",
+                  "/tmp/craidd-perf-gr002-20261020-installed-timed-v1/fixture-dwarf"
+                ],
+                "exitCode": 0,
+                "seconds": 0.002567354000348132
+              },
+              "record": {
+                "command": [
+                  "/usr/bin/perf",
+                  "record",
+                  "--no-buildid-cache",
+                  "--clockid",
+                  "mono",
+                  "-e",
+                  "cpu-clock:u",
+                  "-F",
+                  "99",
+                  "--call-graph",
+                  "dwarf,8192",
+                  "-p",
+                  "950793",
+                  "-o",
+                  "/tmp/craidd-perf-gr002-20261020-installed-timed-v1/dwarf.data"
+                ],
+                "exitCode": 255,
+                "sigintSentToCollector": false
+              }
+            },
+            "targetPid": 950793,
+            "targetBirth": "4406478",
+            "tasks": {
+              "950793": "fixture-dwarf",
+              "950794": "hot-worker",
+              "950795": "pool-worker",
+              "950796": "pool-worker"
+            },
+            "buildAndSmoke": "PASS",
+            "binaryEvidence": {
+              "knownSymbolsPresent": true,
+              "debugInfoPresent": true,
+              "knownHotFramePointerPresent": false,
+              "buildId": "514262a4b67788b1665c4984a3b133b2e849ca32"
+            },
+            "targetAliveAfterCollectorStop": true,
+            "capture": "BLOCKED",
+            "reason": "perf refused/failed; inspect raw stderr",
+            "safeCollectorStop": "PARTIAL",
+            "samples": "BLOCKED",
+            "symbols": "BLOCKED",
+            "loss": "BLOCKED",
+            "fixtureAliveBeforeNormalShutdown": true
+          }
+        },
+        "gates": {
+          "nativeFixtureBuildAndSmoke": "PASS",
+          "perfDiscovery": "PASS",
+          "captureQualification": "PARTIAL",
+          "desktopBehaviour": "NOT TESTED",
+          "flightRecording": "NOT TESTED",
+          "jitAndSymbolScale": "NOT TESTED"
+        },
+        "sysctlsAfter": {
+          "kernel.perf_event_paranoid": "2",
+          "kernel.kptr_restrict": "0",
+          "kernel.yama.ptrace_scope": "1"
+        },
+        "sysctlsUnchanged": true
+      },
+      "stderr": {
+        "fp": "Error:\nFailure to open event 'cpu-clock:u' on PMU 'software' which will be removed.\nAccess to performance monitoring and observability operations is limited.\nConsider adjusting /proc/sys/kernel/perf_event_paranoid setting to open\naccess to performance monitoring and observability operations for processes\nwithout CAP_PERFMON, CAP_SYS_PTRACE or CAP_SYS_ADMIN Linux capability.\nMore information can be found at 'Perf events and tool security' document:\nhttps://www.kernel.org/doc/html/latest/admin-guide/perf-security.html\nperf_event_paranoid setting is 2:\n  -1: Allow use of (almost) all events by all users\n      Ignore mlock limit after perf_event_mlock_kb without CAP_IPC_LOCK\n>= 0: Disallow raw and ftrace function tracepoint access\n>= 1: Disallow CPU event access\n>= 2: Disallow kernel profiling\nTo make the adjusted perf_event_paranoid setting permanent preserve it\nin /etc/sysctl.conf (e.g. kernel.perf_event_paranoid = <setting>)\nError:\nFailure to open any events for recording.\n",
+        "dwarf": "Error:\nFailure to open event 'cpu-clock:u' on PMU 'software' which will be removed.\nAccess to performance monitoring and observability operations is limited.\nConsider adjusting /proc/sys/kernel/perf_event_paranoid setting to open\naccess to performance monitoring and observability operations for processes\nwithout CAP_PERFMON, CAP_SYS_PTRACE or CAP_SYS_ADMIN Linux capability.\nMore information can be found at 'Perf events and tool security' document:\nhttps://www.kernel.org/doc/html/latest/admin-guide/perf-security.html\nperf_event_paranoid setting is 2:\n  -1: Allow use of (almost) all events by all users\n      Ignore mlock limit after perf_event_mlock_kb without CAP_IPC_LOCK\n>= 0: Disallow raw and ftrace function tracepoint access\n>= 1: Disallow CPU event access\n>= 2: Disallow kernel profiling\nTo make the adjusted perf_event_paranoid setting permanent preserve it\nin /etc/sysctl.conf (e.g. kernel.perf_event_paranoid = <setting>)\nError:\nFailure to open any events for recording.\n"
+      }
+    },
+    "v2": {
+      "run": {
+        "timestampUtc": "2026-10-20T22:05:56.909571+00:00",
+        "machine": {
+          "uname": [
+            "Linux",
+            "sk27",
+            "7.2.11-arch1-1",
+            "#1 SMP PREEMPT_DYNAMIC Fri, 16 Oct 2026 00:28:58 +0000",
+            "x86_64",
+            ""
+          ],
+          "cpu": "AMD Ryzen 9 9950X3D 16-Core Processor",
+          "memory": "MemTotal:       63297788 kB"
+        },
+        "sourceSha256": "e227090c754aa4a33d7315c54fcd70660e79450be18d583c391671013bd72bab",
+        "runnerSha256": "b8af509eb70f0d0e19cbb26dfce5af53e8a8a587d07d09844decc40257130541",
+        "baseline": "8bac01edf9bf1f0a0b84b55441b5638bc1233a29",
+        "sysctls": {
+          "kernel.perf_event_paranoid": "2",
+          "kernel.kptr_restrict": "0",
+          "kernel.yama.ptrace_scope": "1"
+        },
+        "credentials": [
+          "Uid:\t1000\t1000\t1000\t1000",
+          "Gid:\t1000\t1000\t1000\t1000",
+          "CapInh:\t0000000800000000",
+          "CapPrm:\t0000000000000000",
+          "CapEff:\t0000000000000000",
+          "CapBnd:\t000001ffffffffff",
+          "CapAmb:\t0000000000000000",
+          "NoNewPrivs:\t0",
+          "Seccomp:\t0"
+        ],
+        "perfPath": "/usr/bin/perf",
+        "alternativePaths": {
+          "/usr/bin/perf": true,
+          "/usr/libexec/perf": false
+        },
+        "captureSettings": {
+          "event": "cpu-clock:u",
+          "frequency": 99,
+          "seconds": 3.0,
+          "note": "qualification settings, not accepted product defaults"
+        },
+        "tools": {
+          "g++": {
+            "command": [
+              "g++",
+              "--version"
+            ],
+            "exitCode": 0,
+            "seconds": 0.0008279710018541664,
+            "version": "g++ (GCC) 16.2.1 20260810"
+          },
+          "readelf": {
+            "command": [
+              "readelf",
+              "--version"
+            ],
+            "exitCode": 0,
+            "seconds": 0.0026533150012255646,
+            "version": "GNU readelf (GNU Binutils) 2.47"
+          },
+          "nm": {
+            "command": [
+              "nm",
+              "--version"
+            ],
+            "exitCode": 0,
+            "seconds": 0.0007368009974015877,
+            "version": "GNU nm (GNU Binutils) 2.47"
+          },
+          "objdump": {
+            "command": [
+              "objdump",
+              "--version"
+            ],
+            "exitCode": 0,
+            "seconds": 0.0026961640032823198,
+            "version": "GNU objdump (GNU Binutils) 2.47"
+          },
+          "perf": {
+            "command": [
+              "/usr/bin/perf",
+              "--version"
+            ],
+            "exitCode": 0,
+            "seconds": 0.0038894469980732538,
+            "version": "perf version 7.2.11-1"
+          }
+        },
+        "modes": {
+          "fp": {
+            "binarySha256": "a61e431f10e2c8f39fc719a5c5256490f99dfaab6ad6cb498b93e6216bc7512f",
+            "commands": {
+              "build": {
+                "command": [
+                  "g++",
+                  "-std=c++17",
+                  "-O2",
+                  "-g",
+                  "-pthread",
+                  "-Wl,--build-id",
+                  "-fno-omit-frame-pointer",
+                  "-mno-omit-leaf-frame-pointer",
+                  "/home/skira24/.codex/worktrees/9b33/Craidd-Studio/workspaces/profiling-perf-qualification/fixture.cpp",
+                  "-o",
+                  "/tmp/craidd-perf-gr002-20261020-installed-timed-v2/fixture-fp"
+                ],
+                "exitCode": 0,
+                "seconds": 0.31420699899899773
+              },
+              "symbols": {
+                "command": [
+                  "nm",
+                  "-C",
+                  "/tmp/craidd-perf-gr002-20261020-installed-timed-v2/fixture-fp"
+                ],
+                "exitCode": 0,
+                "seconds": 0.005094108004414011
+              },
+              "sections": {
+                "command": [
+                  "readelf",
+                  "-S",
+                  "/tmp/craidd-perf-gr002-20261020-installed-timed-v2/fixture-fp"
+                ],
+                "exitCode": 0,
+                "seconds": 0.0021565829956671223
+              },
+              "build-id": {
+                "command": [
+                  "readelf",
+                  "-n",
+                  "/tmp/craidd-perf-gr002-20261020-installed-timed-v2/fixture-fp"
+                ],
+                "exitCode": 0,
+                "seconds": 0.0017735229994286783
+              },
+              "known-hot-asm": {
+                "command": [
+                  "objdump",
+                  "-d",
+                  "--disassemble=known_hot",
+                  "/tmp/craidd-perf-gr002-20261020-installed-timed-v2/fixture-fp"
+                ],
+                "exitCode": 0,
+                "seconds": 0.0028595150070032105
+              },
+              "record": {
+                "command": [
+                  "/usr/bin/perf",
+                  "record",
+                  "--no-buildid-cache",
+                  "--clockid",
+                  "mono",
+                  "--per-thread",
+                  "--no-inherit",
+                  "-e",
+                  "cpu-clock:u",
+                  "-F",
+                  "99",
+                  "--call-graph",
+                  "fp",
+                  "-p",
+                  "951393",
+                  "-o",
+                  "/tmp/craidd-perf-gr002-20261020-installed-timed-v2/fp.data"
+                ],
+                "exitCode": 255,
+                "sigintSentToCollector": false
+              }
+            },
+            "targetPid": 951393,
+            "targetBirth": "4411702",
+            "tasks": {
+              "951393": "fixture-fp",
+              "951394": "hot-worker",
+              "951395": "pool-worker",
+              "951396": "pool-worker"
+            },
+            "buildAndSmoke": "PASS",
+            "binaryEvidence": {
+              "knownSymbolsPresent": true,
+              "debugInfoPresent": true,
+              "knownHotFramePointerPresent": true,
+              "buildId": "fc145315e72705f87e513770ecf0c281f4733ca9"
+            },
+            "targetAliveAfterCollectorStop": true,
+            "capture": "BLOCKED",
+            "reason": "perf refused/failed; inspect raw stderr",
+            "safeCollectorStop": "PARTIAL",
+            "samples": "BLOCKED",
+            "symbols": "BLOCKED",
+            "loss": "BLOCKED",
+            "fixtureAliveBeforeNormalShutdown": true
+          },
+          "dwarf": {
+            "binarySha256": "83aa2e2bcce25561eeee8f59807c31ed0156719d665eb665b11e94c74b824fef",
+            "commands": {
+              "build": {
+                "command": [
+                  "g++",
+                  "-std=c++17",
+                  "-O2",
+                  "-g",
+                  "-pthread",
+                  "-Wl,--build-id",
+                  "-fomit-frame-pointer",
+                  "/home/skira24/.codex/worktrees/9b33/Craidd-Studio/workspaces/profiling-perf-qualification/fixture.cpp",
+                  "-o",
+                  "/tmp/craidd-perf-gr002-20261020-installed-timed-v2/fixture-dwarf"
+                ],
+                "exitCode": 0,
+                "seconds": 0.28915268999844557
+              },
+              "symbols": {
+                "command": [
+                  "nm",
+                  "-C",
+                  "/tmp/craidd-perf-gr002-20261020-installed-timed-v2/fixture-dwarf"
+                ],
+                "exitCode": 0,
+                "seconds": 0.0052318579982966185
+              },
+              "sections": {
+                "command": [
+                  "readelf",
+                  "-S",
+                  "/tmp/craidd-perf-gr002-20261020-installed-timed-v2/fixture-dwarf"
+                ],
+                "exitCode": 0,
+                "seconds": 0.0022330840001814067
+              },
+              "build-id": {
+                "command": [
+                  "readelf",
+                  "-n",
+                  "/tmp/craidd-perf-gr002-20261020-installed-timed-v2/fixture-dwarf"
+                ],
+                "exitCode": 0,
+                "seconds": 0.0016856029978953302
+              },
+              "known-hot-asm": {
+                "command": [
+                  "objdump",
+                  "-d",
+                  "--disassemble=known_hot",
+                  "/tmp/craidd-perf-gr002-20261020-installed-timed-v2/fixture-dwarf"
+                ],
+                "exitCode": 0,
+                "seconds": 0.0025579240027582273
+              },
+              "record": {
+                "command": [
+                  "/usr/bin/perf",
+                  "record",
+                  "--no-buildid-cache",
+                  "--clockid",
+                  "mono",
+                  "--per-thread",
+                  "--no-inherit",
+                  "-e",
+                  "cpu-clock:u",
+                  "-F",
+                  "99",
+                  "--call-graph",
+                  "dwarf,8192",
+                  "-p",
+                  "951414",
+                  "-o",
+                  "/tmp/craidd-perf-gr002-20261020-installed-timed-v2/dwarf.data"
+                ],
+                "exitCode": 255,
+                "sigintSentToCollector": false
+              }
+            },
+            "targetPid": 951414,
+            "targetBirth": "4411736",
+            "tasks": {
+              "951414": "fixture-dwarf",
+              "951415": "hot-worker",
+              "951416": "pool-worker",
+              "951417": "pool-worker"
+            },
+            "buildAndSmoke": "PASS",
+            "binaryEvidence": {
+              "knownSymbolsPresent": true,
+              "debugInfoPresent": true,
+              "knownHotFramePointerPresent": false,
+              "buildId": "514262a4b67788b1665c4984a3b133b2e849ca32"
+            },
+            "targetAliveAfterCollectorStop": true,
+            "capture": "BLOCKED",
+            "reason": "perf refused/failed; inspect raw stderr",
+            "safeCollectorStop": "PARTIAL",
+            "samples": "BLOCKED",
+            "symbols": "BLOCKED",
+            "loss": "BLOCKED",
+            "fixtureAliveBeforeNormalShutdown": true
+          }
+        },
+        "gates": {
+          "nativeFixtureBuildAndSmoke": "PASS",
+          "perfDiscovery": "PASS",
+          "captureQualification": "PARTIAL",
+          "desktopBehaviour": "NOT TESTED",
+          "flightRecording": "NOT TESTED",
+          "jitAndSymbolScale": "NOT TESTED"
+        },
+        "sysctlsAfter": {
+          "kernel.perf_event_paranoid": "2",
+          "kernel.kptr_restrict": "0",
+          "kernel.yama.ptrace_scope": "1"
+        },
+        "sysctlsUnchanged": true
+      },
+      "stderr": {
+        "fp": "Error:\nFailure to open event 'cpu-clock:u' on PMU 'software' which will be removed.\nAccess to performance monitoring and observability operations is limited.\nConsider adjusting /proc/sys/kernel/perf_event_paranoid setting to open\naccess to performance monitoring and observability operations for processes\nwithout CAP_PERFMON, CAP_SYS_PTRACE or CAP_SYS_ADMIN Linux capability.\nMore information can be found at 'Perf events and tool security' document:\nhttps://www.kernel.org/doc/html/latest/admin-guide/perf-security.html\nperf_event_paranoid setting is 2:\n  -1: Allow use of (almost) all events by all users\n      Ignore mlock limit after perf_event_mlock_kb without CAP_IPC_LOCK\n>= 0: Disallow raw and ftrace function tracepoint access\n>= 1: Disallow CPU event access\n>= 2: Disallow kernel profiling\nTo make the adjusted perf_event_paranoid setting permanent preserve it\nin /etc/sysctl.conf (e.g. kernel.perf_event_paranoid = <setting>)\nError:\nFailure to open any events for recording.\n",
+        "dwarf": "Error:\nFailure to open event 'cpu-clock:u' on PMU 'software' which will be removed.\nAccess to performance monitoring and observability operations is limited.\nConsider adjusting /proc/sys/kernel/perf_event_paranoid setting to open\naccess to performance monitoring and observability operations for processes\nwithout CAP_PERFMON, CAP_SYS_PTRACE or CAP_SYS_ADMIN Linux capability.\nMore information can be found at 'Perf events and tool security' document:\nhttps://www.kernel.org/doc/html/latest/admin-guide/perf-security.html\nperf_event_paranoid setting is 2:\n  -1: Allow use of (almost) all events by all users\n      Ignore mlock limit after perf_event_mlock_kb without CAP_IPC_LOCK\n>= 0: Disallow raw and ftrace function tracepoint access\n>= 1: Disallow CPU event access\n>= 2: Disallow kernel profiling\nTo make the adjusted perf_event_paranoid setting permanent preserve it\nin /etc/sysctl.conf (e.g. kernel.perf_event_paranoid = <setting>)\nError:\nFailure to open any events for recording.\n"
+      }
+    }
+  },
+  "runnerReviewNote": "v3 contained valid finalised data but old runner rejected intentional SIGINT exit-2; v4 reran with explicit owned-SIGINT handling plus successful decode checks.",
+  "sourceHashesAtAnalysis": {
+    "fixture.cpp": "e227090c754aa4a33d7315c54fcd70660e79450be18d583c391671013bd72bab",
+    "qualify.py": "3ed911d93721ae9c24d9050c0a4d97ef8ee1ea63b9aba4f440852cd37112d6f6",
+    "experiment.py": "1451505488080f24ef8e63b2c838334201d8a133a9042c073e3fa42639d49a18",
+    "analyse.py": "b790400195cb9a54bbd2deefb8ae10e2dde755ceebbfcae349b98a0c6f53397a"
+  },
+  "gates": {
+    "nativeFixture": "PASS",
+    "installedToolDiscovery": "PASS",
+    "framePointerTimedCapture": "PASS",
+    "dwarfTimedCapture": "PASS",
+    "knownHotFunctionAndThreadAttribution": "PASS",
+    "fixtureBuildIdAndSourceResolution": "PASS",
+    "systemLibrarySymbolCoverage": "PARTIAL",
+    "lostRecordAndCounterReporting": "PASS",
+    "positiveLossCapture": "PARTIAL",
+    "safeCollectorStopTargetSurvives": "PASS",
+    "observedSingleTidRingRetention": "PASS",
+    "workloadOverhead": "NOT TESTED",
+    "lateThreadsWithNoInherit": "NOT TESTED",
+    "collectorCrashTargetExitPidReuse": "NOT TESTED",
+    "desktopAndInIdeIntegration": "NOT TESTED",
+    "secondPerfVersionParser": "NOT TESTED",
+    "jitMapsSymbolScaleFlameGraphs": "NOT TESTED",
+    "flightRecorderProductDecision": "NOT TESTED"
+  }
+}
