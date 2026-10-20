@@ -36,6 +36,9 @@ pub struct DebugRequest {
 }
 
 struct Session {
+    attached: Option<super::processes::ProcessIdentity>,
+    disconnect_ack: AtomicBool,
+    profile_id: Mutex<Option<String>>,
     writer: super::debug_transport::DapWriter,
     next_seq: AtomicU64,
     thread_id: AtomicI64,
@@ -300,7 +303,10 @@ impl Drop for DebugBuildManager {
 impl Drop for DebugManager {
     fn drop(&mut self) {
         if let Ok(active) = self.0.lock() {
-            for session in active.values().filter(|session| session.alive.load(Ordering::Acquire)) { unsafe { libc::killpg(session.pgid, libc::SIGTERM); } }
+            for session in active.values().filter(|session| session.alive.load(Ordering::Acquire)) {
+                if session.attached.is_some() { let _ = request(session, "disconnect", disconnect_arguments(session)); }
+                else { unsafe { libc::killpg(session.pgid, libc::SIGTERM); } }
+            }
         }
     }
 }
@@ -514,7 +520,19 @@ fn request_selection(session: &Session, command: &str, arguments: Value,
     Ok(())
 }
 
+fn disconnect_arguments(session: &Session) -> Value {
+    json!({"terminateDebuggee":session.attached.is_none()})
+}
+
+fn request_session_stop(session: &Session) -> Result<(),String> {
+    // Foreign targets NEVER enter supervisor tree cleanup, even on failure/timeout.
+    let result=request(session,"disconnect",disconnect_arguments(session));
+    if result.is_ok() { schedule_debug_stop(session); }
+    result.map(|_|())
+}
+
 fn schedule_debug_stop(session: &Session) {
+    if session.attached.is_some() { session.stopping.store(true,Ordering::Release); return; }
     if session.stopping.swap(true, Ordering::AcqRel) { return; }
     if let Some(cancel) = crate::process_supervisor::capture_cancel_tree(session.pgid, session.birth) {
         thread::spawn(move || {
@@ -1061,6 +1079,35 @@ pub fn adapter_available_for_method(method: &str) -> bool {
     })
 }
 
+#[derive(Deserialize)]
+#[serde(rename_all="camelCase")]
+pub struct AttachRequest {
+    pub target: super::processes::ProcessIdentity,
+    pub adapter: String,
+    #[serde(default)] pub solution_path: String,
+    #[serde(default)] pub breakpoints: Vec<Breakpoint>,
+}
+
+#[tauri::command]
+pub async fn attach_to_process(window: WebviewWindow, app: AppHandle, request_spec: AttachRequest) -> Result<(),String> {
+    let label=window.label().to_owned();
+    tauri::async_runtime::spawn_blocking(move|| {
+        let info=super::processes::info(request_spec.target.pid)?;
+        if info.identity != request_spec.target { return Err("Attach target changed; refresh the process list".into()); }
+        if info.uid != unsafe {libc::geteuid()} { return Err("Only processes owned by the current user can be attached".into()); }
+        let language=match request_spec.adapter.as_str() {"lldb"=>"cpp","coreclr"=>"csharp",_=>return Err("Unsupported attach adapter".into())};
+        if language=="csharp" && info.adapter_hint != "netcoredbg · CoreCLR" {
+            return Err("netcoredbg attach requires CoreCLR. Unity/Mono/IL2CPP needs a separately qualified adapter.".into());
+        }
+        if has_debug_session(&app,&label) {return Err("End the existing debugger session before attaching".into());}
+        let executable=super::processes::executable(&request_spec.target)?;
+        let cwd=PathBuf::from(&info.cwd);
+        let cwd=if cwd.is_dir(){cwd}else{std::env::current_dir().map_err(|e|e.to_string())?};
+        start_prepared(app,label,language,cwd,request_spec.solution_path,executable,vec![],BTreeMap::new(),
+            request_spec.breakpoints,None,None,None,Some(request_spec.target))
+    }).await.map_err(|e|e.to_string())?
+}
+
 #[tauri::command]
 pub async fn start_debug(window: WebviewWindow, app: AppHandle, request_spec: DebugRequest) -> Result<(), String> {
     start_debug_for_label(app, window.label().to_string(), request_spec).await
@@ -1150,11 +1197,27 @@ pub async fn start_debug_for_label(app: AppHandle, label: String, request_spec: 
 /// Both normal debugging and the LDI library driver use the same DAP lifecycle.
 pub(crate) fn launch_prepared(
     app: AppHandle, label: String, language: &'static str, cwd: PathBuf,
-    solution_path: String, executable: PathBuf, args: Vec<String>, mut env: BTreeMap<String, String>,
+    solution_path: String, executable: PathBuf, args: Vec<String>, env: BTreeMap<String, String>,
     breakpoints: Vec<Breakpoint>, dev_lease: Option<super::tauri_dev::DevLease>,
     ldi_token: Option<u64>,
     native_snapshot: Option<Vec<super::native_debug::Binding>>,
 ) -> Result<(), String> {
+    start_prepared(app,label,language,cwd,solution_path,executable,args,env,breakpoints,dev_lease,ldi_token,native_snapshot,None)
+}
+
+fn start_prepared(
+    app: AppHandle, label: String, language: &'static str, cwd: PathBuf,
+    solution_path: String, executable: PathBuf, args: Vec<String>, mut env: BTreeMap<String,String>,
+    breakpoints: Vec<Breakpoint>, dev_lease: Option<super::tauri_dev::DevLease>, ldi_token: Option<u64>,
+    native_snapshot: Option<Vec<super::native_debug::Binding>>, attached: Option<super::processes::ProcessIdentity>,
+) -> Result<(), String> {
+    if let Some(target)=&attached { super::processes::verify(target)?; }
+    if attached.is_none() {
+        match super::profiling::ensure_bridge(&app) {
+            Ok(path)=>{env.insert("CRAIDD_PROFILE_SOCKET".into(),path);},
+            Err(error)=>emit(&app,&label,json!({"status":"output","text":format!("Gold source provider unavailable: {error}. Debugging can continue without it.")})),
+        }
+    }
     super::ldi::check_launch(&app, &label, ldi_token)?;
     super::native_debug::check_window_launch(&app, &label)?;
     if ldi_token.is_some() && language == "csharp" {
@@ -1188,7 +1251,11 @@ pub(crate) fn launch_prepared(
     if language == "csharp" { command.arg("--interpreter=vscode"); }
     command.current_dir(&cwd).stdin(Stdio::piped()).stdout(Stdio::piped()).stderr(Stdio::piped());
     unsafe { command.pre_exec(|| { if libc::setsid() == -1 { return Err(std::io::Error::last_os_error()); } Ok(()) }); }
-    let mut child = crate::process_supervisor::spawn(&mut command).map_err(|e| format!("Could not start {adapter_name}: {e}"))?;
+    let foreign=attached.is_some();
+    // An attached process must never be recorded as an owned descendant. Its
+    // adapter is launched directly and only killed after confirmed disconnect.
+    let mut child = if foreign { command.spawn() } else { crate::process_supervisor::spawn(&mut command) }
+        .map_err(|e| format!("Could not start {adapter_name}: {e}"))?;
     let pgid = child.id() as i32;
     let birth = crate::process_supervisor::process_birth(pgid).ok_or("Debugger process identity unavailable")?;
     let input = child.stdin.take().ok_or("Debugger input unavailable")?;
@@ -1196,10 +1263,13 @@ pub(crate) fn launch_prepared(
     let transport_label = label.clone();
     let writer = super::debug_transport::DapWriter::spawn(input, move |error| {
         eprintln!("[craidd-debug] {transport_label}: {error}");
-        if let Some(cancel) = crate::process_supervisor::capture_cancel_tree(pgid, birth) { cancel(); }
+        if !foreign {
+            if let Some(cancel) = crate::process_supervisor::capture_cancel_tree(pgid, birth) { cancel(); }
+        }
         emit(&transport_app, &transport_label, json!({"status":"output", "text":error}));
     });
     let session = Arc::new(Session {
+        attached: attached.clone(), disconnect_ack: AtomicBool::new(false),profile_id:Mutex::new(None),
         writer,
         next_seq: AtomicU64::new(1), thread_id: AtomicI64::new(0),
         ldi_token,
@@ -1226,17 +1296,24 @@ pub(crate) fn launch_prepared(
         alive: Arc::new(AtomicBool::new(true)),
         reaped: Arc::new(AtomicBool::new(false)),
     });
+    if let Some(target)=&session.attached {
+        if let Ok(info)=super::processes::info(target.pid) {
+            if let Ok(id)=super::profiling::start(&app,&label,target.clone()){if let Ok(mut slot)=session.profile_id.lock(){*slot=Some(id);}}
+            emit(&app,&label,json!({"status":"target","attached":true,"target":info,
+                "sessionKey":format!("{}:{}",pgid,birth)}));
+        }
+    }
     let stdout = child.stdout.take().ok_or("Debugger output unavailable")?;
     let stderr = child.stderr.take().ok_or("Debugger errors unavailable")?;
     app.state::<DebugManager>().0.lock().map_err(|e| e.to_string())?.insert(label.clone(), session.clone());
-    if let Err(error) = super::ldi::adapter_started(&app, &label, pgid, ldi_token) {
+    if let Err(error) = if foreign { Ok(()) } else { super::ldi::adapter_started(&app, &label, pgid, ldi_token) } {
         session.alive.store(false, Ordering::Release);
         unsafe { libc::killpg(pgid, libc::SIGTERM); }
         let _ = child.wait();
         if let Ok(mut sessions) = app.state::<DebugManager>().0.lock() { sessions.remove(&label); }
         return Err(error);
     }
-    if let Err(error) = super::native_debug::started(&app, &label, pgid, native_bindings) {
+    if let Err(error) = if foreign { Ok(()) } else { super::native_debug::started(&app, &label, pgid, native_bindings) } {
         session.alive.store(false, Ordering::Release);
         unsafe { libc::killpg(pgid, libc::SIGTERM); }
         let _ = child.wait();
@@ -1256,7 +1333,7 @@ pub(crate) fn launch_prepared(
     let ready_reader = ready.clone();
     let launch_accepted = Arc::new(AtomicBool::new(false));
     let launch_accepted_reader = launch_accepted.clone();
-    let process_id = Arc::new(AtomicI64::new(0));
+    let process_id = Arc::new(AtomicI64::new(attached.as_ref().map_or(0,|target|target.pid as i64)));
     let process_id_reader = process_id.clone();
     let watchdog_alive = session.alive.clone();
     let watchdog_session = session.clone();
@@ -1279,7 +1356,10 @@ pub(crate) fn launch_prepared(
         let mut pending_native_stop: Option<(u64, Value)> = None;
         let mut hidden_driver_frames: Option<Value> = None;
         let mut auto_resume_after_control = false;
-        let launch = if language == "csharp" {
+        let launch = if let Some(target)=&attached {
+            if language == "csharp" { json!({"processId":target.pid}) }
+            else { json!({"pid":target.pid,"program":executable,"initCommands":native_symbol_commands(download_symbols)}) }
+        } else if language == "csharp" {
             json!({"program": executable, "cwd": cwd, "args": args, "env": env, "stopAtEntry": false, "console":"internalConsole"})
         } else {
             json!({"program": executable, "cwd": cwd, "args": args, "env": env, "stopOnEntry": false,
@@ -1296,6 +1376,13 @@ pub(crate) fn launch_prepared(
                     "process" => {
                         if let Some(pid) = message["body"]["systemProcessId"].as_i64() {
                             process_id_reader.store(pid, Ordering::Release);
+                            if let Ok(target)=super::processes::info(pid as i32) {
+                                if session.attached.as_ref().is_some_and(|expected|expected!=&target.identity){emit(&app_reader,&label_reader,json!({"status":"error","text":"Attached target identity differs from the selected process; detaching without target signals"}));let _=request_session_stop(&session);continue;}
+                                match super::profiling::start(&app_reader,&label_reader,target.identity.clone()){Ok(id)=>{if let Ok(mut slot)=session.profile_id.lock(){*slot=Some(id);}},Err(error)=>emit(&app_reader,&label_reader,json!({"status":"output","text":format!("Profiler: {error}")}))}
+                                emit_current_session(&app_reader,&label_reader,&session,json!({"status":"target",
+                                    "attached":session.attached.is_some(),"target":target,
+                                    "sessionKey":format!("{}:{}",session.pgid,session.birth)}));
+                            }
                         }
                     }
                     "initialized" => {
@@ -1310,6 +1397,7 @@ pub(crate) fn launch_prepared(
                         }
                     }
                     "stopped" => {
+                        super::profiling::debug_pause(&app_reader,&label_reader,&message["body"],true);
                         let (secondary, requested_stop) = session.native_step_request.lock().ok()
                             .map(|pending| {
                                 let step = pending.as_ref();
@@ -1382,6 +1470,7 @@ pub(crate) fn launch_prepared(
                         }
                     }
                     "continued" => {
+                        super::profiling::debug_pause(&app_reader,&label_reader,&message["body"],false);
                         if session.native_step_request.lock().is_ok_and(|pending| pending.is_none()) {
                             recent_native_stop = None;
                         }
@@ -1432,7 +1521,10 @@ pub(crate) fn launch_prepared(
                             let _ = request(&session, "threads", json!({}));
                         }
                     }
-                    "module" => super::native_debug::module(&app_reader, &label_reader, pgid, &message["body"]),
+                    "module" => {
+                        emit_current_session(&app_reader,&label_reader,&session,json!({"status":"module","module":message["body"]}));
+                        super::native_debug::module(&app_reader, &label_reader, pgid, &message["body"]);
+                    },
                     "output" => {
                         if !native_receipt_output(&message["body"]) {
                             emit(&app_reader, &label_reader, json!({"status":"output", "text":message["body"]["output"]}));
@@ -1449,9 +1541,13 @@ pub(crate) fn launch_prepared(
                         }
                         let _ = request(&session, "disconnect", json!({"terminateDebuggee":false}));
                         super::ldi::on_exit(&app_reader, &label_reader, pgid, message["body"]["exitCode"].as_i64());
+                        if session.attached.is_some() { continue; }
                         break;
                     }
                     "terminated" => {
+                        // LLDB sends terminated BEFORE disconnect's acknowledgement.
+                        // Keep reading so foreign-target teardown is actually confirmed.
+                        if session.attached.is_some() { continue; }
                         emit(&app_reader, &label_reader, json!({"status":"terminated"}));
                         terminated_emitted = true;
                         break;
@@ -1748,11 +1844,18 @@ pub(crate) fn launch_prepared(
                     }
                     super::ldi::on_inspection_error(&app_reader, &label_reader, pgid,
                         message["command"].as_str().unwrap_or(""), message["message"].as_str().unwrap_or("DAP request failed"));
-                    let fatal = message["command"] == "initialize" || message["command"] == "launch";
+                    if message["command"] == "disconnect" && session.attached.is_some() {
+                        session.stopping.store(false,Ordering::Release);
+                        emit(&app_reader,&label_reader,json!({"status":"output","text":"Detach was rejected. The attached session remains available; retry Detach. No termination was requested."}));
+                    }
+                    let fatal = message["command"] == "initialize" || message["command"] == "launch" || message["command"] == "attach";
                     emit(&app_reader, &label_reader, json!({"status":if fatal { "error" } else { "output" },
                         "text":format!("{}: {}", message["command"].as_str().unwrap_or("DAP request"),
                             message["message"].as_str().unwrap_or("request failed"))}));
-                    if fatal { break; }
+                    if fatal {
+                        if session.attached.is_some() { let _=request_session_stop(&session); continue; }
+                        break;
+                    }
                     continue;
                 }
                 let command = pending.remove(&message["request_seq"].as_u64().unwrap_or(0))
@@ -1769,9 +1872,19 @@ pub(crate) fn launch_prepared(
                                 "exclusiveNext":exclusive_next_mode != 0,
                                 "exclusiveMethod":match exclusive_next_mode { 1 => "dap", 2 => "experimentalManaged", _ => "none" }}));
                         initialized_reader.store(true, Ordering::Release);
-                        if let Ok(seq) = request(&session, "launch", launch.clone()) { pending.insert(seq, "launch".into()); }
+                        let command=if session.attached.is_some(){"attach"}else{"launch"};
+                        if session.attached.as_ref().is_some_and(|target|super::processes::verify(target).is_err()) {
+                            emit(&app_reader,&label_reader,json!({"status":"error","text":"Attach target exited or changed identity before connection"})); let _=request_session_stop(&session);continue;
+                        }
+                        if let Ok(seq) = request(&session, command, launch.clone()) { pending.insert(seq, command.into()); }
                     }
-                    "launch" => {
+                    "disconnect" if session.attached.is_some() => {
+                        session.disconnect_ack.store(true,Ordering::Release);
+                        emit(&app_reader,&label_reader,json!({"status":"terminated","text":"Detached. The foreign target was not terminated."}));
+                        terminated_emitted=true;
+                        break;
+                    }
+                    "launch" | "attach" => {
                         if startup.on_launch_response() {
                             launch_accepted_reader.store(true, Ordering::Release);
                             if language == "csharp" && !ready_reader.swap(true, Ordering::AcqRel) {
@@ -1899,10 +2012,16 @@ pub(crate) fn launch_prepared(
                 }
             }
         }
-        let _ = request(&session, "disconnect", json!({"terminateDebuggee":true}));
+        if session.attached.is_none() { let _ = request(&session, "disconnect", disconnect_arguments(&session)); }
         session.alive.store(false, Ordering::Release);
+        if let Ok(id)=session.profile_id.lock(){if let Some(id)=id.as_ref(){super::profiling::stop_session(&app_reader,&label_reader,id,"Debug session ended");}}
         super::ldi::on_adapter_end(&app_reader, &label_reader, pgid);
-        let _ = child.kill();
+        if session.attached.is_none() || session.disconnect_ack.load(Ordering::Acquire) {
+            let _ = child.kill();
+        } else {
+            emit(&app_reader,&label_reader,json!({"status":"error","text":format!("Adapter transport ended without confirmed Detach. No target signal was sent. Target PID {}; adapter PID {pgid}. Check target state before reconnecting.",session.attached.as_ref().unwrap().pid)}));
+            terminated_emitted=true;
+        }
         let _ = child.wait();
         super::native_debug::ended(&app_reader, &label_reader, pgid);
         let mut replacement = false;
@@ -1927,7 +2046,8 @@ pub(crate) fn launch_prepared(
         if let Err(error) = request(session, "initialize", json!({"clientID":"craidd-studio", "adapterID":if language == "csharp" { "coreclr" } else { "lldb-dap" },
             "pathFormat":"path", "linesStartAt1":true, "columnsStartAt1":true,
             "supportsRunInTerminalRequest":false})) {
-            unsafe { libc::killpg(session.pgid, libc::SIGTERM); }
+            if session.attached.is_none() { unsafe { libc::killpg(session.pgid, libc::SIGTERM); } }
+            else { let _ = request_session_stop(session); }
             return Err(format!("Could not initialize {adapter_name}: {error}"));
         }
     }
@@ -1949,8 +2069,7 @@ pub(crate) fn launch_prepared(
                     format!("{adapter_name} did not respond to initialization within 15 seconds.")
                 } else if language == "csharp" { format!("{adapter_name} did not complete managed launch/configuration within 30 seconds.") }
                 else { format!("{adapter_name} connected but native execution or a breakpoint stop was not observed within 30 seconds. Check LLDB symbol downloads in Preferences → Toolchain; the application has not been marked ready.") }}));
-                schedule_debug_stop(&watchdog_session);
-                let _ = request(&watchdog_session, "disconnect", json!({"terminateDebuggee":true}));
+                let _ = request_session_stop(&watchdog_session);
                 return;
             }
             if language != "csharp" && launch_accepted.load(Ordering::Acquire) && polled_at.elapsed() >= Duration::from_millis(500) {
@@ -2318,8 +2437,7 @@ pub(crate) fn control_live_native(app: &AppHandle, label: &str, pgid: i32, actio
         _ => return Err("Unsupported native debug control".into()),
     };
     if action == "stop" {
-        schedule_debug_stop(&session);
-        let _ = request(&session, command, json!({"terminateDebuggee":true}));
+        request_session_stop(&session)?;
         return Ok(());
     }
     if !matches!(action, "pause") && session.native_step_request.lock().map_err(|e| e.to_string())?.is_some() {
@@ -2422,8 +2540,7 @@ fn control_debug(label: &str, state: &DebugManager, builds: &DebugBuildManager, 
         "continue" => "continue", "pause" => "pause", "stepOver" => "next",
         "stepInto" => "stepIn", "stepOut" => "stepOut",
         "stop" => {
-            schedule_debug_stop(&session);
-            let _ = request(&session, "disconnect", json!({"terminateDebuggee":true}));
+            request_session_stop(&session)?;
             return Ok(());
         }
         _ => return Err("Unsupported debug control".into()),
@@ -2463,8 +2580,7 @@ pub(crate) fn stop_cancelled_ldi_adapter(app: &AppHandle, label: &str, pgid: i32
     let session = app.state::<DebugManager>().0.lock().ok()
         .and_then(|active| active.get(label).filter(|session| session.pgid == pgid).cloned());
     if let Some(session) = session {
-        schedule_debug_stop(&session);
-        let _ = request(&session, "disconnect", json!({"terminateDebuggee":true}));
+        let _ = request_session_stop(&session);
     }
 }
 
@@ -2493,11 +2609,11 @@ fn cancel_debug_session_only(app: &AppHandle, label: &str) {
         }
     }
     if let Some(manager) = app.try_state::<DebugManager>() {
-        let session = manager.0.lock().ok().and_then(|mut active| active.remove(label));
-        if let Some(session) = session {
-            schedule_debug_stop(&session);
-            let _ = request(&session, "disconnect", json!({"terminateDebuggee":true}));
-        }
+        let session = manager.0.lock().ok().and_then(|mut active| {
+            if active.get(label).is_some_and(|session|session.attached.is_some()) { active.get(label).cloned() }
+            else { active.remove(label) }
+        });
+        if let Some(session) = session { let _ = request_session_stop(&session); }
     }
 }
 

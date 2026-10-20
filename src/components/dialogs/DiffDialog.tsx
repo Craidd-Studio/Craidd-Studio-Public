@@ -1,3 +1,4 @@
+import { isFileTab } from "../../types/project";
 import { useEffect, useState } from "react";
 import { DiffEditor } from "@monaco-editor/react";
 import { useSolution } from "../../store/solutionStore";
@@ -13,7 +14,7 @@ export default function DiffDialog({
 }) {
   const tabs = useSolution((s) => s.tabs);
   const theme = usePreferences((s) => s.theme);
-  const tab = tabs.find((t) => t.fileId === fileId);
+  const tab = tabs.filter(isFileTab).find((t) => t.fileId === fileId);
   const [diskContent, setDiskContent] = useState<string | null>(null);
 
   useEffect(() => {

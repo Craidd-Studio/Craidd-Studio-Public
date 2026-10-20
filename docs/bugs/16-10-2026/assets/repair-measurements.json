@@ -1,0 +1,2415 @@
+{
+  "branch": "feat/unity/profiling-a-to-p",
+  "base": "d00d19d2ec4c030021ce1fed3d0074a6ff31827e",
+  "productRevision": "310f546",
+  "harnessRevisionAtAssembly": "eaf685139ef38c4fd60fd8fd2b9e451a714679f5",
+  "binarySha256": "ac3cd25e87e8611fffcfc58988d7324849b2e78f678f50cf19b3ce2637284800",
+  "configSha256": "0491079b40586b4f7cd65e216473ee12e60440c287301d293f5bd62c4bd89017",
+  "preservedUntrackedSha256": "622993c5611db4016b72dbf12de4754a642fa96b071d2fd663cc40253db5764e",
+  "environment": {
+    "os": "Linux 7.2.9-arch1-1",
+    "node": "v24.21.0",
+    "rust": "1.99.0",
+    "webkit2gtk4_1": "2.54.1-1",
+    "viewport": "1280x800",
+    "devicePixelRatio": 1
+  },
+  "scenarios": {
+    "icons": {
+      "artifact": "test-results/ui/2026-10-16T23-34-43-791Z/profiler-icons/record.json",
+      "sha256": "e215e073908a7f5834468bfc5a291843381c1c88c3cf065966df1b2ee60863a9",
+      "steps": [
+        {
+          "step": "build-target",
+          "at": "2026-10-16T23:34:45.012Z",
+          "application": "/mnt/ext_drives/Development/Development/Desktop Development/Craidd-Studio/src-tauri/target/debug/craidd-studio",
+          "url": "tauri://localhost"
+        },
+        {
+          "step": "no-file-open",
+          "at": "2026-10-16T23:34:45.056Z",
+          "icons": [
+            {
+              "height": 16,
+              "label": "Take memory snapshot",
+              "stroke": "rgb(198, 202, 208)",
+              "path": "M3 7h4l2-3h6l2 3h4v13H3Z M16 13a4 4 0 1 1-8 0 4 4 0 0 1 8 0Z",
+              "width": 16,
+              "iconFont": false
+            },
+            {
+              "height": 16,
+              "label": "Snapshot and record again",
+              "stroke": "rgb(198, 202, 208)",
+              "path": "M4 4v6h6 M4.8 9a8 8 0 1 1-.3 6",
+              "width": 16,
+              "iconFont": false
+            },
+            {
+              "height": 16,
+              "label": "Stop profiling",
+              "stroke": "rgb(198, 202, 208)",
+              "path": "M5 5h14v14H5Z",
+              "width": 16,
+              "iconFont": false
+            },
+            {
+              "height": 16,
+              "label": "Profiling settings",
+              "stroke": "rgb(198, 202, 208)",
+              "path": "m9 3-.5 3-2 1-3-.5-2 3 2.5 2v2L1.5 16l2 3 3-.5 2 1 .5 3h4l.5-3 2-1 3 .5 2-3-2.5-2.5v-2l2.5-2-2-3-3 .5-2-1L13 3Z M15 13a4 4 0 1 1-8 0 4 4 0 0 1 8 0Z",
+              "width": 16,
+              "iconFont": false
+            }
+          ],
+          "viewport": {
+            "width": 1280,
+            "height": 800,
+            "dpr": 1,
+            "csp": null
+          }
+        },
+        {
+          "step": "editor-open",
+          "at": "2026-10-16T23:34:45.272Z",
+          "icons": [
+            {
+              "height": 16,
+              "label": "Take memory snapshot",
+              "stroke": "rgb(198, 202, 208)",
+              "path": "M3 7h4l2-3h6l2 3h4v13H3Z M16 13a4 4 0 1 1-8 0 4 4 0 0 1 8 0Z",
+              "width": 16,
+              "iconFont": false
+            },
+            {
+              "height": 16,
+              "label": "Snapshot and record again",
+              "stroke": "rgb(198, 202, 208)",
+              "path": "M4 4v6h6 M4.8 9a8 8 0 1 1-.3 6",
+              "width": 16,
+              "iconFont": false
+            },
+            {
+              "height": 16,
+              "label": "Stop profiling",
+              "stroke": "rgb(198, 202, 208)",
+              "path": "M5 5h14v14H5Z",
+              "width": 16,
+              "iconFont": false
+            },
+            {
+              "height": 16,
+              "label": "Profiling settings",
+              "stroke": "rgb(198, 202, 208)",
+              "path": "m9 3-.5 3-2 1-3-.5-2 3 2.5 2v2L1.5 16l2 3 3-.5 2 1 .5 3h4l.5-3 2-1 3 .5 2-3-2.5-2.5v-2l2.5-2-2-3-3 .5-2-1L13 3Z M15 13a4 4 0 1 1-8 0 4 4 0 0 1 8 0Z",
+              "width": 16,
+              "iconFont": false
+            }
+          ],
+          "viewport": {
+            "width": 1280,
+            "height": 800,
+            "dpr": 1,
+            "csp": null
+          }
+        },
+        {
+          "step": "monaco-csp-unmodified",
+          "at": "2026-10-16T23:34:45.352Z",
+          "violations": [
+            {
+              "blocked": "inline",
+              "directive": "style-src-elem"
+            },
+            {
+              "blocked": "inline",
+              "directive": "style-src-elem"
+            },
+            {
+              "blocked": "inline",
+              "directive": "style-src-elem"
+            },
+            {
+              "blocked": "inline",
+              "directive": "style-src-elem"
+            },
+            {
+              "blocked": "inline",
+              "directive": "style-src-attr"
+            },
+            {
+              "blocked": "inline",
+              "directive": "style-src-attr"
+            },
+            {
+              "blocked": "inline",
+              "directive": "style-src-attr"
+            },
+            {
+              "blocked": "inline",
+              "directive": "style-src-attr"
+            },
+            {
+              "blocked": "inline",
+              "directive": "style-src-attr"
+            },
+            {
+              "blocked": "inline",
+              "directive": "style-src-attr"
+            },
+            {
+              "blocked": "inline",
+              "directive": "style-src-attr"
+            },
+            {
+              "blocked": "inline",
+              "directive": "style-src-attr"
+            },
+            {
+              "blocked": "inline",
+              "directive": "style-src-attr"
+            },
+            {
+              "blocked": "inline",
+              "directive": "style-src-attr"
+            },
+            {
+              "blocked": "inline",
+              "directive": "style-src-attr"
+            },
+            {
+              "blocked": "inline",
+              "directive": "style-src-attr"
+            },
+            {
+              "blocked": "inline",
+              "directive": "style-src-attr"
+            }
+          ]
+        },
+        {
+          "step": "final-profile",
+          "at": "2026-10-16T23:34:45.421Z",
+          "profile": null
+        }
+      ]
+    },
+    "developmentIcons": {
+      "artifact": "test-results/ui/2026-10-16T23-19-15-652Z/profiler-icons/record.json",
+      "sha256": "919888743b03f4b40d486b69c171321ddc5f47018a522806ca8811a56d8489ab",
+      "steps": [
+        {
+          "step": "build-target",
+          "at": "2026-10-16T23:19:17.109Z",
+          "application": "/tmp/craidd-unity-repair-20261016/bin/dev-craidd-studio",
+          "url": "http://127.0.0.1:5198/"
+        },
+        {
+          "step": "no-file-open",
+          "at": "2026-10-16T23:19:17.154Z",
+          "icons": [
+            {
+              "height": 16,
+              "label": "Take memory snapshot",
+              "stroke": "rgb(198, 202, 208)",
+              "path": "M3 7h4l2-3h6l2 3h4v13H3Z M16 13a4 4 0 1 1-8 0 4 4 0 0 1 8 0Z",
+              "width": 16,
+              "iconFont": false
+            },
+            {
+              "height": 16,
+              "label": "Snapshot and record again",
+              "stroke": "rgb(198, 202, 208)",
+              "path": "M4 4v6h6 M4.8 9a8 8 0 1 1-.3 6",
+              "width": 16,
+              "iconFont": false
+            },
+            {
+              "height": 16,
+              "label": "Stop profiling",
+              "stroke": "rgb(198, 202, 208)",
+              "path": "M5 5h14v14H5Z",
+              "width": 16,
+              "iconFont": false
+            },
+            {
+              "height": 16,
+              "label": "Profiling settings",
+              "stroke": "rgb(198, 202, 208)",
+              "path": "m9 3-.5 3-2 1-3-.5-2 3 2.5 2v2L1.5 16l2 3 3-.5 2 1 .5 3h4l.5-3 2-1 3 .5 2-3-2.5-2.5v-2l2.5-2-2-3-3 .5-2-1L13 3Z M15 13a4 4 0 1 1-8 0 4 4 0 0 1 8 0Z",
+              "width": 16,
+              "iconFont": false
+            }
+          ],
+          "viewport": {
+            "width": 1280,
+            "height": 800,
+            "dpr": 1,
+            "csp": null
+          }
+        },
+        {
+          "step": "editor-open",
+          "at": "2026-10-16T23:19:17.531Z",
+          "icons": [
+            {
+              "height": 16,
+              "label": "Take memory snapshot",
+              "stroke": "rgb(198, 202, 208)",
+              "path": "M3 7h4l2-3h6l2 3h4v13H3Z M16 13a4 4 0 1 1-8 0 4 4 0 0 1 8 0Z",
+              "width": 16,
+              "iconFont": false
+            },
+            {
+              "height": 16,
+              "label": "Snapshot and record again",
+              "stroke": "rgb(198, 202, 208)",
+              "path": "M4 4v6h6 M4.8 9a8 8 0 1 1-.3 6",
+              "width": 16,
+              "iconFont": false
+            },
+            {
+              "height": 16,
+              "label": "Stop profiling",
+              "stroke": "rgb(198, 202, 208)",
+              "path": "M5 5h14v14H5Z",
+              "width": 16,
+              "iconFont": false
+            },
+            {
+              "height": 16,
+              "label": "Profiling settings",
+              "stroke": "rgb(198, 202, 208)",
+              "path": "m9 3-.5 3-2 1-3-.5-2 3 2.5 2v2L1.5 16l2 3 3-.5 2 1 .5 3h4l.5-3 2-1 3 .5 2-3-2.5-2.5v-2l2.5-2-2-3-3 .5-2-1L13 3Z M15 13a4 4 0 1 1-8 0 4 4 0 0 1 8 0Z",
+              "width": 16,
+              "iconFont": false
+            }
+          ],
+          "viewport": {
+            "width": 1280,
+            "height": 800,
+            "dpr": 1,
+            "csp": null
+          }
+        },
+        {
+          "step": "monaco-csp-unmodified",
+          "at": "2026-10-16T23:19:17.595Z",
+          "violations": []
+        },
+        {
+          "step": "final-profile",
+          "at": "2026-10-16T23:19:17.617Z",
+          "profile": null
+        }
+      ]
+    },
+    "60fps": {
+      "artifact": "test-results/ui/2026-10-16T23-35-01-418Z/unity-60fps/record.json",
+      "sha256": "009a049fb119af5c3909619773530a965f0064da58cd6809015cdabbc9d4d2fc",
+      "steps": [
+        {
+          "step": "environment",
+          "at": "2026-10-16T23:35:07.288Z",
+          "unityVersion": "6000.5.10f1",
+          "editor": "/home/skira24/Unity/Hub/Editor/6000.5.10f1/Editor/Unity",
+          "editorPid": 413753,
+          "project": "/tmp/cui-T80ZzL/workspaces/unity",
+          "namespace": "unity-60fps-77071f76-4f9a-4624-b900-ac0a021fa98e",
+          "requestedFps": 60
+        },
+        {
+          "step": "first-play",
+          "at": "2026-10-16T23:35:10.814Z",
+          "batch": 1,
+          "generation": 1,
+          "profile": {
+            "id": "413753-4061112-1792193708669902301",
+            "target": {
+              "pid": 413753,
+              "birth": 4061112
+            },
+            "active": true,
+            "waitingForPlay": false,
+            "playGeneration": 1,
+            "batch": 1,
+            "provider": true,
+            "reason": "",
+            "counters": {
+              "evictedCaptures": 0,
+              "agedSamples": 0,
+              "rejectedEvents": 0,
+              "disconnects": 0,
+              "sourceGaps": 0
+            },
+            "dropped": 0,
+            "samplesRetained": 8,
+            "capturesRetained": 22,
+            "lastSampleAtMs": 2002.688617,
+            "markers": {
+              "unity.native.mix": {
+                "hits": 21,
+                "liveBytesInclusive": 0,
+                "freedBytesInclusive": 0,
+                "threads": [
+                  413753
+                ]
+              },
+              "unity.solo": {
+                "hits": 1,
+                "liveBytesInclusive": 0,
+                "freedBytesInclusive": 0,
+                "threads": [
+                  413753
+                ]
+              }
+            }
+          }
+        },
+        {
+          "step": "retained-memory",
+          "at": "2026-10-16T23:35:11.020Z",
+          "unity": {
+            "pid": 413753,
+            "playing": true,
+            "changing": false,
+            "nativeLiveBytes": 1048576,
+            "frames": 32,
+            "overlayDraws": 0,
+            "lastCommand": 2,
+            "menuExecuted": true,
+            "error": ""
+          },
+          "profile": {
+            "id": "413753-4061112-1792193708669902301",
+            "target": {
+              "pid": 413753,
+              "birth": 4061112
+            },
+            "active": true,
+            "waitingForPlay": false,
+            "playGeneration": 1,
+            "batch": 1,
+            "provider": true,
+            "reason": "",
+            "counters": {
+              "evictedCaptures": 0,
+              "agedSamples": 0,
+              "rejectedEvents": 0,
+              "disconnects": 0,
+              "sourceGaps": 0
+            },
+            "dropped": 0,
+            "samplesRetained": 9,
+            "capturesRetained": 34,
+            "lastSampleAtMs": 2253.0443689999997,
+            "markers": {
+              "unity.native.alloc": {
+                "hits": 1,
+                "liveBytesInclusive": 1048576,
+                "freedBytesInclusive": 0,
+                "threads": [
+                  413753
+                ]
+              },
+              "unity.native.mix": {
+                "hits": 32,
+                "liveBytesInclusive": 0,
+                "freedBytesInclusive": 0,
+                "threads": [
+                  413753
+                ]
+              },
+              "unity.solo": {
+                "hits": 1,
+                "liveBytesInclusive": 1048576,
+                "freedBytesInclusive": 0,
+                "threads": [
+                  413753
+                ]
+              }
+            }
+          }
+        },
+        {
+          "step": "cleared-memory",
+          "at": "2026-10-16T23:35:11.454Z",
+          "unity": {
+            "pid": 413753,
+            "playing": true,
+            "changing": false,
+            "nativeLiveBytes": 0,
+            "frames": 47,
+            "overlayDraws": 0,
+            "lastCommand": 3,
+            "menuExecuted": true,
+            "error": ""
+          },
+          "profile": {
+            "id": "413753-4061112-1792193708669902301",
+            "target": {
+              "pid": 413753,
+              "birth": 4061112
+            },
+            "active": true,
+            "waitingForPlay": false,
+            "playGeneration": 1,
+            "batch": 1,
+            "provider": true,
+            "reason": "",
+            "counters": {
+              "evictedCaptures": 0,
+              "agedSamples": 0,
+              "rejectedEvents": 0,
+              "disconnects": 0,
+              "sourceGaps": 0
+            },
+            "dropped": 0,
+            "samplesRetained": 10,
+            "capturesRetained": 53,
+            "lastSampleAtMs": 2503.547921,
+            "markers": {
+              "unity.native.alloc": {
+                "hits": 1,
+                "liveBytesInclusive": 0,
+                "freedBytesInclusive": 1048576,
+                "threads": [
+                  413753
+                ]
+              },
+              "unity.native.mix": {
+                "hits": 51,
+                "liveBytesInclusive": 0,
+                "freedBytesInclusive": 0,
+                "threads": [
+                  413753
+                ]
+              },
+              "unity.solo": {
+                "hits": 1,
+                "liveBytesInclusive": 0,
+                "freedBytesInclusive": 1048576,
+                "threads": [
+                  413753
+                ]
+              }
+            }
+          },
+          "snapshots": [
+            "#1 \u00b7 2.25 s\t539.19 MiB\t\u2014\t1.00 MiB",
+            "#2 \u00b7 2.50 s\t539.19 MiB\t+0 B\t0 B"
+          ]
+        },
+        {
+          "step": "resize-pointer",
+          "at": "2026-10-16T23:35:11.886Z",
+          "requested": 288,
+          "before": {
+            "width": 288,
+            "x": 990,
+            "y": 225
+          },
+          "after": {
+            "width": 288,
+            "events": [
+              {
+                "type": "pointermove",
+                "buttons": 0,
+                "x": 990,
+                "y": 225
+              },
+              {
+                "type": "pointerdown",
+                "buttons": 1,
+                "x": 990,
+                "y": 225
+              },
+              {
+                "type": "pointermove",
+                "buttons": 1,
+                "x": 990,
+                "y": 225
+              },
+              {
+                "type": "pointerup",
+                "buttons": 0,
+                "x": 990,
+                "y": 225
+              }
+            ]
+          }
+        },
+        {
+          "step": "resize-pointer",
+          "at": "2026-10-16T23:35:12.383Z",
+          "requested": 288,
+          "before": {
+            "width": 288,
+            "x": 990,
+            "y": 225
+          },
+          "after": {
+            "width": 288,
+            "events": [
+              {
+                "type": "pointermove",
+                "buttons": 0,
+                "x": 990,
+                "y": 225
+              },
+              {
+                "type": "pointerdown",
+                "buttons": 1,
+                "x": 990,
+                "y": 225
+              },
+              {
+                "type": "pointermove",
+                "buttons": 1,
+                "x": 990,
+                "y": 225
+              },
+              {
+                "type": "pointerup",
+                "buttons": 0,
+                "x": 990,
+                "y": 225
+              }
+            ]
+          }
+        },
+        {
+          "step": "width-288",
+          "at": "2026-10-16T23:35:12.426Z",
+          "summary": {
+            "width": 287,
+            "viewport": {
+              "width": 1280,
+              "height": 800,
+              "dpr": 1
+            },
+            "clientWidth": 287,
+            "scrollWidth": 287
+          },
+          "memory": {
+            "width": 287,
+            "viewport": {
+              "width": 1280,
+              "height": 800,
+              "dpr": 1
+            },
+            "clientWidth": 287,
+            "scrollWidth": 287
+          }
+        },
+        {
+          "step": "resize-pointer",
+          "at": "2026-10-16T23:35:12.793Z",
+          "requested": 360,
+          "before": {
+            "width": 288,
+            "x": 990,
+            "y": 225
+          },
+          "after": {
+            "width": 360,
+            "events": [
+              {
+                "type": "pointermove",
+                "buttons": 0,
+                "x": 990,
+                "y": 225
+              },
+              {
+                "type": "pointerdown",
+                "buttons": 1,
+                "x": 990,
+                "y": 225
+              },
+              {
+                "type": "pointermove",
+                "buttons": 1,
+                "x": 918,
+                "y": 225
+              },
+              {
+                "type": "pointerup",
+                "buttons": 0,
+                "x": 918,
+                "y": 225
+              }
+            ]
+          }
+        },
+        {
+          "step": "resize-pointer",
+          "at": "2026-10-16T23:35:13.159Z",
+          "requested": 360,
+          "before": {
+            "width": 360,
+            "x": 918,
+            "y": 225
+          },
+          "after": {
+            "width": 360,
+            "events": [
+              {
+                "type": "pointermove",
+                "buttons": 0,
+                "x": 918,
+                "y": 225
+              },
+              {
+                "type": "pointerdown",
+                "buttons": 1,
+                "x": 918,
+                "y": 225
+              },
+              {
+                "type": "pointermove",
+                "buttons": 1,
+                "x": 918,
+                "y": 225
+              },
+              {
+                "type": "pointerup",
+                "buttons": 0,
+                "x": 918,
+                "y": 225
+              }
+            ]
+          }
+        },
+        {
+          "step": "width-360",
+          "at": "2026-10-16T23:35:13.201Z",
+          "summary": {
+            "width": 359,
+            "viewport": {
+              "width": 1280,
+              "height": 800,
+              "dpr": 1
+            },
+            "clientWidth": 359,
+            "scrollWidth": 359
+          },
+          "memory": {
+            "width": 359,
+            "viewport": {
+              "width": 1280,
+              "height": 800,
+              "dpr": 1
+            },
+            "clientWidth": 359,
+            "scrollWidth": 359
+          }
+        },
+        {
+          "step": "resize-pointer",
+          "at": "2026-10-16T23:35:13.652Z",
+          "requested": 420,
+          "before": {
+            "width": 360,
+            "x": 918,
+            "y": 225
+          },
+          "after": {
+            "width": 420,
+            "events": [
+              {
+                "type": "pointermove",
+                "buttons": 0,
+                "x": 918,
+                "y": 225
+              },
+              {
+                "type": "pointerdown",
+                "buttons": 1,
+                "x": 918,
+                "y": 225
+              },
+              {
+                "type": "pointermove",
+                "buttons": 1,
+                "x": 858,
+                "y": 225
+              },
+              {
+                "type": "pointerup",
+                "buttons": 0,
+                "x": 858,
+                "y": 225
+              }
+            ]
+          }
+        },
+        {
+          "step": "resize-pointer",
+          "at": "2026-10-16T23:35:14.121Z",
+          "requested": 420,
+          "before": {
+            "width": 420,
+            "x": 858,
+            "y": 225
+          },
+          "after": {
+            "width": 420,
+            "events": [
+              {
+                "type": "pointermove",
+                "buttons": 0,
+                "x": 858,
+                "y": 225
+              },
+              {
+                "type": "pointerdown",
+                "buttons": 1,
+                "x": 858,
+                "y": 225
+              },
+              {
+                "type": "pointermove",
+                "buttons": 1,
+                "x": 858,
+                "y": 225
+              },
+              {
+                "type": "pointerup",
+                "buttons": 0,
+                "x": 858,
+                "y": 225
+              }
+            ]
+          }
+        },
+        {
+          "step": "width-420",
+          "at": "2026-10-16T23:35:14.170Z",
+          "summary": {
+            "width": 419,
+            "viewport": {
+              "width": 1280,
+              "height": 800,
+              "dpr": 1
+            },
+            "clientWidth": 419,
+            "scrollWidth": 419
+          },
+          "memory": {
+            "width": 419,
+            "viewport": {
+              "width": 1280,
+              "height": 800,
+              "dpr": 1
+            },
+            "clientWidth": 419,
+            "scrollWidth": 419
+          }
+        },
+        {
+          "step": "record-again",
+          "at": "2026-10-16T23:35:15.167Z",
+          "batch": 2,
+          "profile": {
+            "id": "413753-4061112-1792193708669902301",
+            "target": {
+              "pid": 413753,
+              "birth": 4061112
+            },
+            "active": true,
+            "waitingForPlay": false,
+            "playGeneration": 1,
+            "batch": 2,
+            "provider": true,
+            "reason": "",
+            "counters": {
+              "evictedCaptures": 141,
+              "agedSamples": 0,
+              "rejectedEvents": 0,
+              "disconnects": 0,
+              "sourceGaps": 0
+            },
+            "dropped": 0,
+            "samplesRetained": 24,
+            "capturesRetained": 132,
+            "lastSampleAtMs": 6018.86219,
+            "markers": {
+              "unity.native.alloc": {
+                "hits": 2,
+                "liveBytesInclusive": 1048576,
+                "freedBytesInclusive": 1048576,
+                "threads": [
+                  413753
+                ]
+              },
+              "unity.native.mix": {
+                "hits": 128,
+                "liveBytesInclusive": 0,
+                "freedBytesInclusive": 0,
+                "threads": [
+                  413753
+                ]
+              },
+              "unity.solo": {
+                "hits": 2,
+                "liveBytesInclusive": 1048576,
+                "freedBytesInclusive": 1048576,
+                "threads": [
+                  0,
+                  413753
+                ]
+              }
+            }
+          }
+        },
+        {
+          "step": "thread-and-batch-inspection",
+          "at": "2026-10-16T23:35:15.916Z",
+          "chosen": 416020,
+          "tids": [
+            413753,
+            416020,
+            416021
+          ],
+          "profile": {
+            "id": "413753-4061112-1792193708669902301",
+            "target": {
+              "pid": 413753,
+              "birth": 4061112
+            },
+            "active": true,
+            "waitingForPlay": false,
+            "playGeneration": 1,
+            "batch": 2,
+            "provider": true,
+            "reason": "",
+            "counters": {
+              "evictedCaptures": 235,
+              "agedSamples": 0,
+              "rejectedEvents": 0,
+              "disconnects": 0,
+              "sourceGaps": 0
+            },
+            "dropped": 0,
+            "samplesRetained": 28,
+            "capturesRetained": 132,
+            "lastSampleAtMs": 7024.089295,
+            "markers": {
+              "unity.native.alloc": {
+                "hits": 2,
+                "liveBytesInclusive": 0,
+                "freedBytesInclusive": 2097152,
+                "threads": [
+                  413753
+                ]
+              },
+              "unity.native.mix": {
+                "hits": 128,
+                "liveBytesInclusive": 0,
+                "freedBytesInclusive": 0,
+                "threads": [
+                  413753,
+                  416020,
+                  416021
+                ]
+              },
+              "unity.solo": {
+                "hits": 2,
+                "liveBytesInclusive": 0,
+                "freedBytesInclusive": 2097152,
+                "threads": [
+                  0,
+                  413753
+                ]
+              }
+            }
+          }
+        },
+        {
+          "step": "coverage-limits",
+          "at": "2026-10-16T23:35:16.216Z",
+          "text": "Profiling settings\nDone\nSource markers \u00b7 0\n\nGold markers record automatically without pausing. Pairs end at their End marker; one solo records until the session ends.\n\nGutter markers require a prepared source copy and a rebuilt matching native target. Fixture benchmarks come from its compiled hooks. Unity managed C# markers are not instrumented by this exporter.\n\nPrepare source copy\u2026\nNative source provider\n\nPrepared targets discover Craidd after Attach or Profile only, including targets started first. Unity Editor Play sessions stay armed until Stop. This environment variable is a fallback for older instrumented builds.\n\nCRAIDD_PROFILE_SOCKET=/run/user/1000/craidd-profiling/n020ce4bc29e3af34/host-415440-4061607.sock\nCopy environment\nCollectors\nProcess CPU / RSS\n250 ms polling\nNative allocation cohorts\nConnected\nManaged heap / GC\nUnavailable\nHeap objects / stacks\nUnavailable\nGPU / hardware cycles\nPlanned"
+        },
+        {
+          "step": "second-play",
+          "at": "2026-10-16T23:35:17.856Z",
+          "previousBatch": 2,
+          "generation": 2,
+          "profile": {
+            "id": "413753-4061112-1792193708669902301",
+            "target": {
+              "pid": 413753,
+              "birth": 4061112
+            },
+            "active": true,
+            "waitingForPlay": false,
+            "playGeneration": 2,
+            "batch": 3,
+            "provider": true,
+            "reason": "",
+            "counters": {
+              "evictedCaptures": 313,
+              "agedSamples": 0,
+              "rejectedEvents": 0,
+              "disconnects": 0,
+              "sourceGaps": 0
+            },
+            "dropped": 0,
+            "samplesRetained": 36,
+            "capturesRetained": 134,
+            "lastSampleAtMs": 9034.935157,
+            "markers": {
+              "unity.native.alloc": {
+                "hits": 3,
+                "liveBytesInclusive": 0,
+                "freedBytesInclusive": 3145728,
+                "threads": [
+                  413753
+                ]
+              },
+              "unity.native.mix": {
+                "hits": 128,
+                "liveBytesInclusive": 0,
+                "freedBytesInclusive": 0,
+                "threads": [
+                  413753,
+                  416020,
+                  416021
+                ]
+              },
+              "unity.solo": {
+                "hits": 3,
+                "liveBytesInclusive": 0,
+                "freedBytesInclusive": 3145728,
+                "threads": [
+                  0,
+                  413753
+                ]
+              }
+            }
+          }
+        },
+        {
+          "step": "final-profile",
+          "at": "2026-10-16T23:35:28.123Z",
+          "profile": {
+            "id": "413753-4061112-1792193708669902301",
+            "target": {
+              "pid": 413753,
+              "birth": 4061112
+            },
+            "active": false,
+            "waitingForPlay": false,
+            "playGeneration": 2,
+            "batch": 3,
+            "provider": true,
+            "reason": "Profiling stopped; target left running",
+            "counters": {
+              "evictedCaptures": 316,
+              "agedSamples": 0,
+              "rejectedEvents": 0,
+              "disconnects": 0,
+              "sourceGaps": 0
+            },
+            "dropped": 0,
+            "samplesRetained": 36,
+            "capturesRetained": 134,
+            "lastSampleAtMs": 9034.935157,
+            "markers": {
+              "unity.native.alloc": {
+                "hits": 3,
+                "liveBytesInclusive": 0,
+                "freedBytesInclusive": 3145728,
+                "threads": [
+                  413753
+                ]
+              },
+              "unity.native.mix": {
+                "hits": 128,
+                "liveBytesInclusive": 0,
+                "freedBytesInclusive": 0,
+                "threads": [
+                  413753,
+                  416020,
+                  416021
+                ]
+              },
+              "unity.solo": {
+                "hits": 3,
+                "liveBytesInclusive": 0,
+                "freedBytesInclusive": 3145728,
+                "threads": [
+                  0,
+                  413753
+                ]
+              }
+            }
+          }
+        }
+      ],
+      "sourceManifest": {
+        "artifact": "test-results/ui/2026-10-16T23-35-01-418Z/unity-60fps/source-manifest.json",
+        "sha256": "74f02c2f75fe1c546eee15c9a206cde25ec34912fda06cb03655db5fc9b744b8",
+        "revisionAtCopy": "eaf685139ef38c4fd60fd8fd2b9e451a714679f5",
+        "pluginSha256": "cbb950e69a8ae27dc85b03acdf74aba45eb84a14558f70209c9dae167733397f",
+        "coreSources": {
+          "support/profiling/craidd_gold.hpp": "118ba38ef5612ac44907b0aa37d637a38a4dac348f6c15bfa60b9f1d2d085f16",
+          "workspaces/unity/Assets/Editor/ProbePlayLifecycle.cs": "5dee6ee3909d6d1e6f84371bf82cf9c0511d855b1d9d3e6e4fed156d9fb2c599",
+          "workspaces/unity/Assets/Scripts/NativeProbe.cs": "798a0039c432e2ec4e40c6a23612e8321a757648dbc3d4242194aade42866ab4",
+          "workspaces/unity/Native/probe.cpp": "d861f4c694b4d0e7f2d4fda6195e5c61c4b6f56d0deca72e3055a53855fe226f",
+          "workspaces/unity/Assets/Editor/UnityProfilingHarness.cs": "0d5ab5cd2eb134bb8a0e2101f02d0d2feed0da309b320363a038f01320aac847"
+        }
+      }
+    },
+    "uncapped": {
+      "artifact": "test-results/ui/2026-10-16T23-35-01-418Z/unity-uncapped/record.json",
+      "sha256": "c30d2c95ed45177d43c24aa5c98a4d4c08b1f394f852380dea66741da5faf4ee",
+      "steps": [
+        {
+          "step": "environment",
+          "at": "2026-10-16T23:35:35.002Z",
+          "unityVersion": "6000.5.10f1",
+          "editor": "/home/skira24/Unity/Hub/Editor/6000.5.10f1/Editor/Unity",
+          "editorPid": 416266,
+          "project": "/tmp/cui-xqWNIN/workspaces/unity",
+          "namespace": "unity-uncapped-bd2d1146-8d8e-48f9-91a3-4604f43b5461",
+          "requestedFps": -1
+        },
+        {
+          "step": "first-play",
+          "at": "2026-10-16T23:35:38.277Z",
+          "batch": 1,
+          "generation": 1,
+          "profile": {
+            "id": "416266-4063835-1792193736254373743",
+            "target": {
+              "pid": 416266,
+              "birth": 4063835
+            },
+            "active": true,
+            "waitingForPlay": false,
+            "playGeneration": 1,
+            "batch": 1,
+            "provider": true,
+            "reason": "",
+            "counters": {
+              "evictedCaptures": 3698,
+              "agedSamples": 0,
+              "rejectedEvents": 0,
+              "disconnects": 0,
+              "sourceGaps": 0
+            },
+            "dropped": 0,
+            "samplesRetained": 7,
+            "capturesRetained": 129,
+            "lastSampleAtMs": 1752.021084,
+            "markers": {
+              "unity.native.mix": {
+                "hits": 128,
+                "liveBytesInclusive": 0,
+                "freedBytesInclusive": 0,
+                "threads": [
+                  416266
+                ]
+              },
+              "unity.solo": {
+                "hits": 1,
+                "liveBytesInclusive": 0,
+                "freedBytesInclusive": 0,
+                "threads": [
+                  416266
+                ]
+              }
+            }
+          }
+        },
+        {
+          "step": "retained-memory",
+          "at": "2026-10-16T23:35:38.578Z",
+          "unity": {
+            "pid": 416266,
+            "playing": true,
+            "changing": false,
+            "nativeLiveBytes": 1048576,
+            "frames": 7530,
+            "overlayDraws": 0,
+            "lastCommand": 2,
+            "menuExecuted": true,
+            "error": ""
+          },
+          "profile": {
+            "id": "416266-4063835-1792193736254373743",
+            "target": {
+              "pid": 416266,
+              "birth": 4063835
+            },
+            "active": true,
+            "waitingForPlay": false,
+            "playGeneration": 1,
+            "batch": 1,
+            "provider": true,
+            "reason": "",
+            "counters": {
+              "evictedCaptures": 8237,
+              "agedSamples": 0,
+              "rejectedEvents": 0,
+              "disconnects": 0,
+              "sourceGaps": 0
+            },
+            "dropped": 0,
+            "samplesRetained": 9,
+            "capturesRetained": 130,
+            "lastSampleAtMs": 2254.355062,
+            "markers": {
+              "unity.native.alloc": {
+                "hits": 1,
+                "liveBytesInclusive": 1048576,
+                "freedBytesInclusive": 0,
+                "threads": [
+                  416266
+                ]
+              },
+              "unity.native.mix": {
+                "hits": 128,
+                "liveBytesInclusive": 0,
+                "freedBytesInclusive": 0,
+                "threads": [
+                  416266
+                ]
+              },
+              "unity.solo": {
+                "hits": 1,
+                "liveBytesInclusive": 1048576,
+                "freedBytesInclusive": 0,
+                "threads": [
+                  416266
+                ]
+              }
+            }
+          }
+        },
+        {
+          "step": "cleared-memory",
+          "at": "2026-10-16T23:35:38.975Z",
+          "unity": {
+            "pid": 416266,
+            "playing": true,
+            "changing": false,
+            "nativeLiveBytes": 0,
+            "frames": 11794,
+            "overlayDraws": 0,
+            "lastCommand": 3,
+            "menuExecuted": true,
+            "error": ""
+          },
+          "profile": {
+            "id": "416266-4063835-1792193736254373743",
+            "target": {
+              "pid": 416266,
+              "birth": 4063835
+            },
+            "active": true,
+            "waitingForPlay": false,
+            "playGeneration": 1,
+            "batch": 1,
+            "provider": true,
+            "reason": "",
+            "counters": {
+              "evictedCaptures": 13200,
+              "agedSamples": 0,
+              "rejectedEvents": 0,
+              "disconnects": 0,
+              "sourceGaps": 0
+            },
+            "dropped": 0,
+            "samplesRetained": 10,
+            "capturesRetained": 130,
+            "lastSampleAtMs": 2505.5826460000003,
+            "markers": {
+              "unity.native.alloc": {
+                "hits": 1,
+                "liveBytesInclusive": 0,
+                "freedBytesInclusive": 1048576,
+                "threads": [
+                  416266
+                ]
+              },
+              "unity.native.mix": {
+                "hits": 128,
+                "liveBytesInclusive": 0,
+                "freedBytesInclusive": 0,
+                "threads": [
+                  416266
+                ]
+              },
+              "unity.solo": {
+                "hits": 1,
+                "liveBytesInclusive": 0,
+                "freedBytesInclusive": 1048576,
+                "threads": [
+                  416266
+                ]
+              }
+            }
+          },
+          "snapshots": [
+            "#1 \u00b7 2.25 s\t537.47 MiB\t\u2014\t1.00 MiB",
+            "#2 \u00b7 2.51 s\t537.47 MiB\t+0 B\t0 B"
+          ]
+        },
+        {
+          "step": "record-again",
+          "at": "2026-10-16T23:35:39.821Z",
+          "batch": 2,
+          "profile": {
+            "id": "416266-4063835-1792193736254373743",
+            "target": {
+              "pid": 416266,
+              "birth": 4063835
+            },
+            "active": true,
+            "waitingForPlay": false,
+            "playGeneration": 1,
+            "batch": 2,
+            "provider": true,
+            "reason": "",
+            "counters": {
+              "evictedCaptures": 25523,
+              "agedSamples": 0,
+              "rejectedEvents": 0,
+              "disconnects": 0,
+              "sourceGaps": 0
+            },
+            "dropped": 0,
+            "samplesRetained": 13,
+            "capturesRetained": 132,
+            "lastSampleAtMs": 3259.0296369999996,
+            "markers": {
+              "unity.native.alloc": {
+                "hits": 2,
+                "liveBytesInclusive": 1048576,
+                "freedBytesInclusive": 1048576,
+                "threads": [
+                  416266
+                ]
+              },
+              "unity.native.mix": {
+                "hits": 128,
+                "liveBytesInclusive": 0,
+                "freedBytesInclusive": 0,
+                "threads": [
+                  416266
+                ]
+              },
+              "unity.solo": {
+                "hits": 2,
+                "liveBytesInclusive": 1048576,
+                "freedBytesInclusive": 1048576,
+                "threads": [
+                  0,
+                  416266
+                ]
+              }
+            }
+          }
+        },
+        {
+          "step": "uncapped-sustained",
+          "at": "2026-10-16T23:35:39.866Z",
+          "unity": {
+            "pid": 416266,
+            "playing": true,
+            "changing": false,
+            "nativeLiveBytes": 0,
+            "frames": 28999,
+            "overlayDraws": 0,
+            "lastCommand": 5,
+            "menuExecuted": true,
+            "error": ""
+          },
+          "profile": {
+            "id": "416266-4063835-1792193736254373743",
+            "target": {
+              "pid": 416266,
+              "birth": 4063835
+            },
+            "active": true,
+            "waitingForPlay": false,
+            "playGeneration": 1,
+            "batch": 2,
+            "provider": true,
+            "reason": "",
+            "counters": {
+              "evictedCaptures": 29868,
+              "agedSamples": 0,
+              "rejectedEvents": 0,
+              "disconnects": 0,
+              "sourceGaps": 0
+            },
+            "dropped": 0,
+            "samplesRetained": 14,
+            "capturesRetained": 132,
+            "lastSampleAtMs": 3510.160771,
+            "markers": {
+              "unity.native.alloc": {
+                "hits": 2,
+                "liveBytesInclusive": 0,
+                "freedBytesInclusive": 2097152,
+                "threads": [
+                  416266
+                ]
+              },
+              "unity.native.mix": {
+                "hits": 128,
+                "liveBytesInclusive": 0,
+                "freedBytesInclusive": 0,
+                "threads": [
+                  416266
+                ]
+              },
+              "unity.solo": {
+                "hits": 2,
+                "liveBytesInclusive": 0,
+                "freedBytesInclusive": 2097152,
+                "threads": [
+                  0,
+                  416266
+                ]
+              }
+            }
+          }
+        },
+        {
+          "step": "second-play",
+          "at": "2026-10-16T23:35:41.474Z",
+          "previousBatch": 2,
+          "generation": 2,
+          "profile": {
+            "id": "416266-4063835-1792193736254373743",
+            "target": {
+              "pid": 416266,
+              "birth": 4063835
+            },
+            "active": true,
+            "waitingForPlay": false,
+            "playGeneration": 2,
+            "batch": 3,
+            "provider": true,
+            "reason": "",
+            "counters": {
+              "evictedCaptures": 42678,
+              "agedSamples": 0,
+              "rejectedEvents": 0,
+              "disconnects": 0,
+              "sourceGaps": 0
+            },
+            "dropped": 0,
+            "samplesRetained": 20,
+            "capturesRetained": 134,
+            "lastSampleAtMs": 5017.627414,
+            "markers": {
+              "unity.native.alloc": {
+                "hits": 3,
+                "liveBytesInclusive": 0,
+                "freedBytesInclusive": 3145728,
+                "threads": [
+                  416266
+                ]
+              },
+              "unity.native.mix": {
+                "hits": 128,
+                "liveBytesInclusive": 0,
+                "freedBytesInclusive": 0,
+                "threads": [
+                  416266
+                ]
+              },
+              "unity.solo": {
+                "hits": 3,
+                "liveBytesInclusive": 0,
+                "freedBytesInclusive": 3145728,
+                "threads": [
+                  0,
+                  416266
+                ]
+              }
+            }
+          }
+        },
+        {
+          "step": "final-profile",
+          "at": "2026-10-16T23:35:51.725Z",
+          "profile": {
+            "id": "416266-4063835-1792193736254373743",
+            "target": {
+              "pid": 416266,
+              "birth": 4063835
+            },
+            "active": false,
+            "waitingForPlay": false,
+            "playGeneration": 2,
+            "batch": 3,
+            "provider": true,
+            "reason": "Profiling stopped; target left running",
+            "counters": {
+              "evictedCaptures": 43841,
+              "agedSamples": 0,
+              "rejectedEvents": 0,
+              "disconnects": 0,
+              "sourceGaps": 0
+            },
+            "dropped": 0,
+            "samplesRetained": 21,
+            "capturesRetained": 134,
+            "lastSampleAtMs": 5268.7500580000005,
+            "markers": {
+              "unity.native.alloc": {
+                "hits": 3,
+                "liveBytesInclusive": 0,
+                "freedBytesInclusive": 3145728,
+                "threads": [
+                  416266
+                ]
+              },
+              "unity.native.mix": {
+                "hits": 128,
+                "liveBytesInclusive": 0,
+                "freedBytesInclusive": 0,
+                "threads": [
+                  416266
+                ]
+              },
+              "unity.solo": {
+                "hits": 3,
+                "liveBytesInclusive": 0,
+                "freedBytesInclusive": 3145728,
+                "threads": [
+                  0,
+                  416266
+                ]
+              }
+            }
+          }
+        }
+      ],
+      "sourceManifest": {
+        "artifact": "test-results/ui/2026-10-16T23-35-01-418Z/unity-uncapped/source-manifest.json",
+        "sha256": "014e30ab224d0a8fb5efce8abe78baccdc05584db36c50833c547dd4a9cb5dc4",
+        "revisionAtCopy": "eaf685139ef38c4fd60fd8fd2b9e451a714679f5",
+        "pluginSha256": "46b42e6ed3bd76e15cbc63bc7f18215979abedd3e78036c45063cc44fc06859d",
+        "coreSources": {
+          "support/profiling/craidd_gold.hpp": "118ba38ef5612ac44907b0aa37d637a38a4dac348f6c15bfa60b9f1d2d085f16",
+          "workspaces/unity/Assets/Editor/ProbePlayLifecycle.cs": "5dee6ee3909d6d1e6f84371bf82cf9c0511d855b1d9d3e6e4fed156d9fb2c599",
+          "workspaces/unity/Assets/Scripts/NativeProbe.cs": "798a0039c432e2ec4e40c6a23612e8321a757648dbc3d4242194aade42866ab4",
+          "workspaces/unity/Native/probe.cpp": "d861f4c694b4d0e7f2d4fda6195e5c61c4b6f56d0deca72e3055a53855fe226f",
+          "workspaces/unity/Assets/Editor/UnityProfilingHarness.cs": "0d5ab5cd2eb134bb8a0e2101f02d0d2feed0da309b320363a038f01320aac847"
+        }
+      }
+    },
+    "longUncapped": {
+      "artifact": "test-results/ui/2026-10-16T22-36-57-995Z/unity-uncapped/record.json",
+      "sha256": "8c64aecf77a815828087b40758eb1451a70dbe15a136bd79747b67e0fe049648",
+      "steps": [
+        {
+          "step": "environment",
+          "at": "2026-10-16T22:37:04.009Z",
+          "unityVersion": "6000.5.10f1",
+          "editor": "/home/skira24/Unity/Hub/Editor/6000.5.10f1/Editor/Unity",
+          "editorPid": 326013,
+          "project": "/tmp/cui-QgbP1D/workspaces/unity",
+          "namespace": "unity-uncapped-b47200fd-4fef-4aec-a717-82f42c88f4dc",
+          "requestedFps": -1
+        },
+        {
+          "step": "first-play",
+          "at": "2026-10-16T22:37:07.468Z",
+          "batch": 1,
+          "generation": 1,
+          "profile": {
+            "id": "326013-3712774-1792190225388507942",
+            "target": {
+              "pid": 326013,
+              "birth": 3712774
+            },
+            "active": true,
+            "waitingForPlay": false,
+            "playGeneration": 1,
+            "batch": 1,
+            "provider": true,
+            "reason": "",
+            "counters": {
+              "evictedCaptures": 4653,
+              "agedSamples": 0,
+              "rejectedEvents": 0,
+              "disconnects": 0,
+              "sourceGaps": 0
+            },
+            "dropped": 0,
+            "samplesRetained": 8,
+            "capturesRetained": 129,
+            "lastSampleAtMs": 2002.771507,
+            "markers": {
+              "unity.native.mix": {
+                "hits": 128,
+                "liveBytesInclusive": 0,
+                "freedBytesInclusive": 0,
+                "threads": [
+                  326013
+                ]
+              },
+              "unity.solo": {
+                "hits": 1,
+                "liveBytesInclusive": 0,
+                "freedBytesInclusive": 0,
+                "threads": [
+                  326013
+                ]
+              }
+            }
+          }
+        },
+        {
+          "step": "retained-memory",
+          "at": "2026-10-16T22:37:07.823Z",
+          "unity": {
+            "pid": 326013,
+            "playing": true,
+            "changing": false,
+            "nativeLiveBytes": 1048576,
+            "frames": 7440,
+            "overlayDraws": 0,
+            "lastCommand": 2,
+            "menuExecuted": true,
+            "error": ""
+          },
+          "profile": {
+            "id": "326013-3712774-1792190225388507942",
+            "target": {
+              "pid": 326013,
+              "birth": 3712774
+            },
+            "active": true,
+            "waitingForPlay": false,
+            "playGeneration": 1,
+            "batch": 1,
+            "provider": true,
+            "reason": "",
+            "counters": {
+              "evictedCaptures": 8267,
+              "agedSamples": 0,
+              "rejectedEvents": 0,
+              "disconnects": 0,
+              "sourceGaps": 0
+            },
+            "dropped": 0,
+            "samplesRetained": 9,
+            "capturesRetained": 130,
+            "lastSampleAtMs": 2254.398507,
+            "markers": {
+              "unity.native.alloc": {
+                "hits": 1,
+                "liveBytesInclusive": 1048576,
+                "freedBytesInclusive": 0,
+                "threads": [
+                  326013
+                ]
+              },
+              "unity.native.mix": {
+                "hits": 128,
+                "liveBytesInclusive": 0,
+                "freedBytesInclusive": 0,
+                "threads": [
+                  326013
+                ]
+              },
+              "unity.solo": {
+                "hits": 1,
+                "liveBytesInclusive": 1048576,
+                "freedBytesInclusive": 0,
+                "threads": [
+                  326013
+                ]
+              }
+            }
+          }
+        },
+        {
+          "step": "cleared-memory",
+          "at": "2026-10-16T22:37:08.161Z",
+          "unity": {
+            "pid": 326013,
+            "playing": true,
+            "changing": false,
+            "nativeLiveBytes": 0,
+            "frames": 11439,
+            "overlayDraws": 0,
+            "lastCommand": 3,
+            "menuExecuted": true,
+            "error": ""
+          },
+          "profile": {
+            "id": "326013-3712774-1792190225388507942",
+            "target": {
+              "pid": 326013,
+              "birth": 3712774
+            },
+            "active": true,
+            "waitingForPlay": false,
+            "playGeneration": 1,
+            "batch": 1,
+            "provider": true,
+            "reason": "",
+            "counters": {
+              "evictedCaptures": 12130,
+              "agedSamples": 0,
+              "rejectedEvents": 0,
+              "disconnects": 0,
+              "sourceGaps": 0
+            },
+            "dropped": 0,
+            "samplesRetained": 10,
+            "capturesRetained": 130,
+            "lastSampleAtMs": 2506.3287960000002,
+            "markers": {
+              "unity.native.alloc": {
+                "hits": 1,
+                "liveBytesInclusive": 0,
+                "freedBytesInclusive": 1048576,
+                "threads": [
+                  326013
+                ]
+              },
+              "unity.native.mix": {
+                "hits": 128,
+                "liveBytesInclusive": 0,
+                "freedBytesInclusive": 0,
+                "threads": [
+                  326013
+                ]
+              },
+              "unity.solo": {
+                "hits": 1,
+                "liveBytesInclusive": 0,
+                "freedBytesInclusive": 1048576,
+                "threads": [
+                  326013
+                ]
+              }
+            }
+          },
+          "snapshots": [
+            "#1 \u00b7 2.25 s\t540.41 MiB\t\u2014\t1.00 MiB",
+            "#2 \u00b7 2.51 s\t540.41 MiB\t+0 B\t0 B"
+          ]
+        },
+        {
+          "step": "record-again",
+          "at": "2026-10-16T22:37:08.744Z",
+          "batch": 2,
+          "profile": {
+            "id": "326013-3712774-1792190225388507942",
+            "target": {
+              "pid": 326013,
+              "birth": 3712774
+            },
+            "active": true,
+            "waitingForPlay": false,
+            "playGeneration": 1,
+            "batch": 2,
+            "provider": true,
+            "reason": "",
+            "counters": {
+              "evictedCaptures": 23995,
+              "agedSamples": 0,
+              "rejectedEvents": 0,
+              "disconnects": 0,
+              "sourceGaps": 0
+            },
+            "dropped": 0,
+            "samplesRetained": 13,
+            "capturesRetained": 131,
+            "lastSampleAtMs": 3261.1855849999997,
+            "markers": {
+              "unity.native.alloc": {
+                "hits": 1,
+                "liveBytesInclusive": 0,
+                "freedBytesInclusive": 1048576,
+                "threads": [
+                  326013
+                ]
+              },
+              "unity.native.mix": {
+                "hits": 128,
+                "liveBytesInclusive": 0,
+                "freedBytesInclusive": 0,
+                "threads": [
+                  326013
+                ]
+              },
+              "unity.solo": {
+                "hits": 2,
+                "liveBytesInclusive": 0,
+                "freedBytesInclusive": 1048576,
+                "threads": [
+                  0,
+                  326013
+                ]
+              }
+            }
+          }
+        },
+        {
+          "step": "uncapped-sustained",
+          "at": "2026-10-16T22:37:08.790Z",
+          "unity": {
+            "pid": 326013,
+            "playing": true,
+            "changing": false,
+            "nativeLiveBytes": 0,
+            "frames": 23835,
+            "overlayDraws": 0,
+            "lastCommand": 3,
+            "menuExecuted": true,
+            "error": ""
+          },
+          "profile": {
+            "id": "326013-3712774-1792190225388507942",
+            "target": {
+              "pid": 326013,
+              "birth": 3712774
+            },
+            "active": true,
+            "waitingForPlay": false,
+            "playGeneration": 1,
+            "batch": 2,
+            "provider": true,
+            "reason": "",
+            "counters": {
+              "evictedCaptures": 24748,
+              "agedSamples": 0,
+              "rejectedEvents": 0,
+              "disconnects": 0,
+              "sourceGaps": 0
+            },
+            "dropped": 0,
+            "samplesRetained": 13,
+            "capturesRetained": 131,
+            "lastSampleAtMs": 3261.1855849999997,
+            "markers": {
+              "unity.native.alloc": {
+                "hits": 1,
+                "liveBytesInclusive": 0,
+                "freedBytesInclusive": 1048576,
+                "threads": [
+                  326013
+                ]
+              },
+              "unity.native.mix": {
+                "hits": 128,
+                "liveBytesInclusive": 0,
+                "freedBytesInclusive": 0,
+                "threads": [
+                  326013
+                ]
+              },
+              "unity.solo": {
+                "hits": 2,
+                "liveBytesInclusive": 0,
+                "freedBytesInclusive": 1048576,
+                "threads": [
+                  0,
+                  326013
+                ]
+              }
+            }
+          }
+        },
+        {
+          "step": "long-rolling-history",
+          "at": "2026-10-16T22:47:21.208Z",
+          "unity": {
+            "pid": 326013,
+            "playing": true,
+            "changing": false,
+            "nativeLiveBytes": 0,
+            "frames": 9955374,
+            "overlayDraws": 0,
+            "lastCommand": 3,
+            "menuExecuted": true,
+            "error": ""
+          },
+          "profile": {
+            "id": "326013-3712774-1792190225388507942",
+            "target": {
+              "pid": 326013,
+              "birth": 3712774
+            },
+            "active": true,
+            "waitingForPlay": false,
+            "playGeneration": 1,
+            "batch": 2,
+            "provider": true,
+            "reason": "",
+            "counters": {
+              "evictedCaptures": 9957822,
+              "agedSamples": 1,
+              "rejectedEvents": 0,
+              "disconnects": 0,
+              "sourceGaps": 0
+            },
+            "dropped": 0,
+            "samplesRetained": 2400,
+            "capturesRetained": 131,
+            "lastSampleAtMs": 615547.6664499999,
+            "markers": {
+              "unity.native.alloc": {
+                "hits": 1,
+                "liveBytesInclusive": 0,
+                "freedBytesInclusive": 1048576,
+                "threads": [
+                  326013
+                ]
+              },
+              "unity.native.mix": {
+                "hits": 128,
+                "liveBytesInclusive": 0,
+                "freedBytesInclusive": 0,
+                "threads": [
+                  326013
+                ]
+              },
+              "unity.solo": {
+                "hits": 2,
+                "liveBytesInclusive": 0,
+                "freedBytesInclusive": 1048576,
+                "threads": [
+                  0,
+                  326013
+                ]
+              }
+            }
+          }
+        },
+        {
+          "step": "second-play",
+          "at": "2026-10-16T22:47:22.582Z",
+          "previousBatch": 2,
+          "generation": 2,
+          "profile": {
+            "id": "326013-3712774-1792190225388507942",
+            "target": {
+              "pid": 326013,
+              "birth": 3712774
+            },
+            "active": true,
+            "waitingForPlay": false,
+            "playGeneration": 2,
+            "batch": 3,
+            "provider": true,
+            "reason": "",
+            "counters": {
+              "evictedCaptures": 9965998,
+              "agedSamples": 7,
+              "rejectedEvents": 0,
+              "disconnects": 0,
+              "sourceGaps": 0
+            },
+            "dropped": 0,
+            "samplesRetained": 2400,
+            "capturesRetained": 133,
+            "lastSampleAtMs": 617112.515999,
+            "markers": {
+              "unity.native.alloc": {
+                "hits": 2,
+                "liveBytesInclusive": 0,
+                "freedBytesInclusive": 2097152,
+                "threads": [
+                  326013
+                ]
+              },
+              "unity.native.mix": {
+                "hits": 128,
+                "liveBytesInclusive": 0,
+                "freedBytesInclusive": 0,
+                "threads": [
+                  326013
+                ]
+              },
+              "unity.solo": {
+                "hits": 3,
+                "liveBytesInclusive": 0,
+                "freedBytesInclusive": 2097152,
+                "threads": [
+                  0,
+                  326013
+                ]
+              }
+            }
+          }
+        },
+        {
+          "step": "final-profile",
+          "at": "2026-10-16T22:47:27.888Z",
+          "profile": {
+            "id": "326013-3712774-1792190225388507942",
+            "target": {
+              "pid": 326013,
+              "birth": 3712774
+            },
+            "active": false,
+            "waitingForPlay": false,
+            "playGeneration": 2,
+            "batch": 3,
+            "provider": true,
+            "reason": "Profiling stopped; target left running",
+            "counters": {
+              "evictedCaptures": 9966810,
+              "agedSamples": 7,
+              "rejectedEvents": 0,
+              "disconnects": 0,
+              "sourceGaps": 0
+            },
+            "dropped": 0,
+            "samplesRetained": 2400,
+            "capturesRetained": 133,
+            "lastSampleAtMs": 617112.515999,
+            "markers": {
+              "unity.native.alloc": {
+                "hits": 2,
+                "liveBytesInclusive": 0,
+                "freedBytesInclusive": 2097152,
+                "threads": [
+                  326013
+                ]
+              },
+              "unity.native.mix": {
+                "hits": 128,
+                "liveBytesInclusive": 0,
+                "freedBytesInclusive": 0,
+                "threads": [
+                  326013
+                ]
+              },
+              "unity.solo": {
+                "hits": 3,
+                "liveBytesInclusive": 0,
+                "freedBytesInclusive": 2097152,
+                "threads": [
+                  0,
+                  326013
+                ]
+              }
+            }
+          }
+        }
+      ]
+    },
+    "recovery": {
+      "artifact": "test-results/ui/2026-10-16T23-35-52-260Z/unity-recovery/record.json",
+      "sha256": "83fa80be721c9a8f3686a35dc0d8215aa2262a9c6760a5051c94ac937ae9473a",
+      "steps": [
+        {
+          "step": "provider-recovery",
+          "at": "2026-10-16T23:36:02.743Z",
+          "before": {
+            "id": "418795-4066202-1792193759664888544",
+            "target": {
+              "pid": 418795,
+              "birth": 4066202
+            },
+            "active": true,
+            "waitingForPlay": false,
+            "playGeneration": 1,
+            "batch": 1,
+            "provider": true,
+            "reason": "",
+            "counters": {
+              "evictedCaptures": 0,
+              "agedSamples": 0,
+              "rejectedEvents": 0,
+              "disconnects": 0,
+              "sourceGaps": 0
+            },
+            "dropped": 0,
+            "samplesRetained": 8,
+            "capturesRetained": 22,
+            "lastSampleAtMs": 2002.854809,
+            "markers": {
+              "unity.native.alloc": {
+                "hits": 1,
+                "liveBytesInclusive": 1048576,
+                "freedBytesInclusive": 0,
+                "threads": [
+                  418795
+                ]
+              },
+              "unity.native.mix": {
+                "hits": 20,
+                "liveBytesInclusive": 0,
+                "freedBytesInclusive": 0,
+                "threads": [
+                  418795
+                ]
+              },
+              "unity.solo": {
+                "hits": 1,
+                "liveBytesInclusive": 1048576,
+                "freedBytesInclusive": 0,
+                "threads": [
+                  418795
+                ]
+              }
+            }
+          },
+          "resumed": {
+            "id": "418795-4066202-1792193759664888544",
+            "target": {
+              "pid": 418795,
+              "birth": 4066202
+            },
+            "active": true,
+            "waitingForPlay": false,
+            "playGeneration": 1,
+            "batch": 1,
+            "provider": true,
+            "reason": "",
+            "counters": {
+              "evictedCaptures": 0,
+              "agedSamples": 0,
+              "rejectedEvents": 0,
+              "disconnects": 1,
+              "sourceGaps": 0
+            },
+            "dropped": 0,
+            "samplesRetained": 9,
+            "capturesRetained": 35,
+            "lastSampleAtMs": 2253.361512,
+            "markers": {
+              "unity.native.alloc": {
+                "hits": 1,
+                "liveBytesInclusive": 1048576,
+                "freedBytesInclusive": 0,
+                "threads": [
+                  418795
+                ]
+              },
+              "unity.native.mix": {
+                "hits": 32,
+                "liveBytesInclusive": 0,
+                "freedBytesInclusive": 0,
+                "threads": [
+                  418795
+                ]
+              },
+              "unity.solo": {
+                "hits": 2,
+                "liveBytesInclusive": 1048576,
+                "freedBytesInclusive": 0,
+                "threads": [
+                  418795
+                ]
+              }
+            }
+          },
+          "released": {
+            "id": "418795-4066202-1792193759664888544",
+            "target": {
+              "pid": 418795,
+              "birth": 4066202
+            },
+            "active": true,
+            "waitingForPlay": false,
+            "playGeneration": 1,
+            "batch": 1,
+            "provider": true,
+            "reason": "",
+            "counters": {
+              "evictedCaptures": 0,
+              "agedSamples": 0,
+              "rejectedEvents": 0,
+              "disconnects": 1,
+              "sourceGaps": 0
+            },
+            "dropped": 0,
+            "samplesRetained": 10,
+            "capturesRetained": 54,
+            "lastSampleAtMs": 2503.934475,
+            "markers": {
+              "unity.native.alloc": {
+                "hits": 1,
+                "liveBytesInclusive": 0,
+                "freedBytesInclusive": 1048576,
+                "threads": [
+                  418795
+                ]
+              },
+              "unity.native.mix": {
+                "hits": 51,
+                "liveBytesInclusive": 0,
+                "freedBytesInclusive": 0,
+                "threads": [
+                  418795
+                ]
+              },
+              "unity.solo": {
+                "hits": 2,
+                "liveBytesInclusive": 0,
+                "freedBytesInclusive": 1048576,
+                "threads": [
+                  418795
+                ]
+              }
+            }
+          }
+        },
+        {
+          "step": "host-crash-cleanup",
+          "at": "2026-10-16T23:36:03.674Z",
+          "host": {
+            "pid": 420459,
+            "birth": 4066707,
+            "parent": 420456,
+            "state": "S"
+          },
+          "target": {
+            "pid": 418795,
+            "birth": 4066202,
+            "parent": 418716,
+            "state": "R"
+          },
+          "scope": "/run/user/1000/craidd-profiling/n79ced323d95ac9cc",
+          "route": "/run/user/1000/craidd-profiling/n79ced323d95ac9cc/418795-4066202.endpoint",
+          "socket": "/run/user/1000/craidd-profiling/n79ced323d95ac9cc/host-420459-4066707.sock",
+          "routeExists": false,
+          "socketExists": false
+        }
+      ],
+      "sourceManifest": {
+        "artifact": "test-results/ui/2026-10-16T23-35-52-260Z/unity-recovery/source-manifest.json",
+        "sha256": "fcc53936852e37315e913f8e0235712978444fbaa312769241ff6f48ab0a35c6",
+        "revisionAtCopy": "eaf685139ef38c4fd60fd8fd2b9e451a714679f5",
+        "pluginSha256": "eb2f1c2adf4e169cca0fca99cdda0b6bf11771e90185055d27b3a9f313aa5301",
+        "coreSources": {
+          "support/profiling/craidd_gold.hpp": "118ba38ef5612ac44907b0aa37d637a38a4dac348f6c15bfa60b9f1d2d085f16",
+          "workspaces/unity/Assets/Editor/ProbePlayLifecycle.cs": "5dee6ee3909d6d1e6f84371bf82cf9c0511d855b1d9d3e6e4fed156d9fb2c599",
+          "workspaces/unity/Assets/Scripts/NativeProbe.cs": "798a0039c432e2ec4e40c6a23612e8321a757648dbc3d4242194aade42866ab4",
+          "workspaces/unity/Native/probe.cpp": "d861f4c694b4d0e7f2d4fda6195e5c61c4b6f56d0deca72e3055a53855fe226f",
+          "workspaces/unity/Assets/Editor/UnityProfilingHarness.cs": "0d5ab5cd2eb134bb8a0e2101f02d0d2feed0da309b320363a038f01320aac847"
+        }
+      }
+    },
+    "replacement": {
+      "artifact": "test-results/ui/2026-10-16T23-35-52-260Z/unity-recovery-replacement/record.json",
+      "sha256": "dd401d3ef32d59f32960d4d44f7a6795a221d56dace1154b5cc936cf7c5c53cc",
+      "steps": [
+        {
+          "step": "replacement-host",
+          "at": "2026-10-16T23:36:07.402Z",
+          "originalHost": {
+            "pid": 420459,
+            "birth": 4066707,
+            "parent": 420456,
+            "state": "S"
+          },
+          "editorPid": 418795,
+          "profile": {
+            "id": "418795-4066202-1792193765858928754",
+            "target": {
+              "pid": 418795,
+              "birth": 4066202
+            },
+            "active": true,
+            "waitingForPlay": false,
+            "playGeneration": 1,
+            "batch": 1,
+            "provider": true,
+            "reason": "",
+            "counters": {
+              "evictedCaptures": 0,
+              "agedSamples": 0,
+              "rejectedEvents": 0,
+              "disconnects": 0,
+              "sourceGaps": 0
+            },
+            "dropped": 0,
+            "samplesRetained": 5,
+            "capturesRetained": 24,
+            "lastSampleAtMs": 1251.707392,
+            "markers": {
+              "unity.native.alloc": {
+                "hits": 1,
+                "liveBytesInclusive": 1048576,
+                "freedBytesInclusive": 0,
+                "threads": [
+                  418795
+                ]
+              },
+              "unity.native.mix": {
+                "hits": 22,
+                "liveBytesInclusive": 0,
+                "freedBytesInclusive": 0,
+                "threads": [
+                  418795
+                ]
+              },
+              "unity.solo": {
+                "hits": 1,
+                "liveBytesInclusive": 1048576,
+                "freedBytesInclusive": 0,
+                "threads": [
+                  418795
+                ]
+              }
+            }
+          }
+        },
+        {
+          "step": "final-profile",
+          "at": "2026-10-16T23:36:15.272Z",
+          "profile": {
+            "id": "418795-4066202-1792193765858928754",
+            "target": {
+              "pid": 418795,
+              "birth": 4066202
+            },
+            "active": false,
+            "waitingForPlay": false,
+            "playGeneration": 1,
+            "batch": 1,
+            "provider": true,
+            "reason": "Profiling stopped; target left running",
+            "counters": {
+              "evictedCaptures": 0,
+              "agedSamples": 0,
+              "rejectedEvents": 0,
+              "disconnects": 0,
+              "sourceGaps": 0
+            },
+            "dropped": 0,
+            "samplesRetained": 6,
+            "capturesRetained": 41,
+            "lastSampleAtMs": 1502.147315,
+            "markers": {
+              "unity.native.alloc": {
+                "hits": 1,
+                "liveBytesInclusive": 0,
+                "freedBytesInclusive": 1048576,
+                "threads": [
+                  418795
+                ]
+              },
+              "unity.native.mix": {
+                "hits": 39,
+                "liveBytesInclusive": 0,
+                "freedBytesInclusive": 0,
+                "threads": [
+                  418795
+                ]
+              },
+              "unity.solo": {
+                "hits": 1,
+                "liveBytesInclusive": 0,
+                "freedBytesInclusive": 1048576,
+                "threads": [
+                  418795
+                ]
+              }
+            }
+          }
+        }
+      ]
+    },
+    "overlay": {
+      "artifact": "test-results/ui/2026-10-16T23-34-45-950Z/unity-overlay/overlay-state.json",
+      "sha256": "8055e04bd077355fb19ad818ed5e7684d39d7bfda7b3ed24271a653c8cc0147f",
+      "state": {
+        "project": "/tmp/cui-qVBZkL/workspaces/unity",
+        "editor": "/home/skira24/Unity/Hub/Editor/6000.5.10f1/Editor/Unity",
+        "version": "6000.5.10f1",
+        "status": {
+          "pid": 411660,
+          "playing": true,
+          "changing": false,
+          "nativeLiveBytes": 1048576,
+          "frames": 44,
+          "overlayDraws": 44,
+          "lastCommand": 3,
+          "menuExecuted": false,
+          "error": ""
+        }
+      }
+    }
+  },
+  "harnessSourceSha256": {
+    "tests/ui/lib/webdriver.mjs": "18ae51b8aa5189efb5bcfad673bce8694dafdd5456719dec5fbdc0984932d97a",
+    "tests/ui/lib/unity-copy.mjs": "b3cdfc8e76fd50b6b4f3afdbd68a14d0dbdda4aebce7a41c4cbf0fa8b916aad6",
+    "tests/ui/lib/harness.mjs": "c2028ddebdf6d8d0e6b46a87ffaf4beb5e413be8ee28d060263468e834512a55",
+    "tests/ui/lib/profiler.mjs": "c52801e50f0ec5cc7e83f860098d3a8fc1adfbc1934131599172a091fe57a79e",
+    "tests/ui/profiler-icons.test.mjs": "ce91f68bfaf596fd047352d5ad86359db543ed5d5b3efa201836c57a1994e9b5",
+    "tests/ui/unity-profiling.test.mjs": "b237077203a05caa79561a77abbe2479ce089bad0c8d00d348898a4bcce6dc06",
+    "tests/ui/unity-recovery.test.mjs": "b6e328ca2be56feb78f12094b6d9c25875b36acff8286cdf56ac70162009a2e0",
+    "tests/ui/unity-overlay.test.mjs": "e86a6d0f69651b451374690040ffb354f9498762f803e641c0600204662c5eb1",
+    "tests/fixtures/attach-profiling/UnityProfilingHarness.cs": "0d5ab5cd2eb134bb8a0e2101f02d0d2feed0da309b320363a038f01320aac847"
+  },
+  "verification": {
+    "rust": {
+      "command": "CRAIDD_PROFILE_NAMESPACE=repair-qualified-unit cargo test --offline --manifest-path src-tauri/Cargo.toml --lib",
+      "passed": 172,
+      "ignored": 5,
+      "failed": 0
+    },
+    "frontend": {
+      "command": "node --test tests/*.test.mjs",
+      "passedFiles": 14,
+      "failed": 0
+    },
+    "typescript": {
+      "command": "npx tsc --noEmit",
+      "result": "pass"
+    },
+    "generalUI": {
+      "command": "node --test --test-concurrency=1 tests/ui/titles.test.mjs tests/ui/menus.test.mjs tests/ui/debug.test.mjs tests/ui/exit.test.mjs",
+      "passed": 2,
+      "failed": 2,
+      "failures": [
+        "Explorer bottom-right menu outside 900x600 viewport",
+        "C# hover value timeout"
+      ]
+    },
+    "checklist": {
+      "passed": 16,
+      "partialUnrun": 4,
+      "fullyFailed": 0,
+      "blocked": 0,
+      "masterGate": "open"
+    },
+    "targetedUI": {
+      "command": "npm run test:ui:profiling",
+      "harnessRevision": "eaf6851",
+      "passed": 5,
+      "failed": 0,
+      "durationMs": 93825.269591,
+      "log": "/tmp/craidd-unity-repair-20261016/targeted-ui-handback.log"
+    }
+  },
+  "verificationLogHashes": {
+    "all-rust-final.log": "44652a8d901e2c91e0a4053ec754bae965dfa63eba173824d54f033a0d14d3ec",
+    "all-frontend-tests-qualified.log": "90c0126a41c30de529864340584b85bb3ab41b6703886e3e08e1565a5fe4363e",
+    "legacy-ui-regressions-rerun.log": "607cc7ee39444d6317af5fd79b1fe4e0e12d9cb483c2231392aa834e9d12806f",
+    "dev-icons-qualified-rerun.log": "9fb80dd4ae2bb6ad9962fad0e8a82aba317ab940eebea6af00fc2d5a3b20a7cf",
+    "unity-uncapped-harness-rerun.log": "a0223cc9169fa2415addf881e966ee720096047a7d399a67f782e53e85f502ee",
+    "width-thread-visible.log": "db399cb455c7f29d3144709922acbc89ea2a77e3eb6866780a257074b1ca8064",
+    "recovery-sequential-qualified.log": "d1abb7c47af0a3502aa632b46e977dd38ee4caab7eacaa6ed39b71f7aadf15e3",
+    "targeted-ui-handback.log": "713340076a874ba3291a906f8096ea10e83ea8b71f04af948d26518ed6301fc1"
+  },
+  "generalUIArtifacts": {
+    "menus": {
+      "record": "test-results/ui/2026-10-16T22-45-33-945Z/menus/record.json",
+      "sha256": "f1a3c022f23bb819ab2612b50f285f56e9c784d129b75839a9e69774ea488a53"
+    },
+    "debug-csharp": {
+      "record": "test-results/ui/2026-10-16T22-45-11-487Z/debug-csharp/record.json",
+      "sha256": "df6982aeaf91a50b57a3e3fa9ddf6c0605a90a45948d2368369546f5feb0d9bd"
+    }
+  }
+}

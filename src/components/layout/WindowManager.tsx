@@ -190,7 +190,7 @@ export default function WindowManager() {
       await publishLinkedWindow(solution, clnPath).catch(() => {});
       targets = await invoke<LinkedMember[]>("get_application_windows").catch(() => targets);
       if (!targets.some((item) => item.windowLabel === initiator)) {
-        const blocker = unregisteredBlocker(useSolution.getState().tabs.filter((tab) => tab.dirty).length);
+        const blocker = unregisteredBlocker(useSolution.getState().tabs.filter((tab) => tab.kind === "file" && tab.dirty).length);
         if (blocker) blockers.push(blocker);
       }
     }

@@ -1,3 +1,4 @@
+import { isFileTab } from "../../types/project";
 import Editor from "@monaco-editor/react";
 import type { Monaco } from "@monaco-editor/react";
 import type { editor } from "monaco-editor";
@@ -10,6 +11,7 @@ import { useSplit } from "../../store/splitStore";
 import { useLinkedWindows } from "../../store/linkedWindowsStore";
 import type { Breakpoint } from "../../store/breakpointStore";
 import { useDebug } from "../../store/debugStore";
+import { useGold } from "../../store/goldStore";
 import BreakpointMenu from "./BreakpointMenu";
 import { CRAIDD_DARK_THEME, defineCraiddDarkTheme } from "../../lib/editorThemes";
 import { listLdiCallSites, removeLdiBlue, setLdiBlue, setupLdiBlue, useLdi } from "../../store/ldiStore";
@@ -98,17 +100,19 @@ function CodeView({ onReady }: { onReady?: (instance: editor.IStandaloneCodeEdit
   const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
   const monacoRef = useRef<Monaco | null>(null);
   const decorationsRef = useRef<editor.IEditorDecorationsCollection | null>(null);
+  const goldDecorationsRef = useRef<editor.IEditorDecorationsCollection | null>(null);
+  const goldPoints = useGold(s => s.points);
   const trackedPointsRef = useRef<Breakpoint[]>([]);
   const trackedBluesRef = useRef<LdiBlue[]>([]);
   const callSitesRef = useRef<LdiCallSite[]>([]);
   const callSiteCacheRef = useRef(new Map<string, CallSiteCacheEntry>());
-  const [breakpointMenu, setBreakpointMenu] = useState<{ x: number; y: number; line: number } | null>(null);
+  const [breakpointMenu, setBreakpointMenu] = useState<{ x: number; y: number; line: number; markerKind?: "gold" | "debug" } | null>(null);
   const [callSites, setCallSites] = useState<LdiCallSite[]>([]);
   const [breakpointError, setBreakpointError] = useState<string | null>(null);
   const activeFileId = useSolution((s) => s.activeFileId);
-  const activeDirty = useSolution((s) => s.tabs.find((tab) => tab.fileId === s.activeFileId)?.dirty ?? false);
+  const activeDirty = useSolution((s) => s.tabs.filter(isFileTab).find((tab) => tab.fileId === s.activeFileId)?.dirty ?? false);
   const solution = useSolution((s) => s.solution);
-  const savedContent = useSolution((s) => s.tabs.find((tab) => tab.fileId === s.activeFileId)?.originalContent ?? "");
+  const savedContent = useSolution((s) => s.tabs.filter(isFileTab).find((tab) => tab.fileId === s.activeFileId)?.originalContent ?? "");
   const points = useBreakpoints((s) => s.points);
   const blues = useLdi((s) => s.blues);
   const nativeSourceVersion = useLdi((s) => s.nativeSourceVersion);
@@ -133,7 +137,7 @@ function CodeView({ onReady }: { onReady?: (instance: editor.IStandaloneCodeEdit
   // change for Save, but React only needs to rerender on a tab switch or a
   // disk reload (which changes originalContent).
   const updateTabContent = useSolution((s) => s.updateTabContent);
-  const active = useSolution.getState().tabs.find((t) => t.fileId === activeFileId);
+  const active = useSolution.getState().tabs.filter(isFileTab).find((t) => t.fileId === activeFileId);
 
   useEffect(() => {
     const clear = () => { callSitesRef.current = []; setCallSites([]); };
@@ -226,9 +230,29 @@ function CodeView({ onReady }: { onReady?: (instance: editor.IStandaloneCodeEdit
     trackedPointsRef.current = currentPoints.filter((point) => point.file === file)
       .filter((point, index, all) => all.findIndex((item) => item.line === point.line) === index);
     trackedBluesRef.current = useLdi.getState().blues.filter((blue) => blue.file === file && blue.originLabel === linked.ownWindowLabel);
-    const dirty = useSolution.getState().tabs.find((tab) => tab.fileId === file)?.dirty ?? false;
+    const dirty = useSolution.getState().tabs.filter(isFileTab).find((tab) => tab.fileId === file)?.dirty ?? false;
     decorations.set(breakpointDecorations(monaco, currentPoints, file, currentPausedLine, callSitesRef.current, dirty, liveBlueLines, liveRedLines));
   }, []);
+
+  const refreshGold = useCallback(() => {
+    const monaco=monacoRef.current;const instance=editorRef.current;if(!monaco||!instance)return;
+    const file=useSolution.getState().activeFileId;
+    const dirty=useSolution.getState().tabs.filter(isFileTab).find(t=>t.fileId===file)?.dirty;
+    const points = useGold.getState().points.filter(p => p.file === file);
+    // Reserve both lanes for the whole model so diamonds do not change sides
+    // on lines without a red marker. Removing Gold also releases the extra lane.
+    const lanes: editor.IModelDeltaDecoration[] = points.length
+      ? [monaco.editor.GlyphMarginLane.Center, monaco.editor.GlyphMarginLane.Right].map(position => ({
+        range: new monaco.Range(1, 1, instance.getModel()?.getLineCount() ?? 1, 1),
+        options: { glyphMargin: { position }, glyphMarginClassName: "craidd-profile-lane" },
+      })) : [];
+    const glyphMargin = { position: monaco.editor.GlyphMarginLane.Right };
+    goldDecorationsRef.current?.set([...lanes, ...points.flatMap(p => [
+      {range:new monaco.Range(p.start,1,p.start,1),options:{glyphMargin,glyphMarginClassName:"craidd-gold-marker"+(dirty?" craidd-gold-stale":""),glyphMarginHoverMessage:{value:`Gold ${p.solo?"Solo":p.end?`Start → ${p.end}`:"Start · Awaiting End"} · prepared build required${dirty?" · unsaved edits: review lines":""}${p.condition?` · if ${p.condition}`:""}`}}},
+      ...(p.end?[{range:new monaco.Range(p.end,1,p.end,1),options:{glyphMargin,glyphMarginClassName:"craidd-gold-marker craidd-gold-end"+(dirty?" craidd-gold-stale":""),glyphMarginHoverMessage:{value:`Gold End ← ${p.start} · prepared build required`}}}]:[])
+    ])]);
+  },[]);
+  useEffect(()=>{refreshGold();},[refreshGold,goldPoints,activeDirty,activeFileId]);
 
   useEffect(() => { refreshBreakpoints(); }, [refreshBreakpoints, points, blues, callSites, activeDirty, activeFileId, remoteEditContext?.windowLabel, pausedLine]);
 
@@ -261,6 +285,7 @@ function CodeView({ onReady }: { onReady?: (instance: editor.IStandaloneCodeEdit
     <div className="relative flex-1 min-h-0 bg-editor-bg">
       <Editor
         height="100%"
+        keepCurrentModel
         path={active.fileId}
         language={active.monacoLanguage}
         value={active.content}
@@ -276,9 +301,11 @@ function CodeView({ onReady }: { onReady?: (instance: editor.IStandaloneCodeEdit
           instance.onDidDispose(() => { if (getActiveEditor() === instance) setActiveEditor(null); });
           monacoRef.current = monaco;
           decorationsRef.current = instance.createDecorationsCollection();
+          goldDecorationsRef.current = instance.createDecorationsCollection();
+          refreshGold();
           refreshBreakpoints();
           revealCurrentNavigation(instance);
-          instance.onDidChangeModel(() => { revealCurrentNavigation(instance); refreshBreakpoints(); });
+          instance.onDidChangeModel(() => { revealCurrentNavigation(instance); refreshBreakpoints(); refreshGold(); });
           const markersAtLine = (file: string, line: number) => {
             const decorations = decorationsRef.current;
             return {
@@ -292,18 +319,19 @@ function CodeView({ onReady }: { onReady?: (instance: editor.IStandaloneCodeEdit
             if (event.target.type !== monaco.editor.MouseTargetType.GUTTER_GLYPH_MARGIN || !event.event.leftButton) return;
             const file = useSolution.getState().activeFileId;
             const line = event.target.position?.lineNumber;
+            if (line && (event.target as editor.IMouseTargetMargin).detail.glyphMarginLane === monaco.editor.GlyphMarginLane.Right) { setBreakpointMenu({x:event.event.posx,y:event.event.posy,line,markerKind:"gold"}); return; }
             if (!file || !line) return;
             setBreakpointError(null);
             const { blue, red } = markersAtLine(file, line);
             const site = callSitesRef.current.find((item) => item.line === line);
-            if (blue && (red || blue.unreachable || blue.warning)) setBreakpointMenu({ x: event.event.posx, y: event.event.posy, line: blue.line });
+            if (blue && (red || blue.unreachable || blue.warning)) setBreakpointMenu({ x: event.event.posx, y: event.event.posy, line: blue.line, markerKind: "debug" });
             else if (blue) void removeLdiBlue(file, blue.line).catch((error) => setBreakpointError(String(error)));
             else if (!red && site?.partnerLabels.length === 1) {
               void setLdiBlue(file, line, site.partnerLabels[0]).catch((error) => setBreakpointError(String(error)));
             } else if (!red && site?.partnerLabels.length === 0 && site.configNames.length === 1) {
               void setupLdiBlue(file, line, site.configNames[0], true).catch((error) => setBreakpointError(String(error)));
             } else if (!red && site && (site.partnerLabels.length > 1 || site.configNames.length > 1)) {
-              setBreakpointMenu({ x: event.event.posx, y: event.event.posy, line });
+              setBreakpointMenu({ x: event.event.posx, y: event.event.posy, line, markerKind: "debug" });
             } else void useBreakpoints.getState().toggle(file, red?.line ?? line).catch((error) => setBreakpointError(String(error)));
           });
           instance.onContextMenu((event) => {
@@ -314,7 +342,10 @@ function CodeView({ onReady }: { onReady?: (instance: editor.IStandaloneCodeEdit
             event.event.preventDefault();
             const file = useSolution.getState().activeFileId;
             const markers = file ? markersAtLine(file, line) : null;
-            setBreakpointMenu({ x: event.event.posx, y: event.event.posy, line: markers?.blue?.line ?? markers?.red?.line ?? line });
+            const markerKind = event.target.type === monaco.editor.MouseTargetType.GUTTER_GLYPH_MARGIN
+              ? (event.target as editor.IMouseTargetMargin).detail.glyphMarginLane === monaco.editor.GlyphMarginLane.Right ? "gold" : "debug"
+              : file && useGold.getState().points.some(p => p.file === file && (p.start === line || p.end === line)) ? "gold" : "debug";
+            setBreakpointMenu({ x: event.event.posx, y: event.event.posy, markerKind, line: markerKind === "gold" ? line : markers?.blue?.line ?? markers?.red?.line ?? line });
           });
         }}
         options={options}
@@ -324,7 +355,7 @@ function CodeView({ onReady }: { onReady?: (instance: editor.IStandaloneCodeEdit
         <button type="button" className="ml-3 text-zinc-400 hover:text-white" onClick={() => setBreakpointError(null)}>Dismiss</button>
       </div>}
       {breakpointMenu && activeFileId && <BreakpointMenu file={activeFileId}
-        line={breakpointMenu.line} x={breakpointMenu.x} y={breakpointMenu.y}
+        markerKind={breakpointMenu.markerKind} line={breakpointMenu.line} x={breakpointMenu.x} y={breakpointMenu.y}
         callSite={callSites.find((site) => site.line === breakpointMenu.line)}
         onClose={() => setBreakpointMenu(null)} />}
     </div>

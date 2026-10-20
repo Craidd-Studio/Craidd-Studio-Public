@@ -2,8 +2,14 @@
 
 **Roadmap track:** Phase 3.5 profiling proposal; DAP timing belongs to Phase 3.x. See the [current roadmap](../../roadmaps/Roadmap-v0.0.4A.md).
 
-**Status:** Design. Recorded 22 September 2026. No implementation in this
-document.
+**Status:** Infrastructure and future-extension design, recorded 22 September
+2026 and reconciled 14 October 2026. The [experimental native implementation](implementation-attach-gold.md) is recorded separately; the sketches below remain future infrastructure. The [Gold capture contract](design-gold-capture.md) governs the current
+UX: automatic Debug arming, one explicit solo per context, all other ranges
+paired, collapsible results, Snapshot and Record again. Its provider, identity,
+metric and lifecycle rules supersede conflicting sketches below.
+
+**Companions:** [Attached profiling](design-attach-profiling.md) and
+[Unity native plugin workflow](../../unity/feats/design-unity-native-plugin.md).
 
 **Applies to:** Phase 3.5 onward.
 
@@ -29,8 +35,10 @@ region it came from. The AI panel reads the numbers — not a description
 of the numbers. It proposes a change. The user accepts it. The
 measurement runs again. The numbers compare.
 
-The four rungs below are how the user expresses *what* to measure and
-*when* to stop. The loop is why the rungs exist.
+The four rungs below describe recording and separate future threshold-stop
+capabilities. Gold capture is non-stopping rung 3 intent; rung 4 is an explicit
+future request to stop execution and must not be assigned to every Gold marker.
+The loop is why the rungs exist.
 
 This is not "Craidd has a profiler." A profiler with a flame graph is a
 tool. This is a feedback loop between the code, its measurements, and
@@ -84,9 +92,9 @@ allocation volume, call count, and any custom metric. When the run
 ends — or while it is running — the user sees the numbers attached to
 the region.
 
-No IDE has this as a first-class, inline primitive. Profilers have it
-in a separate window, in a separate process, in a separate run. Craidd
-makes it a mark, in the code, in the run the user is already doing.
+The target is source-located measurement in the run the user is already
+doing, with a qualified non-stopping provider. Placement alone does not prove
+that the currently loaded binary can emit those events.
 
 ### Rung 4 — Profile breakpoint marker
 
@@ -106,14 +114,18 @@ instead of a *value*. It uses the marker infrastructure from rung 3 to
 know when the metric crossed, and the debugger infrastructure from
 rungs 1 and 2 to stop the program.
 
-No IDE has this. It is where the loop becomes actionable in place.
+This future threshold-stop feature needs its own accepted evaluator and
+debugger path. It is not the meaning of a Gold Start/End recording marker.
 
 ---
 
 ## The shared condition language
 
-Rungs 2 and 4 use the same syntax. This is the piece that ties the
-ladder together.
+A shared condition surface for future metric stops is an aspiration, not a
+qualified universal evaluator. Ordinary DAP value conditions use the selected
+adapter's language/capability. Gold Start conditions use their non-stopping
+provider's supported expression subset and cannot execute getters through
+the debugger. Report unsupported conditions before arming.
 
 A condition is an expression over names visible at the marked line —
 variables in scope at rung 2, and metrics in scope at rung 4 — plus a
@@ -153,9 +165,9 @@ ptr != null && freed(ptr)
 ptr != null && used_after_free(ptr)
 +++
 
-The parser is one parser. The evaluator has two modes: values (rung 2)
-and metrics (rung 4). A user who learns one condition syntax has
-learned both.
+The expressions above are illustrative. A future metric evaluator must define
+its grammar, runtime inputs and compatibility with the provider. Do not claim
+that one implemented parser already evaluates adapter and metric conditions.
 
 The condition language is deliberately small. It is not a scripting
 language. It has comparison operators, boolean operators, a small set
@@ -169,8 +181,10 @@ result.
 
 ## Where markers live
 
-Two places. Both supported. Source-resident is the default; the
-metadata store is for temporary lenses.
+Two possible preparation surfaces are described below. Neither is implemented
+by this document. Gutter placement creates source-located intent and does not
+silently insert macros or modify source. The final persistence schema is open;
+any instrumented build/source modification is explicit and provider-qualified.
 
 ### Source-resident markers
 
@@ -264,11 +278,10 @@ Metadata markers are for temporary use. "I want to measure this
 region for this run." They are not committed, they do not survive a
 fresh checkout, and they do not couple the user's source to Craidd.
 
-The editor-driven path inserts *source* markers by default, because
-the honest record of "this region matters" belongs in the code. A user
-who wants a temporary lens chooses "Profile this region (this run
-only)" from the context menu, and the marker goes to the metadata
-store.
+Source-resident instrumentation is an explicit future authoring option. The
+current gutter UX is [Gold Start/End and Solo](design-gold-capture.md#gutter-interaction).
+Temporary lenses and committed annotations need defined persistence/rebuild
+lifecycles; they are not evidence of a provider binding in a foreign process.
 
 ---
 
@@ -283,14 +296,10 @@ their code. Full control. Portable. The marker is part of the codebase.
 
 ### 2. Editor-driven, "Profile this region"
 
-The user selects a range of lines and right-clicks. Chooses
-**Profile this region**. Craidd inserts a source-resident marker into
-the code at the right place, wraps the region, and marks the gutter
-with a small stopwatch icon.
-
-This is the default path. It is what makes the feature feel like an
-IDE feature rather than a library feature. The user does not have to
-know the macro syntax.
+This earlier source-insertion proposal is retained as an optional future
+authoring surface, not the default. If delivered, its preview must show source
+changes and its provider-specific preparation. The accepted current path uses
+the nested Profiling gutter menu and explicit Start/End or single Solo intent.
 
 ### 3. Editor-driven, "Profile this region (this run only)"
 
@@ -309,17 +318,18 @@ Markers record a set of metrics per region per run. Each metric has a
 source, which varies by language. The list, in order of when they
 ship:
 
-**Wall time.** Nanosecond timestamps around the region. Free in every
-language. `std::time::Instant` in Rust, `std::chrono::steady_clock` in
+**Wall time.** Monotonic timestamps around the region. Reads and hooks have
+nonzero overhead that must be characterised per provider/language. Candidates
+include `std::time::Instant` in Rust, `std::chrono::steady_clock` in
 C++, `Stopwatch` in C#, `time.perf_counter_ns()` in Python,
 `process.hrtime.bigint()` in TypeScript.
 
-**Call count.** A counter incremented at region entry. Free in every
-language.
+**Call count.** A counter incremented at verified region entry. It is cheap
+but not free, and missing events affect coverage.
 
 **CPU time.** Per-thread CPU time from `clock_gettime(CLOCK_THREAD_CPUTIME_ID)`
-on Linux. Free to read, but requires a syscall per region entry and
-exit. Fine for coarse-grained regions. For fine-grained regions, the
+on Linux. Reads require provider-specific overhead measurement at entry/exit.
+Fine for coarse-grained regions. For fine-grained regions, the
 overhead matters.
 
 **Allocation volume.** Bytes allocated inside the region. Requires
@@ -327,10 +337,15 @@ language support:
 
 - **Rust:** a custom global allocator that reports to the marker.
 - **C++:** an `operator new` override that reports to the marker.
-- **C#:** `GC.GetAllocatedBytesForCurrentThread()` before and after.
-- **Python:** `tracemalloc` snapshots before and after.
-- **TypeScript:** `process.memoryUsage().heapUsed` before and after.
-  Rough, but enough to spot a leak.
+- **C#:** `GC.GetAllocatedBytesForCurrentThread()` can provide a cumulative
+  managed allocation delta for that thread, not surviving bytes or native
+  allocations; it is not automatically a Unity Mono/IL2CPP collector.
+- **Python:** `tracemalloc` provides separately scoped allocation information.
+- **TypeScript:** `process.memoryUsage().heapUsed` is a live-heap gauge delta,
+  not allocation volume or proof of a leak.
+
+These are candidate metric sources. Range survivors/reclamation require the
+[allocation-lifetime contract](design-gold-capture.md#memory), not a gauge alone.
 
 **Pointer identity.** Track a specific pointer, allocation, or handle
 across the program. Requires language support:
@@ -342,12 +357,15 @@ across the program. Requires language support:
 - **TypeScript:** no direct story; out of scope for the first pass.
 
 **GPU cycles.** Vendor-specific. CUDA, ROCm, Metal. Last to land.
-Requires the region to be a GPU kernel. Requires a vendor profiler or
-a driver API. Delegation where possible.
+Requires a qualified collector and correlation to device work, including
+render/compute submission and completion. CPU range duration is not GPU
+duration. Delegate to installed tools/device APIs where supported.
 
-The gate: **wall time and call count first**, for every language, for
-every platform. Then allocations. Then CPU cycles. Then pointer
-identity. Then GPU.
+Wall time/hit count can be an initial provider checkpoint. The current public
+Gold target includes qualified CPU and memory tooling with thread inspection;
+GPU is designed but optional. This does not promise every language/platform
+simultaneously. Delivery requires per-provider evidence, as described in
+[attached profiling](design-attach-profiling.md#delivery-and-evidence).
 
 ---
 
@@ -406,23 +424,24 @@ Three surfaces:
 
 ### The gutter
 
-A small stopwatch icon next to the line number for every marked
-region. Solid for a source-resident marker, hollow for a metadata
-marker. A tooltip on hover shows the latest measurement for that
-marker.
+Use labelled Gold Start/End and Solo glyphs, pair highlighting and binding
+status from the [gutter contract](design-gold-capture.md#gutter-interaction).
+Tooltips expose the range/partner, condition and latest qualified result.
 
 ### The Profile tab
 
 A **Profiler** tab in the right panel, beside the Debugger, in the style of
 Visual Studio 2019's Diagnostic Tools. This was moved from the bottom panel on
 9 October 2026; see [UI/UX sweep D3](../../uiux/design-public-release-sweep.md#decisions).
-Lists every marker, sorted by total time, total allocation, or call
-count. Each row shows the marker name, its source location, and its
-numbers. Clicking a row navigates to the region.
+One collapsible group belongs to each solo/paired range, with repeated hits
+inside and stacked CPU/memory/thread/GPU views. Scope and unavailable metrics
+are explicit. Source navigation reveals the pair. See
+[Profiler presentation](design-gold-capture.md#profiler-presentation).
 
-Above the list, a run selector: which run's numbers to display. Below
-the list, a comparison view: choose two runs, see the delta per
-marker.
+A run/batch selector distinguishes Live, immutable Snapshots and preserved
+batches. Snapshot and Record again follow the
+[result lifecycle](design-gold-capture.md#snapshot-and-record-again). Cross-run
+comparison remains a later capability, requiring comparable inputs and scope.
 
 ### Cross-window aggregation
 
@@ -506,23 +525,16 @@ later, unassigned work. Phase 4 now refers to the dedicated batch-replace plan.
 
 ## The schema commitment
 
-**The breakpoint data model must reserve room for metric conditions
-now, even before rung 4 ships.**
+Gold recording intent must remain distinct from ordinary stop conditions,
+blue/LDI bindings and any future metric-threshold stop. Preserve source/range
+identity, explicit solo/pair form, provider condition and target binding. The
+[Gold capture contract](design-gold-capture.md) defines their semantics; it does
+not commit a persistence format or request a speculative code migration.
 
-The current breakpoint struct is `{ path, line, condition }`. Rung 4
-needs `{ path, line, data_condition, metric_condition, threshold,
-window }`. If the struct is built today without room for the metric
-fields, the rewrite later touches the UI, the persistence format, and
-the DAP bridge — three places, three migrations.
-
-Reserving the fields today costs nothing. The frontend renders
-`metric_condition` as "not set" and does not expose it until rung 4
-ships. The persistence format writes it as `null`. The DAP bridge
-ignores it. But the *shape* is in place, and the rewrite is avoided.
-
-Same discipline as reserving `framework` in `.craidd` before there was
-a framework enum, and reserving `[config]` in `.craidd` before there
-was config-inference. The field is cheap. The migration is expensive.
+Future metric-stop fields need a versioned schema and migration design once
+that feature is scheduled. Do not claim that null fields alone remove its
+integration cost. Do not reserve a `framework` field in `.craidd`: it violates
+the [project model](../../craidd-cln-model.md).
 
 ---
 
@@ -530,8 +542,9 @@ was config-inference. The field is cheap. The migration is expensive.
 
 **Not a sampling profiler.** Sampling profilers take a stack trace
 every N microseconds and aggregate. Markers are deterministic: they
-measure exactly the region they are placed on, exactly as many times
-as it runs. The two are complementary. Sampling is for "where is time
+use observed boundary events to define a region. Exactness and call counts
+still depend on source binding and complete event coverage. The two are
+complementary. Sampling is for "where is time
 spent across the whole program." Markers are for "how long does this
 specific region take."
 
@@ -550,9 +563,10 @@ they write it in their program and break on the result. The condition
 language is for filtering markers and thresholds, not for arbitrary
 computation.
 
-**Not free.** Every marker costs something. Wall time and call count
-are free. Allocations and CPU time are cheap but not free. Pointer
-identity is expensive. The IDE reports the overhead per marker, so a
+**Not free.** Every marker costs something, including timestamp reads,
+entry counters and event transport. Allocation/CPU hooks can add significant
+overhead in hot code; identity/lifetime tracking has its own cost. The IDE
+reports characterised overhead where available, so a
 user profiling a hot loop can see the cost of watching it.
 
 ---
@@ -632,5 +646,5 @@ Everything above is a consequence of that sentence.
 
 ---
 
-*Last updated: Phase 3.x. Author: ShinkuKira21.*
+*Last updated: Phase 3.5, 15 October 2026. Author(s): ShinkuKira21.*
 *This document is a design.*

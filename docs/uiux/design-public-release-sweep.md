@@ -444,7 +444,16 @@ Settled by the user on 9 October 2026.
 - Desktop shell behaviour (top bar, dock, shelf) is observed by the user and
   recorded here.
 
+## Unity profiling usability gate
+
+The [Unity UI/UX harness checklist](unity-profiling-harness-checklist.md) adds
+the master Unity profiling checkbox and U00–U19 acceptance cases. Its
+[initial report](../bugs/16-10-2026/unity-profiling-uiux-report.md) records
+current desktop failures; the [Opus handoff](../handoffs/handoff-unity-profiling-uiux-2026-10-16.md)
+specifies the repair/retest report. This profiling gate remains open and is
+separate from the historical UI sweep results above.
+
 ---
 
-*Last updated: Phase 3.x, 9 October 2026. Author(s): ShinkuKira21.*
+*Last updated: Phase 3.x / 3.5, 16 October 2026. Author(s): ShinkuKira21.*
 *This document is a design.*

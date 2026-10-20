@@ -1,0 +1,66 @@
+{
+  "after-profiler-no-file.png": {
+    "artifact": "test-results/ui/2026-10-16T23-34-43-791Z/profiler-icons/no-file-open.png",
+    "sha256": "da00fdf54cf3ab8a0dfcde901e59c3205b15070c57dd5f0c2743a2e4449c711d"
+  },
+  "after-profiler-editor-open.png": {
+    "artifact": "test-results/ui/2026-10-16T23-34-43-791Z/profiler-icons/editor-open.png",
+    "sha256": "696cff4e381d67e90c57311d37239fc449e57e4eb09cef4953e6403a8f6d9310"
+  },
+  "after-profiler-288px.png": {
+    "artifact": "test-results/ui/2026-10-16T23-35-01-418Z/unity-60fps/summary-288px.png",
+    "sha256": "e8e25c17f1cad8d40bb23a9b276ee3fa5a5588ee4116edff44d81be5a0bea932"
+  },
+  "after-memory-288px.png": {
+    "artifact": "test-results/ui/2026-10-16T23-35-01-418Z/unity-60fps/memory-288px.png",
+    "sha256": "3d2fff8842a5c56bb80435a865030ae589b62217de5152b65f697145f03c1fb9"
+  },
+  "after-memory-420px.png": {
+    "artifact": "test-results/ui/2026-10-16T23-35-01-418Z/unity-60fps/memory-420px.png",
+    "sha256": "abc89f0981d84d3197457813f5f9094eb1da3b0192ee6c9be2dc24f0be2f8826"
+  },
+  "after-profiler-retained.png": {
+    "artifact": "test-results/ui/2026-10-16T23-35-01-418Z/unity-60fps/retained-1MiB-live-snapshot.png",
+    "sha256": "16e714f3a8c988c2a5f79a6857bf3c80aff22567019fae3f3ddf609dcc946422"
+  },
+  "after-profiler-cleared.png": {
+    "artifact": "test-results/ui/2026-10-16T23-35-01-418Z/unity-60fps/cleared-two-snapshots.png",
+    "sha256": "9eb1bca5582d944b43cd0d617d2b89a3e4369aa390f1b7a46a361ab4ec299977"
+  },
+  "after-profiler-recorded-hit.png": {
+    "artifact": "test-results/ui/2026-10-16T23-35-01-418Z/unity-60fps/range-and-expanded-hit.png",
+    "sha256": "12318c4fbac121fb579f5a47b659e4f11ccadaa68a59de25611ead2f965e4cca"
+  },
+  "after-profiler-thread-filter.png": {
+    "artifact": "test-results/ui/2026-10-16T23-35-01-418Z/unity-60fps/thread-and-batch-inspection.png",
+    "sha256": "62af8159718514bd832592333a9173ea8e82ea80d08dc1c6ba5aee49259e3f4e"
+  },
+  "after-profiler-coverage.png": {
+    "artifact": "test-results/ui/2026-10-16T23-35-01-418Z/unity-60fps/coverage-limits.png",
+    "sha256": "80b604d8cbf164dbc4186a669cc1536fc97f5d6a4a94b972339e5813526e90a8"
+  },
+  "after-profiler-rolling.png": {
+    "artifact": "test-results/ui/2026-10-16T22-36-57-995Z/unity-uncapped/long-rolling-history.png",
+    "sha256": "2f89fd64dfaffac146eb9d9fac1f4e4d39de90011ef8d7317e94d619ac7422b9"
+  },
+  "after-profiler-reconnected.png": {
+    "artifact": "test-results/ui/2026-10-16T23-35-52-260Z/unity-recovery/recovered-solo.png",
+    "sha256": "2115d22ee4f153705231768aefec36f830343349a541a53d0e5abb3ec5676f45"
+  },
+  "after-profiler-replacement.png": {
+    "artifact": "test-results/ui/2026-10-16T23-35-52-260Z/unity-recovery-replacement/replacement-host-solo.png",
+    "sha256": "c436f9d0f13977b27c3976eee1df85cb1ffa1376fb70cfe823c7e8a75e55f736"
+  },
+  "after-unity-overlay.png": {
+    "artifact": "test-results/ui/2026-10-16T23-34-45-950Z/unity-overlay/signals/overlay.png",
+    "sha256": "f4e08f6dacf63288f7bd4e27a002320e29d3c8311766762b176ccb115ceb3686"
+  },
+  "remaining-explorer-edge.png": {
+    "artifact": "test-results/ui/2026-10-16T22-45-33-945Z/menus/final-state.png",
+    "sha256": "02804ee2b47b29f9ff4e495be5e0c3063428b7ba1caa1eaaa1b4775d2195e737"
+  },
+  "remaining-debugger-hover.png": {
+    "artifact": "test-results/ui/2026-10-16T22-45-11-487Z/debug-csharp/final-state.png",
+    "sha256": "e55fb23ee1b04d9c3ff0aeb0737b2a63f465cdcc181bacc3566694f5382520f4"
+  }
+}

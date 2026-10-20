@@ -889,7 +889,108 @@ those languages need separate loader and marshalling proofs. Unsupported
 captured values produce a typed error while A remains at the gate, rather
 than terminating the developer's process or silently spawning B.
 
+## Where values come from
+
+LDI is often read as "the interposer mechanism." It is not. The
+interposer is a **specialized value source for one shape of argument.**
+The general mechanism is: hold a stopped frame, acquire the argument
+values, drive a native reproduction, release. Where the values come
+from is a detail of the acquisition step.
+
+There are two axes.
+
+### Axis 1 — where the value comes from
+
+- **Frame reads (default).** The implemented scalar path in `ldi.rs` reads
+  supported, already materialized managed locals from the stopped frame.
+  Value structs and bounded managed arrays/strings are extension candidates,
+  each requiring extraction, representation and ABI proof; they are not
+  generic implemented DAP value copying.
+- **Boundary capture (interposer).** The marshalled bytes of a
+  `string` or `byte[]` — the pinned pointer the runtime hands to the
+  native call — exist only at the FFI boundary, briefly, and are
+  captured by the interposer. This is the narrow case the interposer
+  was built for.
+
+Values that are neither — pointers as identity, callbacks, object
+graphs — are outside LDI's scope. See
+[value vs state](../../philosophies/debugging/ldi-debugging/philosophy-value-vs-state.md).
+
+### Axis 2 — where the frame comes from
+
+- **Owned frame.** The origin process was launched by Craidd. The
+  process supervisor records it; the debugger that owns its
+  `continue` is one Craidd started. This is LDI today.
+- **Attached frame.** The origin process is foreign. Craidd connects
+  a qualified managed debugger to it via the attach capability (see the
+  [attach design](../debugging/design-attach-to-process.md)). Frame/input
+  extraction and hold/release behaviour require provider-specific proof; the
+  copied-input reproduction contract is retained once those gates pass.
+
+### The combined model
+
+```text
+                          LDI
+                           │
+             ┌─────────────┴─────────────┐
+             │                           │
+        Held frame                  Boundary capture
+        (default)                   (interposer)
+             │                           │
+             │  reads values             │  captures marshalled bytes
+             │  from DAP variables       │  at the FFI boundary
+             │                           │
+             └─────────────┬─────────────┘
+                           │
+                   Reproduce in driver
+                           │
+                      Debug, release
+                           │
+             ┌─────────────┴─────────────┐
+             │                           │
+        Owned frame                 Attached frame
+        (Craidd launched)           (foreign process)
+             │                           │
+        netcoredbg owns hold        Qualified runtime adapter owns hold
+```
+
+The combinations:
+
+| Frame source | Value source | Status |
+|---|---|---|
+| Owned | Frame reads | Implemented today (scalar path). |
+| Owned | Boundary capture | Implemented today (typed interposer path). |
+| Attached | Frame reads | Candidate after adapter, exact frame/input/ABI, loaded-artifact and hold/release qualification; attach alone is insufficient. |
+| Attached | Boundary capture | Existing launch-time hook unavailable in an unprepared running target; a separately prepared runtime integration remains future work. |
+
+### The next LDI extension
+
+The natural next extension is `CallKind::ValueStruct`: reading a POD
+struct passed by value (a `Vector3`, a `Matrix4x4`, or any fixed-layout
+type) field by field from the stopped frame, and emitting a C++ struct
+of the same shape in the driver. It extends the frame-read path, needs
+no interposer, and serves any FFI call whose arguments are value-shaped
+rather than state-shaped.
+
+The extension remains proposed; an adapter alone does not implement it.
+
+### Unity and profiling qualification
+
+[Unity attach](../../unity/feats/design-unity-native-plugin.md) is a future
+origin route, not a claim that CoreCLR machinery works on Mono or IL2CPP.
+Unity documents C# debugging on both backends; Craidd needs its own adapter,
+frame-reader and lifecycle qualification. Preserve the fixed held origin,
+separate owned driver and exactly-once release/cancellation contract.
+
+[Gold capture markers](../profiling/design-gold-capture.md) record and do not
+activate LDI. Gold Linked Debug is a launch/coordinator action, distinct from
+Gold source capture intent. Profiling labels A and B with separate process,
+heap and capture identities. Pause/hold intervals remain visible; B's measured
+performance is not evidence for A's real native invocation. Detaching a foreign
+origin cancels its owned driver and resolves the hold through the qualified
+adapter without terminating the origin or accepting late releases.
+
 ---
 
-*Last updated: Phase 3.x. Author: ShinkuKira21.*
+*Last updated: Phase 3.x, 14 October 2026. Author(s): ShinkuKira21.*
 *This document is a design.*

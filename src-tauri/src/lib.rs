@@ -61,6 +61,7 @@ pub fn run() {
         .manage(RunnerManager::default())
         .manage(commands::tauri_dev::TauriDevServers::default())
         .manage(DebugManager::default())
+        .manage(commands::profiling::ProfileManager::default())
         .manage(DebugBuildManager::default())
         .manage(commands::ldi::LdiManager::default())
         .manage(commands::native_debug::NativeDebugManager::default())
@@ -79,6 +80,7 @@ pub fn run() {
                     commands::build::cancel_window_build(&closing_window);
                     commands::runner::cancel_window_run(&closing_window);
                     commands::debug::cancel_window_debug(&closing_window);
+                    commands::profiling::stop(&closing_window.app_handle(),closing_window.label(),"Profiling window closed");
                 });
                 remove_linked_window(window);
             }
@@ -170,6 +172,18 @@ pub fn run() {
             dispatch_linked_window_command,
             load_breakpoints,
             save_breakpoints,
+            commands::profiling::profiling_bridge,
+            commands::profiling::start_profiling,
+            commands::profiling::stop_profiling,
+            commands::profiling::profile_record_again,
+            commands::profiling::get_profile,
+            commands::gold::load_gold,
+            commands::gold::edit_gold,
+            commands::gold::export_gold_instrumentation,
+            commands::processes::list_attach_processes,
+            commands::processes::process_modules,
+            commands::processes::attach_adapter_choices,
+            commands::debug::attach_to_process,
             start_debug,
             commands::tauri_dev::describe_debug_prerequisites,
             debug_control,
@@ -194,8 +208,8 @@ pub fn run() {
         ])
         .build(tauri::generate_context!())
         .expect("error while building tauri application")
-        .run(|_, event| {
-            if matches!(event, tauri::RunEvent::Exit) { process_supervisor::shutdown(); }
+        .run(|app, event| {
+            if matches!(event, tauri::RunEvent::Exit) { commands::profiling::shutdown(app); process_supervisor::shutdown(); }
         });
     process_supervisor::shutdown();
 }

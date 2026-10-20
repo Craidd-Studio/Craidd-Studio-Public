@@ -1,4 +1,5 @@
 import { useSolution } from "../store/solutionStore";
+import { findFileTab } from "../types/project";
 import { dispatchLinkedWindowCommand, useLinkedWindows } from "../store/linkedWindowsStore";
 
 /** Share the owning-window guard across filesystem trees and document links. */
@@ -11,7 +12,7 @@ export async function openWorkspaceFile(path: string): Promise<void> {
     throw new Error("Save this file in its owning window before editing it here.");
   }
   await useSolution.getState().openFile(path, path.split("/").pop() || path);
-  if (!useSolution.getState().tabs.some((tab) => tab.fileId === path)) throw new Error(`Could not open ${path}`);
+  if (!findFileTab(useSolution.getState().tabs, path)) throw new Error(`Could not open ${path}`);
   if (hidden) {
     linked.setRemoteEditing(true);
     await dispatchLinkedWindowCommand(hidden.windowLabel, "reveal_file", JSON.stringify({ file: path, line: 1 }));

@@ -36,7 +36,7 @@ export async function startViewedAction(action: Action, configName?: string): Pr
   if (["starting", "building", "running", "paused"].includes(remote.status)) {
     throw new Error("The hidden process is already active. Stop it before starting another action.");
   }
-  if (useSolution.getState().tabs.some((tab) => tab.dirty)) {
+  if (useSolution.getState().tabs.some((tab) => tab.kind === "file" && tab.dirty)) {
     throw new Error("Save this window's edited files before starting the hidden process.");
   }
   if (remote.dirtyCount > 0) throw new Error("The hidden window has unsaved files. Show it and save them first.");

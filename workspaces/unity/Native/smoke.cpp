@@ -1,0 +1,3 @@
+#include <cassert>
+extern "C" {int craidd_probe_mix(int,int);void craidd_probe_allocate(int,int);void craidd_probe_clear();unsigned long long craidd_probe_live();int craidd_probe_stateful(int);void craidd_probe_workers_start();void craidd_probe_workers_stop();}
+int main(){assert(craidd_probe_mix(7,200)==craidd_probe_mix(7,200));craidd_probe_allocate(4096,0);assert(craidd_probe_live()==0);craidd_probe_allocate(8192,1);assert(craidd_probe_live()==8192);craidd_probe_clear();assert(craidd_probe_live()==0);assert(craidd_probe_stateful(2)==2);craidd_probe_workers_start();craidd_probe_workers_stop();}

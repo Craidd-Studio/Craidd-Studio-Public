@@ -1,0 +1,4 @@
+[project]
+name = "Unity managed probe sources"
+language = "csharp"
+root = "."
