@@ -1,7 +1,7 @@
 import Editor from "@monaco-editor/react";
 import type { Monaco } from "@monaco-editor/react";
 import type { editor } from "monaco-editor";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSolution } from "../../store/solutionStore";
 import { usePreferences } from "../../store/preferencesStore";
 import { useBreakpoints } from "../../store/breakpointStore";
@@ -94,7 +94,7 @@ function revealCurrentNavigation(instance: editor.IStandaloneCodeEditor) {
   instance.focus();
 }
 
-export default function CodeView() {
+function CodeView({ onReady }: { onReady?: (instance: editor.IStandaloneCodeEditor) => void }) {
   const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
   const monacoRef = useRef<Monaco | null>(null);
   const decorationsRef = useRef<editor.IEditorDecorationsCollection | null>(null);
@@ -269,6 +269,7 @@ export default function CodeView() {
         onChange={onChange}
         onMount={(instance: editor.IStandaloneCodeEditor, monaco: Monaco) => {
           editorRef.current = instance;
+          onReady?.(instance);
           const mainFile = () => useSolution.getState().activeFileId;
           setActiveEditor(instance, mainFile);
           instance.onDidFocusEditorText(() => { useSplit.getState().setSideFocused(false); setActiveEditor(instance, mainFile); });
@@ -329,3 +330,5 @@ export default function CodeView() {
     </div>
   );
 }
+
+export default memo(CodeView);

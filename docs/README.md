@@ -29,9 +29,15 @@ The philosophy documents are grouped by topic. Start with the [philosophy index]
 
 The [future MT debugging investigations](feats/mt-debugging/future/README.md) cover Python/CPython, Java/JNI, assembly/disassembly, and maintenance of the optional patched Samsung netcoredbg experiment. They do not expand the current support claim.
 
-The [Docs viewer design collection](feats/editor/docs-viewer/README.md) records editable Markdown Preview with View Source / View Preview controls and a preferred Docs sidebar direction backed by File Discovery. It retains docs-as-project as an alternative, explores potential HTML/PDF viewers, and identifies the editing, discovery and document-management decisions needed before implementation. It is unscheduled design work.
+The [Docs viewer collection](feats/editor/docs-viewer/README.md) now includes an
+[initial Markdown / Docs implementation record](feats/editor/docs-viewer/implementation-markdown-docs.md):
+a Docs sidebar, View Source / View Preview, source-preserving block editing and
+formatting shortcuts. Automated/browser checks are recorded separately from
+remaining native desktop acceptance. Full rich text editing, docs-as-project,
+and HTML/PDF viewers remain future work. Session context is in the
+[Markdown / Docs handoff](handoffs/handoff-markdown-docs.md).
 
 ---
 
-*Last updated: Phase 3.x, 13 October 2026. Author(s): ShinkuKira21.*
+*Last updated: Phase 3.x, 20 October 2026. Author(s): ShinkuKira21.*
 *This document is a record.*

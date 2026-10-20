@@ -3,10 +3,12 @@ import type { editor } from "monaco-editor";
 // The code editor that last had focus (main or side group), for commands that
 // act on it from outside the editor components (F9, Edit → Undo/Redo).
 let current: editor.IStandaloneCodeEditor | null = null;
+let previewCommand: ((redo: boolean) => void) | null = null;
 let currentFile: (() => string | null) | null = null;
 
-export function setActiveEditor(instance: editor.IStandaloneCodeEditor | null, file?: () => string | null): void {
+export function setActiveEditor(instance: editor.IStandaloneCodeEditor | null, file?: () => string | null, command?: (redo: boolean) => void): void {
   current = instance;
+  previewCommand = command ?? null;
   currentFile = instance ? file ?? null : null;
 }
 export function getActiveEditor(): editor.IStandaloneCodeEditor | null { return current; }
@@ -15,6 +17,7 @@ export function getActiveEditorFile(): string | null { return currentFile?.() ??
 
 export function triggerEditorCommand(command: "undo" | "redo"): void {
   if (!current) return;
+  if (previewCommand) { previewCommand(command === "redo"); return; }
   current.focus();
   current.trigger("menu", command, null);
 }

@@ -4,6 +4,8 @@
 
 **Status:** Proposal, 9 October 2026. No renderer, Docs sidebar or Markdown project is implemented by this document. The user selected the View Source / View Preview interaction with editable Preview and leans toward B, the Docs sidebar. B is the preferred direction for discussion, not a final implementation decision; A and other recommendations remain available for consideration.
 
+**Implementation follow-up, 20 October 2026:** The [initial implementation record](implementation-markdown-docs.md) selects B with browse/edit scope and source-preserving Markdown block edits in Preview. It records the delivered controls, automated/browser evidence and remaining desktop gates. The proposal below retains the broader design alternatives and future acceptance.
+
 **Design owner:** ShinkuKira21. This records the user's idea for reading and working with a repository's documentation inside Craidd.
 
 **Companion:** [The project model](../../../craidd-cln-model.md), especially the distinction between File Discovery and Solution Explorer.
@@ -341,5 +343,5 @@ the idea and tradeoffs so a later feature decision has a concrete starting point
 
 ---
 
-*Last updated: 9 October 2026. Author(s): ShinkuKira21.*
+*Last updated: 20 October 2026. Author(s): ShinkuKira21.*
 *This document is a design.*

@@ -1,7 +1,7 @@
 import { memo, useEffect, useState } from "react";
 import EditorTabs from "./EditorTabs";
 import Breadcrumb from "./Breadcrumb";
-import CodeView from "./CodeView";
+import DocumentView from "./DocumentView";
 import SideEditor from "./SideEditor";
 import SaveConfirmDialog from "../dialogs/SaveConfirmDialog";
 
@@ -23,7 +23,7 @@ function EditorPane() {
         <div className="flex-1 min-w-0 min-h-0 flex flex-col">
           <EditorTabs requestClose={(id) => setPendingClose(id)} />
           <Breadcrumb />
-          <CodeView />
+          <DocumentView />
         </div>
         <SideEditor />
       </div>

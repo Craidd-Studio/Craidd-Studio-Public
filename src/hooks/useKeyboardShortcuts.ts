@@ -9,6 +9,7 @@ import { useSessionFeedback } from "../store/sessionFeedbackStore";
 import { focusAreaOf, isChordPrefix, matchShortcut, type ShortcutId } from "../lib/shortcuts";
 import { openFolderDialog, openSolutionDialog } from "../lib/workspaceActions";
 import { getActiveEditor, getActiveEditorFile } from "../lib/activeEditor";
+import { markdownFormatKey } from "../lib/markdownPreview";
 import { useBreakpoints } from "../store/breakpointStore";
 
 const CHORD_WINDOW_MS = 1500;
@@ -109,6 +110,15 @@ export function useKeyboardShortcuts(
     const onKey = (e: KeyboardEvent) => {
       if (useSessionFeedback.getState().savePrompt) return;
       if (["Control", "Shift", "Alt", "Meta"].includes(e.key)) return;
+      // The Markdown surface handles formatting in Preview, block fields and
+      // Source. Ctrl+K retains the IDE's chord except inside a block field.
+      const target = e.target as HTMLElement | null;
+      const format = markdownFormatKey(e);
+      if (target?.closest?.("[data-markdown-document]") && format
+        && (format !== "link" || target.closest("[data-markdown-edit]"))) {
+        chordAt = 0;
+        return;
+      }
       if (isChordPrefix(e)) { chordAt = Date.now(); return; }
       const afterChord = chordAt > 0 && Date.now() - chordAt < CHORD_WINDOW_MS;
       chordAt = 0;

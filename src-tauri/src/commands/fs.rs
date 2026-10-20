@@ -38,6 +38,42 @@ pub fn read_file(path: String) -> Result<String, String> {
     fs::read_to_string(&path).map_err(|e| format!("read_file({path}) failed: {e}"))
 }
 
+/// Document content may only reference existing files inside the active root.
+/// Canonical paths close both parent traversal and symlink escapes.
+fn document_path(root: &str, path: &str) -> Result<std::path::PathBuf, String> {
+    let root = fs::canonicalize(root).map_err(|e| format!("Invalid workspace root: {e}"))?;
+    let target = fs::canonicalize(path).map_err(|e| format!("Document asset not found: {e}"))?;
+    if !target.starts_with(&root) || !target.is_file() {
+        return Err("Document target must be a file inside the open workspace.".into());
+    }
+    Ok(target)
+}
+
+#[tauri::command(async)]
+pub fn resolve_document_path(root: String, path: String) -> Result<(), String> {
+    document_path(&root, &path).map(|_| ())
+}
+
+fn document_image_bytes(root: &str, path: &str) -> Result<Vec<u8>, String> {
+    use std::io::Read;
+    let target = document_path(root, path)?;
+    let extension = target.extension().and_then(|s| s.to_str()).unwrap_or("").to_ascii_lowercase();
+    if !["png", "jpg", "jpeg", "gif", "webp", "avif", "ico", "bmp"].contains(&extension.as_str()) {
+        return Err("Only local raster images are supported in Markdown Preview.".into());
+    }
+    const LIMIT: u64 = 8 * 1024 * 1024;
+    let file = fs::File::open(&target).map_err(|e| e.to_string())?;
+    let mut bytes = Vec::new();
+    file.take(LIMIT + 1).read_to_end(&mut bytes).map_err(|e| e.to_string())?;
+    if bytes.len() as u64 > LIMIT { return Err("Image exceeds the 8 MiB preview limit.".into()); }
+    Ok(bytes)
+}
+
+#[tauri::command(async)]
+pub fn read_document_image(root: String, path: String) -> Result<tauri::ipc::Response, String> {
+    document_image_bytes(&root, &path).map(tauri::ipc::Response::new)
+}
+
 #[tauri::command(async)]
 pub fn read_dir_tree(path: String) -> Result<FileNode, String> {
     let p = Path::new(&path);
@@ -476,6 +512,35 @@ mod discovery_tests {
     fn has_path(node: &FileNode, path: &str) -> bool {
         node.path == path || node.children.as_ref().is_some_and(|children|
             children.iter().any(|child| has_path(child, path)))
+    }
+
+    #[test]
+    fn document_assets_are_scoped_bounded_and_raster_only() {
+        use std::os::unix::fs::symlink;
+        let root = std::env::temp_dir().join(format!("craidd-docs-{}-{}", std::process::id(),
+            SAVE_NONCE.fetch_add(1, Ordering::Relaxed)));
+        let inside = root.join("workspace");
+        let outside = root.join("workspace-other");
+        fs::create_dir_all(&inside).unwrap();
+        fs::create_dir_all(&outside).unwrap();
+        fs::write(inside.join("image.PNG"), [1, 2, 3]).unwrap();
+        fs::write(inside.join("unsafe.svg"), "<svg/>" ).unwrap();
+        fs::write(outside.join("secret.png"), [4, 5]).unwrap();
+        fs::write(inside.join("guide.md"), "# Guide").unwrap();
+        symlink(outside.join("secret.png"), inside.join("escape.png")).unwrap();
+        let base = inside.to_string_lossy();
+        let image = inside.join("image.PNG").to_string_lossy().into_owned();
+        assert_eq!(document_image_bytes(&base, &image).unwrap(), vec![1, 2, 3]);
+        assert!(document_image_bytes(&base, &inside.join("unsafe.svg").to_string_lossy()).is_err());
+        assert!(document_image_bytes(&base, &inside.join("escape.png").to_string_lossy()).is_err());
+        assert!(document_path(&base, &outside.join("secret.png").to_string_lossy()).is_err());
+        assert!(document_path(&base, &inside.join("missing.md").to_string_lossy()).is_err());
+        assert!(document_path(&base, &base).is_err());
+        assert!(resolve_document_path(base.to_string(), inside.join("guide.md").to_string_lossy().into_owned()).is_ok());
+        let large = inside.join("large.png");
+        fs::File::create(&large).unwrap().set_len(8 * 1024 * 1024 + 1).unwrap();
+        assert!(document_image_bytes(&base, &large.to_string_lossy()).is_err());
+        fs::remove_dir_all(root).unwrap();
     }
 
     #[test]

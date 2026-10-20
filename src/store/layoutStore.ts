@@ -1,8 +1,10 @@
 import { create } from "zustand";
 
 interface LayoutState {
-  activeView: "solution" | "search" | "debug" | "settings";
-  setActiveView: (v: "solution" | "search" | "debug" | "settings") => void;
+  activeView: "solution" | "search" | "docs" | "debug" | "settings";
+  setActiveView: (v: "solution" | "search" | "docs" | "debug" | "settings") => void;
+  discoveryReveal: { path: string; serial: number } | null;
+  revealInDiscovery: (path: string) => void;
   sidebarWidth: number;
   setSidebarWidth: (n: number) => void;
   rightPanelWidth: number;
@@ -18,6 +20,8 @@ interface LayoutState {
 export const useLayout = create<LayoutState>((set) => ({
   activeView: "solution",
   setActiveView: (v) => set({ activeView: v }),
+  discoveryReveal: null,
+  revealInDiscovery: (path) => set((s) => ({ activeView: "solution", discoveryReveal: { path, serial: (s.discoveryReveal?.serial ?? 0) + 1 } })),
   sidebarWidth: 288,
   setSidebarWidth: (n) => set({ sidebarWidth: Math.max(180, Math.min(500, n)) }),
   rightPanelWidth: 288,
