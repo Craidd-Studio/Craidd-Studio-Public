@@ -13,6 +13,7 @@ mod process_supervisor {
 fn main() {
     let args: Vec<_> = std::env::args().collect();
     match args.get(1).map(String::as_str) {
+        Some("serve") => serve(&args[2]),
         Some("discover") => println!("{}", perf_capture::discover()),
         Some("exercise") => exercise(&args[2], &args[3], &args[4], &args[5]),
         Some("parse") => {
@@ -79,6 +80,75 @@ fn main() {
             }
         }
         _ => panic!("Usage: parse SCRIPT | capture PID OUTPUT_DIR HZ SECONDS fp|8192|16384"),
+    }
+}
+
+fn serve(root: &str) {
+    use std::{
+        io::{BufRead, Write},
+        path::PathBuf,
+    };
+    let root = PathBuf::from(root);
+    std::fs::create_dir_all(&root).unwrap();
+    let solution = root.join("fixture.cln");
+    if !solution.exists() {
+        std::fs::write(&solution, "[solution]\nname='backend-probe'\n").unwrap();
+    }
+    let manager = perf_capture::PerfManager::new(root.join("cache"));
+    for line in std::io::stdin().lock().lines() {
+        let request: serde_json::Value = serde_json::from_str(&line.unwrap()).unwrap();
+        if request["action"] == "quit" {
+            break;
+        }
+        let result = (|| -> Result<serde_json::Value, String> {
+            let id = request["id"].as_str().unwrap_or_default();
+            match request["action"].as_str().unwrap_or_default() {
+                "start" => {
+                    let target = perf_capture::identity(
+                        request["pid"].as_i64().ok_or("Missing PID")? as i32,
+                    )?;
+                    let options = serde_json::from_value(request["options"].clone())
+                        .map_err(|e| e.to_string())?;
+                    manager
+                        .start("probe", &solution, "probe-profile", target, options)
+                        .map(|id| serde_json::json!({"id":id}))
+                }
+                "status" => serde_json::to_value(manager.status("probe", &solution, id)?)
+                    .map_err(|e| e.to_string()),
+                "stop" => manager
+                    .stop("probe", &solution, id)
+                    .map(|_| serde_json::Value::Null),
+                "reopen" => manager
+                    .reopen("probe", &solution, id)
+                    .map(|_| serde_json::Value::Null),
+                "tree" => {
+                    let query = serde_json::from_value(request["query"].clone())
+                        .map_err(|e| e.to_string())?;
+                    manager.tree("probe", &solution, id, &query)
+                }
+                "source" => serde_json::to_value(manager.source(
+                    "probe",
+                    &solution,
+                    id,
+                    request["frameId"].as_u64().ok_or("Missing frameId")? as u32,
+                )?)
+                .map_err(|e| e.to_string()),
+                "refuseDebugger" => {
+                    let target = perf_capture::identity(
+                        request["pid"].as_i64().ok_or("Missing PID")? as i32,
+                    )?;
+                    manager
+                        .refuse_debugger(&target)
+                        .map(|_| serde_json::Value::Null)
+                }
+                _ => Err("Unknown probe action".into()),
+            }
+        })();
+        match result {
+            Ok(value) => println!("{}", serde_json::json!({"ok":true,"value":value})),
+            Err(error) => println!("{}", serde_json::json!({"ok":false,"error":error})),
+        }
+        std::io::stdout().flush().unwrap();
     }
 }
 

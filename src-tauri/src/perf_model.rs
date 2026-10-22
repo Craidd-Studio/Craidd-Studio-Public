@@ -79,6 +79,16 @@ pub struct SourceLocation {
     pub line: u32,
 }
 
+#[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq, Hash)]
+#[serde(rename_all = "camelCase")]
+pub enum SymbolOrigin {
+    #[default]
+    PerfReported,
+    ElfBuildId,
+    PerfMap,
+    Unresolved,
+}
+
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq, Hash)]
 #[serde(rename_all = "camelCase")]
 pub struct Frame {
@@ -86,6 +96,8 @@ pub struct Frame {
     pub symbol: String,
     pub module: String,
     pub resolved: bool,
+    #[serde(default)]
+    pub symbol_origin: SymbolOrigin,
     pub source: Option<SourceLocation>,
 }
 #[derive(Clone, Debug)]
@@ -270,7 +282,6 @@ pub fn parse_script(reader: impl BufRead) -> Result<SampleSet, String> {
         r"^\s*(.*?)\s+(\d+)(?:/|\s+)(\d+)\s+(\d+\.\d+):\s+(\d+)\s+([^\s]+):(?:\s+(.*))?$",
     )
     .unwrap();
-    let frame = Regex::new(r"^\s*([0-9a-fA-F]+)\s+(.*?)\s+\((.*)\)\s*$").unwrap();
     let mut result = SampleSet::default();
     let mut intern = HashMap::<(String, String, String), u32>::new();
     let mut frame_text_bytes = 0_usize;
@@ -369,7 +380,7 @@ pub fn parse_script(reader: impl BufRead) -> Result<SampleSet, String> {
                     frames: Vec::new(),
                 });
                 if let Some(tail) = c.get(7).filter(|v| !v.as_str().trim().is_empty()) {
-                    if let Some(f) = frame.captures(tail.as_str()) {
+                    if let Some(f) = frame_parts(tail.as_str()) {
                         if !push_frame(
                             &mut result,
                             &mut intern,
@@ -387,7 +398,7 @@ pub fn parse_script(reader: impl BufRead) -> Result<SampleSet, String> {
             } else {
                 result.coverage.diagnostic(line);
             }
-        } else if let Some(f) = frame.captures(line) {
+        } else if let Some(f) = frame_parts(line) {
             if current.is_none() {
                 result.coverage.diagnostic(line);
                 continue;
@@ -447,31 +458,64 @@ pub fn parse_script(reader: impl BufRead) -> Result<SampleSet, String> {
     finish(&mut result, &mut current, &mut refs, rejected);
     Ok(result)
 }
+// The final balanced parenthesized group is the module. Method arguments and
+// `(deleted)` paths can contain parentheses too; the first '(' is not a boundary.
+fn frame_parts(line: &str) -> Option<(&str, &str, &str)> {
+    let line = line.trim();
+    let split = line.find(char::is_whitespace)?;
+    let address = &line[..split];
+    if address.is_empty() || address.len() > 32 || !address.bytes().all(|b| b.is_ascii_hexdigit()) {
+        return None;
+    }
+    let body = line[split..].trim();
+    if !body.ends_with(')') {
+        return None;
+    }
+    let mut depth = 0_u32;
+    for (index, ch) in body.char_indices().rev() {
+        if ch == ')' {
+            depth += 1;
+        } else if ch == '(' {
+            depth = depth.checked_sub(1)?;
+            if depth == 0 {
+                let symbol = body[..index].trim_end();
+                if symbol.is_empty() || !body[..index].ends_with(char::is_whitespace) {
+                    return None;
+                }
+                return Some((address, symbol, &body[index + 1..body.len() - 1]));
+            }
+        }
+    }
+    None
+}
+
 fn push_frame(
     set: &mut SampleSet,
     intern: &mut HashMap<(String, String, String), u32>,
     sample: &mut Option<Sample>,
-    f: &regex::Captures<'_>,
+    f: &(&str, &str, &str),
     text_bytes: &mut usize,
 ) -> bool {
-    let symbol = f[2].trim();
+    let (address, symbol, module) = *f;
+    let symbol = symbol.trim();
     let raw = symbol
         .rsplit_once("+0x")
         .filter(|(_, offset)| !offset.is_empty() && offset.bytes().all(|b| b.is_ascii_hexdigit()))
         .map_or(symbol, |(name, _)| name);
-    if f[1].len() > 32 || f[2].len() > 4096 || f[3].len() > 4096 {
+    if address.len() > 32 || symbol.len() > 4096 || module.len() > 4096 {
         return false;
     }
     let resolved = raw != "[unknown]" && raw != "??" && !raw.starts_with("0x");
     let value = Frame {
-        address: f[1].into(),
+        address: address.into(),
         symbol: if resolved {
             raw.into()
         } else {
-            format!("{}+address 0x{}", &f[3], &f[1])
+            format!("{}+address 0x{}", module, address)
         },
-        module: f[3].into(),
+        module: module.into(),
         resolved,
+        symbol_origin: SymbolOrigin::PerfReported,
         source: None,
     };
     let key = (
@@ -854,5 +898,18 @@ mod tests {
         assert_eq!(coverage.lost_count, 1126);
         assert_eq!(coverage.lost_sample_records, 2);
         assert_eq!(coverage.lost_sample_count, 1126);
+    }
+    #[test]
+    fn method_arguments_and_deleted_module_names_are_not_boundaries() {
+        let script="jit-hot-0 10/11 1.000000001: 100 cpu-clock:u:\n aa ManagedPerfFixture:KnownJitHot (long) (/tmp/perf-10.map)\n bb native::operator() (/memfd:doublemapper (deleted))\n\n";
+        let set = parse_script(script.as_bytes()).unwrap();
+        assert_eq!(set.samples.len(), 1);
+        assert_eq!(
+            set.frames[0].symbol,
+            "ManagedPerfFixture:KnownJitHot (long)"
+        );
+        assert_eq!(set.frames[0].module, "/tmp/perf-10.map");
+        assert_eq!(set.frames[1].module, "/memfd:doublemapper (deleted)");
+        assert_eq!(set.frames[1].symbol, "native::operator()");
     }
 }

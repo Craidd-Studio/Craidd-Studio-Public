@@ -38,9 +38,9 @@ that short-lived threads between polls can be missed. New threads are not added
 silently. A changed target incarnation invalidates attribution rather than
 moving the result to the new process.
 
-## Proposed raw-output limit
+## Accepted raw-output limit
 
-**Proposed: 512 MiB per capture**, with a 32 MiB finalization reserve, early size monitoring and an OS file-size
+**Accepted: 512 MiB per capture**, with a 32 MiB finalization reserve, early size monitoring and an OS file-size
 limit on the collector. Reaching the cap marks the capture PARTIAL even when the
 remaining data decodes. The cap includes final perf metadata; a capped file can
 be incomplete and must retain that diagnostic. It never silently discards loss.
@@ -48,7 +48,7 @@ be incomplete and must retain that diagnostic. It never silently discards loss.
 The earlier 8 KiB DWARF fixture wrote 2,730,260 bytes for 319 samples, about
 8,559 bytes/sample. At 32 busy threads, 99 Hz and 10 seconds, that extrapolates to
 about 259 MiB. A 16 KiB stack increases the estimate by 8,192 bytes/sample;
-32 busy threads at 999 Hz can reach the proposed cap in about one second.
+32 busy threads at 999 Hz can reach the cap in about one second.
 These are output-cost estimates, not overhead measurements or guarantees.
 Record actual bytes and sample counts for both stack sizes before UI acceptance.
 
@@ -65,10 +65,12 @@ with machine, perf version, source build and fixture recorded. A backend harness
 does not pass desktop behaviour. No UI implementation starts before review of
 the user's ChatGPT design. Keep commits local until human acceptance.
 
-Flight recording stays **proposed**, outside the product slice. Measure per-TID
-ring retention with 16 and 32 busy threads at 99 and 999 Hz before a decision.
-JIT maps, symbol-scale qualification and flame graphs follow this slice. M2 live
-CSV follow and M3 clock mapping/comparison wait behind GR-002.
+Flight recording is **excluded from this release**, following the measured
+16/32-thread matrix and FP/DWARF coverage/storage trade-offs.
+[Accepted follow-up decisions](perf-backend-follow-up-decisions.md) require matched
+overhead, perf-map name qualification and remaining backend gates next. Large
+symbol scale waits for those gates; flame graphs remain deferred. M2 live CSV
+follow and M3 mapping/comparison still wait behind GR-002.
 
 ---
 

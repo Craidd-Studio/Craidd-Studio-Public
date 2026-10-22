@@ -51,3 +51,7 @@ CLAUDE.md
 !workspaces/profiling-perf-qualification/
 !workspaces/profiling-perf-backend/
 workspaces/profiling-perf-backend/target/
+!workspaces/profiling-perf-managed/
+workspaces/profiling-perf-managed/bin/
+workspaces/profiling-perf-managed/obj/
+workspaces/profiling-perf-managed/__pycache__/

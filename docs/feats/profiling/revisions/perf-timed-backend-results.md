@@ -1,11 +1,11 @@
 # GR-002 timed backend: results and remaining gates
 
 **Roadmap track:** Phase 3.5 profiling.
-**Status:** Backend checkpoint, 22 October 2026. UI implementation is on hold for the user's ChatGPT design. This is not the delivered in-IDE slice or public-release acceptance.
+**Status:** Historical backend checkpoint at `82cbf47`, 22 October 2026. UI implementation is on hold for the user's ChatGPT design. This is not the delivered in-IDE slice or public-release acceptance.
 **Source:** `codex/profiling-perf-timed`, stacked on M1 `5039abf`; local only.
 
 The [decisions addendum](perf-timed-implementation-decisions.md) records the
-accepted scope and proposed cap. The native [evidence JSON](../../../../workspaces/profiling-perf-backend/evidence-2026-10-22.json)
+accepted scope and now-accepted cap. The [follow-up record](perf-backend-follow-up-results.md) supersedes the older NOT TESTED entries for matched overhead, debugger refusal and file substitution below. Those entries describe this checkpoint, not the latest evidence. The native [evidence JSON](../../../../workspaces/profiling-perf-backend/evidence-2026-10-22.json)
 records the machine, binary hashes, exact configurations, result trees,
 provenance, recovery cases and separate gates. Reproduction is in the
 [backend fixture README](../../../../workspaces/profiling-perf-backend/README.md).
@@ -71,7 +71,7 @@ subtracted estimate. Module/build-ID checking is not called total symbol
 resolution time. The [separate no-FP qualification](gr-002-many-thread-retention.md)
 demonstrates the missing FP ancestors and the full DWARF chain.
 
-**Proposed 512 MiB cap:** 32 busy workers, 999 Hz, 16,384-byte DWARF stopped at
+**512 MiB cap (subsequently accepted):** 32 busy workers, 999 Hz, 16,384-byte DWARF stopped at
 **507,665,148 bytes (about 484 MiB)**, retained 30,549 samples and was PARTIAL
 with an explicit cap reason. The target remained alive. No LOST records were
 present and the loss scan completed. Module checks took 580 ms; decode/parser
@@ -126,8 +126,9 @@ profiling/native-debug frontend test files also pass.
 | Desktop tree interaction, source opening and human usability | NOT TESTED | Waiting for UI design and implementation |
 
 The 16/32-busy-thread [retention matrix](gr-002-many-thread-retention.md) is
-separate evidence. Flight recording remains proposed; JIT maps, large-symbol
-qualification and flame graphs remain deferred. M2/M3 still wait behind this
+separate evidence. Flight recording was subsequently excluded from this release; the follow-up
+record qualifies Mono maps, records the .NET failure and keeps large-symbol
+qualification and flame graphs deferred. M2/M3 still wait behind this
 slice. M1's existing human-usability failure remains open; this backend work
 does not change that gate.
 

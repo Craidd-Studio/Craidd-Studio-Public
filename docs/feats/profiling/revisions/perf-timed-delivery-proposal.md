@@ -61,8 +61,8 @@ until an explicit, recorded mapping exists.
 **Accepted since this proposal:** `cpu-clock:u`, 99 Hz default / 999 Hz
 selectable, 10-second default / 120-second maximum, explicit FP and DWARF
 8,192/16,384, existing-thread coverage with gained-thread observations, per-solution
-cache retention/pinning and refusal of the unqualified LLDB pair. The proposed
-512 MiB raw cap awaits the user's review of its measured evidence. Separate
+cache retention/pinning, refusal of the unqualified LLDB pair and the
+512 MiB raw cap with 32 MiB finalisation reserve. Separate
 clock axes remain mandatory. See the addendum for the full decisions.
 
 ## Acceptance before this slice is called delivered
@@ -81,10 +81,11 @@ clock axes remain mandatory. See the addendum for the full decisions.
 - Refuse unqualified concurrent debugger/collector combinations rather than
   assuming that an LLDB attachment composes with perf.
 
-Flight recording, JIT maps, symbol scale, flame graphs, off-CPU, GPU and memory
-tracing stay outside this first slice. The measured ring-retention table
-supports a separate flight-recorder decision; it approves no “last N seconds”
-guarantee and cannot make sampling reliably capture every short spike.
+Flight recording is excluded from this release. The measured ring-retention
+table remains evidence, not a “last N seconds” guarantee. Full JIT delivery,
+symbol scale, flame graphs, off-CPU, GPU and memory tracing stay outside this
+first slice. The [backend follow-up](perf-backend-follow-up-results.md) records
+the bounded perf-map probe and its separate runtime outcomes.
 
 ---
 

@@ -40,23 +40,46 @@ show newly observed threads and observation limits. Separate clocks until M3.
 Keep ten unpinned captures per solution plus pins. Never signal the target,
 change policy, offer privileged perf, or assume LLDB coexistence.
 
-The **512 MiB raw cap remains proposed** with measured cap evidence. Flight
-recording remains a separate user decision; the new 16/32-busy-thread matrix
-includes lower bounds and uncertain wrap, not a last-N-seconds guarantee. FP
-ancestry across the no-FP library fails as expected; DWARF recovers the declared
-chain. JIT maps, 200k-symbol scale and flame graphs are deferred. M2 then M3
-remain approved but wait behind the timed in-IDE slice.
+The user accepted the **512 MiB raw cap and 32 MiB finalisation reserve**,
+parsed-data bounds, retention and 100 ms gained-thread polling. State that polling
+can miss short-lived threads and FP can miss callers above no-FP modules.
+**Flight recording is excluded from this release**: DWARF history costs far more
+than the FP matrix, while FP loses callers. The matrix remains evidence.
 
-Still required: UI design review and implementation, live Profile only IPC flow,
-actual window-close/IDE-exit desktop tests, real LLDB refusal, substituted-module
-mismatch, live PID-reuse qualification, a second perf version, overhead/memory
-qualification and human usability. Core close/shutdown tests are not desktop
+Read the [follow-up results](../feats/profiling/revisions/perf-backend-follow-up-results.md)
+and [matched overhead report](../feats/profiling/revisions/perf-matched-overhead-results.md).
+Five alternating repetitions per mode with 16/32 workers completed. Descriptive
+median slowdown ranges from −0.063% to 0.473%, with spread and machine conditions
+recorded; it is not a correction for production timings. Mono map names resolve
+100% of fixture leaf weight versus 0% without a map. .NET remains at 0% even
+with a stable map containing sampled IPs: that gate FAILS. Craidd preserves
+perf-reported map origin; no alternate JIT mechanism was added. An observed
+Mono parser/ELF-guard problem was fixed and qualified.
+
+Actual LLDB-first refusal and the shared perf-first debugger guard pass with a
+real adapter. Private module/debug substitutions pass after fixing missing
+separate-debug candidate identity reporting. A debug mismatch conservatively
+withholds module names/source and marks PARTIAL. Live PID reuse stays BLOCKED
+within ordinary-user/no-policy-change constraints; stale-ID tests are distinct.
+Large-symbol scale remains deferred because prerequisites do not all pass.
+Flame graphs and full JIT delivery are deferred. M2 then M3 remain approved but
+wait behind the timed in-IDE slice.
+
+The supplied image is retained in the [metric-inspection editor design](../feats/profiling/design-metric-inspection-editor.md).
+It is a credible chart-first candidate inside the existing Profiling editor tab,
+not an approved replacement shell or implementation. Statistical labels, axes,
+linked selection, responsive layout and accessibility still need review.
+
+Still required: UI design approval and implementation, live Profile only IPC
+flow, actual window-close/IDE-exit desktop tests, live PID-reuse qualification,
+a second perf version, full decoder memory qualification and human usability. Core close/shutdown tests are not desktop
 acceptance. Do not fix M1's separate whole-IDE memory baseline in this slice.
 
 ## Next task and opening prompt
 
-Review the user's ChatGPT profiler design before changing any UI. Then implement
-the approved timed-capture surface using the existing backend, preserving CSV's
+Review the documented candidate with the user before changing any UI. Do not
+start large-symbol work while prerequisite gates remain failed/blocked. Once
+UI implementation is explicitly released from hold, implement the approved timed-capture surface using the existing backend, preserving CSV's
 editor-only host and standard process/Gold's sidebar/editor support. Run and
 report the remaining gates individually. Keep all commits local until the user
 reports human acceptance.
@@ -66,7 +89,9 @@ reports human acceptance.
 > this handoff's linked decisions/results. Preserve dirty M1 usability records.
 > The backend is a qualified checkpoint, not a delivered UI. Review my ChatGPT
 > UI design before implementation; retain honest clocks, coverage and loss.
-> Do not push or merge. Flight recording, JIT, symbol scale and M2/M3 wait.
+> Read the follow-up report: .NET naming FAILS and live PID reuse is BLOCKED.
+> UI stays on hold; do not push or merge. Flight recording is excluded from this
+> release. Large symbols, full JIT delivery, flame graphs and M2/M3 wait.
 
 ---
 

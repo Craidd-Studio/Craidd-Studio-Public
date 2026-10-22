@@ -48,13 +48,11 @@ pub fn refuses_debugger(
     app: &tauri::AppHandle,
     target: &super::processes::ProcessIdentity,
 ) -> Result<(), String> {
-    if app.try_state::<PerfManager>().is_some_and(|m| {
-        m.active_target(&Target {
+    if let Some(manager) = app.try_state::<PerfManager>() {
+        manager.refuse_debugger(&Target {
             pid: target.pid,
             birth: target.birth,
-        })
-    }) {
-        return Err("Stop the active perf capture before attaching LLDB; this collector/debugger pair has not been qualified".into());
+        })?;
     }
     Ok(())
 }

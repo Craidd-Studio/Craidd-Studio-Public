@@ -18,7 +18,7 @@ The output directory must not exist. The runner exercises FP and both DWARF
 stack sizes, source locations, foreign-owner refusal, pinning, Stop, owner close
 and replacement-owner reopening, collector failure, manager shutdown, positive
 loss, target exit, stale identities, newly observed threads and an independent
-manager's reopen. The final 32-worker/999-Hz/16-KiB capture tests the proposed
+manager's reopen. The final 32-worker/999-Hz/16-KiB capture tests the accepted
 512 MiB raw cap. Fixtures exit through stdin. Fault injection addresses only
 the collector through a verified pidfd. The capture/cache artifacts and full
 manifests remain under the fresh output directory.
@@ -39,6 +39,25 @@ No fixture claims compatibility with a second perf version.
 
 See the [backend results](../../docs/feats/profiling/revisions/perf-timed-backend-results.md)
 and [accepted decisions](../../docs/feats/profiling/revisions/perf-timed-implementation-decisions.md).
+
+## Follow-up native gates
+
+`qualify_remaining.py` uses the production manager's line-JSON `serve` harness
+and the repository's existing DAP driver. It launches a real lldb-dap session,
+tests both refusal orders, and substitutes only private module/debug copies.
+It never sends target Stop signals or changes ptrace/perf policy. Existing Yama
+policy is satisfied by letting LLDB launch its own child, then detaching it.
+The reverse path exercises the exact shared guard before any attach request;
+actual Tauri IPC remains a separate desktop gate.
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 python3 workspaces/profiling-perf-backend/qualify_remaining.py --harness workspaces/profiling-perf-backend/target/release/craidd-perf-backend-fixture --build /tmp/new-perf-build --output /tmp/new-perf-remaining
+```
+
+The live PID-reuse race stays BLOCKED: no forced PID wrap, privileged namespace,
+next-PID writes or policy changes are attempted. The runner does not relabel a
+stale-ID check as live reuse. See `evidence-follow-up-2026-10-22.json` and the
+[follow-up report](../../docs/feats/profiling/revisions/perf-backend-follow-up-results.md).
 
 ---
 

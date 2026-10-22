@@ -1,11 +1,15 @@
 # Generic profiling revisions
 
 **Roadmap track:** Phase 3.5 profiling.
-**Status:** Staged revisions, 20 October 2026. GR-001 M1 is source-implemented
+**Status:** Staged revisions, 22 October 2026. GR-001 M1 is source-implemented
 with [automated acceptance](gr-001-m1-results.md) passing and human acceptance
 still open. M2 then M3 remain approved but wait behind GR-002 timed capture.
 GR-002 has [installed native timed evidence](perf-qualification-results.md);
-its [timed slice](perf-timed-delivery-proposal.md) is approved, with [backend work](perf-timed-backend-results.md) separate from the pending UI design. [Many-thread retention](gr-002-many-thread-retention.md) supports a separate flight-recorder decision.
+its [timed slice](perf-timed-delivery-proposal.md) is approved, with [backend work](perf-timed-backend-results.md) separate from the pending UI design. [Many-thread retention](gr-002-many-thread-retention.md) supports the decision to exclude flight recording from this release. The [backend follow-up decisions](perf-backend-follow-up-decisions.md) record the accepted cap and next gates.
+
+The [backend follow-up results](perf-backend-follow-up-results.md) report matched overhead, Mono/.NET naming, real debugger refusal, substituted files and the blocked live-reuse gate.
+
+The [candidate metric-inspection editor design](../design-metric-inspection-editor.md) preserves the user-supplied reference image, editor host, honest metric semantics and public-release acceptance gates; it is not UI implementation approval.
 **Craidd baseline reviewed:** `feat/unity/debug-a-to-p` at `8bac01e`.
 
 The [accepted implementation decisions](implementation-decisions.md) resolve
@@ -26,7 +30,7 @@ runtime acceptance.
 | Revision | Proposal | Decisions still open |
 | --- | --- | --- |
 | [GR-001](gr-001-metric-csv-import.md) | Finished-file M1, followed by live generations (M2) and mapping/comparison (M3) after separate reviews | Automated M1 gates pass; human acceptance open; baseline-memory issue separate; project defaults and sidecars deferred |
-| [GR-002](gr-002-external-pid-sampling-perf.md) | Native timed qualification first; later large native/JIT workloads | Timed backend implemented/qualified on the installed version; UI and desktop acceptance pending; raw cap and flight recording remain proposed; JIT and symbol scale deferred |
+| [GR-002](gr-002-external-pid-sampling-perf.md) | Native timed qualification first; later large native/JIT workloads | Timed backend implemented/qualified on the installed version; UI and desktop acceptance pending; cap accepted; flight recording excluded from this release; Mono map names pass / .NET map names fail; live reuse blocked; symbol scale gated |
 
 Each revision includes its requirements, implementation seams, fixtures and
 automated, desktop and failure/recovery acceptance. Resolve remaining open

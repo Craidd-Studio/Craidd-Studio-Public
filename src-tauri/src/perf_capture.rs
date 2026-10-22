@@ -4,10 +4,10 @@ use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use std::{
     collections::{BTreeSet, HashMap},
-    fs::{self, File},
+    fs::{self, File, OpenOptions},
     io::{self, BufReader, Read},
     os::unix::{
-        fs::{MetadataExt, PermissionsExt},
+        fs::{MetadataExt, OpenOptionsExt, PermissionsExt},
         process::{CommandExt, ExitStatusExt},
     },
     path::{Path, PathBuf},
@@ -271,6 +271,7 @@ pub struct Manifest {
     pub parser_cpu_ms: u64,
     pub loss_scan_ms: u64,
     pub build_ids: Vec<SymbolIdentity>,
+    pub jit_map: Option<PerfMapIdentity>,
     pub stderr: String,
     pub omitted_stderr_bytes: u64,
 }
@@ -281,6 +282,137 @@ pub struct SymbolIdentity {
     pub captured_build_id: String,
     pub current_build_id: Option<String>,
     pub state: String,
+    #[serde(default)]
+    pub debug_files: Vec<DebugIdentity>,
+}
+#[derive(Clone, Debug, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct DebugIdentity {
+    pub path: String,
+    pub build_id: Option<String>,
+    pub state: String,
+}
+#[derive(Clone, Debug, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct PerfMapIdentity {
+    pub path: String,
+    pub bytes: u64,
+    pub sha256: Option<String>,
+    pub state: String,
+    pub basis: String,
+}
+// Inspect a bounded set of conventional local debug candidates; perf remains the decoder.
+// A candidate mismatch is conservative: withhold this module's names and source mappings.
+fn elf_build_id(tool: &Path, path: &Path) -> Option<String> {
+    let mut c = command(tool);
+    c.args(["-n", "--"]).arg(path);
+    output(c, Duration::from_secs(2))
+        .ok()?
+        .lines()
+        .find_map(|line| {
+            line.trim()
+                .strip_prefix("Build ID:")
+                .map(|v| v.trim().to_string())
+        })
+}
+fn debug_identities(tool: &Path, module: &Path, expected: &str) -> Vec<DebugIdentity> {
+    let mut candidates = BTreeSet::new();
+    let mut c = command(tool);
+    c.args(["--string-dump=.gnu_debuglink", "--"]).arg(module);
+    if let Ok(text) = output(c, Duration::from_secs(2)) {
+        let name = text.lines().find_map(|line| {
+            let (offset, name) = line.trim().split_once(']')?;
+            (offset.trim_start_matches('[').trim() == "0").then(|| name.trim())
+        });
+        if let (Some(name), Some(parent)) = (name, module.parent()) {
+            if !name.is_empty() && name != "." && name != ".." && !name.contains('/') {
+                candidates.insert(parent.join(name));
+                candidates.insert(parent.join(".debug").join(name));
+                if let Ok(relative) = parent.strip_prefix("/") {
+                    candidates.insert(Path::new("/usr/lib/debug").join(relative).join(name));
+                }
+            }
+        }
+    }
+    if expected.len() > 2 && expected.bytes().all(|b| b.is_ascii_hexdigit()) {
+        candidates.insert(
+            Path::new("/usr/lib/debug/.build-id")
+                .join(&expected[..2])
+                .join(format!("{}.debug", &expected[2..])),
+        );
+    }
+    candidates
+        .into_iter()
+        .filter(|path| path.is_file())
+        .map(|path| {
+            let id = elf_build_id(tool, &path);
+            let state = match id.as_deref() {
+                Some(id) if id == expected => "matchedCandidate",
+                Some(_) => "mismatch",
+                None => "unverified",
+            };
+            DebugIdentity {
+                path: path.to_string_lossy().into(),
+                build_id: id,
+                state: state.into(),
+            }
+        })
+        .collect()
+}
+fn inspect_perf_map(pid: i32) -> PerfMapIdentity {
+    let path = format!("/tmp/perf-{pid}.map");
+    let mut result = PerfMapIdentity {
+        path: path.clone(),
+        bytes: 0,
+        sha256: None,
+        state: "missing".into(),
+        basis:
+            "Names reported by perf from the PID map; no ELF build-ID or source-line verification"
+                .into(),
+    };
+    let read = (|| -> Result<(u64, String), String> {
+        let mut file = OpenOptions::new()
+            .read(true)
+            .custom_flags(libc::O_NOFOLLOW | libc::O_NONBLOCK)
+            .open(&path)
+            .map_err(|e| {
+                if e.kind() == io::ErrorKind::NotFound {
+                    "missing".into()
+                } else {
+                    e.to_string()
+                }
+            })?;
+        let before = file.metadata().map_err(|e| e.to_string())?;
+        if !before.is_file()
+            || before.uid() != unsafe { libc::geteuid() }
+            || before.len() > 16 * 1024 * 1024
+        {
+            return Err("Map is not a current-user regular file within the 16 MiB limit".into());
+        }
+        let mut data = Vec::new();
+        file.by_ref()
+            .take(16 * 1024 * 1024 + 1)
+            .read_to_end(&mut data)
+            .map_err(|e| e.to_string())?;
+        let after = file.metadata().map_err(|e| e.to_string())?;
+        if data.len() > 16 * 1024 * 1024
+            || before.len() != after.len()
+            || before.mtime() != after.mtime()
+            || before.mtime_nsec() != after.mtime_nsec()
+        {
+            return Err("Map changed while being read".into());
+        }
+        Ok((data.len() as u64, format!("{:x}", Sha256::digest(&data))))
+    })();
+    match read {
+        Ok((bytes, hash)) => {
+            result.bytes = bytes;
+            result.sha256 = Some(hash);
+            result.state = "observed".into();
+        }
+        Err(reason) => result.state = reason,
+    }
+    result
 }
 struct Job {
     manifest: Mutex<Manifest>,
@@ -367,6 +499,14 @@ impl PerfManager {
             m.target == *target && matches!(m.state.as_str(), "recording" | "starting" | "stopping")
         })
     }
+    /// Shared by the real debugger attach route and native qualification harness.
+    pub fn refuse_debugger(&self, target: &Target) -> Result<(), String> {
+        if self.active_target(target) {
+            Err("Stop the active perf capture before attaching LLDB; this collector/debugger pair has not been qualified".into())
+        } else {
+            Ok(())
+        }
+    }
     fn directory(&self, solution: &Path) -> Result<(String, PathBuf), String> {
         let solution = solution
             .canonicalize()
@@ -406,7 +546,9 @@ impl PerfManager {
             serde_json::json!({"target":target,"threadsAtStart":t,"event":"cpu-clock:u","options":options,
             "expectedSampleIntervalMs":1000.0/options.frequency as f64,"sampleIntervalBasis":"requested CPU-clock interval per on-CPU thread; wall interval can be longer","estimatedRawBytes":options.estimated_bytes(t.len()),
             "estimateBasis":"FP and 8192-byte DWARF fixture bytes/sample; 16384 extrapolated; actual output varies",
-            "rawLimitBytes":RAW_CAP,"rawLimitStatus":"proposed default","threadCoverage":"threads existing at capture start; later threads excluded",
+            "rawLimitBytes":RAW_CAP,"rawLimitStatus":"accepted","threadCoverage":"threads existing at capture start; later threads excluded",
+            "threadObservationWarning":"100 ms polling can miss short-lived threads",
+            "unwindCoverageWarning":match options.unwind {model::Unwind::Fp=>"An FP tree can be missing callers above modules built without frame pointers",model::Unwind::Dwarf{..}=>"DWARF coverage depends on unwind information and the selected captured stack size"},
             "clockDomain":"CLOCK_MONOTONIC; separate axis, no session mapping","discovery":discover()}),
         )
     }
@@ -485,6 +627,7 @@ impl PerfManager {
             parser_cpu_ms: 0,
             loss_scan_ms: 0,
             build_ids: vec![],
+            jit_map: None,
             stderr: String::new(),
             omitted_stderr_bytes: 0,
         };
@@ -627,6 +770,21 @@ impl PerfManager {
             .find_map(|l| l.trim().strip_prefix("Build ID:").map(str::trim));
         if actual != Some(build.captured_build_id.as_str()) {
             return Err("Module changed since parsing; source navigation refused".into());
+        }
+        let current_debug =
+            debug_identities(&tool, Path::new(&build.module), &build.captured_build_id);
+        if current_debug.iter().any(|d| d.state != "matchedCandidate")
+            || build.debug_files.iter().any(|old| {
+                !current_debug.iter().any(|d| {
+                    d.path == old.path
+                        && d.build_id == old.build_id
+                        && d.state == "matchedCandidate"
+                })
+            })
+        {
+            return Err(
+                "Separate debug file changed or mismatched; source navigation refused".into(),
+            );
         }
         Ok(model::SourceLocation {
             path: path.to_string_lossy().into(),
@@ -882,7 +1040,7 @@ fn record(job: &Job, perf: &Path) -> Result<(), String> {
             let bytes = fs::metadata(job.dir.join("perf.data")).map_or(0, |m| m.len());
             let mut reasons = Vec::new();
             if bytes >= RAW_CAP.saturating_sub(32 * 1024 * 1024) {
-                reasons.push("Raw output cap reached; collector stopped (proposed 512 MiB cap)");
+                reasons.push("Raw output cap reached; collector stopped (512 MiB cap)");
             }
             if job.stop.load(Ordering::Acquire) {
                 reasons.push(if job.closed.load(Ordering::Acquire) {
@@ -983,6 +1141,7 @@ fn decode(job: &Job, perf: &Path) -> Result<(), String> {
     if !job.manifest.lock().unwrap().attribution_valid {
         return Err("Capture attribution is invalid; raw data is quarantined".into());
     }
+    let initial_decode = job.manifest.lock().unwrap().raw_sha256.is_none();
     let raw = job.dir.join("perf.data");
     let meta = fs::symlink_metadata(&raw).map_err(|e| e.to_string())?;
     if !meta.is_file() || meta.len() > RAW_CAP {
@@ -1022,18 +1181,11 @@ fn decode(job: &Job, perf: &Path) -> Result<(), String> {
         }
         let actual = readelf
             .as_ref()
-            .and_then(|r| {
-                let mut c = command(r);
-                c.args(["-n", "--"]).arg(module);
-                output(c, Duration::from_secs(2)).ok()
-            })
-            .and_then(|s| {
-                s.lines().find_map(|l| {
-                    l.trim()
-                        .strip_prefix("Build ID:")
-                        .map(|s| s.trim().to_string())
-                })
-            });
+            .and_then(|r| elf_build_id(r, Path::new(module)));
+        let debug_files = readelf
+            .as_ref()
+            .map(|r| debug_identities(r, Path::new(module), id))
+            .unwrap_or_default();
         let state = match &actual {
             Some(v) if v == id => "matched",
             Some(_) => "mismatch",
@@ -1044,6 +1196,7 @@ fn decode(job: &Job, perf: &Path) -> Result<(), String> {
             captured_build_id: id.into(),
             current_build_id: actual,
             state: state.into(),
+            debug_files,
         });
         if symbol_started.elapsed() > Duration::from_secs(15) {
             break;
@@ -1054,6 +1207,26 @@ fn decode(job: &Job, perf: &Path) -> Result<(), String> {
         m.module_identity_ms = symbol_started.elapsed().as_millis() as u64;
         m.build_ids = builds.clone();
     }
+    let map_before = inspect_perf_map(job.manifest.lock().unwrap().target.pid);
+    let map_basis = if initial_decode {
+        let mut observed = map_before.clone();
+        if verify(&job.manifest.lock().unwrap().target).is_err() {
+            observed.sha256 = None;
+            observed.state = "Target incarnation unavailable while observing map".into();
+        }
+        observed
+    } else {
+        job.manifest
+            .lock()
+            .unwrap()
+            .jit_map
+            .clone()
+            .unwrap_or(PerfMapIdentity {
+                sha256: None,
+                state: "No map provenance recorded in this capture".into(),
+                ..map_before.clone()
+            })
+    };
     let parse_started = Instant::now();
     let mut c = command(perf);
     c.args([
@@ -1119,18 +1292,55 @@ fn decode(job: &Job, perf: &Path) -> Result<(), String> {
             "Decoded samples did not match the declared PID/TID scope; trees quarantined".into(),
         );
     }
-    // Symbol names are trusted only when their captured module identity still matches.
+    let map_after = inspect_perf_map(expected.target.pid);
+    let map_matches = map_basis.sha256.is_some()
+        && map_basis.sha256 == map_before.sha256
+        && map_before.sha256 == map_after.sha256;
+    let map_frames = set.frames.iter().any(|f| f.module == map_before.path);
+    // ELF names need matching build identity; perf-map names retain their distinct provenance.
     let matched: BTreeSet<_> = builds
         .iter()
-        .filter(|b| b.state == "matched")
+        .filter(|b| {
+            b.state == "matched" && b.debug_files.iter().all(|d| d.state == "matchedCandidate")
+        })
         .map(|b| b.module.as_str())
         .collect();
     for f in &mut set.frames {
-        if !matched.contains(f.module.as_str()) {
+        if f.module == map_before.path && map_matches && f.resolved {
+            f.symbol_origin = model::SymbolOrigin::PerfMap;
+            f.source = None;
+        } else if matched.contains(f.module.as_str()) && f.resolved {
+            f.symbol_origin = model::SymbolOrigin::ElfBuildId;
+        } else {
             f.resolved = false;
+            f.symbol_origin = model::SymbolOrigin::Unresolved;
             f.source = None;
             f.symbol = format!("{}+address 0x{}", f.module, f.address);
         }
+    }
+    if map_frames && map_basis.sha256.is_some() && !map_matches {
+        set.coverage
+            .diagnostic("Recorded perf map is missing or changed; map names withheld");
+    }
+    if map_frames || map_before.sha256.is_some() {
+        let mut map = map_basis;
+        map.state = if map_matches && !map_frames {
+            "observedNotUsedByPerf"
+        } else if map_matches {
+            "matched"
+        } else if map_after.sha256.is_none() {
+            "unavailable"
+        } else {
+            "unverifiedOrChanged"
+        }
+        .into();
+        job.manifest.lock().unwrap().jit_map = Some(map);
+    }
+    if builds
+        .iter()
+        .any(|b| b.debug_files.iter().any(|d| d.state != "matchedCandidate"))
+    {
+        set.coverage.diagnostic("A local separate debug-file candidate has a mismatched or unverified build ID; module names and source mappings withheld");
     }
     if builds.iter().any(|b| b.state == "mismatch") {
         set.coverage
