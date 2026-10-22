@@ -287,6 +287,10 @@ struct SelectionRequest {
 #[derive(Default)]
 pub struct DebugManager(Mutex<HashMap<String, Arc<Session>>>, Mutex<HashMap<String, Vec<Arc<AtomicBool>>>>);
 
+pub fn has_attached_target(app:&AppHandle,target:&super::processes::ProcessIdentity)->bool {
+    app.state::<DebugManager>().0.lock().map(|sessions|sessions.values().any(|s|s.alive.load(Ordering::Acquire) && s.attached.as_ref()==Some(target))).unwrap_or(true)
+}
+
 struct BuildJob {
     pgid: i32,
     cancelled: Arc<AtomicBool>,
@@ -1132,10 +1136,12 @@ pub struct AttachRequest {
 pub async fn attach_to_process(window: WebviewWindow, app: AppHandle, request_spec: AttachRequest) -> Result<(),String> {
     let label=window.label().to_owned();
     tauri::async_runtime::spawn_blocking(move|| {
+        let _capture_pair=if request_spec.adapter=="lldb" {Some(super::perf::PAIR.lock().map_err(|e|e.to_string())?)}else{None};
         let info=super::processes::info(request_spec.target.pid)?;
         if info.identity != request_spec.target { return Err("Attach target changed; refresh the process list".into()); }
         if info.uid != unsafe {libc::geteuid()} { return Err("Only processes owned by the current user can be attached".into()); }
         let language=match request_spec.adapter.as_str() {"lldb"=>"cpp","coreclr"|"unity-mono"=>"csharp",_=>return Err("Unsupported attach adapter".into())};
+        if request_spec.adapter=="lldb" { super::perf::refuses_debugger(&app,&request_spec.target)?; }
         if request_spec.adapter=="coreclr" && info.adapter_hint != "netcoredbg · CoreCLR" {
             return Err("netcoredbg attach requires CoreCLR. Unity/Mono/IL2CPP needs a separately qualified adapter.".into());
         }

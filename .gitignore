@@ -49,3 +49,5 @@ CLAUDE.md
 !workspaces/unity/
 !workspaces/profiling-metrics/
 !workspaces/profiling-perf-qualification/
+!workspaces/profiling-perf-backend/
+workspaces/profiling-perf-backend/target/

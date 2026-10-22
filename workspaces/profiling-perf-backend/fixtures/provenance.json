@@ -1,0 +1,33 @@
+{
+  "perfVersion": "perf version 7.2.11-1",
+  "rawPath": "/tmp/craidd-perf-backend-release-v2/native/cache/eee1a87447bc0e6101123c6551efdfdab4960e3a2ea4acd973a627325dae785a/capture-1792680291025-92005-8/perf.data",
+  "rawSha256": "345e24dbb80a193254c8e5d2f9b9cd05ddb6df9f34b44daf9be6c16ede845b96",
+  "fixtureSha256": "5bd55b1720a0a48d030878b1d1b9ba7ea59782034c04a33e26dac7a49ad06f69",
+  "fixtureBasis": "Exact LOST and LOST_SAMPLES event records extracted from live capture; minimal regular-file header rebuilt, no sample payloads",
+  "binaryCounts": {
+    "diagnostics": [
+      "Warning:\nProcessed 3022 events and lost 2 chunks!\n\nCheck IO/CPU overload!\n\nWarning:\nProcessed 3995 samples and lost 28.19%!\n\n"
+    ],
+    "lossScanComplete": true,
+    "lostCount": 1126,
+    "lostRecords": 2,
+    "lostSampleCount": 1126,
+    "lostSampleRecords": 2,
+    "omittedSamples": 0,
+    "parsedSamples": 2869,
+    "retainedSamples": 2869,
+    "truncatedStacks": 0,
+    "unknownRecords": 1,
+    "unparsedLossRecords": 0
+  },
+  "perfDumpExit": 0,
+  "perfDumpLossRecords": [
+    "2542463521109 0x8839b8 [0x28]: PERF_RECORD_LOST: id:766: lost:563",
+    "2542463536089 0x885ac8 [0x28]: PERF_RECORD_LOST: id:767: lost:563",
+    "0 0x170e440 [0x20]: PERF_RECORD_LOST_SAMPLES: id:18446744073709551615: lost samples :563",
+    "0 0x170e460 [0x20]: PERF_RECORD_LOST_SAMPLES: id:18446744073709551615: lost samples :563"
+  ],
+  "perfDumpStderr": "Warning:\nProcessed 3022 events and lost 2 chunks!\n\nCheck IO/CPU overload!\n\nWarning:\nProcessed 3995 samples and lost 28.19%!\n\n",
+  "textFixtureBasis": "Three explicit-field blocks from fresh DWARF capture, trailing whitespace and extra EOF blank lines normalized",
+  "textFixtureSha256": "32a9e613b4b73aec30c13de74e8f3c152e2df18f15d8ff28fa68392b2c149864"
+}

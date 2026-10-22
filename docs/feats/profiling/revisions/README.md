@@ -5,7 +5,7 @@
 with [automated acceptance](gr-001-m1-results.md) passing and human acceptance
 still open. M2 then M3 remain approved but wait behind GR-002 timed capture.
 GR-002 has [installed native timed evidence](perf-qualification-results.md);
-its [first in-IDE timed delivery](perf-timed-delivery-proposal.md) remains a proposal.
+its [timed slice](perf-timed-delivery-proposal.md) is approved, with [backend work](perf-timed-backend-results.md) separate from the pending UI design. [Many-thread retention](gr-002-many-thread-retention.md) supports a separate flight-recorder decision.
 **Craidd baseline reviewed:** `feat/unity/debug-a-to-p` at `8bac01e`.
 
 The [accepted implementation decisions](implementation-decisions.md) resolve
@@ -26,7 +26,7 @@ runtime acceptance.
 | Revision | Proposal | Decisions still open |
 | --- | --- | --- |
 | [GR-001](gr-001-metric-csv-import.md) | Finished-file M1, followed by live generations (M2) and mapping/comparison (M3) after separate reviews | Automated M1 gates pass; human acceptance open; baseline-memory issue separate; project defaults and sidecars deferred |
-| [GR-002](gr-002-external-pid-sampling-perf.md) | Native timed qualification first; later large native/JIT workloads | Installed-version timed qualification and bounded retention evidence; flight-recorder product decision, runtime setup and unwinder defaults remain proposed |
+| [GR-002](gr-002-external-pid-sampling-perf.md) | Native timed qualification first; later large native/JIT workloads | Timed backend implemented/qualified on the installed version; UI and desktop acceptance pending; raw cap and flight recording remain proposed; JIT and symbol scale deferred |
 
 Each revision includes its requirements, implementation seams, fixtures and
 automated, desktop and failure/recovery acceptance. Resolve remaining open
@@ -46,5 +46,5 @@ capabilities separately from these proposals.
 
 ---
 
-*Last updated: 20 October 2026. Author(s): ShinkuKira21.*
+*Last updated: 22 October 2026. Author(s): ShinkuKira21.*
 *This document is a design.*

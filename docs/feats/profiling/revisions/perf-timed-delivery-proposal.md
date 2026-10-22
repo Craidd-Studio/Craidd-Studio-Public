@@ -1,7 +1,7 @@
 # Proposed first in-IDE perf timed slice
 
 **Roadmap track:** Phase 3.5 profiling.
-**Status:** Proposed, 20 October 2026. Not implemented; requires review before product implementation.
+**Status:** First timed slice approved, 22 October 2026. Backend implementation/qualification is separate from UI delivery; the UI is on hold for design review. See the [accepted decisions](perf-timed-implementation-decisions.md) and [backend results](perf-timed-backend-results.md).
 **Basis:** [Native timed qualification](perf-qualification-results.md) passed on perf 7.2.11-1 for the declared user-only configuration.
 
 ## User-visible behaviour
@@ -58,11 +58,12 @@ until an explicit, recorded mapping exists.
   start. Later-created threads/descendants require additional qualification,
   not an implicit all-threads promise.
 
-**Still proposed:** 99 Hz as the initial UI frequency; `cpu-clock:u` as the
-initial event; capture duration/output limits; retention/storage location; and
-the precise stack-sample schema and clock-map integration. The qualification's
-3-second span and DWARF 8,192-byte setting are evidence settings, not approved
-product defaults.
+**Accepted since this proposal:** `cpu-clock:u`, 99 Hz default / 999 Hz
+selectable, 10-second default / 120-second maximum, explicit FP and DWARF
+8,192/16,384, existing-thread coverage with gained-thread observations, per-solution
+cache retention/pinning and refusal of the unqualified LLDB pair. The proposed
+512 MiB raw cap awaits the user's review of its measured evidence. Separate
+clock axes remain mandatory. See the addendum for the full decisions.
 
 ## Acceptance before this slice is called delivered
 
@@ -87,5 +88,5 @@ guarantee and cannot make sampling reliably capture every short spike.
 
 ---
 
-*Last updated: 20 October 2026. Author(s): ShinkuKira21.*
+*Last updated: 22 October 2026. Author(s): ShinkuKira21.*
 *This document is a design.*

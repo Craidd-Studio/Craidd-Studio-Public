@@ -1,0 +1,59 @@
+busy-worker   75987/75988    1397.179773905:   10101010 cpu-clock:u:
+	    7f3f0cb4c28d generated_leaf_001 (/tmp/craidd-perf-gr002-20261022-build-v1/libgenerated-no-fp.so)
+  /tmp/craidd-perf-gr002-20261022-build-v1/generated_workload.cpp:15
+	    7f3f0cb4c2d8 generated_inner_001 (/tmp/craidd-perf-gr002-20261022-build-v1/libgenerated-no-fp.so)
+  /tmp/craidd-perf-gr002-20261022-build-v1/generated_workload.cpp:18
+	    7f3f0cb4c2f8 generated_middle_001 (/tmp/craidd-perf-gr002-20261022-build-v1/libgenerated-no-fp.so)
+  /tmp/craidd-perf-gr002-20261022-build-v1/generated_workload.cpp:20
+	    7f3f0cb4c318 generated_outer_001 (/tmp/craidd-perf-gr002-20261022-build-v1/libgenerated-no-fp.so)
+  /tmp/craidd-perf-gr002-20261022-build-v1/generated_workload.cpp:22
+	    7f3f0cb50534 generated_workload_entry (/tmp/craidd-perf-gr002-20261022-build-v1/libgenerated-no-fp.so)
+  /tmp/craidd-perf-gr002-20261022-build-v1/generated_workload.cpp:645
+	    55dc6083fb39 native_worker_parent (/tmp/craidd-perf-gr002-20261022-build-v1/fixture)
+  /home/skira24/.codex/worktrees/9b33/Craidd-Studio/workspaces/profiling-perf-qualification/many_thread_fixture.cpp:25
+	    7f3f0c8ea858 [unknown] (/usr/lib/libstdc++.so.6.0.36)
+  libstdc++.so.6.0.36[ea858]
+	    7f3f0c498041 [unknown] (/usr/lib/libc.so.6)
+  libc.so.6[98041]
+	    7f3f0c52072b [unknown] (/usr/lib/libc.so.6)
+  libc.so.6[12072b]
+
+busy-worker   75987/75989    1397.179774765:   10101010 cpu-clock:u:
+	    7f3f0cb4d397 generated_leaf_018 (/tmp/craidd-perf-gr002-20261022-build-v1/libgenerated-no-fp.so)
+  /tmp/craidd-perf-gr002-20261022-build-v1/generated_workload.cpp:185
+	    7f3f0cb4d3d8 generated_inner_018 (/tmp/craidd-perf-gr002-20261022-build-v1/libgenerated-no-fp.so)
+  /tmp/craidd-perf-gr002-20261022-build-v1/generated_workload.cpp:188
+	    7f3f0cb4d3f8 generated_middle_018 (/tmp/craidd-perf-gr002-20261022-build-v1/libgenerated-no-fp.so)
+  /tmp/craidd-perf-gr002-20261022-build-v1/generated_workload.cpp:190
+	    7f3f0cb4d418 generated_outer_018 (/tmp/craidd-perf-gr002-20261022-build-v1/libgenerated-no-fp.so)
+  /tmp/craidd-perf-gr002-20261022-build-v1/generated_workload.cpp:192
+	    7f3f0cb50424 generated_workload_entry (/tmp/craidd-perf-gr002-20261022-build-v1/libgenerated-no-fp.so)
+  /tmp/craidd-perf-gr002-20261022-build-v1/generated_workload.cpp:662
+	    55dc6083fb39 native_worker_parent (/tmp/craidd-perf-gr002-20261022-build-v1/fixture)
+  /home/skira24/.codex/worktrees/9b33/Craidd-Studio/workspaces/profiling-perf-qualification/many_thread_fixture.cpp:25
+	    7f3f0c8ea858 [unknown] (/usr/lib/libstdc++.so.6.0.36)
+  libstdc++.so.6.0.36[ea858]
+	    7f3f0c498041 [unknown] (/usr/lib/libc.so.6)
+  libc.so.6[98041]
+	    7f3f0c52072b [unknown] (/usr/lib/libc.so.6)
+  libc.so.6[12072b]
+
+busy-worker   75987/75988    1397.189873661:   10101010 cpu-clock:u:
+	    7f3f0cb4f88d generated_leaf_055 (/tmp/craidd-perf-gr002-20261022-build-v1/libgenerated-no-fp.so)
+  /tmp/craidd-perf-gr002-20261022-build-v1/generated_workload.cpp:555
+	    7f3f0cb4f8d8 generated_inner_055 (/tmp/craidd-perf-gr002-20261022-build-v1/libgenerated-no-fp.so)
+  /tmp/craidd-perf-gr002-20261022-build-v1/generated_workload.cpp:558
+	    7f3f0cb4f8f8 generated_middle_055 (/tmp/craidd-perf-gr002-20261022-build-v1/libgenerated-no-fp.so)
+  /tmp/craidd-perf-gr002-20261022-build-v1/generated_workload.cpp:560
+	    7f3f0cb4f918 generated_outer_055 (/tmp/craidd-perf-gr002-20261022-build-v1/libgenerated-no-fp.so)
+  /tmp/craidd-perf-gr002-20261022-build-v1/generated_workload.cpp:562
+	    7f3f0cb501d4 generated_workload_entry (/tmp/craidd-perf-gr002-20261022-build-v1/libgenerated-no-fp.so)
+  /tmp/craidd-perf-gr002-20261022-build-v1/generated_workload.cpp:699
+	    55dc6083fb39 native_worker_parent (/tmp/craidd-perf-gr002-20261022-build-v1/fixture)
+  /home/skira24/.codex/worktrees/9b33/Craidd-Studio/workspaces/profiling-perf-qualification/many_thread_fixture.cpp:25
+	    7f3f0c8ea858 [unknown] (/usr/lib/libstdc++.so.6.0.36)
+  libstdc++.so.6.0.36[ea858]
+	    7f3f0c498041 [unknown] (/usr/lib/libc.so.6)
+  libc.so.6[98041]
+	    7f3f0c52072b [unknown] (/usr/lib/libc.so.6)
+  libc.so.6[12072b]

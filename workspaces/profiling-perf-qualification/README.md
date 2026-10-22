@@ -67,6 +67,30 @@ desktop UI are outside this fixture. The overwrite experiment approves no
 flight-recorder product scope. Results live in the
 [qualification report](../../docs/feats/profiling/revisions/perf-qualification-results.md).
 
+## 22 October: runtime-loaded no-FP module and many busy threads
+
+The [extended report](../../docs/feats/profiling/revisions/gr-002-many-thread-retention.md)
+and `evidence-2026-10-22-many-thread.json` keep the later measurements separate
+from the original fixtures/evidence. Build the FP main and generated no-FP
+shared library, then capture explicitly:
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 python3 workspaces/profiling-perf-qualification/many_thread_qualification.py build --output /tmp/new-many-build
+PYTHONDONTWRITEBYTECODE=1 python3 workspaces/profiling-perf-qualification/many_thread_qualification.py capture timed --build /tmp/new-many-build --output /tmp/new-many-fp --workers 2 --frequency 99 --pages 128 --seconds 3 --unwinder fp
+PYTHONDONTWRITEBYTECODE=1 python3 workspaces/profiling-perf-qualification/many_thread_qualification.py capture timed --build /tmp/new-many-build --output /tmp/new-many-dwarf --workers 2 --frequency 99 --pages 128 --seconds 3 --unwinder dwarf
+PYTHONDONTWRITEBYTECODE=1 python3 workspaces/profiling-perf-qualification/many_thread_qualification.py capture retention --build /tmp/new-many-build --output /tmp/new-many-ring --workers 16 --frequency 99 --pages 4 --seconds 8 --unwinder fp
+```
+
+The library has 256 generated functions plus an entry, not the deferred
+200,000-symbol fixture and not a Unity/IL2CPP artifact. All selected 16/32
+workers remain busy; the waiting main is excluded from the explicit TID list.
+Repeat retention serially for 16/32 workers, 99/999 Hz and 1/4/16 data pages.
+The output records actual per-TID histories, rates, CPU ticks, real perf mapping
+sizes and collector resources. Full-ring/time evidence is labelled as inferred
+wrap; unfilled histories are lower bounds. A direct read-only owned-perf ring
+header probe returned EIO and is recorded as unavailable, never replaced with
+invented counters. Signals still address only the owned collector.
+
 ---
 
 *Last updated: 20 October 2026. Author(s): ShinkuKira21.*

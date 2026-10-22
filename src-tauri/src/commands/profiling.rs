@@ -989,9 +989,11 @@ pub fn stop_session(app: &AppHandle, label: &str, id: &str, reason: &str) {
             p.close(reason);
         }
     });
+    if let Some(perf)=app.try_state::<crate::perf_capture::PerfManager>() { perf.stop_owner(label,Some(id),reason); }
 }
 pub fn stop(app: &AppHandle, label: &str, reason: &str) {
     change_profile(app, label, |p| p.close(reason));
+    if let Some(perf)=app.try_state::<crate::perf_capture::PerfManager>() { perf.stop_owner(label,None,reason); }
 }
 pub fn debug_pause(app: &AppHandle, label: &str, body: &serde_json::Value, stopped: bool) {
     change_profile(app, label, |p| {

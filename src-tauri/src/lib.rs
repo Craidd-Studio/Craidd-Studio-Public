@@ -2,6 +2,8 @@ mod commands;
 mod types;
 mod process_supervisor;
 mod metric_csv;
+mod perf_model;
+mod perf_capture;
 
 pub use process_supervisor::entry as process_supervisor_entry;
 
@@ -69,9 +71,14 @@ pub fn run() {
         .manage(commands::native_debug::NativeDebugManager::default())
         .manage(commands::build_order::OrderManager::default())
         .manage(LinkedWindowRegistry::default())
+        .setup(|app| {
+            app.manage(perf_capture::PerfManager::new(app.path().app_cache_dir()?.join("profiling/perf")));
+            Ok(())
+        })
         .on_window_event(|window, event| {
             if matches!(event, tauri::WindowEvent::Destroyed) {
                 window.state::<commands::metrics::MetricManager>().close(window.label());
+                commands::perf::close(window.app_handle(), window.label());
             }
             if let tauri::WindowEvent::CloseRequested { api, .. } = event {
                 if !prepare_native_close(window) {
@@ -87,6 +94,7 @@ pub fn run() {
                     commands::debug::cancel_window_debug(&closing_window);
                     commands::profiling::stop(&closing_window.app_handle(),closing_window.label(),"Profiling window closed");
                     closing_window.state::<commands::metrics::MetricManager>().close(closing_window.label());
+                    commands::perf::close(closing_window.app_handle(), closing_window.label());
                 });
                 remove_linked_window(window);
             }
@@ -95,6 +103,7 @@ pub fn run() {
         .plugin(tauri_plugin_dialog::init())
         .invoke_handler(tauri::generate_handler![
             commands::metrics::metric_action,
+            commands::perf::perf_action,
             read_file,
             resolve_document_path,
             read_document_image,
@@ -216,7 +225,7 @@ pub fn run() {
         .build(tauri::generate_context!())
         .expect("error while building tauri application")
         .run(|app, event| {
-            if matches!(event, tauri::RunEvent::Exit) { commands::profiling::shutdown(app); process_supervisor::shutdown(); }
+            if matches!(event, tauri::RunEvent::Exit) { commands::perf::shutdown(app); commands::profiling::shutdown(app); process_supervisor::shutdown(); }
         });
     process_supervisor::shutdown();
 }

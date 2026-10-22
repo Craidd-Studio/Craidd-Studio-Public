@@ -29,3 +29,4 @@ pub mod profiling;
 mod profiling_discovery;
 pub mod gold;
 pub mod metrics;
+pub mod perf;
