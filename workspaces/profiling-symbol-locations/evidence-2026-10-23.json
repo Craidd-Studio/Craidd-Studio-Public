@@ -1,0 +1,101 @@
+{
+  "scope": "Fixture-only private perf build-ID cache mechanism; production settings/manifest/reopen UI not implemented",
+  "machine": "sk27",
+  "kernel": "7.2.11-arch1-1",
+  "perf": "perf version 7.2.11-1",
+  "cases": [
+    {
+      "case": "undeclared",
+      "validBuildId": false,
+      "servedBy": null,
+      "hotNameRecords": 0,
+      "sourceLineRecords": 0,
+      "decodeMs": 16.85359399562003,
+      "conservativeWithhold": false
+    },
+    {
+      "case": "sibling",
+      "validBuildId": true,
+      "servedBy": {
+        "path": "/tmp/craidd-gr003-qualification-20261023-record/sibling-symbols/liblocation.so.debug",
+        "sha256": "643d13ae9f43cdefdb160f263fca5f06f2bab30f2b51cc50d8bb06fd0f99532e",
+        "buildId": "b844add52a4d587c4b072aad274295c6c0ad66a1"
+      },
+      "hotNameRecords": 396,
+      "sourceLineRecords": 792,
+      "decodeMs": 17.444894998334348,
+      "conservativeWithhold": false
+    },
+    {
+      "case": "renamed",
+      "validBuildId": true,
+      "servedBy": {
+        "path": "/tmp/craidd-gr003-qualification-20261023-record/unrelated/artifact-unrelated-name.elf",
+        "sha256": "643d13ae9f43cdefdb160f263fca5f06f2bab30f2b51cc50d8bb06fd0f99532e",
+        "buildId": "b844add52a4d587c4b072aad274295c6c0ad66a1"
+      },
+      "hotNameRecords": 396,
+      "sourceLineRecords": 792,
+      "decodeMs": 15.91704200109234,
+      "conservativeWithhold": false
+    },
+    {
+      "case": "decoy",
+      "validBuildId": false,
+      "servedBy": null,
+      "hotNameRecords": 0,
+      "sourceLineRecords": 0,
+      "decodeMs": 15.861163003137335,
+      "conservativeWithhold": true
+    }
+  ],
+  "gates": {
+    "noDeclaredLocation": "PASS",
+    "siblingLocation": "PASS",
+    "renamedLocation": "PASS",
+    "decoyVerification": "PASS",
+    "privateCaches": "PASS",
+    "userCacheUnchanged": "PASS",
+    "tenThousandIndex": "PASS",
+    "productionManifestReopen": "NOT TESTED",
+    "retentionCleanup": "NOT TESTED",
+    "desktopSettings": "NOT TESTED"
+  },
+  "fixture": {
+    "module": "/tmp/craidd-gr003-qualification-20261023-record/build/liblocation.so",
+    "moduleSha256": "8ddf6ecab9d6d5ef29713984abc8c803438c348260b3210f5acf4bcb7a56b109",
+    "buildId": "b844add52a4d587c4b072aad274295c6c0ad66a1",
+    "debug": "/tmp/craidd-gr003-qualification-20261023-record/sibling-symbols/liblocation.so.debug",
+    "debugSha256": "643d13ae9f43cdefdb160f263fca5f06f2bab30f2b51cc50d8bb06fd0f99532e",
+    "decoyBuildId": "3df57eb430b20b29e10ab9089328b6493dea00db"
+  },
+  "recordStderr": "[ perf record: Woken up 13 times to write data ]\n[ perf record: Captured and wrote 3.188 MB /tmp/craidd-gr003-qualification-20261023-record/perf.data ]\n",
+  "renamedIndex": {
+    "entries": 1,
+    "elapsedMs": 1.6865720026544295,
+    "cutShort": false,
+    "ids": {
+      "b844add52a4d587c4b072aad274295c6c0ad66a1": [
+        "/tmp/craidd-gr003-qualification-20261023-record/unrelated/artifact-unrelated-name.elf"
+      ]
+    }
+  },
+  "reopenPrototype": {
+    "servedPathMissing": true,
+    "originalSha256": "643d13ae9f43cdefdb160f263fca5f06f2bab30f2b51cc50d8bb06fd0f99532e",
+    "withhold": true,
+    "remainingHotNameRecords": 0
+  },
+  "index": {
+    "entries": 10000,
+    "elapsedMs": 64.14600899734069,
+    "cutShort": false,
+    "ids": {
+      "b844add52a4d587c4b072aad274295c6c0ad66a1": [
+        "/tmp/craidd-gr003-qualification-20261023-record/ten-thousand/artifact-symbols.elf"
+      ]
+    }
+  },
+  "targetSurvived": true,
+  "userDebugCacheUnchanged": true
+}

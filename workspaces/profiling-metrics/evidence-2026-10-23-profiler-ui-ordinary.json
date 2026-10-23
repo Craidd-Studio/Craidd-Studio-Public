@@ -1,0 +1,617 @@
+{
+  "machine": "sk27",
+  "kernel": "7.2.11-arch1-1",
+  "binary": {
+    "path": "/home/skira24/.codex/worktrees/9b33/Craidd-Studio/src-tauri/target/debug/craidd-studio",
+    "sha256": "0ab1d47e62270f167297191199a0b1c323ad9ca542ff3cec300c0587f9f5b6ad"
+  },
+  "gates": {
+    "automated": "PASS",
+    "desktopMetrics": "PASS",
+    "desktopPerf": "PASS",
+    "captureWindowRecovery": "PASS",
+    "targetSurvival": "PASS",
+    "responsive": "PASS",
+    "humanUsability": "NOT TESTED",
+    "releaseMillionRowPerformance": "NOT TESTED"
+  },
+  "layouts": [
+    {
+      "width": 900,
+      "scroll": 564,
+      "viewport": {
+        "width": 900,
+        "height": 1000
+      },
+      "sidebarCsv": false,
+      "panel": 564,
+      "chart": {
+        "width": 364,
+        "height": 210,
+        "top": 493.046875,
+        "bottom": 703.046875
+      }
+    },
+    {
+      "width": 1280,
+      "scroll": 944,
+      "viewport": {
+        "width": 1280,
+        "height": 1000
+      },
+      "sidebarCsv": false,
+      "panel": 944,
+      "chart": {
+        "width": 725,
+        "height": 210,
+        "top": 389.046875,
+        "bottom": 599.046875
+      }
+    },
+    {
+      "width": 1600,
+      "scroll": 1264,
+      "viewport": {
+        "width": 1600,
+        "height": 1000
+      },
+      "sidebarCsv": false,
+      "panel": 1264,
+      "chart": {
+        "width": 1016,
+        "height": 210,
+        "top": 389.046875,
+        "bottom": 599.046875
+      }
+    }
+  ],
+  "fixture": {
+    "build": "/tmp/craidd-perf-20261023-large-build",
+    "target": {
+      "pid": 404503,
+      "birth": 3946051,
+      "parent": 404216,
+      "state": "S"
+    }
+  },
+  "capture": {
+    "options": {
+      "durationSeconds": 10,
+      "unwind": {
+        "stackBytes": 8192,
+        "kind": "dwarf"
+      },
+      "frequency": 99
+    },
+    "stderr": "[ perf record: Woken up 9 times to write data ]\n[ perf record: Captured and wrote 2.722 MB /home/skira24/.codex/worktrees/9b33/Craidd-Studio/test-results/ui/2026-10-23T23-28-21-007Z/profiler-analysis/home/.cache/com.skira24.craidd-studio/profiling/perf/c8d306b647d130b0712729a88dfc59f43e399af672469d02c886c8c20f357c5a/capture-1792798107051-404231-1/perf.data ]\n",
+    "reasons": [
+      "Stopped by user"
+    ],
+    "solution": "/tmp/craidd-perf-20261023-large-build/craidd-profiler-analysis-ZeFKQm.cln",
+    "rawSha256": "9d24b30ea3247e1f0b9b016b0edc4abb34d220790f2712785743ec7038d45c4a",
+    "id": "capture-1792798107051-404231-1",
+    "moduleIdentityMs": 476,
+    "jitMap": null,
+    "profileId": "404503-3946051-1792798106682672519",
+    "recordArgv": [
+      "record",
+      "--no-buildid-cache",
+      "--clockid",
+      "mono",
+      "--timestamp",
+      "--per-thread",
+      "--no-inherit",
+      "--user-callchains",
+      "-e",
+      "cpu-clock:u",
+      "-F",
+      "99",
+      "--call-graph",
+      "dwarf,8192",
+      "-t",
+      "404503,404504,404505",
+      "-o",
+      "/home/skira24/.codex/worktrees/9b33/Craidd-Studio/test-results/ui/2026-10-23T23-28-21-007Z/profiler-analysis/home/.cache/com.skira24.craidd-studio/profiling/perf/c8d306b647d130b0712729a88dfc59f43e399af672469d02c886c8c20f357c5a/capture-1792798107051-404231-1/perf.data"
+    ],
+    "collectorIdentity": {
+      "birth": 3946150,
+      "pid": 404520
+    },
+    "pinned": false,
+    "lossScanMs": 0,
+    "version": 1,
+    "decodeAndParseMs": 252,
+    "parserCpuMs": 26,
+    "coverage": {
+      "unknownRecords": 0,
+      "lossScanComplete": true,
+      "lostSampleRecords": 0,
+      "lostSampleCount": 0,
+      "retainedSamples": 338,
+      "unparsedLossRecords": 0,
+      "truncatedStacks": 0,
+      "lostRecords": 0,
+      "diagnostics": [],
+      "lostCount": 0,
+      "parsedSamples": 338,
+      "omittedSamples": 0
+    },
+    "clockMapping": null,
+    "state": "partial",
+    "generation": 1,
+    "rawLimit": 536870912,
+    "collectorSignal": 2,
+    "attributionValid": true,
+    "collectorExit": null,
+    "omittedThreadObservations": 0,
+    "label": "perf \u00b7 PID 404503",
+    "rawBytes": 2890764,
+    "threadPollMs": 100,
+    "summary": {
+      "threads": {
+        "404504": "busy-worker",
+        "404505": "busy-worker"
+      },
+      "units": "sampled cpu-clock event period (ns); not exact function time",
+      "lastMonotonicNs": 39463236110558,
+      "coverage": {
+        "unknownRecords": 0,
+        "lossScanComplete": true,
+        "lostSampleRecords": 0,
+        "lostSampleCount": 0,
+        "retainedSamples": 338,
+        "unparsedLossRecords": 0,
+        "truncatedStacks": 0,
+        "lostRecords": 0,
+        "diagnostics": [],
+        "lostCount": 0,
+        "parsedSamples": 338,
+        "omittedSamples": 0
+      },
+      "lossAccounting": "LOST and LOST_SAMPLES are separate reports and may overlap; never summed",
+      "firstMonotonicNs": 39461539076038,
+      "frameCount": 85,
+      "retention": {
+        "samples": 500000,
+        "frames": 100000,
+        "stackReferences": 8000000
+      }
+    },
+    "threadsAtStart": [
+      {
+        "tid": 404503,
+        "birth": 3946051,
+        "name": "fixture"
+      },
+      {
+        "tid": 404504,
+        "birth": 3946051,
+        "name": "busy-worker"
+      },
+      {
+        "tid": 404505,
+        "birth": 3946051,
+        "name": "busy-worker"
+      }
+    ],
+    "clockDomain": "CLOCK_MONOTONIC",
+    "buildIds": [
+      {
+        "debugFiles": [],
+        "state": "matched",
+        "currentBuildId": "35f3a4430163e161774cf8b80fa64f3708834260",
+        "module": "/tmp/craidd-perf-20261023-large-build/fixture",
+        "capturedBuildId": "35f3a4430163e161774cf8b80fa64f3708834260"
+      },
+      {
+        "debugFiles": [
+          {
+            "path": "/tmp/craidd-perf-20261023-large-build/libscale-no-fp.so.debug",
+            "buildId": "eac32b7d8ae7129320c8b9db29c79ced58ec62d6",
+            "state": "matchedCandidate"
+          }
+        ],
+        "state": "matched",
+        "currentBuildId": "eac32b7d8ae7129320c8b9db29c79ced58ec62d6",
+        "module": "/tmp/craidd-perf-20261023-large-build/libscale-no-fp.so",
+        "capturedBuildId": "eac32b7d8ae7129320c8b9db29c79ced58ec62d6"
+      },
+      {
+        "debugFiles": [],
+        "state": "matched",
+        "currentBuildId": "d320029ad1a23be2f4bce117fd321cbd23a2014b",
+        "module": "/usr/lib/libc.so.6",
+        "capturedBuildId": "d320029ad1a23be2f4bce117fd321cbd23a2014b"
+      },
+      {
+        "debugFiles": [],
+        "state": "matched",
+        "currentBuildId": "5b8d3de442de987b24d0e3679533068f2ae62497",
+        "module": "/usr/lib/libstdc++.so.6.0.36",
+        "capturedBuildId": "5b8d3de442de987b24d0e3679533068f2ae62497"
+      }
+    ],
+    "target": {
+      "birth": 3946051,
+      "pid": 404503
+    },
+    "perfVersion": "perf version 7.2.11-1",
+    "sourceKind": "nativeStackSamples",
+    "host": {
+      "birth": 3945549,
+      "pid": 404231
+    },
+    "event": "cpu-clock:u",
+    "createdMs": 1792798107051,
+    "estimatedRawBytes": 25420230,
+    "threadsGained": [],
+    "omittedStderrBytes": 0,
+    "owner": "workspace-1"
+  },
+  "sourceNavigation": "PASS",
+  "coverageText": "Collector\nperf version 7.2.11-1\nTarget identity\n404503 / start 3946051\nEvent\ncpu-clock:u\nClock\nCLOCK_MONOTONIC \u00b7 no session mapping\nRetained sample span\n1.697 s\nFirst / last monotonic ns\n39461539076038 / 39463236110558\nRaw output\n2.8 MiB / 512.0 MiB\nParsed / retained samples\n338 / 338\nOmitted samples\n0\nLOST records / reported count\n0 / 0\nLOST_SAMPLES records / reported count\n0 / 0\nLoss scan\nComplete\nUnparsed loss records\n0\nTruncated stacks / unknown records\n0 / 0\nThreads at start / gained\n3 / 0\nOmitted thread observations\n0\nSymbol identity / decode & parse\n476 ms / 252 ms\n\nLOST and LOST_SAMPLES may overlap; counts are never added. Only threads existing at capture start are sampled. 100 ms polling may miss short-lived threads.\n\nDWARF coverage depends on unwind information and captured stack size. .NET JIT map naming remains a known limitation on double-mapped executable memory.\n\nSymbols and diagnostics",
+  "closedCapture": {
+    "options": {
+      "durationSeconds": 30,
+      "unwind": {
+        "kind": "fp"
+      },
+      "frequency": 999
+    },
+    "stderr": "[ perf record: Woken up 1 times to write data ]\n[ perf record: Captured and wrote 0.105 MB /home/skira24/.codex/worktrees/9b33/Craidd-Studio/test-results/ui/2026-10-23T23-28-21-007Z/profiler-analysis/home/.cache/com.skira24.craidd-studio/profiling/perf/c8d306b647d130b0712729a88dfc59f43e399af672469d02c886c8c20f357c5a/capture-1792798113006-404231-2/perf.data ]\n",
+    "reasons": [
+      "Owning window or IDE closed",
+      "No retained stack samples; inspect parser and collector diagnostics"
+    ],
+    "solution": "/tmp/craidd-perf-20261023-large-build/craidd-profiler-analysis-ZeFKQm.cln",
+    "rawSha256": "16493ac4b37a464ea4044af175f6226ebf2c6600f25a58d37168069e1a09c618",
+    "id": "capture-1792798113006-404231-2",
+    "moduleIdentityMs": 288,
+    "jitMap": null,
+    "profileId": "404503-3946051-1792798106682672519",
+    "recordArgv": [
+      "record",
+      "--no-buildid-cache",
+      "--clockid",
+      "mono",
+      "--timestamp",
+      "--per-thread",
+      "--no-inherit",
+      "--user-callchains",
+      "-e",
+      "cpu-clock:u",
+      "-F",
+      "999",
+      "--call-graph",
+      "fp",
+      "-t",
+      "404503,404504,404505",
+      "-o",
+      "/home/skira24/.codex/worktrees/9b33/Craidd-Studio/test-results/ui/2026-10-23T23-28-21-007Z/profiler-analysis/home/.cache/com.skira24.craidd-studio/profiling/perf/c8d306b647d130b0712729a88dfc59f43e399af672469d02c886c8c20f357c5a/capture-1792798113006-404231-2/perf.data"
+    ],
+    "collectorIdentity": {
+      "birth": 3946746,
+      "pid": 405010
+    },
+    "pinned": false,
+    "lossScanMs": 0,
+    "version": 1,
+    "decodeAndParseMs": 4,
+    "parserCpuMs": 1,
+    "coverage": {
+      "unknownRecords": 2,
+      "lossScanComplete": false,
+      "lostSampleRecords": 0,
+      "lostSampleCount": 0,
+      "retainedSamples": 0,
+      "unparsedLossRecords": 0,
+      "truncatedStacks": 0,
+      "lostRecords": 0,
+      "diagnostics": [
+        "perf script incomplete: Err(\"Collector-owned analysis stopped or exceeded its deadline\"); ",
+        "Loss scan incomplete: Loss scan cancelled"
+      ],
+      "lostCount": 0,
+      "parsedSamples": 0,
+      "omittedSamples": 0
+    },
+    "clockMapping": null,
+    "state": "partial",
+    "generation": 1,
+    "rawLimit": 536870912,
+    "collectorSignal": 2,
+    "attributionValid": true,
+    "collectorExit": null,
+    "omittedThreadObservations": 0,
+    "label": "perf \u00b7 PID 404503",
+    "rawBytes": 147380,
+    "threadPollMs": 100,
+    "summary": {
+      "threads": {},
+      "units": "sampled cpu-clock event period (ns); not exact function time",
+      "lastMonotonicNs": null,
+      "coverage": {
+        "unknownRecords": 2,
+        "lossScanComplete": false,
+        "lostSampleRecords": 0,
+        "lostSampleCount": 0,
+        "retainedSamples": 0,
+        "unparsedLossRecords": 0,
+        "truncatedStacks": 0,
+        "lostRecords": 0,
+        "diagnostics": [
+          "perf script incomplete: Err(\"Collector-owned analysis stopped or exceeded its deadline\"); ",
+          "Loss scan incomplete: Loss scan cancelled"
+        ],
+        "lostCount": 0,
+        "parsedSamples": 0,
+        "omittedSamples": 0
+      },
+      "lossAccounting": "LOST and LOST_SAMPLES are separate reports and may overlap; never summed",
+      "firstMonotonicNs": null,
+      "frameCount": 0,
+      "retention": {
+        "samples": 500000,
+        "frames": 100000,
+        "stackReferences": 8000000
+      }
+    },
+    "threadsAtStart": [
+      {
+        "tid": 404503,
+        "birth": 3946051,
+        "name": "fixture"
+      },
+      {
+        "tid": 404504,
+        "birth": 3946051,
+        "name": "busy-worker"
+      },
+      {
+        "tid": 404505,
+        "birth": 3946051,
+        "name": "busy-worker"
+      }
+    ],
+    "clockDomain": "CLOCK_MONOTONIC",
+    "buildIds": [
+      {
+        "debugFiles": [],
+        "state": "matched",
+        "currentBuildId": "35f3a4430163e161774cf8b80fa64f3708834260",
+        "module": "/tmp/craidd-perf-20261023-large-build/fixture",
+        "capturedBuildId": "35f3a4430163e161774cf8b80fa64f3708834260"
+      },
+      {
+        "debugFiles": [
+          {
+            "path": "/tmp/craidd-perf-20261023-large-build/libscale-no-fp.so.debug",
+            "buildId": "eac32b7d8ae7129320c8b9db29c79ced58ec62d6",
+            "state": "matchedCandidate"
+          }
+        ],
+        "state": "matched",
+        "currentBuildId": "eac32b7d8ae7129320c8b9db29c79ced58ec62d6",
+        "module": "/tmp/craidd-perf-20261023-large-build/libscale-no-fp.so",
+        "capturedBuildId": "eac32b7d8ae7129320c8b9db29c79ced58ec62d6"
+      },
+      {
+        "debugFiles": [],
+        "state": "matched",
+        "currentBuildId": "d320029ad1a23be2f4bce117fd321cbd23a2014b",
+        "module": "/usr/lib/libc.so.6",
+        "capturedBuildId": "d320029ad1a23be2f4bce117fd321cbd23a2014b"
+      },
+      {
+        "debugFiles": [],
+        "state": "matched",
+        "currentBuildId": "5b8d3de442de987b24d0e3679533068f2ae62497",
+        "module": "/usr/lib/libstdc++.so.6.0.36",
+        "capturedBuildId": "5b8d3de442de987b24d0e3679533068f2ae62497"
+      }
+    ],
+    "target": {
+      "birth": 3946051,
+      "pid": 404503
+    },
+    "perfVersion": "perf version 7.2.11-1",
+    "sourceKind": "nativeStackSamples",
+    "host": {
+      "birth": 3945549,
+      "pid": 404231
+    },
+    "event": "cpu-clock:u",
+    "createdMs": 1792798113006,
+    "estimatedRawBytes": 19600380,
+    "threadsGained": [],
+    "omittedStderrBytes": 0,
+    "owner": "workspace-1"
+  },
+  "closedCaptureReopened": {
+    "options": {
+      "durationSeconds": 30,
+      "unwind": {
+        "kind": "fp"
+      },
+      "frequency": 999
+    },
+    "stderr": "[ perf record: Woken up 1 times to write data ]\n[ perf record: Captured and wrote 0.105 MB /home/skira24/.codex/worktrees/9b33/Craidd-Studio/test-results/ui/2026-10-23T23-28-21-007Z/profiler-analysis/home/.cache/com.skira24.craidd-studio/profiling/perf/c8d306b647d130b0712729a88dfc59f43e399af672469d02c886c8c20f357c5a/capture-1792798113006-404231-2/perf.data ]\n",
+    "reasons": [
+      "Owning window or IDE closed",
+      "No retained stack samples; inspect parser and collector diagnostics"
+    ],
+    "solution": "/tmp/craidd-perf-20261023-large-build/craidd-profiler-analysis-ZeFKQm.cln",
+    "rawSha256": "16493ac4b37a464ea4044af175f6226ebf2c6600f25a58d37168069e1a09c618",
+    "id": "capture-1792798113006-404231-2",
+    "moduleIdentityMs": 288,
+    "jitMap": null,
+    "profileId": "404503-3946051-1792798106682672519",
+    "recordArgv": [
+      "record",
+      "--no-buildid-cache",
+      "--clockid",
+      "mono",
+      "--timestamp",
+      "--per-thread",
+      "--no-inherit",
+      "--user-callchains",
+      "-e",
+      "cpu-clock:u",
+      "-F",
+      "999",
+      "--call-graph",
+      "fp",
+      "-t",
+      "404503,404504,404505",
+      "-o",
+      "/home/skira24/.codex/worktrees/9b33/Craidd-Studio/test-results/ui/2026-10-23T23-28-21-007Z/profiler-analysis/home/.cache/com.skira24.craidd-studio/profiling/perf/c8d306b647d130b0712729a88dfc59f43e399af672469d02c886c8c20f357c5a/capture-1792798113006-404231-2/perf.data"
+    ],
+    "collectorIdentity": {
+      "birth": 3946746,
+      "pid": 405010
+    },
+    "pinned": false,
+    "lossScanMs": 0,
+    "version": 1,
+    "decodeAndParseMs": 227,
+    "parserCpuMs": 53,
+    "coverage": {
+      "unknownRecords": 0,
+      "lossScanComplete": true,
+      "lostSampleRecords": 0,
+      "lostSampleCount": 0,
+      "retainedSamples": 1130,
+      "unparsedLossRecords": 0,
+      "truncatedStacks": 0,
+      "lostRecords": 0,
+      "diagnostics": [],
+      "lostCount": 0,
+      "parsedSamples": 1130,
+      "omittedSamples": 0
+    },
+    "clockMapping": null,
+    "state": "partial",
+    "generation": 1,
+    "rawLimit": 536870912,
+    "collectorSignal": 2,
+    "attributionValid": true,
+    "collectorExit": null,
+    "omittedThreadObservations": 0,
+    "label": "perf \u00b7 PID 404503",
+    "rawBytes": 147380,
+    "threadPollMs": 100,
+    "summary": {
+      "threads": {
+        "404504": "busy-worker",
+        "404505": "busy-worker"
+      },
+      "units": "sampled cpu-clock event period (ns); not exact function time",
+      "lastMonotonicNs": 39468044378110,
+      "coverage": {
+        "unknownRecords": 0,
+        "lossScanComplete": true,
+        "lostSampleRecords": 0,
+        "lostSampleCount": 0,
+        "retainedSamples": 1130,
+        "unparsedLossRecords": 0,
+        "truncatedStacks": 0,
+        "lostRecords": 0,
+        "diagnostics": [],
+        "lostCount": 0,
+        "parsedSamples": 1130,
+        "omittedSamples": 0
+      },
+      "lossAccounting": "LOST and LOST_SAMPLES are separate reports and may overlap; never summed",
+      "firstMonotonicNs": 39467479710449,
+      "frameCount": 24,
+      "retention": {
+        "samples": 500000,
+        "frames": 100000,
+        "stackReferences": 8000000
+      }
+    },
+    "threadsAtStart": [
+      {
+        "tid": 404503,
+        "birth": 3946051,
+        "name": "fixture"
+      },
+      {
+        "tid": 404504,
+        "birth": 3946051,
+        "name": "busy-worker"
+      },
+      {
+        "tid": 404505,
+        "birth": 3946051,
+        "name": "busy-worker"
+      }
+    ],
+    "clockDomain": "CLOCK_MONOTONIC",
+    "buildIds": [
+      {
+        "debugFiles": [],
+        "state": "matched",
+        "currentBuildId": "35f3a4430163e161774cf8b80fa64f3708834260",
+        "module": "/tmp/craidd-perf-20261023-large-build/fixture",
+        "capturedBuildId": "35f3a4430163e161774cf8b80fa64f3708834260"
+      },
+      {
+        "debugFiles": [
+          {
+            "path": "/tmp/craidd-perf-20261023-large-build/libscale-no-fp.so.debug",
+            "buildId": "eac32b7d8ae7129320c8b9db29c79ced58ec62d6",
+            "state": "matchedCandidate"
+          }
+        ],
+        "state": "matched",
+        "currentBuildId": "eac32b7d8ae7129320c8b9db29c79ced58ec62d6",
+        "module": "/tmp/craidd-perf-20261023-large-build/libscale-no-fp.so",
+        "capturedBuildId": "eac32b7d8ae7129320c8b9db29c79ced58ec62d6"
+      },
+      {
+        "debugFiles": [],
+        "state": "matched",
+        "currentBuildId": "d320029ad1a23be2f4bce117fd321cbd23a2014b",
+        "module": "/usr/lib/libc.so.6",
+        "capturedBuildId": "d320029ad1a23be2f4bce117fd321cbd23a2014b"
+      },
+      {
+        "debugFiles": [],
+        "state": "matched",
+        "currentBuildId": "5b8d3de442de987b24d0e3679533068f2ae62497",
+        "module": "/usr/lib/libstdc++.so.6.0.36",
+        "capturedBuildId": "5b8d3de442de987b24d0e3679533068f2ae62497"
+      }
+    ],
+    "target": {
+      "birth": 3946051,
+      "pid": 404503
+    },
+    "perfVersion": "perf version 7.2.11-1",
+    "sourceKind": "nativeStackSamples",
+    "host": {
+      "birth": 3945549,
+      "pid": 404231
+    },
+    "event": "cpu-clock:u",
+    "createdMs": 1792798113006,
+    "estimatedRawBytes": 19600380,
+    "threadsGained": [],
+    "omittedStderrBytes": 0,
+    "owner": "workspace-2"
+  },
+  "sourceFilesSha256": {
+    "src/components/panels/ProfilerPanel.tsx": "55cd9b4ebbfb491cc7e46314d563a159903c91e15b62e02fffb3f2b9eb99e0ab",
+    "src/components/panels/PerfPanel.tsx": "27db0bb9c44950b1d10929a9dd69c294c474f9057e41bae8a9ea35ce645ca08c",
+    "src/components/panels/MetricImportPanel.tsx": "b30f96899646b592e210472837b294d873fc4d4f41f5ccbaca1e9cf4160f8fb9",
+    "src/store/perfStore.ts": "41b9c7cd30041ef6ecb0647e514b4d429af34d09932230e3479f5fce027fae3b",
+    "src/store/metricStore.ts": "30141bc2f5b9b9e39bc384f627c6c5b0f89614226c94636ed0a278af3d2d2b26",
+    "src/types/profileSource.ts": "dcb8ab98f307c384fc5d9e4f12f83d8438803c6b2c41a394b4976e18410d3ac1",
+    "src/assets/styles/index.css": "775a6d7a50538fbe0eb3c57364fcbf4d8017e87f23428b7cee410e993e2673af",
+    "src-tauri/src/commands/metrics.rs": "b1f1f22c371b381d7cb52eea78eafaedcedb2a87c42732e9693268577746637a",
+    "src-tauri/src/metric_csv.rs": "f54f86ae539e17c432090c6bef71aa158d8fef72db3d18d5619f5910d40de896"
+  },
+  "scope": "Ordinary desktop through XWayland, embedded debug build; scripted controls, no human or release-performance acceptance",
+  "evidenceDirectory": "/home/skira24/.codex/worktrees/9b33/Craidd-Studio/test-results/ui/2026-10-23T23-28-21-007Z/profiler-analysis"
+}

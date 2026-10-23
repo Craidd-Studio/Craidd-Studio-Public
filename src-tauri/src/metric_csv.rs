@@ -731,6 +731,8 @@ pub struct Row {
     pub line: u32,
     pub x: f64,
     pub cells: Vec<serde_json::Value>,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub truncated_columns: Vec<usize>,
 }
 impl Table {
     pub fn row(&self, i: usize) -> Result<Row, String> {
@@ -739,6 +741,7 @@ impl Table {
         }
         Ok(Row {
             index: i,
+            truncated_columns: Vec::new(),
             line: self.lines[i],
             x: self.x(i),
             cells: (0..self.values.len())
@@ -746,6 +749,53 @@ impl Table {
                 .collect(),
         })
     }
+}
+/// Bounded original rows for the editor table. Never materialize the entire file in IPC.
+pub fn page(t: &Table, start: usize, count: usize) -> Result<Vec<Row>, String> {
+    if count == 0 || count > 100 || start > t.lines.len() {
+        return Err("Row pages allow 1–100 rows inside the retained range".into());
+    }
+    (start..start.saturating_add(count).min(t.lines.len()))
+        .map(|i| {
+            let mut row = t.row(i)?;
+            for (index, cell) in row.cells.iter_mut().enumerate() {
+                if let serde_json::Value::String(text) = cell {
+                    if text.chars().count() > 160 {
+                        *text = text.chars().take(160).collect::<String>() + "…";
+                        row.truncated_columns.push(index);
+                    }
+                }
+            }
+            Ok(row)
+        })
+        .collect()
+}
+/// Time axes are validated monotonic; ordinal axes use the same lower-bound search.
+pub fn nearest(t: &Table, start: usize, end: usize, x: f64) -> Result<usize, String> {
+    let end = end.min(t.lines.len());
+    if !x.is_finite() || start >= end {
+        return Err("Invalid point selection range".into());
+    }
+    let (mut lo, mut hi) = (start, end);
+    while lo < hi {
+        let mid = lo + (hi - lo) / 2;
+        if t.x(mid) < x {
+            lo = mid + 1;
+        } else {
+            hi = mid;
+        }
+    }
+    if lo == start {
+        return Ok(start);
+    }
+    if lo == end {
+        return Ok(end - 1);
+    }
+    Ok(if (t.x(lo) - x).abs() < (t.x(lo - 1) - x).abs() {
+        lo
+    } else {
+        lo - 1
+    })
 }
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]

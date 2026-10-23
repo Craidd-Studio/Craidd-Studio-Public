@@ -6,6 +6,8 @@ import { goldBenchmarks, resolveGoldBenchmark, resolveProfileScope, recordingLab
 import { useGold } from "../../store/goldStore";
 import { useSolution } from "../../store/solutionStore";
 import { useMetrics } from "../../store/metricStore";
+import { usePerf } from "../../store/perfStore";
+import PerfPanel from "./PerfPanel";
 import MetricImportPanel from "./MetricImportPanel";
 
 const bytes = (n: number) => n >= 1048576 ? `${(n / 1048576).toFixed(2)} MiB` : n >= 1024 ? `${(n / 1024).toFixed(1)} KiB` : `${n} B`;
@@ -101,13 +103,16 @@ function CaptureGraph({ label, hits, value, format, color }: {
 export default function ProfilerPanel({ expanded = false }: { expanded?: boolean }) {
   const active = useMetrics(s => s.active) && expanded;
   const setActive = useMetrics(s => s.setActive);
+  const perf = usePerf(s => s.active);
+  const setPerf = (value: boolean) => usePerf.getState().set({active:value});
   return <div className="profiler-source-host" aria-label={expanded ? "Profiler editor" : "Profiler sidebar"}>
-    {expanded && <nav className="profiler-source-picker" aria-label="Profiler sources">
-      <button aria-pressed={!active} onClick={() => setActive(false)}>Process / Gold</button>
-      <button aria-pressed={active} onClick={() => setActive(true)}>Imported metrics</button>
-    </nav>}
+    <nav className="profiler-source-picker" aria-label="Profiler sources">
+      <button aria-pressed={!active && !perf} onClick={() => {setActive(false);setPerf(false);}}>Process / Gold</button>
+      <button aria-pressed={perf && !active} onClick={() => {setActive(false);setPerf(true);}}>CPU sampling</button>
+      {expanded && <button aria-pressed={active} onClick={() => {setActive(true);setPerf(false);}}>Imported metrics</button>}
+    </nav>
     {!expanded && <div className="profiler-host-actions"><button onClick={() => { setActive(false); openProfilerWorkspace(); }}>Open in Editor Panel</button><button onClick={() => { setActive(true); openProfilerWorkspace(); }}>Open metric imports</button></div>}
-    {active ? <MetricImportPanel /> : <ProcessProfilerPanel expanded={expanded} />}
+    {active ? <MetricImportPanel /> : perf ? <PerfPanel expanded={expanded} /> : <ProcessProfilerPanel expanded={expanded} />}
   </div>;
 }
 

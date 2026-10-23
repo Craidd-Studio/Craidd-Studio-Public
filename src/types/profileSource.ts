@@ -16,6 +16,6 @@ export interface MetricSource {
   bytesRead: number; totalBytes: number; tables: MetricMetadata[]; rows: number[]; joins: MetricJoin[];
   memoryBytes: number; maxMemoryBytes: number; maxRows: number; maxFileBytes: number; maxSets: number;
 }
-export interface MetricRow { index: number; line: number; x: number; cells: (number | string | null)[] }
+export interface MetricRow { truncatedColumns?: number[]; index: number; line: number; x: number; cells: (number | string | null)[] }
 export interface MetricInspection { row: MetricRow; companions: { table: number; state: string; row: MetricRow | null }[] }
 export interface MetricGraph { column: number; points: { x: number; until: number; min: number; max: number }[]; start: number; end: number; xStart: number; xEnd: number }

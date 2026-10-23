@@ -529,4 +529,35 @@ mod tests {
         assert_eq!(copy.tables[0].meta.source_id, source);
         fs::remove_dir_all(d).unwrap();
     }
+    #[test]
+    fn editor_pages_and_point_selection_keep_original_irregular_time_rows() {
+        let (d,mut t)=parse("elapsed_s,value_ms,note\n0,1,a\n0.1,8,b\n40,9,c\n90,2,d\n");
+        t.interpret(t.meta.columns.clone(),Axis{kind:"elapsed".into(),column:Some(0),window_seconds:None}).unwrap();
+        assert_eq!(csv::nearest(&t,0,4,39.9).unwrap(),2);
+        assert_eq!(csv::nearest(&t,1,3,90.).unwrap(),2);
+        assert_eq!(csv::nearest(&t,1,3,-3.).unwrap(),1);
+        assert!(csv::nearest(&t,0,4,f64::NAN).is_err());
+        assert!(csv::nearest(&t,4,4,0.).is_err());
+        let rows=csv::page(&t,2,50).unwrap();
+        assert_eq!(rows.len(),2); assert_eq!(rows[0].index,2);assert_eq!(rows[0].line,4);
+        assert_eq!(rows[0].cells[2],"c");assert_eq!(rows[0].x,40.);
+        assert!(csv::page(&t,0,101).is_err());assert!(csv::page(&t,0,0).is_err());assert!(csv::page(&t,5,1).is_err());
+        assert!(csv::page(&t,4,1).unwrap().is_empty());
+        assert_eq!(t.meta.axis.window_seconds,None);
+        fs::remove_dir_all(d).unwrap();
+    }
+
+    #[test]
+    fn page_text_is_bounded_without_changing_original_row_cells() {
+        let text="界".repeat(300);
+        let (d,t)=parse(&format!("value,note\n1,{text}\n"));
+        let rows=csv::page(&t,0,1).unwrap();
+        assert_eq!(rows[0].cells[1].as_str().unwrap().chars().count(),161);
+        assert_eq!(rows[0].truncated_columns,vec![1]);
+        assert!(t.row(0).unwrap().truncated_columns.is_empty());
+        assert!(rows[0].cells[1].as_str().unwrap().ends_with('…'));
+        assert_eq!(t.row(0).unwrap().cells[1],text);
+        fs::remove_dir_all(d).unwrap();
+    }
+
 }

@@ -15,19 +15,19 @@ The [results](gr-001-m1-results.md) describe supported CSV syntax and limits.
    into a disposable folder. Use **Import CSV files…** to select both. Check
    picker, keyboard focus, source label and progress/error clarity.
 3. Check main coverage: **5 retained rows, 2 invalid records, 1 unsupported
-   multiline record and 1 empty cell**. Open diagnostics. Continuation text must
+   multiline record and 1 empty cell**. Open **Import issues**. Continuation text must
    never become the fake `999` row. Companion coverage is 3 retained rows.
-4. Choose `p99_ms`. The axis initially says **ordinal**, and duration is unknown.
+4. In the Columns pane, select `p99_ms` to plot it. The axis initially says **ordinal**, and duration is unknown.
    Inspect retained row 2: `elapsed_s=1`, `p99_ms=70`, `objects=44`, `note=slow`.
    Row 5 preserves the quoted text `last, quoted`.
-5. In **Interpretation and joins**, choose elapsed time using `elapsed_s`.
+5. In **Column meanings** (also reachable through **Interpretation and joins**), choose elapsed time using `elapsed_s`.
    Leave duration blank first; spacing must not declare a window. Set duration
    to 1 second and `p99_ms` meaning to **window statistic**, then apply. Check
    readable axis/units and declared-window display.
 6. Declare an exact companion join: main `elapsed_s` ↔ companion `time_s`.
    Inspect row 2: companion `section_ms=60`. Inspect row 3: companion is unjoined.
    The different physical row order must not pair files by position.
-7. Use **Find worst windows / largest values**. The highest percentile is 70;
+7. Open **Largest values**, rank by `p99_ms`, and use **Find worst windows / largest values**. The highest percentile is 70;
    jump to that row. Pan, zoom, switch series and inspect another row. Check
    labels, responsiveness and keyboard focus at your normal display scale.
 8. Open source/text code, then return using **Open metric imports**. The selected
@@ -36,7 +36,7 @@ The [results](gr-001-m1-results.md) describe supported CSV syntax and limits.
 9. With a numeric join tolerance declared, try incompatible units on one key.
    The edit must fail clearly without altering the saved rule. Correct it and
    retry; the error must clear. Also try a missing import path, then a valid one.
-10. Check the displayed snapshot scope. Save a **new** `.crmetrics` artifact with
+10. Check the snapshot scope in **File details**. Save a **new** `.crmetrics` artifact with
     the native chooser. Change an import unit afterwards; the saved snapshot
     must keep the old interpretation. Producer CSV bytes must remain unchanged.
 11. Close Craidd. Move the **copied** CSV fixtures elsewhere. Restart and use
@@ -53,5 +53,5 @@ not sign off those aspects. M2/M3 and perf are outside this checklist.
 
 ---
 
-*Last updated: 20 October 2026. Author(s): ShinkuKira21.*
+*Last updated: 24 October 2026. Author(s): ShinkuKira21.*
 *This document is a record.*

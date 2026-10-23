@@ -1,8 +1,8 @@
 # Imported metric inspection in the Profiling editor
 
 **Roadmap track:** Phase 3.5 profiling.
-**Status:** Proposed design, 22 October 2026. The supplied image is a candidate direction, not approved implementation or public-release acceptance. UI work remains on hold.
-**Scope:** GR-001 imported CSV inspection in the existing **Profiling** editor tab. Standard process/Gold profiling retains its existing sidebar and editor hosts. GR-002 capture controls and trees require their own reviewed surface.
+**Status:** Direction authorized for implementation on 23 October 2026. The initial chart-first implementation is on the local UI branch; [delivery and remaining gates](revisions/profiler-analysis-ui-results.md) are recorded separately. Human/public-release acceptance remains open.
+**Scope:** GR-001 imported CSV inspection in the existing **Profiling** editor tab. Standard process/Gold profiling retains its existing sidebar and editor hosts. GR-002 capture controls and trees follow the [analysis interface design](design-profiler-analysis-ui.md).
 **Companions:** [Source contract](design-profile-source-contract.md), [workspace hosts](design-profiler-workspace-modes.md), [scopes](design-profiler-scopes.md), [GR-001 decisions](revisions/implementation-decisions.md), [human acceptance](revisions/gr-001-m1-human-acceptance.md).
 
 ## Candidate and assessment
@@ -133,11 +133,9 @@ cross-session alignment and comparison are not added by this visual proposal.
 | Human usability | User can find a spike, inspect original and companion data, explain axes/units/coverage and reopen the inspection unaided |
 
 Report PASS / FAIL / PARTIAL / BLOCKED / NOT TESTED separately. An automated
-click path or attractive screenshot does not pass the human gate. Before code,
-review the final host, responsive layout, statistical labels and interaction
-states with the user. GR-002's accepted backend checkpoint approves no UI.
+click path or attractive screenshot does not pass the human gate. The user subsequently authorized implementation using this direction. The delivered slice uses bounded row pages and explicit row-range controls; the candidate's miniature overview and descriptive selection-summary cards remain proposed. Report these differences, and retain human acceptance as an independent gate.
 
 ---
 
-*Last updated: 22 October 2026. Author(s): ShinkuKira21.*
+*Last updated: 24 October 2026. Author(s): ShinkuKira21.*
 *This document is a design.*

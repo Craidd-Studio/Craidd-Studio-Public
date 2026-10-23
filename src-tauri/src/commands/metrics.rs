@@ -70,6 +70,19 @@ pub enum Request {
         table: usize,
         row: usize,
     },
+    Page {
+        id: String,
+        table: usize,
+        start: usize,
+        count: usize,
+    },
+    Nearest {
+        id: String,
+        table: usize,
+        start: usize,
+        end: usize,
+        x: f64,
+    },
     Graph {
         id: String,
         table: usize,
@@ -253,6 +266,8 @@ impl MetricManager {
             | Request::Cancel { id }
             | Request::Dispose { id }
             | Request::Row { id, .. }
+            | Request::Page { id, .. }
+            | Request::Nearest { id, .. }
             | Request::Graph { id, .. }
             | Request::Worst { id, .. }
             | Request::Interpret { id, .. }
@@ -321,6 +336,26 @@ impl MetricManager {
             Request::Row { table: i, row, .. } => Ok(
                 serde_json::json!({"row":table(i)?.row(row)?,"companions":csv::companions(data,i,row,&job.joins.lock().map_err(|e|e.to_string())?)?}),
             ),
+            Request::Page {
+                table: i,
+                start,
+                count,
+                ..
+            } => {
+                serde_json::to_value(csv::page(table(i)?, start, count)?).map_err(|e| e.to_string())
+            }
+            Request::Nearest {
+                table: i,
+                start,
+                end,
+                x,
+                ..
+            } => {
+                let row = csv::nearest(table(i)?, start, end, x)?;
+                Ok(
+                    serde_json::json!({"row":table(i)?.row(row)?,"companions":csv::companions(data,i,row,&job.joins.lock().map_err(|e|e.to_string())?)?}),
+                )
+            }
             Request::Graph {
                 table: i,
                 column,

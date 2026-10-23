@@ -55,3 +55,8 @@ workspaces/profiling-perf-backend/target/
 workspaces/profiling-perf-managed/bin/
 workspaces/profiling-perf-managed/obj/
 workspaces/profiling-perf-managed/__pycache__/
+
+!workspaces/profiling-symbol-locations/
+!workspaces/profiling-embedded-mono/
+workspaces/profiling-symbol-locations/__pycache__/
+workspaces/profiling-embedded-mono/__pycache__/
