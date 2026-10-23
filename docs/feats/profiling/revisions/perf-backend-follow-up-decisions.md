@@ -49,7 +49,12 @@ The [follow-up results](perf-backend-follow-up-results.md) record the completed 
    If a real reuse cannot be induced safely and repeatably, label that gate
    BLOCKED/PARTIAL with the exact limitation, separate from stale-ID tests.
 
-Large-symbol scale stays deferred until these gates pass. Each result needs
+On 23 October the user accepted the measured PASS gates and live PID reuse as
+BLOCKED, retained the normal .NET naming FAIL as a known limitation, and
+explicitly released large-symbol qualification from those two holds. One
+fixture-only W^X-off .NET diagnostic was authorized, with no product workaround.
+The [scale/diagnostic record](perf-scale-and-dotnet-diagnostic-results.md) contains
+its outcome and the 200,000-function measurements. Each result needs
 PASS / FAIL / PARTIAL / BLOCKED / NOT TESTED, machine, perf version, build and
 fixture. Timings under capture are not treated as unperturbed measurements
 before the overhead gate. Keep commits local; no push, merge, sysctl/capability
@@ -58,5 +63,5 @@ is documentation only and does not release the UI hold.
 
 ---
 
-*Last updated: 22 October 2026. Author(s): ShinkuKira21.*
+*Last updated: 23 October 2026. Author(s): ShinkuKira21.*
 *This document is a design.*

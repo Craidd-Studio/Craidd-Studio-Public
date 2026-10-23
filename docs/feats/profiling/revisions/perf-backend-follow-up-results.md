@@ -8,7 +8,9 @@ The [accepted decisions](perf-backend-follow-up-decisions.md) exclude flight
 recording from this release. Its [many-thread matrix](gr-002-many-thread-retention.md)
 remains evidence. The [metric-inspection editor candidate](../design-metric-inspection-editor.md)
 is documented separately; UI work remains on hold. Large-symbol qualification
-has **not** started because the required gates below are not all passing.
+had **not** started at this 22 October checkpoint. On 23 October the user
+accepted the environmental block and .NET-specific failure as separate from
+scale qualification; the [later scale/diagnostic record](perf-scale-and-dotnet-diagnostic-results.md) supersedes that hold. Normal .NET naming still FAILS.
 
 ## Machine, builds and evidence
 
@@ -177,5 +179,5 @@ gates. Build/reproduction commands are in the linked fixture READMEs.
 
 ---
 
-*Last updated: 22 October 2026. Author(s): ShinkuKira21.*
+*Last updated: 23 October 2026. Author(s): ShinkuKira21.*
 *This document is a record.*

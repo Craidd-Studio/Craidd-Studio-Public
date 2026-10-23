@@ -61,7 +61,19 @@ real adapter. Private module/debug substitutions pass after fixing missing
 separate-debug candidate identity reporting. A debug mismatch conservatively
 withholds module names/source and marks PARTIAL. Live PID reuse stays BLOCKED
 within ordinary-user/no-policy-change constraints; stale-ID tests are distinct.
-Large-symbol scale remains deferred because prerequisites do not all pass.
+The user accepted reuse as BLOCKED and authorized large-symbol scale despite
+the .NET-specific FAIL. The [23 October scale/diagnostic record](../feats/profiling/revisions/perf-scale-and-dotnet-diagnostic-results.md)
+now records 200,000 generated functions with matching separate debug info,
+20/20 sampled hot leaves named with source lines, two optimized captures and
+two fresh-process reopens without loss. Decoder symbolization/DWARF/parser
+wall is 225–275 ms plus 452–503 ms identity checks; parser CPU 4–5 ms. Observed
+aggregate decoder peak RSS/PSS is 82.44/68.57 MiB across the two runs, with
+separate baseline and kernel high-water scopes recorded. Existing IPC remains
+responsive in a real debug Tauri/Xvfb window; no new profiling UI is built.
+
+Exactly one authorized .NET diagnostic with `DOTNET_EnableWriteXorExecute=0`
+resolved 100% of fixture leaf weight and removed doublemapper mappings. The
+normal .NET gate remains FAIL; no product workaround or automatic retry.
 Flame graphs and full JIT delivery are deferred. M2 then M3 remain approved but
 wait behind the timed in-IDE slice.
 
@@ -71,14 +83,16 @@ not an approved replacement shell or implementation. Statistical labels, axes,
 linked selection, responsive layout and accessibility still need review.
 
 Still required: UI design approval and implementation, live Profile only IPC
-flow, actual window-close/IDE-exit desktop tests, live PID-reuse qualification,
-a second perf version, full decoder memory qualification and human usability. Core close/shutdown tests are not desktop
+flow through human-facing capture controls, actual window-close/IDE-exit desktop
+tests, another perf version, memory at maximum retention and human usability.
+Live PID reuse remains an accepted environmental block, with stale-incarnation
+checks retained; it is not a reason to hold the other work. Core close/shutdown tests are not desktop
 acceptance. Do not fix M1's separate whole-IDE memory baseline in this slice.
 
 ## Next task and opening prompt
 
-Review the documented candidate with the user before changing any UI. Do not
-start large-symbol work while prerequisite gates remain failed/blocked. Once
+Review the documented candidate with the user before changing any UI. The
+authorized large-symbol qualification is complete within its stated scope. Once
 UI implementation is explicitly released from hold, implement the approved timed-capture surface using the existing backend, preserving CSV's
 editor-only host and standard process/Gold's sidebar/editor support. Run and
 report the remaining gates individually. Keep all commits local until the user
@@ -89,11 +103,13 @@ reports human acceptance.
 > this handoff's linked decisions/results. Preserve dirty M1 usability records.
 > The backend is a qualified checkpoint, not a delivered UI. Review my ChatGPT
 > UI design before implementation; retain honest clocks, coverage and loss.
-> Read the follow-up report: .NET naming FAILS and live PID reuse is BLOCKED.
+> Read the follow-up and 23 October scale report: normal .NET naming FAILS,
+> its one W^X-off diagnostic passes, and live PID reuse is accepted BLOCKED.
 > UI stays on hold; do not push or merge. Flight recording is excluded from this
-> release. Large symbols, full JIT delivery, flame graphs and M2/M3 wait.
+> release. The 200k-function fixture passes within scope; full JIT delivery,
+> flame graphs and M2/M3 wait.
 
 ---
 
-*Last updated: 22 October 2026. Author(s): ShinkuKira21.*
+*Last updated: 23 October 2026. Author(s): ShinkuKira21.*
 *This document is a record.*

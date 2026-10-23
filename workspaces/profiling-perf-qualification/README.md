@@ -63,7 +63,8 @@ reporting test passes. `analyse.py` is version-specific qualification tooling,
 not a production parser.
 
 Flight-recorder product delivery, JIT, symbol-scale, debugger coexistence and
-desktop UI are outside this fixture. The overwrite experiment approves no
+desktop UI are outside the original fixture. Later scale evidence is separate
+below; it does not add profiler UI. The overwrite experiment approves no
 flight-recorder product scope. Results live in the
 [qualification report](../../docs/feats/profiling/revisions/perf-qualification-results.md).
 
@@ -81,7 +82,7 @@ PYTHONDONTWRITEBYTECODE=1 python3 workspaces/profiling-perf-qualification/many_t
 PYTHONDONTWRITEBYTECODE=1 python3 workspaces/profiling-perf-qualification/many_thread_qualification.py capture retention --build /tmp/new-many-build --output /tmp/new-many-ring --workers 16 --frequency 99 --pages 4 --seconds 8 --unwinder fp
 ```
 
-The library has 256 generated functions plus an entry, not the deferred
+The library has 256 generated functions plus an entry, not the separate
 200,000-symbol fixture and not a Unity/IL2CPP artifact. All selected 16/32
 workers remain busy; the waiting main is excluded from the explicit TID list.
 Repeat retention serially for 16/32 workers, 99/999 Hz and 1/4/16 data pages.
@@ -91,7 +92,42 @@ wrap; unfilled histories are lower bounds. A direct read-only owned-perf ring
 header probe returned EIO and is recorded as unavailable, never replaced with
 invented counters. Signals still address only the owned collector.
 
+## 23 October: 200,000 generated functions and existing-IPC independence
+
+The [scale report](../../docs/feats/profiling/revisions/perf-scale-and-dotnet-diagnostic-results.md)
+and `evidence-2026-10-23-scale.json` retain source/binary/raw hashes, exact
+commands, native memory/status samples and one actual Tauri debug/Xvfb run.
+Use installed tools as the ordinary user and fresh absolute output directories:
+
+```sh
+cargo build --offline --release --manifest-path workspaces/profiling-perf-backend/Cargo.toml
+PYTHONDONTWRITEBYTECODE=1 python3 workspaces/profiling-perf-qualification/large_symbol_scale.py build --output /tmp/new-scale-build
+PYTHONDONTWRITEBYTECODE=1 python3 workspaces/profiling-perf-qualification/large_symbol_scale.py measure --build /tmp/new-scale-build --harness workspaces/profiling-perf-backend/target/release/craidd-perf-backend-fixture --output /tmp/new-scale-native
+PYTHONDONTWRITEBYTECODE=1 python3 workspaces/profiling-perf-qualification/measure_highwater.py --output /tmp/new-scale-highwater.json python3 workspaces/profiling-perf-qualification/large_symbol_scale.py measure --build /tmp/new-scale-build --harness workspaces/profiling-perf-backend/target/release/craidd-perf-backend-fixture --output /tmp/new-scale-native-repeat
+npm run test:ui:build
+CRAIDD_UI_APP="$PWD/src-tauri/target/debug/craidd-studio" xvfb-run -a -s '-screen 0 1440x1050x24' node workspaces/profiling-perf-qualification/large_symbol_ui.mjs /tmp/new-scale-build /tmp/new-scale-ui
+```
+
+The build uses 40 shards plus an entry, two compiler jobs, a runtime-loaded
+mostly no-FP library and a matching separate debug file. `nm` verifies 200,000
+exported generated functions at distinct addresses. Twenty four-function hot
+chains span that inventory; it is not a 200,000-node sampled tree.
+
+Native measurements use three-second 99 Hz DWARF8K captures and a fresh-process
+reopen. The requested 10 ms sampler follows only the backend/analysis children,
+recording RSS/PSS/VmHWM; sample gaps and peaks can be missed. `wait4` separately
+records the largest waited-for process high-water RSS, **not a summed tree
+peak**. No GNU time dependency or installation is required. Both targets exit
+through stdin, and perf alone receives collector Stop.
+
+The actual Tauri trial calls existing profiling/perf IPC and samples webview
+callbacks during `parsing`. It uses the existing isolated-home desktop harness;
+no user IDE window or new profiling interface is an automation target. The
+reported 100 ms stall guard is a fixture check, not public-release UI acceptance.
+Run workload measurements serially; caches are not flushed. This qualifies one
+installed tool version and a constructed native workload only.
+
 ---
 
-*Last updated: 20 October 2026. Author(s): ShinkuKira21.*
+*Last updated: 23 October 2026. Author(s): ShinkuKira21.*
 *This document is a record.*

@@ -68,11 +68,12 @@ the user's ChatGPT design. Keep commits local until human acceptance.
 Flight recording is **excluded from this release**, following the measured
 16/32-thread matrix and FP/DWARF coverage/storage trade-offs.
 [Accepted follow-up decisions](perf-backend-follow-up-decisions.md) require matched
-overhead, perf-map name qualification and remaining backend gates next. Large
-symbol scale waits for those gates; flame graphs remain deferred. M2 live CSV
+overhead, perf-map name qualification and remaining backend gates. On 23 October
+the user accepted their scoped outcomes and authorized large-symbol work despite
+the normal .NET FAIL and accepted reuse BLOCKED. The [scale/diagnostic record](perf-scale-and-dotnet-diagnostic-results.md) keeps those gates separate. Flame graphs remain deferred. M2 live CSV
 follow and M3 mapping/comparison still wait behind GR-002.
 
 ---
 
-*Last updated: 22 October 2026. Author(s): ShinkuKira21.*
+*Last updated: 23 October 2026. Author(s): ShinkuKira21.*
 *This document is a design.*

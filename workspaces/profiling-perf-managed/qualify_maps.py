@@ -46,13 +46,18 @@ def main():
     p.add_argument('--harness', type=Path, required=True)
     p.add_argument('--output', type=Path, required=True)
     p.add_argument('--frequency', type=int, default=99)
+    p.add_argument('--runtime', choices=['dotnet','mono','both'], default='both')
+    p.add_argument('--map', dest='map_mode', choices=['enabled','disabled','both'], default='both')
+    p.add_argument('--diagnostic-disable-wx', action='store_true', help='One explicitly requested .NET enabled-map diagnostic; never a product setting')
     args = p.parse_args()
+    if args.diagnostic_disable_wx and (args.runtime != 'dotnet' or args.map_mode != 'enabled'):
+        p.error('W^X diagnostic requires --runtime dotnet --map enabled')
     args.output.mkdir(parents=True, exist_ok=False)
     result = {'machine': platform.node(), 'kernel': platform.release(), 'uid': os.geteuid(),
               'perfVersion': subprocess.check_output(['perf', '--version'], text=True).strip(),
               'harness': fingerprint(args.harness), 'sourceFiles': [fingerprint(Path(__file__)), fingerprint(Path(__file__).parent / 'Program.cs'), fingerprint(Path(__file__).parents[2] / 'src-tauri/src/perf_capture.rs'), fingerprint(Path(__file__).parents[2] / 'src-tauri/src/perf_model.rs')], 'fixture': [fingerprint(args.build / 'dotnet/ManagedPerfFixture.dll'), fingerprint(args.build / 'ManagedPerfFixture.exe')], 'runtimeVersions': {'dotnetSdk': subprocess.check_output(['dotnet','--version'], text=True).strip(), 'dotnetRuntimes': subprocess.check_output(['dotnet','--list-runtimes'], text=True), 'mono': subprocess.check_output(['mono','--version'], text=True)}, 'cases': []}
-    for runtime in ['dotnet', 'mono']:
-        for enabled in [False, True]:
+    for runtime in (['dotnet','mono'] if args.runtime == 'both' else [args.runtime]):
+        for enabled in ([False,True] if args.map_mode == 'both' else [args.map_mode == 'enabled']):
             case = {'runtime': runtime, 'mapEnabled': enabled}
             result['cases'].append(case)
             if not shutil.which(runtime):
@@ -64,8 +69,12 @@ def main():
                    'DOTNET_PerfMapEnabled': '1' if enabled else '0', 'DEBUGINFOD_URLS': '', 'LC_ALL': 'C'}
             env.pop('COMPlus_PerfMapEnabled', None)
             env.pop('MONO_ENV_OPTIONS', None)
+            if args.diagnostic_disable_wx:
+                env['DOTNET_EnableWriteXorExecute'] = '0'
+                env.pop('COMPlus_EnableWriteXorExecute', None)
+                case['diagnosticOnly'] = True
             command = ['dotnet', str(args.build / 'dotnet/ManagedPerfFixture.dll')] if runtime == 'dotnet' else ['mono', *(['--jitmap'] if enabled else []), str(args.build / 'ManagedPerfFixture.exe')]
-            case['command'], case['environmentOverrides'] = command, {k: env[k] for k in ['DOTNET_PerfMapEnabled', 'DEBUGINFOD_URLS']}
+            case['command'], case['environmentOverrides'] = command, {k: env[k] for k in ['DOTNET_PerfMapEnabled', 'DEBUGINFOD_URLS', 'DOTNET_EnableWriteXorExecute'] if k in env}
             with (folder / 'target.log').open('w') as log:
                 target = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=log, stderr=subprocess.STDOUT, text=True, env=env)
                 try:
@@ -82,6 +91,9 @@ def main():
                     map_path = Path('/tmp/perf-%d.map' % target.pid)
                     case['mapBeforeCapture'] = fingerprint(map_path)
                     case['pid'] = target.pid
+                    maps = Path('/proc/%d/maps' % target.pid).read_text()
+                    (folder / 'target.maps').write_text(maps)
+                    case['doublemapperMappings'] = [line for line in maps.splitlines() if 'doublemapper' in line]
                     run = subprocess.run([str(args.harness), 'capture', str(target.pid), str(folder / 'capture'),
                                           str(args.frequency), '2', 'fp'], capture_output=True, text=True, timeout=90)
                     (folder / 'harness.stderr').write_text(run.stderr)
