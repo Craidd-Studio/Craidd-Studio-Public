@@ -91,6 +91,13 @@ pub enum Request {
         columns: Vec<Column>,
         axis: Axis,
     },
+    BulkInterpret {
+        id: String,
+        table: usize,
+        selection: Option<Vec<usize>>,
+        unit: String,
+        meaning: Option<String>,
+    },
     Join {
         id: String,
         rules: Vec<JoinRule>,
@@ -249,6 +256,7 @@ impl MetricManager {
             | Request::Graph { id, .. }
             | Request::Worst { id, .. }
             | Request::Interpret { id, .. }
+            | Request::BulkInterpret { id, .. }
             | Request::Join { id, .. }
             | Request::Save { id, .. } => id,
             _ => unreachable!(),
@@ -335,34 +343,37 @@ impl MetricManager {
                 axis,
                 ..
             } => {
-                if columns.len() != table(i)?.meta.columns.len() {
-                    return Err("Column schema changed".into());
-                }
-                for rule in job
-                    .joins
-                    .lock()
-                    .map_err(|e| e.to_string())?
-                    .iter()
-                    .filter(|r| r.tolerance.is_some())
-                {
-                    let left = if rule.left == i {
-                        &columns
-                    } else {
-                        &table(rule.left)?.meta.columns
-                    };
-                    let right = if rule.right == i {
-                        &columns
-                    } else {
-                        &table(rule.right)?.meta.columns
-                    };
-                    if left[rule.left_column].unit != right[rule.right_column].unit {
-                        return Err("Unit override conflicts with a declared toleranced join; edit or clear that join first".into());
-                    }
-                }
-                data.tables
-                    .get_mut(i)
-                    .ok_or("Unknown file group")?
-                    .interpret(columns, axis)?;
+                apply_interpretation(
+                    data,
+                    &job.joins.lock().map_err(|e| e.to_string())?,
+                    i,
+                    columns,
+                    axis,
+                )?;
+                Ok(serde_json::Value::Null)
+            }
+            Request::BulkInterpret {
+                table: i,
+                selection,
+                unit,
+                meaning,
+                ..
+            } => {
+                let current = table(i)?;
+                let columns = csv::bulk_columns(
+                    &current.meta.columns,
+                    selection.as_deref(),
+                    &unit,
+                    meaning.as_deref(),
+                )?;
+                let axis = current.meta.axis.clone();
+                apply_interpretation(
+                    data,
+                    &job.joins.lock().map_err(|e| e.to_string())?,
+                    i,
+                    columns,
+                    axis,
+                )?;
                 Ok(serde_json::Value::Null)
             }
             Request::Join { rules, .. } => {
@@ -405,6 +416,46 @@ impl MetricManager {
             _ => unreachable!(),
         }
     }
+}
+
+// Shared by individual and bulk edits, so neither can bypass snapshot, axis or join guards.
+fn apply_interpretation(
+    data: &mut Dataset,
+    rules: &[JoinRule],
+    i: usize,
+    columns: Vec<Column>,
+    axis: Axis,
+) -> Result<(), String> {
+    let table = data.tables.get(i).ok_or("Unknown file group")?;
+    if columns.len() != table.meta.columns.len() {
+        return Err("Column schema changed".into());
+    }
+    for rule in rules.iter().filter(|r| r.tolerance.is_some()) {
+        let left = if rule.left == i {
+            &columns
+        } else {
+            &data
+                .tables
+                .get(rule.left)
+                .ok_or("Unknown file group")?
+                .meta
+                .columns
+        };
+        let right = if rule.right == i {
+            &columns
+        } else {
+            &data
+                .tables
+                .get(rule.right)
+                .ok_or("Unknown file group")?
+                .meta
+                .columns
+        };
+        if left[rule.left_column].unit != right[rule.right_column].unit {
+            return Err("Unit override conflicts with a declared toleranced join; edit or clear that join first".into());
+        }
+    }
+    data.tables.get_mut(i).unwrap().interpret(columns, axis)
 }
 
 #[tauri::command]
@@ -606,6 +657,19 @@ mod tests {
             )
             .unwrap_err()
             .contains("conflicts"));
+        assert!(manager
+            .handle(
+                "a",
+                Request::BulkInterpret {
+                    id: id.into(),
+                    table: 0,
+                    selection: Some(vec![0]),
+                    unit: "ms".into(),
+                    meaning: None
+                }
+            )
+            .unwrap_err()
+            .contains("conflicts"));
         let after = wait(&manager, id);
         assert_eq!(after["tables"][0]["columns"][0]["unit"], "s");
         assert_eq!(
@@ -613,6 +677,101 @@ mod tests {
             before["tables"][0]["interpretationRevision"]
         );
         assert_eq!(after["joins"].as_array().unwrap().len(), 1);
+        manager.close("a");
+        std::fs::remove_dir_all(root).unwrap();
+    }
+    #[test]
+    fn bulk_command_is_atomic_and_uses_snapshot_and_join_guards() {
+        let (root, path) = fixture();
+        let manager = MetricManager::default();
+        let start = manager
+            .handle(
+                "a",
+                Request::Start {
+                    paths: vec![path],
+                    snapshot: false,
+                },
+            )
+            .unwrap();
+        let id = start["id"].as_str().unwrap();
+        let before = wait(&manager, id);
+        let snap = root.join("saved.crmetrics");
+        manager
+            .handle(
+                "a",
+                Request::Save {
+                    id: id.into(),
+                    path: snap.to_string_lossy().into(),
+                    ranges: vec![[0, 2]],
+                },
+            )
+            .unwrap();
+        let bytes = std::fs::read(&snap).unwrap();
+        assert!(manager
+            .handle(
+                "a",
+                Request::BulkInterpret {
+                    id: id.into(),
+                    table: 0,
+                    selection: Some(vec![1, 9]),
+                    unit: "us".into(),
+                    meaning: None
+                }
+            )
+            .is_err());
+        assert_eq!(wait(&manager, id)["tables"], before["tables"]);
+        manager
+            .handle(
+                "a",
+                Request::BulkInterpret {
+                    id: id.into(),
+                    table: 0,
+                    selection: Some(vec![1]),
+                    unit: "us".into(),
+                    meaning: Some("window statistic".into()),
+                },
+            )
+            .unwrap();
+        let after = wait(&manager, id);
+        assert_eq!(after["tables"][0]["columns"][1]["unit"], "us");
+        assert_eq!(
+            after["tables"][0]["columns"][0],
+            before["tables"][0]["columns"][0]
+        );
+        assert_eq!(
+            after["tables"][0]["interpretationRevision"]
+                .as_u64()
+                .unwrap(),
+            before["tables"][0]["interpretationRevision"]
+                .as_u64()
+                .unwrap()
+                + 1
+        );
+        let opened = manager
+            .handle(
+                "a",
+                Request::Start {
+                    paths: vec![snap.to_string_lossy().into()],
+                    snapshot: true,
+                },
+            )
+            .unwrap();
+        let saved_id = opened["id"].as_str().unwrap();
+        wait(&manager, saved_id);
+        assert!(manager
+            .handle(
+                "a",
+                Request::BulkInterpret {
+                    id: saved_id.into(),
+                    table: 0,
+                    selection: Some(vec![1]),
+                    unit: "ms".into(),
+                    meaning: None
+                }
+            )
+            .unwrap_err()
+            .contains("immutable"));
+        assert_eq!(std::fs::read(snap).unwrap(), bytes);
         manager.close("a");
         std::fs::remove_dir_all(root).unwrap();
     }

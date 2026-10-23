@@ -1,6 +1,6 @@
 /** Shared envelope only. Payloads keep their own measurement semantics. */
 export type ColumnMeaning = "gauge" | "counter" | "rate" | "window statistic" | "unknown";
-export interface MetricColumn { name: string; numeric: boolean; unit: string; meaning: ColumnMeaning }
+export interface MetricColumn { name: string; numeric: boolean; unit: string; meaning: ColumnMeaning; unitSuggested: boolean; meaningSuggested: boolean }
 export interface MetricAxis { kind: "ordinal" | "elapsed" | "epoch" | "iso8601"; column: number | null; windowSeconds: number | null }
 export interface MetricMetadata {
   sourceId: string;

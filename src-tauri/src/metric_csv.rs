@@ -35,6 +35,10 @@ pub struct Column {
     pub numeric: bool,
     pub unit: String,
     pub meaning: String,
+    #[serde(default)]
+    pub unit_suggested: bool,
+    #[serde(default)]
+    pub meaning_suggested: bool,
 }
 #[derive(Clone, Debug, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -109,12 +113,85 @@ fn number(s: &str) -> Option<f64> {
         // Binary64 charts must not silently round large integer counters.
         .filter(|n| n.fract() != 0. || n.abs() <= 9_007_199_254_740_991.)
 }
-fn unit(name: &str) -> String {
-    ["kb_s", "bytes", "pct", "ms", "us", "hz", "kb", "s"]
-        .iter()
-        .find(|suffix| name.ends_with(&format!("_{suffix}")))
-        .map(|s| s.to_string())
-        .unwrap_or_else(|| "unitless".into())
+fn suggestions(name: &str) -> (Option<String>, bool) {
+    const STATS: &[&str] = &[
+        "mean", "avg", "min", "max", "sum", "total", "p50", "p90", "p95", "p99", "p999",
+    ];
+    const UNITS: &[&str] = &["kb_s", "bytes", "pct", "ms", "us", "hz", "kb", "s"];
+    let literal = name.to_ascii_lowercase();
+    let (base, statistic) = literal
+        .rsplit_once('_')
+        .filter(|(base, suffix)| !base.is_empty() && STATS.contains(suffix))
+        .map_or((literal.as_str(), false), |(base, _)| (base, true));
+    // Stacked statistics and competing unit tokens are ambiguous. Keep the header literal.
+    if statistic
+        && base
+            .rsplit_once('_')
+            .is_some_and(|(_, suffix)| STATS.contains(&suffix))
+    {
+        return (None, false);
+    }
+    let found = UNITS.iter().find_map(|unit| {
+        base.strip_suffix(&format!("_{unit}"))
+            .filter(|prefix| !prefix.trim_matches('_').is_empty())
+            .map(|prefix| (*unit, prefix))
+    });
+    if let Some((unit, prefix)) = found {
+        if prefix.split('_').any(|token| UNITS.contains(&token)) {
+            return (None, false);
+        }
+        return (Some(unit.into()), statistic);
+    }
+    (None, statistic)
+}
+
+/// Build one explicit bulk edit; the caller applies it through the normal atomic
+/// interpretation/join validation. None selects only currently unitless numeric columns.
+pub fn bulk_columns(
+    columns: &[Column],
+    selection: Option<&[usize]>,
+    unit: &str,
+    meaning: Option<&str>,
+) -> Result<Vec<Column>, String> {
+    let unit = unit.trim();
+    if unit.is_empty()
+        || unit.len() > 80
+        || meaning.is_some_and(|m| {
+            !["unknown", "gauge", "counter", "rate", "window statistic"].contains(&m)
+        })
+    {
+        return Err("Choose a nonempty unit (up to 80 bytes) and a valid optional meaning".into());
+    }
+    let indices: Vec<_> = match selection {
+        Some(selected) => selected.to_vec(),
+        None => columns
+            .iter()
+            .enumerate()
+            .filter(|(_, c)| c.numeric && c.unit == "unitless")
+            .map(|(i, _)| i)
+            .collect(),
+    };
+    if indices.is_empty() {
+        return Err("Choose numeric columns, or a group with unitless numeric columns".into());
+    }
+    let mut seen = std::collections::HashSet::new();
+    for &i in &indices {
+        if !seen.insert(i) || !columns.get(i).is_some_and(|c| c.numeric) {
+            return Err(
+                "Bulk selection must contain distinct numeric columns in this file group".into(),
+            );
+        }
+    }
+    let mut result = columns.to_vec();
+    for i in indices {
+        result[i].unit = unit.into();
+        result[i].unit_suggested = false;
+        if let Some(meaning) = meaning {
+            result[i].meaning = meaning.into();
+            result[i].meaning_suggested = false;
+        }
+    }
+    Ok(result)
 }
 // Record boundaries are tracked separately so unsupported multiline records are
 // consumed as ONE rejected record, never shifted into subsequent columns.
@@ -193,7 +270,7 @@ impl Table {
             _ => None,
         }
     }
-    pub fn interpret(&mut self, columns: Vec<Column>, axis: Axis) -> Result<(), String> {
+    pub fn interpret(&mut self, mut columns: Vec<Column>, axis: Axis) -> Result<(), String> {
         if self.meta.snapshot {
             return Err(
                 "Snapshot interpretation is immutable; import the original as a new source to edit"
@@ -213,6 +290,10 @@ impl Table {
             {
                 return Err("Invalid column meaning/unit".into());
             }
+        }
+        for (column, old) in columns.iter_mut().zip(&self.meta.columns) {
+            column.unit_suggested &= old.unit_suggested && column.unit == old.unit;
+            column.meaning_suggested &= old.meaning_suggested && column.meaning == old.meaning;
         }
         let times = self.axis_values_with(&axis, &columns)?;
         self.meta.columns = columns;
@@ -473,11 +554,21 @@ pub fn parse_limited(
             }
             table.meta.columns = header
                 .iter()
-                .map(|name| Column {
-                    name: name.clone(),
-                    numeric: false,
-                    unit: unit(name),
-                    meaning: "unknown".into(),
+                .map(|name| {
+                    let (unit, statistic) = suggestions(name);
+                    Column {
+                        name: name.clone(),
+                        numeric: false,
+                        unit_suggested: unit.is_some(),
+                        unit: unit.unwrap_or_else(|| "unitless".into()),
+                        meaning: if statistic {
+                            "window statistic"
+                        } else {
+                            "unknown"
+                        }
+                        .into(),
+                        meaning_suggested: statistic,
+                    }
                 })
                 .collect();
             kinds = vec![None; header.len()];
@@ -593,6 +684,10 @@ pub fn parse_limited(
     }
     for (column, values) in table.meta.columns.iter_mut().zip(&table.values) {
         column.numeric = matches!(values, Values::Numbers(_));
+        if !column.numeric {
+            column.meaning = "unknown".into();
+            column.meaning_suggested = false;
+        }
     }
     if multiline && table.meta.coverage.unterminated == 0 {
         table.meta.coverage.unterminated += 1;

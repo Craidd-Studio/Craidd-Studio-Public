@@ -309,7 +309,7 @@ select {
 .metric-import-panel button { border-color:#484e59; }
 .metric-settings { border:1px solid #484e59; padding:8px; overflow:auto; }
 .metric-settings fieldset { margin-top:10px; border-top:1px solid #484e59; padding-top:8px; }
-.metric-settings td input { width:80px; }
+.metric-settings td input:not([type="checkbox"]) { width:80px; }
 .metric-row > div { display:flex; justify-content:space-between; gap:12px; padding:3px 0; border-bottom:1px solid #343a43; }
 .metric-row small { color:#98a2af; }
 .metric-chart svg { width:100%; height:150px; }

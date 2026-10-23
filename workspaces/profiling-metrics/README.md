@@ -58,7 +58,33 @@ as native-window lifecycle evidence.
 Full evidence and caveats are in the
 [M1 results](../../docs/feats/profiling/revisions/gr-001-m1-results.md).
 
+## Program-shaped import regression, 23 October
+
+The [new main](fixtures/program-shaped/run.csv) and
+[sections companion](fixtures/program-shaped/run-sections.csv) reproduce middle
+unit tokens (`loop_ms_p99`) and suffixless section values. The slow main Row 3
+has elapsed 2.25; the matching companion is deliberately Row 4. Unit/statistic
+suggestions, one-action bulk interpretation, worst-row context and immutable
+snapshots are covered in the [fix record](../../docs/feats/profiling/revisions/gr-001-m1-program-import-fixes.md)
+and `evidence-2026-10-23-program-defects.json`.
+
+```sh
+cargo test --offline --manifest-path workspaces/profiling-metrics/Cargo.toml
+cargo test --offline --manifest-path src-tauri/Cargo.toml commands::metrics --lib
+node tests/metricRowKey.test.mjs
+npm run test:ui:build
+CRAIDD_TEST_METRIC_DEFECTS=1 GDK_BACKEND=x11 node --test tests/ui/metric-program-defects.test.mjs
+```
+
+The last command uses a disposable real app on the ordinary display; use
+`xvfb-run -a` when explicitly qualifying a virtual display instead. It drives
+the existing import-by-path controls, not the native file chooser. Keep the
+usual isolated harness/ownership rules. `CRAIDD_M1_DEFECT_REPRO=1` is only for
+reproducing the pre-fix build and intentionally expects the defects; it is not
+a normal acceptance mode. Do not treat debug functional evidence as renewed
+million-row release performance or human usability acceptance.
+
 ---
 
-*Last updated: 20 October 2026. Author(s): ShinkuKira21.*
+*Last updated: 23 October 2026. Author(s): ShinkuKira21.*
 *This document is a record.*

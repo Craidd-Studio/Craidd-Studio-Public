@@ -14,6 +14,11 @@ The [23 October scale/diagnostic record](perf-scale-and-dotnet-diagnostic-result
 The [candidate metric-inspection editor design](../design-metric-inspection-editor.md) preserves the user-supplied reference image, editor host, honest metric semantics and public-release acceptance gates; it is not UI implementation approval.
 **Craidd baseline reviewed:** `feat/unity/debug-a-to-p` at `8bac01e`.
 
+The [23 October M1 program-import fixes](gr-001-m1-program-import-fixes.md) cover
+unit/statistic suggestions, bulk column interpretation and worst-row location
+keys. They have separate automated and ordinary-desktop evidence; the layout
+redesign and human public-release acceptance remain outside that checkpoint.
+
 The [accepted implementation decisions](implementation-decisions.md) resolve
 the defaults and stage delivery behind separate M1/M2/M3 reviews. Read the
 [common source contract](../design-profile-source-contract.md) before coding.

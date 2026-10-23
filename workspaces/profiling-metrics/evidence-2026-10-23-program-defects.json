@@ -1,0 +1,994 @@
+{
+  "formatVersion": 1,
+  "date": "2026-10-23",
+  "machine": {
+    "host": "sk27",
+    "kernel": "7.2.11-arch1-1",
+    "cpu": "AMD Ryzen 9 9950X3D 16-Core Processor"
+  },
+  "branch": "codex/profiling-metric-csv-m1",
+  "baselineRevision": "5039abfbf72148dc4a3195bc753113153d77d6a0",
+  "reproduction": {
+    "gate": "PASS",
+    "scope": "Reproduced requested defects before production edits",
+    "binary": {
+      "path": "/home/skira24/.codex/worktrees/9b33/Craidd-Studio/src-tauri/target/debug/craidd-studio",
+      "sha256": "fbc60b11929a4414855b373830d171d37f727413cf373d052fc9c4258b1199f5"
+    },
+    "status": {
+      "state": "complete",
+      "bytesRead": 258,
+      "totalBytes": 258,
+      "tables": [
+        {
+          "originalRange": null,
+          "snapshot": false,
+          "interpretationRevision": 1,
+          "sourceId": "metrics-66055-1:0",
+          "size": 171,
+          "sha256": "501066cd80cc31f6348afef7ad33ed77e4737ce787582c58197a78f894031d2c",
+          "columns": [
+            {
+              "unit": "s",
+              "name": "elapsed_s",
+              "meaning": "unknown",
+              "numeric": true
+            },
+            {
+              "unit": "unitless",
+              "name": "loop_ms_mean",
+              "meaning": "unknown",
+              "numeric": true
+            },
+            {
+              "unit": "unitless",
+              "name": "loop_ms_p95",
+              "meaning": "unknown",
+              "numeric": true
+            },
+            {
+              "unit": "unitless",
+              "name": "loop_ms_p99",
+              "meaning": "unknown",
+              "numeric": true
+            },
+            {
+              "unit": "unitless",
+              "name": "loop_ms_max",
+              "meaning": "unknown",
+              "numeric": true
+            },
+            {
+              "unit": "unitless",
+              "name": "queue_us_p95",
+              "meaning": "unknown",
+              "numeric": true
+            },
+            {
+              "unit": "kb_s",
+              "name": "rx_kb_s",
+              "meaning": "unknown",
+              "numeric": true
+            }
+          ],
+          "axis": {
+            "column": null,
+            "kind": "ordinal",
+            "windowSeconds": null
+          },
+          "schemaSidecar": null,
+          "coverage": {
+            "emptyCells": 0,
+            "retained": 4,
+            "missingColumns": 0,
+            "unsupported": 0,
+            "records": 4,
+            "examples": [],
+            "unterminated": 0,
+            "invalid": 0
+          },
+          "completion": "complete",
+          "modifiedMs": 1792765727151,
+          "generation": 1,
+          "path": "/home/skira24/.codex/worktrees/9b33/Craidd-Studio/workspaces/profiling-metrics/fixtures/program-shaped/run.csv"
+        },
+        {
+          "originalRange": null,
+          "snapshot": false,
+          "interpretationRevision": 1,
+          "sourceId": "metrics-66055-1:1",
+          "size": 87,
+          "sha256": "4ff4426668534f979cf2e1d6d39f78d38544b6152953da6029efcfd738b38ee8",
+          "columns": [
+            {
+              "unit": "s",
+              "name": "elapsed_s",
+              "meaning": "unknown",
+              "numeric": true
+            },
+            {
+              "unit": "unitless",
+              "name": "recv",
+              "meaning": "unknown",
+              "numeric": true
+            },
+            {
+              "unit": "unitless",
+              "name": "update",
+              "meaning": "unknown",
+              "numeric": true
+            },
+            {
+              "unit": "unitless",
+              "name": "send",
+              "meaning": "unknown",
+              "numeric": true
+            },
+            {
+              "unit": "unitless",
+              "name": "other",
+              "meaning": "unknown",
+              "numeric": true
+            }
+          ],
+          "axis": {
+            "column": null,
+            "kind": "ordinal",
+            "windowSeconds": null
+          },
+          "schemaSidecar": null,
+          "coverage": {
+            "emptyCells": 0,
+            "retained": 4,
+            "missingColumns": 0,
+            "unsupported": 0,
+            "records": 4,
+            "examples": [],
+            "unterminated": 0,
+            "invalid": 0
+          },
+          "completion": "complete",
+          "modifiedMs": 1792765727151,
+          "generation": 1,
+          "path": "/home/skira24/.codex/worktrees/9b33/Craidd-Studio/workspaces/profiling-metrics/fixtures/program-shaped/run-sections.csv"
+        }
+      ],
+      "maxMemoryBytes": 536870912,
+      "maxSets": 2,
+      "id": "metrics-66055-1",
+      "maxRows": 2000000,
+      "error": null,
+      "memoryBytes": 851968,
+      "maxFileBytes": 1073741824,
+      "kind": "importedMetrics",
+      "joins": [],
+      "rows": [
+        4,
+        4
+      ],
+      "paths": [
+        "/home/skira24/.codex/worktrees/9b33/Craidd-Studio/workspaces/profiling-metrics/fixtures/program-shaped/run.csv",
+        "/home/skira24/.codex/worktrees/9b33/Craidd-Studio/workspaces/profiling-metrics/fixtures/program-shaped/run-sections.csv"
+      ]
+    },
+    "worstBefore": "Row\tloop_ms_p99\nRow 3\t80\nRow 4\t15\nRow 2\t12\nRow 1\t10",
+    "bulkPresent": false,
+    "fixtureHashes": [
+      "501066cd80cc31f6348afef7ad33ed77e4737ce787582c58197a78f894031d2c",
+      "4ff4426668534f979cf2e1d6d39f78d38544b6152953da6029efcfd738b38ee8"
+    ]
+  },
+  "desktop": {
+    "gate": "PASS",
+    "binary": {
+      "path": "/home/skira24/.codex/worktrees/9b33/Craidd-Studio/src-tauri/target/debug/craidd-studio",
+      "sha256": "940110e12580b3f6c67d69caca0ba51286d7417c6487bbf3a3ecab4eca1b9047"
+    },
+    "fixtureHashes": [
+      "501066cd80cc31f6348afef7ad33ed77e4737ce787582c58197a78f894031d2c",
+      "4ff4426668534f979cf2e1d6d39f78d38544b6152953da6029efcfd738b38ee8"
+    ],
+    "imported": {
+      "state": "complete",
+      "bytesRead": 258,
+      "totalBytes": 258,
+      "tables": [
+        {
+          "originalRange": null,
+          "snapshot": false,
+          "interpretationRevision": 1,
+          "sourceId": "metrics-70484-1:0",
+          "size": 171,
+          "sha256": "501066cd80cc31f6348afef7ad33ed77e4737ce787582c58197a78f894031d2c",
+          "columns": [
+            {
+              "meaning": "unknown",
+              "numeric": true,
+              "meaningSuggested": false,
+              "unit": "s",
+              "name": "elapsed_s",
+              "unitSuggested": true
+            },
+            {
+              "meaning": "window statistic",
+              "numeric": true,
+              "meaningSuggested": true,
+              "unit": "ms",
+              "name": "loop_ms_mean",
+              "unitSuggested": true
+            },
+            {
+              "meaning": "window statistic",
+              "numeric": true,
+              "meaningSuggested": true,
+              "unit": "ms",
+              "name": "loop_ms_p95",
+              "unitSuggested": true
+            },
+            {
+              "meaning": "window statistic",
+              "numeric": true,
+              "meaningSuggested": true,
+              "unit": "ms",
+              "name": "loop_ms_p99",
+              "unitSuggested": true
+            },
+            {
+              "meaning": "window statistic",
+              "numeric": true,
+              "meaningSuggested": true,
+              "unit": "ms",
+              "name": "loop_ms_max",
+              "unitSuggested": true
+            },
+            {
+              "meaning": "window statistic",
+              "numeric": true,
+              "meaningSuggested": true,
+              "unit": "us",
+              "name": "queue_us_p95",
+              "unitSuggested": true
+            },
+            {
+              "meaning": "unknown",
+              "numeric": true,
+              "meaningSuggested": false,
+              "unit": "kb_s",
+              "name": "rx_kb_s",
+              "unitSuggested": true
+            }
+          ],
+          "axis": {
+            "column": null,
+            "kind": "ordinal",
+            "windowSeconds": null
+          },
+          "schemaSidecar": null,
+          "coverage": {
+            "emptyCells": 0,
+            "retained": 4,
+            "missingColumns": 0,
+            "unsupported": 0,
+            "records": 4,
+            "examples": [],
+            "unterminated": 0,
+            "invalid": 0
+          },
+          "completion": "complete",
+          "modifiedMs": 1792765727151,
+          "generation": 1,
+          "path": "/home/skira24/.codex/worktrees/9b33/Craidd-Studio/workspaces/profiling-metrics/fixtures/program-shaped/run.csv"
+        },
+        {
+          "originalRange": null,
+          "snapshot": false,
+          "interpretationRevision": 1,
+          "sourceId": "metrics-70484-1:1",
+          "size": 87,
+          "sha256": "4ff4426668534f979cf2e1d6d39f78d38544b6152953da6029efcfd738b38ee8",
+          "columns": [
+            {
+              "meaning": "unknown",
+              "numeric": true,
+              "meaningSuggested": false,
+              "unit": "s",
+              "name": "elapsed_s",
+              "unitSuggested": true
+            },
+            {
+              "meaning": "unknown",
+              "numeric": true,
+              "meaningSuggested": false,
+              "unit": "unitless",
+              "name": "recv",
+              "unitSuggested": false
+            },
+            {
+              "meaning": "unknown",
+              "numeric": true,
+              "meaningSuggested": false,
+              "unit": "unitless",
+              "name": "update",
+              "unitSuggested": false
+            },
+            {
+              "meaning": "unknown",
+              "numeric": true,
+              "meaningSuggested": false,
+              "unit": "unitless",
+              "name": "send",
+              "unitSuggested": false
+            },
+            {
+              "meaning": "unknown",
+              "numeric": true,
+              "meaningSuggested": false,
+              "unit": "unitless",
+              "name": "other",
+              "unitSuggested": false
+            }
+          ],
+          "axis": {
+            "column": null,
+            "kind": "ordinal",
+            "windowSeconds": null
+          },
+          "schemaSidecar": null,
+          "coverage": {
+            "emptyCells": 0,
+            "retained": 4,
+            "missingColumns": 0,
+            "unsupported": 0,
+            "records": 4,
+            "examples": [],
+            "unterminated": 0,
+            "invalid": 0
+          },
+          "completion": "complete",
+          "modifiedMs": 1792765727151,
+          "generation": 1,
+          "path": "/home/skira24/.codex/worktrees/9b33/Craidd-Studio/workspaces/profiling-metrics/fixtures/program-shaped/run-sections.csv"
+        }
+      ],
+      "maxMemoryBytes": 536870912,
+      "maxSets": 2,
+      "id": "metrics-70484-1",
+      "maxRows": 2000000,
+      "error": null,
+      "memoryBytes": 851968,
+      "maxFileBytes": 1073741824,
+      "kind": "importedMetrics",
+      "joins": [],
+      "rows": [
+        4,
+        4
+      ],
+      "paths": [
+        "/home/skira24/.codex/worktrees/9b33/Craidd-Studio/workspaces/profiling-metrics/fixtures/program-shaped/run.csv",
+        "/home/skira24/.codex/worktrees/9b33/Craidd-Studio/workspaces/profiling-metrics/fixtures/program-shaped/run-sections.csv"
+      ]
+    },
+    "final": {
+      "state": "complete",
+      "bytesRead": 258,
+      "totalBytes": 258,
+      "tables": [
+        {
+          "originalRange": null,
+          "snapshot": false,
+          "interpretationRevision": 2,
+          "sourceId": "metrics-70484-1:0",
+          "size": 171,
+          "sha256": "501066cd80cc31f6348afef7ad33ed77e4737ce787582c58197a78f894031d2c",
+          "columns": [
+            {
+              "meaning": "unknown",
+              "numeric": true,
+              "meaningSuggested": false,
+              "unit": "s",
+              "name": "elapsed_s",
+              "unitSuggested": true
+            },
+            {
+              "meaning": "window statistic",
+              "numeric": true,
+              "meaningSuggested": true,
+              "unit": "ms",
+              "name": "loop_ms_mean",
+              "unitSuggested": true
+            },
+            {
+              "meaning": "window statistic",
+              "numeric": true,
+              "meaningSuggested": true,
+              "unit": "ms",
+              "name": "loop_ms_p95",
+              "unitSuggested": true
+            },
+            {
+              "meaning": "window statistic",
+              "numeric": true,
+              "meaningSuggested": true,
+              "unit": "ms",
+              "name": "loop_ms_p99",
+              "unitSuggested": true
+            },
+            {
+              "meaning": "window statistic",
+              "numeric": true,
+              "meaningSuggested": true,
+              "unit": "ms",
+              "name": "loop_ms_max",
+              "unitSuggested": true
+            },
+            {
+              "meaning": "window statistic",
+              "numeric": true,
+              "meaningSuggested": true,
+              "unit": "us",
+              "name": "queue_us_p95",
+              "unitSuggested": true
+            },
+            {
+              "meaning": "unknown",
+              "numeric": true,
+              "meaningSuggested": false,
+              "unit": "kb_s",
+              "name": "rx_kb_s",
+              "unitSuggested": true
+            }
+          ],
+          "axis": {
+            "column": 0,
+            "kind": "elapsed",
+            "windowSeconds": null
+          },
+          "schemaSidecar": null,
+          "coverage": {
+            "emptyCells": 0,
+            "retained": 4,
+            "missingColumns": 0,
+            "unsupported": 0,
+            "records": 4,
+            "examples": [],
+            "unterminated": 0,
+            "invalid": 0
+          },
+          "completion": "complete",
+          "modifiedMs": 1792765727151,
+          "generation": 1,
+          "path": "/home/skira24/.codex/worktrees/9b33/Craidd-Studio/workspaces/profiling-metrics/fixtures/program-shaped/run.csv"
+        },
+        {
+          "originalRange": null,
+          "snapshot": false,
+          "interpretationRevision": 2,
+          "sourceId": "metrics-70484-1:1",
+          "size": 87,
+          "sha256": "4ff4426668534f979cf2e1d6d39f78d38544b6152953da6029efcfd738b38ee8",
+          "columns": [
+            {
+              "meaning": "unknown",
+              "numeric": true,
+              "meaningSuggested": false,
+              "unit": "s",
+              "name": "elapsed_s",
+              "unitSuggested": true
+            },
+            {
+              "meaning": "window statistic",
+              "numeric": true,
+              "meaningSuggested": false,
+              "unit": "ms",
+              "name": "recv",
+              "unitSuggested": false
+            },
+            {
+              "meaning": "window statistic",
+              "numeric": true,
+              "meaningSuggested": false,
+              "unit": "ms",
+              "name": "update",
+              "unitSuggested": false
+            },
+            {
+              "meaning": "window statistic",
+              "numeric": true,
+              "meaningSuggested": false,
+              "unit": "ms",
+              "name": "send",
+              "unitSuggested": false
+            },
+            {
+              "meaning": "window statistic",
+              "numeric": true,
+              "meaningSuggested": false,
+              "unit": "ms",
+              "name": "other",
+              "unitSuggested": false
+            }
+          ],
+          "axis": {
+            "column": null,
+            "kind": "ordinal",
+            "windowSeconds": null
+          },
+          "schemaSidecar": null,
+          "coverage": {
+            "emptyCells": 0,
+            "retained": 4,
+            "missingColumns": 0,
+            "unsupported": 0,
+            "records": 4,
+            "examples": [],
+            "unterminated": 0,
+            "invalid": 0
+          },
+          "completion": "complete",
+          "modifiedMs": 1792765727151,
+          "generation": 1,
+          "path": "/home/skira24/.codex/worktrees/9b33/Craidd-Studio/workspaces/profiling-metrics/fixtures/program-shaped/run-sections.csv"
+        }
+      ],
+      "maxMemoryBytes": 536870912,
+      "maxSets": 2,
+      "id": "metrics-70484-1",
+      "maxRows": 2000000,
+      "error": null,
+      "memoryBytes": 852000,
+      "maxFileBytes": 1073741824,
+      "kind": "importedMetrics",
+      "joins": [
+        {
+          "leftColumn": 0,
+          "right": 1,
+          "rightColumn": 0,
+          "tolerance": null,
+          "left": 0
+        }
+      ],
+      "rows": [
+        4,
+        4
+      ],
+      "paths": [
+        "/home/skira24/.codex/worktrees/9b33/Craidd-Studio/workspaces/profiling-metrics/fixtures/program-shaped/run.csv",
+        "/home/skira24/.codex/worktrees/9b33/Craidd-Studio/workspaces/profiling-metrics/fixtures/program-shaped/run-sections.csv"
+      ]
+    },
+    "rankedIdentity": [
+      2,
+      3,
+      1,
+      0
+    ],
+    "inspection": {
+      "companions": [
+        {
+          "state": "joined",
+          "row": {
+            "cells": [
+              2.25,
+              4,
+              60,
+              9,
+              7
+            ],
+            "x": 4,
+            "line": 5,
+            "index": 3
+          },
+          "table": 1
+        }
+      ],
+      "row": {
+        "cells": [
+          2.25,
+          25,
+          55,
+          80,
+          95,
+          900,
+          128
+        ],
+        "x": 2.25,
+        "line": 4,
+        "index": 2
+      }
+    },
+    "reopened": {
+      "state": "complete",
+      "bytesRead": 3174,
+      "totalBytes": 3174,
+      "tables": [
+        {
+          "originalRange": [
+            0,
+            4
+          ],
+          "snapshot": true,
+          "interpretationRevision": 2,
+          "sourceId": "metrics-70484-1:0",
+          "size": 171,
+          "sha256": "501066cd80cc31f6348afef7ad33ed77e4737ce787582c58197a78f894031d2c",
+          "columns": [
+            {
+              "meaning": "unknown",
+              "numeric": true,
+              "meaningSuggested": false,
+              "unit": "s",
+              "name": "elapsed_s",
+              "unitSuggested": true
+            },
+            {
+              "meaning": "window statistic",
+              "numeric": true,
+              "meaningSuggested": true,
+              "unit": "ms",
+              "name": "loop_ms_mean",
+              "unitSuggested": true
+            },
+            {
+              "meaning": "window statistic",
+              "numeric": true,
+              "meaningSuggested": true,
+              "unit": "ms",
+              "name": "loop_ms_p95",
+              "unitSuggested": true
+            },
+            {
+              "meaning": "window statistic",
+              "numeric": true,
+              "meaningSuggested": true,
+              "unit": "ms",
+              "name": "loop_ms_p99",
+              "unitSuggested": true
+            },
+            {
+              "meaning": "window statistic",
+              "numeric": true,
+              "meaningSuggested": true,
+              "unit": "ms",
+              "name": "loop_ms_max",
+              "unitSuggested": true
+            },
+            {
+              "meaning": "window statistic",
+              "numeric": true,
+              "meaningSuggested": true,
+              "unit": "us",
+              "name": "queue_us_p95",
+              "unitSuggested": true
+            },
+            {
+              "meaning": "unknown",
+              "numeric": true,
+              "meaningSuggested": false,
+              "unit": "kb_s",
+              "name": "rx_kb_s",
+              "unitSuggested": true
+            }
+          ],
+          "axis": {
+            "column": 0,
+            "kind": "elapsed",
+            "windowSeconds": null
+          },
+          "schemaSidecar": null,
+          "coverage": {
+            "emptyCells": 0,
+            "retained": 4,
+            "missingColumns": 0,
+            "unsupported": 0,
+            "records": 4,
+            "examples": [],
+            "unterminated": 0,
+            "invalid": 0
+          },
+          "completion": "complete",
+          "modifiedMs": 1792765727151,
+          "generation": 1,
+          "path": "/home/skira24/.codex/worktrees/9b33/Craidd-Studio/workspaces/profiling-metrics/fixtures/program-shaped/run.csv"
+        },
+        {
+          "originalRange": [
+            0,
+            4
+          ],
+          "snapshot": true,
+          "interpretationRevision": 1,
+          "sourceId": "metrics-70484-1:1",
+          "size": 87,
+          "sha256": "4ff4426668534f979cf2e1d6d39f78d38544b6152953da6029efcfd738b38ee8",
+          "columns": [
+            {
+              "meaning": "unknown",
+              "numeric": true,
+              "meaningSuggested": false,
+              "unit": "s",
+              "name": "elapsed_s",
+              "unitSuggested": true
+            },
+            {
+              "meaning": "unknown",
+              "numeric": true,
+              "meaningSuggested": false,
+              "unit": "unitless",
+              "name": "recv",
+              "unitSuggested": false
+            },
+            {
+              "meaning": "unknown",
+              "numeric": true,
+              "meaningSuggested": false,
+              "unit": "unitless",
+              "name": "update",
+              "unitSuggested": false
+            },
+            {
+              "meaning": "unknown",
+              "numeric": true,
+              "meaningSuggested": false,
+              "unit": "unitless",
+              "name": "send",
+              "unitSuggested": false
+            },
+            {
+              "meaning": "unknown",
+              "numeric": true,
+              "meaningSuggested": false,
+              "unit": "unitless",
+              "name": "other",
+              "unitSuggested": false
+            }
+          ],
+          "axis": {
+            "column": null,
+            "kind": "ordinal",
+            "windowSeconds": null
+          },
+          "schemaSidecar": null,
+          "coverage": {
+            "emptyCells": 0,
+            "retained": 4,
+            "missingColumns": 0,
+            "unsupported": 0,
+            "records": 4,
+            "examples": [],
+            "unterminated": 0,
+            "invalid": 0
+          },
+          "completion": "complete",
+          "modifiedMs": 1792765727151,
+          "generation": 1,
+          "path": "/home/skira24/.codex/worktrees/9b33/Craidd-Studio/workspaces/profiling-metrics/fixtures/program-shaped/run-sections.csv"
+        }
+      ],
+      "maxMemoryBytes": 536870912,
+      "maxSets": 2,
+      "id": "metrics-70484-2",
+      "maxRows": 2000000,
+      "error": null,
+      "memoryBytes": 448,
+      "maxFileBytes": 1073741824,
+      "kind": "importedMetrics",
+      "joins": [
+        {
+          "leftColumn": 0,
+          "right": 1,
+          "rightColumn": 0,
+          "tolerance": null,
+          "left": 0
+        }
+      ],
+      "rows": [
+        4,
+        4
+      ],
+      "paths": [
+        "/tmp/craidd-m1-program-defects-chpp27/before-bulk.crmetrics"
+      ]
+    },
+    "savedHash": "5cbbdaa72780331f743925a792712f4538c2d0a571ae6fef55a7a27cacea49ee",
+    "snapshotUnchanged": true,
+    "producerFilesUnchanged": true,
+    "desktopEnvironment": {
+      "display": ":0",
+      "sessionType": "wayland",
+      "gdkBackend": "x11"
+    },
+    "uiRedesign": "NOT TESTED: on hold"
+  },
+  "sourceFiles": [
+    {
+      "path": "src-tauri/src/metric_csv.rs",
+      "bytes": 40424,
+      "sha256": "f2d15132d1a89ffb29628b4e880a54e2b4f757ade9d5d7da8ad2aa7aeca279b7"
+    },
+    {
+      "path": "src-tauri/src/commands/metrics.rs",
+      "bytes": 26603,
+      "sha256": "0b3b1487a3b295599fbb247f77fb4907ae755dbdf16cfb47e47bdef6100507be"
+    },
+    {
+      "path": "src/components/panels/MetricImportPanel.tsx",
+      "bytes": 27098,
+      "sha256": "acd44d16b3ac9c8c372a876f706937327fdd0cd333c9dcf33a5273b3bc4a90b3"
+    },
+    {
+      "path": "src/types/profileSource.ts",
+      "bytes": 1825,
+      "sha256": "1818e8193b1c5824938c83202815cecf64ce53e4e6cb778bd0839bd75cdbde74"
+    },
+    {
+      "path": "src/store/metricStore.ts",
+      "bytes": 3135,
+      "sha256": "62f86adbf6cd59bab2f99d66fe2e3fa72f1df07bd2993ea02707266a87c0ebf4"
+    },
+    {
+      "path": "src/lib/metricRowKey.ts",
+      "bytes": 1174,
+      "sha256": "fdd31e14ab3f4ac204847d11a83204830cd6082c190b05daedf4721c1b8353bb"
+    },
+    {
+      "path": "tests/metricRowKey.test.mjs",
+      "bytes": 2037,
+      "sha256": "4a5a5f85a862915fdf3e56de558d440c73a8c639088ea4e4390d45ae4cbaba7a"
+    },
+    {
+      "path": "tests/ui/metric-program-defects.test.mjs",
+      "bytes": 9921,
+      "sha256": "8375d2098a8417dc80fd633865036217ce2cace82c22662c28cd6d7278b43de1"
+    },
+    {
+      "path": "workspaces/profiling-metrics/src/main.rs",
+      "bytes": 20487,
+      "sha256": "95504ce21708ac0369732049e12e90a2573b3da25047cc03194af8c27133f7e5"
+    },
+    {
+      "path": "src/assets/styles/index.css",
+      "bytes": 22204,
+      "sha256": "8443adeb8fc8619e62f68ed47c19758588bc949228e2906c9318f61b1d8d547c"
+    }
+  ],
+  "fixtures": [
+    {
+      "path": "workspaces/profiling-metrics/fixtures/program-shaped/run.csv",
+      "bytes": 171,
+      "sha256": "501066cd80cc31f6348afef7ad33ed77e4737ce787582c58197a78f894031d2c"
+    },
+    {
+      "path": "workspaces/profiling-metrics/fixtures/program-shaped/run-sections.csv",
+      "bytes": 87,
+      "sha256": "4ff4426668534f979cf2e1d6d39f78d38544b6152953da6029efcfd738b38ee8"
+    }
+  ],
+  "originalResults": [
+    {
+      "path": "test-results/ui/2026-10-23T14-30-46-050Z/metric-program-reproduction/program-defects.json",
+      "bytes": 4837,
+      "sha256": "f81c4a56cb5593ddb8638f26f0bb7bac955195265e6b04338728f757e2ed72e7"
+    },
+    {
+      "path": "test-results/ui/2026-10-23T14-37-10-487Z/metric-program-fixed/program-defects.json",
+      "bytes": 16921,
+      "sha256": "4c0bb48ad5445b405ee0796504388eebbd6f71118bd1bbd96b5f702d996cbbd9"
+    }
+  ],
+  "gates": {
+    "preFixReproduction": "PASS",
+    "parserAndInterpretation": "PASS",
+    "bulkCommandGuards": "PASS",
+    "rowKeyCases": "PASS",
+    "ordinaryDesktopHarness": "PASS",
+    "existingMetricUxRegression": "PASS",
+    "uiLayoutRedesign": "NOT TESTED",
+    "releaseMillionRowPerformance": "NOT TESTED",
+    "humanPublicReleaseAcceptance": "NOT TESTED"
+  },
+  "tests": {
+    "preFixParser": {
+      "command": "cargo test --offline --manifest-path workspaces/profiling-metrics/Cargo.toml statistic_suffix_unit_and_meaning_suggestions_reproduce_program_headers",
+      "exitCode": 101,
+      "log": {
+        "path": "/tmp/craidd-m1-defect-repro-tests.log",
+        "bytes": 1716,
+        "sha256": "3f39f9d1d7502cb78697ef2dd32c9963628f62acfc472857ad691c8fcffb4811"
+      }
+    },
+    "parser": {
+      "command": "cargo test --offline --manifest-path workspaces/profiling-metrics/Cargo.toml",
+      "exitCode": 0,
+      "log": {
+        "path": "/tmp/craidd-m1-defect-parser-tests.log",
+        "bytes": 1746,
+        "sha256": "92a4800942fefb847262b4a1b66e5453645182579d750126fabfec5115b1ba08"
+      },
+      "passed": 18
+    },
+    "keys": {
+      "command": "node tests/metricRowKey.test.mjs",
+      "exitCode": 0,
+      "log": {
+        "path": "/tmp/craidd-m1-defect-key-tests.log",
+        "bytes": 379,
+        "sha256": "0f7028032cd7f7cec9d9e678891f9989d6a1f413b8c468d251755a913b6f3047"
+      },
+      "passed": 3
+    },
+    "command": {
+      "command": "cargo test --offline --manifest-path src-tauri/Cargo.toml commands::metrics --lib",
+      "exitCode": 0,
+      "log": {
+        "path": "/tmp/craidd-m1-defect-command-tests.log",
+        "bytes": 745,
+        "sha256": "cc32b6af29e06d52cd19e43b9b4f5ec48a507bd4a24c71438f75212c0d05a26f"
+      },
+      "passed": 4
+    },
+    "desktop": {
+      "command": "CRAIDD_TEST_METRIC_DEFECTS=1 GDK_BACKEND=x11 node --test tests/ui/metric-program-defects.test.mjs",
+      "exitCode": 0,
+      "log": {
+        "path": "/tmp/craidd-m1-defect-fixed-desktop-v2.log",
+        "bytes": 340,
+        "sha256": "2b491e992f58b378942f3f9fbe5edaa81e95adae8426ac76cbf447168e977115"
+      }
+    },
+    "uxRegression": {
+      "command": "CRAIDD_TEST_METRICS=1 GDK_BACKEND=x11 node --test tests/ui/metric-ux.test.mjs",
+      "exitCode": 0,
+      "log": {
+        "path": "/tmp/craidd-m1-defect-ux-regression.log",
+        "bytes": 697,
+        "sha256": "cdd3ca399e543737632bda40c3d70319a8f5e7ced3b487fd703296ea3dd36d37"
+      }
+    }
+  },
+  "desktopHarnessAttempts": [
+    {
+      "attempt": 1,
+      "result": "FAIL",
+      "scope": "Harness screenshot selector quoting error after successful import/suggestion/key assertions; product binary unchanged"
+    },
+    {
+      "attempt": 2,
+      "result": "PASS",
+      "scope": "Full ordinary-display flow, snapshot reopening and producer hashes"
+    }
+  ],
+  "scope": "Two targeted M1 fixes; layout redesign on hold; debug embedded Tauri on ordinary X11/XWayland display; native chooser not exercised; no perf-branch change",
+  "screenshots": [
+    {
+      "path": "test-results/ui/2026-10-23T14-37-10-487Z/metric-program-fixed/01-unit-and-meaning-suggestions.png",
+      "bytes": 77624,
+      "sha256": "1a72baa89fdf6c5ee4ba333fbdb286cc1f2626a80f13014630c318684c316a90"
+    },
+    {
+      "path": "test-results/ui/2026-10-23T14-37-10-487Z/metric-program-fixed/02-bulk-companion-ms.png",
+      "bytes": 90595,
+      "sha256": "96f1f98c760a4caefcef0b2eb7153d7634a4cdcc71d1efbb49c5a5095c9fe859"
+    },
+    {
+      "path": "test-results/ui/2026-10-23T14-37-10-487Z/metric-program-fixed/03-worst-row-with-joined-companion.png",
+      "bytes": 90240,
+      "sha256": "1011bf72fe20a346b13222ee7eea573f061cac76ef1aa2496a165b60c973f6c0"
+    },
+    {
+      "path": "test-results/ui/2026-10-23T14-37-10-487Z/metric-program-fixed/final-state.png",
+      "bytes": 78156,
+      "sha256": "31bd37461a2043d722522272947c3234c006c9ad4b5149603eb68b7502b679fe"
+    },
+    {
+      "path": "test-results/ui/2026-10-23T14-37-10-487Z/metric-program-fixed/fixed-program-defects.png",
+      "bytes": 78156,
+      "sha256": "31bd37461a2043d722522272947c3234c006c9ad4b5149603eb68b7502b679fe"
+    }
+  ],
+  "build": {
+    "command": "npm run test:ui:build",
+    "scope": "Embedded debug Tauri build; no new release-performance qualification",
+    "logSha256": "3818265e38de7453507129047d666550eeeb3bd25c93f1b2f19bb8d7cf43e56b"
+  },
+  "baselineReproductionLogSha256": "3d2c6d89fdbc92aafe339046b7c70993b73c502311607d1f9417eee5a8e2cd1c"
+}

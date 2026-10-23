@@ -3,6 +3,8 @@ import { open, save } from "@tauri-apps/plugin-dialog";
 import { metricAction, useMetrics, type MetricView } from "../../store/metricStore";
 import type { MetricAxis, MetricColumn, MetricGraph, MetricInspection, MetricJoin, MetricRow } from "../../types/profileSource";
 
+import { worstKeyColumn, worstKeyValue } from "../../lib/metricRowKey";
+
 const filename = (path: string) => path.split("/").pop() ?? path;
 const cell = (value: number | string | null) => value === null || value === "" ? "Empty" : String(value);
 const format = (value: number) => Number.isInteger(value) ? String(value) : value.toPrecision(7);
@@ -19,6 +21,11 @@ export default function MetricImportPanel() {
   const [span, setSpan] = useState<[number, number]>([0, 0]);
   const [graph, setGraph] = useState<MetricGraph | null>(null);
   const [inspection, setInspection] = useState<MetricInspection | null>(null);
+  const [keyChoice, setKeyChoice] = useState<number | null>(null);
+  const [bulkSelection, setBulkSelection] = useState<number[]>([]);
+  const [bulkScope, setBulkScope] = useState("unitless");
+  const [bulkUnit, setBulkUnit] = useState("ms");
+  const [bulkMeaning, setBulkMeaning] = useState("");
   const [worst, setWorst] = useState<MetricRow[]>([]);
   const [rowIndex, setRowIndex] = useState(1);
   const [settings, setSettings] = useState(false);
@@ -36,13 +43,14 @@ export default function MetricImportPanel() {
   const errorRef = useRef<HTMLParagraphElement | null>(null);
   const scrollTop = useRef(0), restoreTop = useRef<number | null>(null), restoreRow = useRef<number | null>(null);
   const lastView = useRef<MetricView>({ column: 0, span: [0, 0], rowIndex: 1, inspected: null, settings: false, scrollTop: 0, showWorst: false });
-  if (loadedKey === key) lastView.current = { column, span, rowIndex, inspected: inspection?.row.index ?? restoreRow.current, settings, scrollTop: scrollTop.current, showWorst: worst.length > 0 };
+  if (loadedKey === key) lastView.current = { column, span, rowIndex, inspected: inspection?.row.index ?? restoreRow.current, settings, scrollTop: scrollTop.current, showWorst: worst.length > 0, worstKeyColumn: keyChoice };
   const fail = (e: unknown) => state.setError(String(e));
   useLayoutEffect(() => {
     const saved = useMetrics.getState().views[viewKey];
     const view: MetricView = saved ?? { column: group?.columns.findIndex(c => c.numeric) ?? 0, span: [0, rows], rowIndex: 1, inspected: null, settings: false, scrollTop: 0, showWorst: false };
     setSpan(view.span); setInspection(null); setWorst([]); setGraph(null); setRowIndex(view.rowIndex); setSettings(view.settings);
     setColumns(group?.columns ?? []); setAxis(group?.axis ?? { kind: "ordinal", column: null, windowSeconds: null });
+    setKeyChoice(view.worstKeyColumn ?? null); setBulkSelection([]);
     setColumn(view.column); setLoadedKey(key); lastView.current = view;
     restoreTop.current = view.scrollTop; restoreRow.current = view.inspected; scrollTop.current = view.scrollTop;
     setJoin({ left: state.table, right: state.table === 0 ? 1 : 0, leftColumn: 0, rightColumn: 0, tolerance: null });
@@ -106,7 +114,18 @@ export default function MetricImportPanel() {
   const coverage = group?.coverage;
   const duration = group?.axis.windowSeconds;
   const xLabel = group?.axis.kind === "ordinal" ? "Retained row ordinal · not time" : `${group?.axis.kind} seconds · ${group?.columns[group.axis.column ?? 0]?.name}`;
-  const renderRow = (r: MetricRow, cols: MetricColumn[]) => <dl className="metric-row">{cols.map((c, i) => <div key={c.name}><dt>{c.name} <small>{c.unit} · {c.meaning}</small></dt><dd><MetricCell value={r.cells[i]} /></dd></div>)}</dl>;
+  const rowKey = worstKeyColumn(group?.columns ?? [], group?.axis ?? axis, keyChoice);
+  const axisKey = group?.axis.kind !== "ordinal" && rowKey !== null && rowKey === group?.axis.column;
+  const keyHeading = rowKey === null ? "Key value" : `${group?.columns[rowKey]?.name} · ${axisKey ? `${group?.axis.kind === "elapsed" ? "s" : "ISO 8601"} (axis)` : group?.columns[rowKey]?.unit}`;
+  const bulkApply = async () => {
+    if (!source) return;
+    setPending(true); state.setError("");
+    try {
+      await metricAction({ op: "bulkInterpret", id: source.id, table: state.table, selection: bulkScope === "unitless" ? null : bulkSelection, unit: bulkUnit, meaning: bulkMeaning || null });
+      await state.refresh(source.id); setNotice("Bulk interpretation applied. Existing snapshots are unchanged.");
+    } catch (e) { fail(e); } finally { setPending(false); }
+  };
+  const renderRow = (r: MetricRow, cols: MetricColumn[]) => <dl className="metric-row">{cols.map((c, i) => <div key={c.name}><dt>{c.name} <small>{c.unit}{c.unitSuggested ? " (suggested)" : ""} · {c.meaning}{c.meaningSuggested ? " (suggested)" : ""}</small></dt><dd><MetricCell value={r.cells[i]} /></dd></div>)}</dl>;
   return <section className="metric-import-panel profiler-panel" aria-label="Imported metric sources">
     <div className="profiler-toolbar">
       <button disabled={state.busy} onClick={() => void chooseFiles(false)}>Import CSV files…</button>
@@ -139,11 +158,22 @@ export default function MetricImportPanel() {
             <p>{coverage?.records} records read · {coverage?.missingColumns} missing fields · {coverage?.unterminated} records without a final newline. Empty cells count retained rows. Unsupported quoted multiline input is skipped as one record.</p>
             <p>Interpretation revision {group.interpretationRevision}. Limits: 2 source sets/window, 8 files/set, 1 GiB/file set, 512 MiB retained/set, 2,000,000 rows/file, 128 columns, 1 MiB/line. No retention eviction in finished imports.</p>
             {coverage?.examples.map((s, i) => <p key={i}>{s}</p>)}</details>
-          {settings && <div className="metric-settings"><p>{group.snapshot ? "Snapshot interpretation and join rules are immutable." : "First nonempty value determines numeric/text storage. Unit suffixes are suggestions; ambiguous suffixes are kept literally. Edits never change existing snapshots."}</p>
+          {settings && <div className="metric-settings"><p>{group.snapshot ? "Snapshot interpretation and join rules are immutable." : "First nonempty value determines numeric/text storage. Units and statistic suffixes are suggestions; ambiguous names are kept literally. Edits never change existing snapshots."}</p>
             <label>Axis<select aria-label="Metric clock domain" disabled={group.snapshot} value={axis.kind} onChange={e => setAxis({ ...axis, kind: e.target.value as MetricAxis["kind"], windowSeconds: null })}>{["ordinal", "elapsed", "epoch", "iso8601"].map(k => <option key={k}>{k}</option>)}</select></label>
             {axis.kind !== "ordinal" && <><label>Time column<select aria-label="Metric time column" disabled={group.snapshot} value={axis.column ?? ""} onChange={e => setAxis({ ...axis, column: Number(e.target.value) })}><option value="" disabled>Choose column</option>{columns.map((c, i) => <option value={i} key={i}>{c.name}</option>)}</select></label>
               <label>Declared window duration (seconds; blank = unknown)<input aria-label="Metric window seconds" type="number" min="0" step="any" disabled={group.snapshot} value={axis.windowSeconds ?? ""} onChange={e => setAxis({ ...axis, windowSeconds: e.target.value === "" ? null : Number(e.target.value) })} /></label></>}
-            <table aria-label="Metric column interpretation"><thead><tr><th>Column</th><th>Unit</th><th>Meaning</th></tr></thead><tbody>{columns.map((c, i) => <tr key={c.name}><td>{c.name} · {c.numeric ? "numeric" : "text"}</td><td><input aria-label={`Unit ${c.name}`} disabled={group.snapshot} value={c.unit} onChange={e => setColumns(columns.map((v, j) => j === i ? { ...v, unit: e.target.value } : v))} /></td><td><select aria-label={`Meaning ${c.name}`} disabled={group.snapshot} value={c.meaning} onChange={e => setColumns(columns.map((v, j) => j === i ? { ...v, meaning: e.target.value as MetricColumn["meaning"] } : v))}>{["unknown", "gauge", "counter", "rate", "window statistic"].map(m => <option key={m}>{m}</option>)}</select></td></tr>)}</tbody></table>
+            <fieldset disabled={group.snapshot || pending}><legend>Bulk column interpretation</legend>
+              <label>Apply to<select aria-label="Metric bulk scope" value={bulkScope} onChange={e => setBulkScope(e.target.value)}><option value="unitless">All unitless numeric columns in this file group</option><option value="selected">Selected numeric columns</option></select></label>
+              <label>Unit<input aria-label="Metric bulk unit" disabled={group.snapshot || pending} value={bulkUnit} onChange={e => setBulkUnit(e.target.value)} /></label>
+              <label>Meaning<select aria-label="Metric bulk meaning" value={bulkMeaning} onChange={e => setBulkMeaning(e.target.value)}><option value="">Keep each column's meaning</option>{["unknown", "gauge", "counter", "rate", "window statistic"].map(m => <option key={m}>{m}</option>)}</select></label>
+              <button disabled={bulkScope === "selected" && !bulkSelection.length} onClick={() => void bulkApply()}>Apply bulk interpretation</button>
+              <p>Applies one explicit edit to the saved interpretation, preserving its current axis and other columns. Individual unsaved draft edits are not included.</p>
+            </fieldset>
+            <table aria-label="Metric column interpretation"><thead><tr><th>Select</th><th>Column</th><th>Unit</th><th>Meaning</th></tr></thead><tbody>{columns.map((c, i) => <tr key={c.name}>
+              <td><input type="checkbox" aria-label={`Select column ${c.name}`} disabled={group.snapshot || !c.numeric || pending} checked={bulkSelection.includes(i)} onChange={e => setBulkSelection(e.target.checked ? [...bulkSelection, i] : bulkSelection.filter(v => v !== i))} /></td>
+              <td>{c.name} · {c.numeric ? "numeric" : "text"}</td><td><input aria-label={`Unit ${c.name}`} disabled={group.snapshot} value={c.unit} onChange={e => setColumns(columns.map((v, j) => j === i ? { ...v, unit: e.target.value, unitSuggested: false } : v))} />{c.unitSuggested && <small>Suggested from column name</small>}</td>
+              <td><select aria-label={`Meaning ${c.name}`} disabled={group.snapshot} value={c.meaning} onChange={e => setColumns(columns.map((v, j) => j === i ? { ...v, meaning: e.target.value as MetricColumn["meaning"], meaningSuggested: false } : v))}>{["unknown", "gauge", "counter", "rate", "window statistic"].map(m => <option key={m}>{m}</option>)}</select>{c.meaningSuggested && <small>Suggested from statistic suffix</small>}</td>
+            </tr>)}</tbody></table>
             <button disabled={group.snapshot || pending} onClick={async () => { setPending(true); state.setError(""); try { await metricAction({ op: "interpret", id: source.id, table: state.table, columns, axis }); await state.refresh(source.id); setNotice("Interpretation applied. Existing snapshots are unchanged."); } catch (e) { fail(e); } finally { setPending(false); } }}>Apply interpretation</button>
             {source.tables.length > 1 && <fieldset disabled={group.snapshot}><legend>Declared companion join</legend>
               <label>Companion group<select aria-label="Metric join group" value={join.right} onChange={e => setJoin({ ...join, right: Number(e.target.value), rightColumn: 0 })}>{source.tables.map((t, i) => i !== state.table && <option key={i} value={i}>{filename(t.path)}</option>)}</select></label>
@@ -157,7 +187,7 @@ export default function MetricImportPanel() {
             <ul className="metric-join-rules">{source.joins.map((r, i) => <li key={i}>{filename(source.tables[r.left].path)} [{source.tables[r.left].columns[r.leftColumn].name}] ↔ {filename(source.tables[r.right].path)} [{source.tables[r.right].columns[r.rightColumn].name}] · {r.tolerance === null ? "exact key" : `±${r.tolerance} ${source.tables[r.left].columns[r.leftColumn].unit}`}</li>)}</ul>
           </div>}
           {ready && <>
-            <div className="metric-controls"><label>Series<select aria-label="Metric series" value={column} onChange={e => { setColumn(Number(e.target.value)); setWorst([]); }}>{group.columns.map((c, i) => c.numeric && <option key={i} value={i}>{c.name} · {c.unit} · {c.meaning}</option>)}</select></label>
+            <div className="metric-controls"><label>Series<select aria-label="Metric series" value={column} onChange={e => { setColumn(Number(e.target.value)); setWorst([]); }}>{group.columns.map((c, i) => c.numeric && <option key={i} value={i}>{c.name} · {c.unit}{c.unitSuggested ? " (suggested)" : ""} · {c.meaning}{c.meaningSuggested ? " (suggested)" : ""}</option>)}</select></label>
               <button onClick={() => changeView(span[0] - (span[1] - span[0]) / 2, span[1] - (span[1] - span[0]) / 2)}>Pan left</button>
               <button onClick={() => changeView(span[0] + (span[1] - span[0]) / 2, span[1] + (span[1] - span[0]) / 2)}>Pan right</button>
               <button onClick={() => changeView(span[0] + (span[1] - span[0]) / 4, span[1] - (span[1] - span[0]) / 4)}>Zoom in</button>
@@ -168,7 +198,12 @@ export default function MetricImportPanel() {
             <p>Graph preserves each display bucket's minimum/maximum; this is a rendering reduction, not a percentile or additive total. Inspect a row for original values.</p>
             <div className="metric-controls"><button onClick={async () => { state.setError(""); const requestKey = key; try { const values = await metricAction<MetricRow[]>({ op: "worst", id: source.id, table: state.table, column, start: span[0], end: span[1], count: 20 }); if (currentKey.current === requestKey) setWorst(values); } catch (e) { fail(e); } }}>Find worst windows / largest values</button>
               <label>Inspect retained row<input aria-label="Metric row number" type="number" min="1" max={rows} value={rowIndex} onChange={e => setRowIndex(Number(e.target.value))} onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); void inspect(rowIndex - 1); } }} /></label><button onClick={() => void inspect(rowIndex - 1)}>Inspect row</button></div>
-            {!!worst.length && <table aria-label="Worst metric windows"><thead><tr><th>Row</th><th>{group.columns[column]?.name}</th></tr></thead><tbody>{worst.map(r => <tr key={r.index}><td><button onClick={() => void inspect(r.index)}>Row {r.index + 1}</button></td><td>{cell(r.cells[column])}</td></tr>)}</tbody></table>}
+            {!!worst.length && <>
+              <label>Worst-window key<select aria-label="Metric worst key" disabled={axisKey} value={axisKey ? String(rowKey) : keyChoice === null ? "auto" : String(keyChoice)} onChange={e => setKeyChoice(e.target.value === "auto" ? null : Number(e.target.value))}>
+                <option value="auto">Auto · first time-unit or elapsed/time column</option>{group.columns.map((c, i) => <option key={i} value={i}>{c.name}</option>)}
+              </select></label>
+              <table aria-label="Worst metric windows"><thead><tr><th>Row</th><th>{keyHeading}</th><th>{group.columns[column]?.name}</th></tr></thead><tbody>{worst.map(r => <tr key={r.index}><td><button onClick={() => void inspect(r.index)}>Row {r.index + 1}</button></td><td>{rowKey === null ? "No key selected" : <MetricCell value={worstKeyValue(r, group.axis, rowKey)} />}</td><td>{cell(r.cells[column])}</td></tr>)}</tbody></table>
+            </>}
             {inspection && <aside aria-label="Inspected metric row"><h3>Row {inspection.row.index + 1} · CSV line {inspection.row.line} · {xLabel}: {format(inspection.row.x)}</h3>{renderRow(inspection.row, group.columns)}
               {source.tables.length > 1 && !inspection.companions.length && <p>Companions unjoined: declare a named-key rule.</p>}
               {inspection.companions.map(c => <section key={c.table}><h3>{filename(source.tables[c.table].path)} · {c.state}</h3>{c.row ? renderRow(c.row, source.tables[c.table].columns) : <p>Unjoined; no unique match.</p>}</section>)}

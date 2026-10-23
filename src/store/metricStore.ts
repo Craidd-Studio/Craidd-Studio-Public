@@ -15,7 +15,7 @@ export function metricAction<T>(request: Record<string, unknown>): Promise<T> {
 }
 export interface MetricView {
   column: number; span: [number, number]; rowIndex: number; inspected: number | null;
-  settings: boolean; scrollTop: number; showWorst: boolean;
+  settings: boolean; scrollTop: number; showWorst: boolean; worstKeyColumn?: number | null;
 }
 interface State {
   active: boolean; sources: MetricSource[]; selected: string; table: number;

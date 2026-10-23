@@ -65,6 +65,96 @@ mod tests {
         (d, t)
     }
     #[test]
+    fn statistic_suffix_unit_and_meaning_suggestions_reproduce_program_headers() {
+        for suffix in [
+            "mean", "avg", "min", "max", "sum", "total", "p50", "p90", "p95", "p99", "p999",
+        ] {
+            let (d, t) = parse(&format!(
+                "elapsed_s,loop_ms_{suffix},queue_us_{suffix},rx_kb_s\n0,1,2,3\n"
+            ));
+            assert_eq!(t.meta.columns[1].unit, "ms", "loop_ms_{suffix}");
+            assert_eq!(t.meta.columns[2].unit, "us", "queue_us_{suffix}");
+            assert_eq!(t.meta.columns[1].meaning, "window statistic", "{suffix}");
+            assert_eq!(t.meta.columns[3].unit, "kb_s");
+            assert!(t.meta.columns[1].unit_suggested && t.meta.columns[1].meaning_suggested);
+            fs::remove_dir_all(d).unwrap();
+        }
+    }
+    #[test]
+    fn ambiguous_names_stay_literal_and_unknown() {
+        for name in [
+            "loop_ms_us_p95",
+            "loop_ms_p95_p99",
+            "queue_ms_s",
+            "loop_ms_p95_extra",
+            "loop_ms_p100",
+        ] {
+            let (d, t) = parse(&format!("{name}\n1\n"));
+            assert_eq!(t.meta.columns[0].name, name);
+            assert_eq!(t.meta.columns[0].unit, "unitless", "{name}");
+            assert_eq!(t.meta.columns[0].meaning, "unknown", "{name}");
+            assert!(!t.meta.columns[0].unit_suggested && !t.meta.columns[0].meaning_suggested);
+            fs::remove_dir_all(d).unwrap();
+        }
+        let (d, t) = parse("elapsed_s,LOOP_MS_P999,rx_kb_s_total,objects_total\n0,1,2,3\n");
+        assert_eq!(t.meta.columns[1].name, "LOOP_MS_P999");
+        assert_eq!(t.meta.columns[1].unit, "ms");
+        assert_eq!(t.meta.columns[2].unit, "kb_s");
+        assert_eq!(t.meta.columns[3].meaning, "window statistic");
+        fs::remove_dir_all(d).unwrap();
+    }
+    #[test]
+    fn bulk_edits_preserve_unselected_fields_and_saved_snapshot_bytes() {
+        let (d, t) = parse("elapsed_s,recv,update,note\n0,1,2,ok\n1,3,4,next\n");
+        let mut data = Dataset { tables: vec![t] };
+        let path = d.join("before.crmetrics");
+        csv::save(
+            &data,
+            &[],
+            path.to_str().unwrap(),
+            &[[0, 2]],
+            &AtomicBool::new(false),
+        )
+        .unwrap();
+        let before = fs::read(&path).unwrap();
+        let table = &mut data.tables[0];
+        let cols = csv::bulk_columns(&table.meta.columns, None, "ms", None).unwrap();
+        table.interpret(cols, table.meta.axis.clone()).unwrap();
+        assert_eq!(table.meta.columns[0].unit, "s");
+        assert_eq!(table.meta.columns[3].unit, "unitless");
+        assert_eq!(table.meta.columns[1].meaning, "unknown");
+        let cols = csv::bulk_columns(
+            &table.meta.columns,
+            Some(&[1]),
+            "us",
+            Some("window statistic"),
+        )
+        .unwrap();
+        table.interpret(cols, table.meta.axis.clone()).unwrap();
+        assert_eq!(table.meta.columns[1].unit, "us");
+        assert_eq!(table.meta.columns[2].unit, "ms");
+        assert!(!table.meta.columns[1].unit_suggested && !table.meta.columns[1].meaning_suggested);
+        for selection in [vec![], vec![9], vec![3], vec![1, 1]] {
+            assert!(csv::bulk_columns(&table.meta.columns, Some(&selection), "ms", None).is_err());
+        }
+        assert!(csv::bulk_columns(&table.meta.columns, None, "ms", None).is_err());
+        let (mut saved, _) = csv::load(path.to_str().unwrap(), &AtomicBool::new(false)).unwrap();
+        assert_eq!(saved.tables[0].meta.columns[1].unit, "unitless");
+        let cols = csv::bulk_columns(&saved.tables[0].meta.columns, None, "ms", None).unwrap();
+        assert!(saved.tables[0].interpret(cols, Axis::default()).is_err());
+        assert_eq!(fs::read(path).unwrap(), before);
+        fs::remove_dir_all(d).unwrap();
+    }
+    #[test]
+    fn old_column_metadata_does_not_gain_new_suggestions_on_reopen() {
+        let c: csv::Column = serde_json::from_str(
+            r#"{"name":"loop_ms_p99","numeric":true,"unit":"unitless","meaning":"unknown"}"#,
+        )
+        .unwrap();
+        assert!(!c.unit_suggested && !c.meaning_suggested);
+        assert_eq!(c.unit, "unitless");
+    }
+    #[test]
     fn public_acceptance_fixtures_have_the_documented_integrity_and_join() {
         let root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("fixtures");
         let main = csv::parse(
