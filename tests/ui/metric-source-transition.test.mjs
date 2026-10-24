@@ -21,7 +21,7 @@ test('CSV replacement, schema switches and removal never render another sourceâ€
  const evidence={machine:hostname(),kernel:release(),binary:{path:APP,sha256:createHash('sha256').update(await readFile(APP)).digest('hex')},gate:'FAIL'};
  t.after(async()=>{await app.screenshot('final-state').catch(()=>{});evidence.dom=await app.wd.execute('return document.body.innerText').catch(String);await writeFile(join(app.dir,'transition-results.json'),JSON.stringify(evidence,null,2));await app.close();});
  const owner=await openSolution(app,solution);await app.invoke('focus_linked_window',{targetLabel:owner});await showProfiler(app);await button(app,'Open metric imports');await button(app,'Focus analysis');await app.wd.command('POST','/window/rect',{width:1600,height:1050});
- await importPath(app,first);await button(app,'Inspect row');
+ await importPath(app,first);await app.wd.execute('const e=document.querySelector(`[aria-label="Metric row number"]`);Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,"value").set.call(e,"1");e.dispatchEvent(new Event("input",{bubbles:true}));');await button(app,'Inspect row');
  await app.waitFor('original row inspected',async()=>({done:await app.wd.execute('return document.querySelector(`[aria-label="Inspected metric row"] h3`)?.textContent==="Row 1"')}));
  await importPath(app,second);
  assert.equal(await app.wd.execute('return document.querySelector(`[aria-label="Inspected metric row"] h3`)?.textContent'),'Original row','the preceding sourceâ€™s inspection must not leak');

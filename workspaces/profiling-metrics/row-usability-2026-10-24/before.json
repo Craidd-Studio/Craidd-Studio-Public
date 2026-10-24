@@ -1,0 +1,32 @@
+{
+  "machine": "sk27",
+  "kernel": "7.2.11-arch1-1",
+  "binary": {
+    "path": "/tmp/craidd-profiler-review-61aa03ffed8e/release/craidd-studio",
+    "sha256": "61aa03ffed8e6b4111ae2aa9b3fd2107ee424c830bb4715e764b603800ce78f0"
+  },
+  "gate": "FAIL",
+  "nativeTextSelection": {
+    "pointerDefaultPrevented": false,
+    "collapsed": true,
+    "text": ""
+  },
+  "rows": {
+    "buttonWidth": 57.53125,
+    "cellWidth": 72,
+    "jump": "1",
+    "footer": "2500 rows in range · showing 13751–13754|‹‹››|Virtual rows · text previews",
+    "first": "Row 1375113756.2979.29712.29716.2972.9342.0979150100steady",
+    "last": 6,
+    "fullRowLabel": false,
+    "lastLabel": "Row 13755"
+  },
+  "checks": {
+    "resizeDoesNotSelectText": true,
+    "resizeCancelsNativeSelection": false,
+    "rowIdentityFits": false,
+    "jumpStartsEmpty": false,
+    "rangeExplicit": false,
+    "visibleLastRowIncluded": false
+  }
+}

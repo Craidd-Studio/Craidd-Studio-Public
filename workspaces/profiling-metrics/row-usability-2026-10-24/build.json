@@ -1,0 +1,13 @@
+{
+  "binary": "/tmp/craidd-profiler-review-a90753fc3efc/release/craidd-studio",
+  "sha256": "a90753fc3efca8e0d47125dd45cc1f578336c01bc8fbb5d52b3c24e3aca9369c",
+  "sourceBase": "67e1c76",
+  "sourceSha256": {
+    "src/components/panels/MetricImportPanel.tsx": "4dce3aa54b0f5b95ff29071730fbed632350930c9326200951844586b3f2f7dd",
+    "src/components/profiling/MetricRows.tsx": "f536d877d5cb33819e1e8afcfd200f79b236de3f32cf759beb9891493d7238f1",
+    "src/components/layout/ResizeHandle.tsx": "46b896b12f4b61808b5d261e77c28deda580e4529868732f63c847ecede3ade8",
+    "src/store/metricStore.ts": "2432cee2627bf75022b4320419949be9c8c4072eab30396a248dad38365f5ffd",
+    "src/assets/styles/index.css": "0ad561f294de305e0866e2fe3a2030ed188ce5d9593292dcbe13ef0a133b1983"
+  },
+  "result": "PASS: release usability and source transitions on ordinary desktop and Xvfb; ordinary release workflow PASS. Human retry NOT TESTED. Prior performance gate remains FAIL."
+}

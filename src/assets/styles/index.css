@@ -663,7 +663,7 @@ select {
 .metric-overview>div { display:flex; justify-content:space-between; color:#a1b3ca; font-size:9px; margin-bottom:4px; }
 .metric-overview svg { display:block; height:42px; width:100%; border:1px solid #465367; border-radius:4px; background:#1c2531; touch-action:none; }
 .metric-workbench .metric-graph-note { font-size:9px; margin:7px 14px 3px; flex-shrink:0; }
-.metric-dock-resize { display:flex; justify-content:center; align-items:center; height:9px; flex-shrink:0; cursor:ns-resize; touch-action:none; }
+.metric-dock-resize { user-select:none; -webkit-user-select:none; display:flex; justify-content:center; align-items:center; height:9px; flex-shrink:0; cursor:ns-resize; touch-action:none; }
 .metric-dock-resize span { width:40px; height:2px; background:#536174; border-radius:2px; }
 .metric-dock-resize:hover { background:#2e4864; }
 .metric-workbench .metric-row-dock { border-top:1px solid #354253; max-height:60%; min-height:140px; overflow:hidden; }

@@ -8,7 +8,8 @@ export default function MetricRows({id,table,revision,columns,range,selected,onS
  const count=Math.max(0,range[1]-range[0]),visible=Math.max(1,Math.floor((height-HEADER)/ROW)),canvasHeight=Math.min(MAX_HEIGHT,Math.max(count*ROW,height-HEADER));
  const scrollMax=Math.max(1,canvasHeight+HEADER-height),first=range[0]+Math.round(top/scrollMax*Math.max(0,count-visible));
  const start=Math.max(range[0],first-5),end=Math.min(range[1],first+visible+7),seq=useRef(0),cache=useRef(new Map<string,MetricRow[]>()),lastRange=useRef("");
- const template=`72px ${columns.map(c=>`${Math.max(110,Math.min(210,c.name.length*7+24))}px`).join(" ")}`;
+ const template=`112px ${columns.map(c=>`${Math.max(110,Math.min(210,c.name.length*7+24))}px`).join(" ")}`;
+ const onScreen=Math.max(0,Math.ceil((height-HEADER)/ROW));
  useEffect(()=>{const node=host.current;if(!node)return;const observer=new ResizeObserver(([e])=>setHeight(e.contentRect.height));observer.observe(node);return()=>observer.disconnect();},[]);
  useLayoutEffect(()=>{const key=`${id}:${table}:${revision}:${range[0]}:${range[1]}`;if(lastRange.current!==key){lastRange.current=key;cache.current.clear();if(host.current)host.current.scrollTop=0;setTop(0);setRows([]);}},[id,table,revision,range[0],range[1]]);
  useEffect(()=>{const n=++seq.current;if(!count)return;const key=`${id}:${table}:${revision}:${start}:${end}`;const found=cache.current.get(key);setError("");if(found){setRows(found);return;}
@@ -32,5 +33,5 @@ export default function MetricRows({id,table,revision,columns,range,selected,onS
    </tr>)}</tbody>
   </table>
   {error&&<div className="analysis-alert" role="alert">{error}</div>}
- </div><footer><span>{count.toLocaleString()} rows in range · showing {count?first+1:0}–{Math.min(range[1],first+visible).toLocaleString()}</span><button aria-label="First metric row" onClick={()=>jump(range[0])}>|‹</button><button aria-label="Previous metric rows" onClick={()=>jump(Math.max(range[0],first-visible))}>‹</button><button aria-label="Next metric rows" onClick={()=>jump(Math.min(range[1]-1,first+visible))}>›</button><button aria-label="Last metric row" onClick={()=>jump(range[1]-1)}>›|</button><small>Virtual rows · text previews</small></footer></div>;
+ </div><footer><span>In view: original rows {count?(range[0]+1).toLocaleString():0}–{range[1].toLocaleString()} ({count.toLocaleString()}) · On screen: {count?(first+1).toLocaleString():0}–{Math.min(range[1],first+onScreen).toLocaleString()}</span><button aria-label="First metric row" onClick={()=>jump(range[0])}>|‹</button><button aria-label="Previous metric rows" onClick={()=>jump(Math.max(range[0],first-visible))}>‹</button><button aria-label="Next metric rows" onClick={()=>jump(Math.min(range[1]-1,first+visible))}>›</button><button aria-label="Last metric row" onClick={()=>jump(range[1]-1)}>›|</button><small>Select a row for all values</small></footer></div>;
 }

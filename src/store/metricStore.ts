@@ -20,6 +20,7 @@ export function metricAction<T>(request: Record<string, unknown>): Promise<T> {
 }
 export interface MetricView {
   column: number; span: [number, number]; rowIndex: number; inspected: number | null;
+  rowDraft?: string;
   selection?: [number,number]|null; dockHeight?: number; displayMode?: "line"|"points"|"windows"; scaleMode?: "unit"|"separate"; inspectorOpen?: boolean|null;
   visibleColumns?: number[]; analysisTab?: string; pageStart?: number; showSources?: boolean; showInspector?: boolean;
   settings: boolean; scrollTop: number; showWorst: boolean; worstKeyColumn?: number | null;

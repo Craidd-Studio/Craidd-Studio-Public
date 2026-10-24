@@ -24,6 +24,7 @@ export default function ResizeHandle({ orientation, onDrag, className = "" }: Pr
 
   const onPointerDown = useCallback((e: React.PointerEvent) => {
     if (e.button !== 0 || e.isPrimary === false || draggingPointer.current !== null) return;
+    e.preventDefault();
     draggingPointer.current = e.pointerId;
     lastPos.current = orientation === "vertical" ? e.clientX : e.clientY;
     e.currentTarget.setPointerCapture(e.pointerId);
@@ -54,7 +55,7 @@ export default function ResizeHandle({ orientation, onDrag, className = "" }: Pr
           : "h-1 cursor-row-resize hover:bg-blue-500/40") +
         " " + className
       }
-      style={{ touchAction: "none" }}
+      style={{ touchAction: "none", userSelect: "none" }}
     >
       <div
         className={
