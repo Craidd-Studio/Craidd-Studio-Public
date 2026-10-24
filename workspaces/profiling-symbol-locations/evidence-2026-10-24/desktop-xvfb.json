@@ -1,0 +1,274 @@
+{
+  "machine": "sk27",
+  "kernel": "7.2.11-arch1-1",
+  "binary": {
+    "path": "/home/skira24/.codex/worktrees/9b33/Craidd-Studio/src-tauri/target/debug/craidd-studio",
+    "sha256": "0540a63c33715c12c5c3b28da3b0edcf316cc4b2469c3a5f5fff5c88255fbc5d"
+  },
+  "fixture": "/tmp/craidd-gr003-production-20261024-first",
+  "solution": "/tmp/craidd-symbol-ui-vUjJSr/Symbols.cln",
+  "capture": {
+    "options": {
+      "durationSeconds": 2,
+      "unwind": {
+        "stackBytes": 8192,
+        "kind": "dwarf"
+      },
+      "frequency": 99
+    },
+    "stderr": "[ perf record: Woken up 13 times to write data ]\n[ perf record: Captured and wrote 3.172 MB /home/skira24/.codex/worktrees/9b33/Craidd-Studio/test-results/ui/2026-10-24T00-28-00-393Z/perf-symbol-locations/home/.cache/com.skira24.craidd-studio/profiling/perf/9c0eb1b762e34386e6c5577ffa6e35f57a496cc76ff50814ddf4973512dfd63e/capture-1792801682515-459153-1/perf.data ]\n",
+    "reasons": [
+      "Timed duration completed"
+    ],
+    "solution": "/tmp/craidd-symbol-ui-vUjJSr/Symbols.cln",
+    "rawSha256": "98ec94fe080acd876f119a24341e7ea084394048cdd98eb0b619a43663b93a6c",
+    "decodeRevision": 1,
+    "id": "capture-1792801682515-459153-1",
+    "moduleIdentityMs": 250,
+    "jitMap": null,
+    "profileId": "459146-4303485-1792801682083325423",
+    "collectorIdentity": {
+      "birth": 4303697,
+      "pid": 459411
+    },
+    "pinned": false,
+    "recordArgv": [
+      "record",
+      "--no-buildid-cache",
+      "--clockid",
+      "mono",
+      "--timestamp",
+      "--per-thread",
+      "--no-inherit",
+      "--user-callchains",
+      "-e",
+      "cpu-clock:u",
+      "-F",
+      "99",
+      "--call-graph",
+      "dwarf,8192",
+      "-t",
+      "459146,459147,459148",
+      "-o",
+      "/home/skira24/.codex/worktrees/9b33/Craidd-Studio/test-results/ui/2026-10-24T00-28-00-393Z/perf-symbol-locations/home/.cache/com.skira24.craidd-studio/profiling/perf/9c0eb1b762e34386e6c5577ffa6e35f57a496cc76ff50814ddf4973512dfd63e/capture-1792801682515-459153-1/perf.data"
+    ],
+    "lossScanMs": 0,
+    "version": 1,
+    "decodeAndParseMs": 129,
+    "parserCpuMs": 31,
+    "coverage": {
+      "unknownRecords": 0,
+      "emptyChains": 0,
+      "lossScanComplete": true,
+      "lostSampleRecords": 0,
+      "lostSampleCount": 0,
+      "retainedSamples": 394,
+      "unparsedLossRecords": 0,
+      "truncatedStacks": 0,
+      "mismatchedChains": 0,
+      "lostRecords": 0,
+      "diagnostics": [],
+      "lostCount": 0,
+      "parsedSamples": 394,
+      "omittedSamples": 0
+    },
+    "clockMapping": null,
+    "state": "complete",
+    "generation": 1,
+    "rawLimit": 536870912,
+    "collectorSignal": 2,
+    "symbolSearch": {
+      "sealed": true,
+      "withheldModules": {},
+      "locations": [
+        "/tmp/craidd-gr003-production-20261024-first/elsewhere"
+      ],
+      "privateCache": "/home/skira24/.codex/worktrees/9b33/Craidd-Studio/test-results/ui/2026-10-24T00-28-00-393Z/perf-symbol-locations/home/.cache/com.skira24.craidd-studio/profiling/perf/9c0eb1b762e34386e6c5577ffa6e35f57a496cc76ff50814ddf4973512dfd63e/capture-1792801682515-459153-1/symbol-cache",
+      "index": {
+        "diagnostics": [],
+        "elfFiles": 1,
+        "entries": 1,
+        "incomplete": false,
+        "elapsedMs": 28
+      },
+      "served": [
+        {
+          "buildId": "b844add52a4d587c4b072aad274295c6c0ad66a1",
+          "module": "/tmp/craidd-gr003-production-20261024-first/build/liblocation.so",
+          "debugFile": {
+            "sha256": "643d13ae9f43cdefdb160f263fca5f06f2bab30f2b51cc50d8bb06fd0f99532e",
+            "canonical": "/tmp/craidd-gr003-production-20261024-first/elsewhere/arbitrary-artifact.elf",
+            "device": 52,
+            "path": "/tmp/craidd-gr003-production-20261024-first/elsewhere/arbitrary-artifact.elf",
+            "inode": 192626,
+            "size": 10368
+          },
+          "moduleFile": {
+            "sha256": "8ddf6ecab9d6d5ef29713984abc8c803438c348260b3210f5acf4bcb7a56b109",
+            "canonical": "/tmp/craidd-gr003-production-20261024-first/build/liblocation.so",
+            "device": 52,
+            "path": "/tmp/craidd-gr003-production-20261024-first/build/liblocation.so",
+            "inode": 192622,
+            "size": 14128
+          },
+          "cacheDebug": "/home/skira24/.codex/worktrees/9b33/Craidd-Studio/test-results/ui/2026-10-24T00-28-00-393Z/perf-symbol-locations/home/.cache/com.skira24.craidd-studio/profiling/perf/9c0eb1b762e34386e6c5577ffa6e35f57a496cc76ff50814ddf4973512dfd63e/capture-1792801682515-459153-1/symbol-cache/tmp/craidd-gr003-production-20261024-first/build/liblocation.so/b844add52a4d587c4b072aad274295c6c0ad66a1/debug",
+          "cacheElf": "/home/skira24/.codex/worktrees/9b33/Craidd-Studio/test-results/ui/2026-10-24T00-28-00-393Z/perf-symbol-locations/home/.cache/com.skira24.craidd-studio/profiling/perf/9c0eb1b762e34386e6c5577ffa6e35f57a496cc76ff50814ddf4973512dfd63e/capture-1792801682515-459153-1/symbol-cache/tmp/craidd-gr003-production-20261024-first/build/liblocation.so/b844add52a4d587c4b072aad274295c6c0ad66a1/elf",
+          "state": "served"
+        }
+      ]
+    },
+    "attributionValid": true,
+    "collectorExit": null,
+    "omittedThreadObservations": 0,
+    "label": "perf · PID 459146",
+    "rawBytes": 3362692,
+    "threadPollMs": 100,
+    "summary": {
+      "unwindCoverage": {
+        "byThread": {
+          "459147": {
+            "samples": 197,
+            "empty": 0,
+            "chainWeight": 1989898970,
+            "mismatch": 0,
+            "weight": 1989898970,
+            "truncated": 0,
+            "chainSamples": 197
+          },
+          "459148": {
+            "samples": 197,
+            "empty": 0,
+            "chainWeight": 1989898970,
+            "mismatch": 0,
+            "weight": 1989898970,
+            "truncated": 0,
+            "chainSamples": 197
+          }
+        },
+        "total": {
+          "samples": 394,
+          "empty": 0,
+          "chainWeight": 3979797940,
+          "mismatch": 0,
+          "weight": 3979797940,
+          "truncated": 0,
+          "chainSamples": 394
+        },
+        "byLeafModule": {
+          "/tmp/craidd-gr003-production-20261024-first/build/liblocation.so": {
+            "samples": 394,
+            "empty": 0,
+            "chainWeight": 3979797940,
+            "mismatch": 0,
+            "weight": 3979797940,
+            "truncated": 0,
+            "chainSamples": 394
+          }
+        },
+        "basis": "Available means perf supplied a chain, not proof of complete unwinding; truncated chains include recovered callers only."
+      },
+      "threads": {
+        "459147": "busy-worker",
+        "459148": "busy-worker"
+      },
+      "units": "sampled cpu-clock event period (ns); not exact function time",
+      "lastMonotonicNs": 43038980927993,
+      "attributionBasis": "Self: all retained sampled leaves. Inclusive: recovered chains only; completeness is not proven.",
+      "coverage": {
+        "unknownRecords": 0,
+        "emptyChains": 0,
+        "lossScanComplete": true,
+        "lostSampleRecords": 0,
+        "lostSampleCount": 0,
+        "retainedSamples": 394,
+        "unparsedLossRecords": 0,
+        "truncatedStacks": 0,
+        "mismatchedChains": 0,
+        "lostRecords": 0,
+        "diagnostics": [],
+        "lostCount": 0,
+        "parsedSamples": 394,
+        "omittedSamples": 0
+      },
+      "lossAccounting": "LOST and LOST_SAMPLES are separate reports and may overlap; never summed",
+      "firstMonotonicNs": 43037000955358,
+      "frameCount": 6,
+      "retention": {
+        "samples": 500000,
+        "frames": 100000,
+        "stackReferences": 8000000
+      }
+    },
+    "threadsAtStart": [
+      {
+        "tid": 459146,
+        "birth": 4303485,
+        "name": "fixture"
+      },
+      {
+        "tid": 459147,
+        "birth": 4303485,
+        "name": "busy-worker"
+      },
+      {
+        "tid": 459148,
+        "birth": 4303485,
+        "name": "busy-worker"
+      }
+    ],
+    "clockDomain": "CLOCK_MONOTONIC",
+    "buildIds": [
+      {
+        "debugFiles": [],
+        "state": "matched",
+        "currentBuildId": "2e5074eab755e2fb5151fa184da4a33fadd67e70",
+        "module": "/tmp/craidd-gr003-production-20261024-first/build/fixture",
+        "capturedBuildId": "2e5074eab755e2fb5151fa184da4a33fadd67e70"
+      },
+      {
+        "debugFiles": [],
+        "state": "matched",
+        "currentBuildId": "b844add52a4d587c4b072aad274295c6c0ad66a1",
+        "module": "/tmp/craidd-gr003-production-20261024-first/build/liblocation.so",
+        "capturedBuildId": "b844add52a4d587c4b072aad274295c6c0ad66a1"
+      },
+      {
+        "debugFiles": [],
+        "state": "matched",
+        "currentBuildId": "d320029ad1a23be2f4bce117fd321cbd23a2014b",
+        "module": "/usr/lib/libc.so.6",
+        "capturedBuildId": "d320029ad1a23be2f4bce117fd321cbd23a2014b"
+      },
+      {
+        "debugFiles": [],
+        "state": "matched",
+        "currentBuildId": "5b8d3de442de987b24d0e3679533068f2ae62497",
+        "module": "/usr/lib/libstdc++.so.6.0.36",
+        "capturedBuildId": "5b8d3de442de987b24d0e3679533068f2ae62497"
+      }
+    ],
+    "target": {
+      "birth": 4303485,
+      "pid": 459146
+    },
+    "perfVersion": "perf version 7.2.11-1",
+    "sourceKind": "nativeStackSamples",
+    "host": {
+      "birth": 4303487,
+      "pid": 459153
+    },
+    "createdMs": 1792801682515,
+    "event": "cpu-clock:u",
+    "estimatedRawBytes": 5084046,
+    "threadsGained": [],
+    "omittedStderrBytes": 0,
+    "owner": "workspace-1"
+  },
+  "gates": {
+    "desktopSettings": "PASS",
+    "namedStrippedFrame": "PASS",
+    "servedProvenance": "PASS",
+    "targetSurvival": "PASS",
+    "humanAcceptance": "NOT TESTED"
+  }
+}

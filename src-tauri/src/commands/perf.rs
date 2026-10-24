@@ -13,6 +13,11 @@ pub(crate) static PAIR: std::sync::Mutex<()> = std::sync::Mutex::new(());
 #[serde(tag = "action", rename_all = "camelCase", deny_unknown_fields)]
 pub enum Request {
     Discover,
+    SymbolSettings,
+    SaveSymbolSettings {
+        paths: Vec<String>,
+        expected: Vec<String>,
+    },
     Prepare {
         options: Options,
     },
@@ -111,6 +116,8 @@ pub async fn perf_action(
     }
     match request{
         Request::Discover=>unreachable!(),
+        Request::SymbolSettings=>crate::perf_symbols::locations(&solution).map(|paths|serde_json::json!(paths)),
+        Request::SaveSymbolSettings{paths,expected}=>crate::perf_symbols::save_locations(&solution,paths,expected).map(|paths|serde_json::json!(paths)),
         Request::Prepare{options}=>manager.prepare(&solution,&target.unwrap().1,&options),
         Request::Start{options}=>{let (profile,target)=target.unwrap();manager.start(&owner,&solution,&profile,target,options).map(|id|serde_json::json!({"id":id}))},
         Request::Status{id}=>serde_json::to_value(manager.status(&owner,&solution,&id)?).map_err(|e|e.to_string()),

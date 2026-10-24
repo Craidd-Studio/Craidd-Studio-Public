@@ -1,5 +1,5 @@
 # GR-003: User-declared debug-symbol locations for perf captures
-Status: proposed revision. Not implemented. Craidd baseline reviewed: codex/profiling-perf-timed at 464e407. Area: Profiler, GR-002 timed capture (symbol resolution).
+Status: accepted for implementation after the GR-002 sampled-leaf fix. Backend/settings implemented locally and qualified within [these gates](gr-003-results.md) (24 October 2026). Craidd baseline reviewed: codex/profiling-perf-timed at 464e407. Area: Profiler, GR-002 timed capture (symbol resolution).
 
 Summary
 Let a user name folders or files where debug symbols live, and make perf actually use the matching ones (verified by build ID). Programs built with common engines and toolchains ship stripped binaries whose debug files are kept somewhere else, and today those frames show unnamed.
@@ -78,6 +78,14 @@ Proposed backend delivery: canonicalize read-only declared locations, cap 16 loc
 Populate a capture-owned cache only from verified module/debug pairs. Qualify the installed perf global `--buildid-dir` option and its exact debug-link layout before implementing. Never touch the user's cache or declared folders. Record served path, canonical identity, size and SHA-256 before and after decode; bind it to the captured module build ID. On reopen and source navigation recheck the served bytes, not only the build ID. A moved/missing/changed file withholds module names and source and marks PARTIAL. Cache links are untrusted input after creation; recreate or verify them from recorded paths. Retention owns their cleanup. Old manifests keep their original conventional lookup behavior.
 
 The native fixture qualification is a mechanism checkpoint. It does not by itself deliver settings persistence, production manifest migration, desktop settings or revalidation gates.
+
+## Accepted implementation decisions (24 October 2026)
+
+The user approved per-solution declarations only, no engine-path guessing, the bounded read-only index, capture-private serving, and fingerprint/reopen checks. Settings use `[profiling].debug_symbol_locations` in the existing `.cln`; the settings editor preserves unrelated TOML and refuses a stale settings list. Relative paths resolve from that solution. Existing captures freeze the declaration list and served identities; settings apply to new captures. Legacy manifests without symbol-search provenance keep their conventional behavior.
+
+The index includes enumeration in its 10,000-entry / five-second budget, skips symlinked subdirectories, and descends at most two directory levels. Only relevant named conflicts or exact build-ID matches affect a module. A separate explicit withheld-module record enforces refusal even if diagnostic examples fill up. The private cache binds both module and debug links to verified fingerprints, rechecked after both decodes and on navigation/reopen. Declared folders and the user cache are never written.
+
+Implementation starting bounds, still subject to measured qualification and user review: 512 MiB per admitted symbol file and a 512 MiB sum of module/debug admission per capture; 15 seconds for discovery plus serving, including the five-second index. Reaching a bound is visible and partial. These are resource guards, not new performance promises. No user-wide list, automatic engine discovery, debuginfod, or source remapping is introduced.
 
 ---
 

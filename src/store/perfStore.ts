@@ -8,11 +8,12 @@ export interface PerfBranch { children:PerfChild[]; childCount:number; omittedCh
 export interface UnwindCounts {samples:number;weight:number;chainSamples:number;chainWeight:number;empty:number;truncated:number;mismatch:number}
 export interface PerfCapture {
  id:string; label:string; createdMs:number; state:string; target:{pid:number;birth:number}; options:PerfOptions; event:string; pinned:boolean;
+ symbolSearch?:{locations:string[];index:{entries:number;elfFiles:number;elapsedMs:number;incomplete:boolean;diagnostics:string[]};served:{module:string;buildId:string;debugFile:{path:string;sha256:string};state:string}[];withheldModules:Record<string,string>;sealed:boolean;privateCache:string}|null;
  rawBytes:number; rawLimit:number; estimatedRawBytes:number; perfVersion:string; clockDomain:string; reasons:string[];
  threadsAtStart:{tid:number;birth:number;name:string}[]; threadsGained:{tid:number;birth:number;name:string}[]; omittedThreadObservations:number; threadPollMs:number;
  coverage:{parsedSamples:number;retainedSamples:number;omittedSamples:number;lostRecords:number;lostCount:number;lostSampleRecords:number;lostSampleCount:number;unparsedLossRecords:number;unknownRecords:number;truncatedStacks:number;lossScanComplete:boolean|null;diagnostics:string[]};
  summary:{threads?:Record<string,string>;firstMonotonicNs?:number;lastMonotonicNs?:number;frameCount?:number;unwindCoverage?:{total:UnwindCounts;byThread:Record<string,UnwindCounts>;byLeafModule:Record<string,UnwindCounts>;basis:string}}|null;
- buildIds:{module:string;state:string;debugFiles:{path:string;state:string}[]}[]; stderr:string; decodeAndParseMs:number; moduleIdentityMs:number;
+ buildIds:{module:string;state:string;debugFiles:{path:string;state:string}[]}[]; stderr:string; decodeAndParseMs:number;decodeRevision?:number; moduleIdentityMs:number;
 }
 export interface PerfDiscovery { available:boolean;version:string|null;path:string|null;reason:string|null;perfEventParanoid:string|null;kptrRestrict:string|null;effectiveCapabilitiesHex:string|null }
 export interface PerfPlan { target:{pid:number;birth:number}; threadsAtStart:unknown[]; estimatedRawBytes:number; estimateBasis:string; unwindCoverageWarning:string; threadCoverage:string; threadObservationWarning:string; expectedSampleIntervalMs:number }

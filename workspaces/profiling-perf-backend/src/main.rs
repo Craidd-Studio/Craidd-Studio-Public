@@ -5,6 +5,9 @@ mod perf_capture;
 #[allow(dead_code)]
 #[path = "../../../src-tauri/src/perf_model.rs"]
 mod perf_model;
+#[allow(dead_code)]
+#[path = "../../../src-tauri/src/perf_symbols.rs"]
+mod perf_symbols;
 mod process_supervisor {
     pub fn spawn(c: &mut std::process::Command) -> std::io::Result<std::process::Child> {
         c.spawn()
@@ -120,6 +123,16 @@ fn serve(root: &str) {
         let result = (|| -> Result<serde_json::Value, String> {
             let id = request["id"].as_str().unwrap_or_default();
             match request["action"].as_str().unwrap_or_default() {
+                "symbolSettings" => {
+                    perf_symbols::locations(&solution).map(|paths| serde_json::json!(paths))
+                }
+                "saveSymbolSettings" => perf_symbols::save_locations(
+                    &solution,
+                    serde_json::from_value(request["paths"].clone()).map_err(|e| e.to_string())?,
+                    serde_json::from_value(request["expected"].clone())
+                        .map_err(|e| e.to_string())?,
+                )
+                .map(|paths| serde_json::json!(paths)),
                 "start" => {
                     let target = perf_capture::identity(
                         request["pid"].as_i64().ok_or("Missing PID")? as i32,

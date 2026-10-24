@@ -30,6 +30,8 @@ Every row matches an independent `perf script -G` sample count and sum of event 
 
 [Machine-readable evidence and screenshot](../../../../workspaces/profiling-perf-backend/leaf-evidence-2026-10-24/), [qualification runner](../../../../workspaces/profiling-perf-backend/qualify_leaves.py), [decision](gr-002-leaf-preservation.md). Each evidence record includes executable hash, machine, raw path, fixture identity, result, loss counts and coverage. The committed 20-record parser excerpt removes trailing header spaces only; the original perf output is retained with the qualification artifacts. Raw captures remain under `/tmp/craidd-perf-leaf-20261024-first`; they are not committed. The ordinary-display screenshot timeout remains open; do not call its whole harness run PASS.
 
+Follow-up: [fresh-manager reopen evidence](../../../../workspaces/profiling-perf-backend/leaf-evidence-2026-10-24/fresh-manager-reopen.json) repeats both raw passes after dropping the in-memory manager. Counts and weights still match for FP, DWARF and the Mono fixture (1,993 leaves, 1,979 empty chains). GR-003 also removes the same-owner loaded-result short-circuit so its Reopen button rechecks bytes and increments a decode revision. The original same-manager request alone was not proof of a second decode.
+
 Next: approved GR-003 backend settings and symbol serving, then GR-004 experimental launch-only helper. Local commits only; no push or merge.
 
 ---

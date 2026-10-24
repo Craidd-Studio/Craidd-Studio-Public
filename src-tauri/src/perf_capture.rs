@@ -146,7 +146,7 @@ fn find_tool(name: &str) -> Option<PathBuf> {
         .find(|p| p.is_file() && fs::metadata(p).is_ok_and(|m| m.permissions().mode() & 0o111 != 0))
         .and_then(|p| p.canonicalize().ok())
 }
-fn command(tool: &Path) -> Command {
+pub(crate) fn command(tool: &Path) -> Command {
     let mut c = Command::new(tool);
     c.env("LC_ALL", "C")
         .env("DEBUGINFOD_URLS", "")
@@ -191,7 +191,7 @@ fn wait_tool(
         thread::sleep(Duration::from_millis(POLL_MS));
     }
 }
-fn output(mut c: Command, timeout: Duration) -> Result<String, String> {
+pub(crate) fn output(mut c: Command, timeout: Duration) -> Result<String, String> {
     c.stdout(Stdio::piped()).stderr(Stdio::piped());
     let mut child = spawn(&mut c).map_err(|e| e.to_string())?;
     let stdout = child.stdout.take().unwrap();
@@ -268,10 +268,14 @@ pub struct Manifest {
     pub summary: serde_json::Value,
     pub module_identity_ms: u64,
     pub decode_and_parse_ms: u64,
+    #[serde(default)]
+    pub decode_revision: u32,
     pub parser_cpu_ms: u64,
     pub loss_scan_ms: u64,
     pub build_ids: Vec<SymbolIdentity>,
     pub jit_map: Option<PerfMapIdentity>,
+    #[serde(default)]
+    pub symbol_search: Option<crate::perf_symbols::Report>,
     pub stderr: String,
     pub omitted_stderr_bytes: u64,
 }
@@ -587,6 +591,7 @@ impl PerfManager {
         let dir = base.join(&id);
         fs::create_dir(&dir).map_err(|e| e.to_string())?;
         fs::set_permissions(&dir, fs::Permissions::from_mode(0o700)).map_err(|e| e.to_string())?;
+        let symbol_locations = crate::perf_symbols::locations(Path::new(&solution))?;
         let mut m = Manifest {
             version: 1,
             id: id.clone(),
@@ -624,10 +629,12 @@ impl PerfManager {
             summary: serde_json::Value::Null,
             module_identity_ms: 0,
             decode_and_parse_ms: 0,
+            decode_revision: 0,
             parser_cpu_ms: 0,
             loss_scan_ms: 0,
             build_ids: vec![],
             jit_map: None,
+            symbol_search: Some(crate::perf_symbols::Report::pending(symbol_locations)),
             stderr: String::new(),
             omitted_stderr_bytes: 0,
         };
@@ -786,6 +793,19 @@ impl PerfManager {
                 "Separate debug file changed or mismatched; source navigation refused".into(),
             );
         }
+        if let Some(mut report) = job.manifest.lock().unwrap().symbol_search.clone() {
+            crate::perf_symbols::verify_report(&mut report, &job.closed);
+            if report
+                .served
+                .iter()
+                .any(|s| s.module == build.module && s.state != "served")
+                || report.withheld_modules.contains_key(&build.module)
+            {
+                return Err(
+                    "Served symbol file changed or was withheld; source navigation refused".into(),
+                );
+            }
+        }
         Ok(model::SourceLocation {
             path: path.to_string_lossy().into(),
             line: source.line,
@@ -836,9 +856,6 @@ impl PerfManager {
                 return Err("Capture is still finishing; retry reopening after it stops".into());
             }
             if !j.closed.load(Ordering::Acquire) {
-                if existing.owner == owner && j.data.lock().unwrap().is_some() {
-                    return Ok(());
-                }
                 if existing.owner != owner {
                     return Err("Capture is already loaded in another window".into());
                 }
@@ -1143,6 +1160,9 @@ fn decode_samples(
     leaf_only: bool,
 ) -> Result<(SampleSet, u64), String> {
     let mut c = command(perf);
+    if job.manifest.lock().unwrap().symbol_search.is_some() {
+        c.arg("--buildid-dir").arg(job.dir.join("symbol-cache"));
+    }
     c.arg("script");
     if leaf_only {
         c.arg("-G");
@@ -1270,6 +1290,20 @@ fn decode(job: &Job, perf: &Path) -> Result<(), String> {
         m.module_identity_ms = symbol_started.elapsed().as_millis() as u64;
         m.build_ids = builds.clone();
     }
+    let saved_search = job.manifest.lock().unwrap().symbol_search.clone();
+    if let (Some(report), Some(tool)) = (saved_search, readelf.as_ref()) {
+        let solution = job.manifest.lock().unwrap().solution.clone();
+        let report = crate::perf_symbols::prepare(
+            perf,
+            tool,
+            &job.dir,
+            Path::new(&solution),
+            &builds,
+            report,
+            &job.closed,
+        );
+        job.manifest.lock().unwrap().symbol_search = Some(report);
+    }
     let map_before = inspect_perf_map(job.manifest.lock().unwrap().target.pid);
     let map_basis = if initial_decode {
         let mut observed = map_before.clone();
@@ -1330,6 +1364,39 @@ fn decode(job: &Job, perf: &Path) -> Result<(), String> {
             "Decoded samples did not match the declared PID/TID scope; trees quarantined".into(),
         );
     }
+    let verify_search = job.manifest.lock().unwrap().symbol_search.clone();
+    if let Some(mut report) = verify_search {
+        crate::perf_symbols::verify_report(&mut report, &job.closed);
+        job.manifest.lock().unwrap().symbol_search = Some(report);
+    }
+    let search = job.manifest.lock().unwrap().symbol_search.clone();
+    let mut withheld = BTreeSet::new();
+    if let Some(report) = &search {
+        for (module, reason) in &report.withheld_modules {
+            withheld.insert(module.as_str());
+            set.coverage
+                .diagnostic(&format!("Module {module}: {reason}"));
+        }
+        for served in &report.served {
+            if served.state != "served" {
+                withheld.insert(served.module.as_str());
+            }
+        }
+        for diagnostic in &report.index.diagnostics {
+            set.coverage.diagnostic(diagnostic);
+            for b in &builds {
+                if diagnostic.starts_with(&format!("Module {}:", b.module)) {
+                    withheld.insert(b.module.as_str());
+                }
+            }
+        }
+        for served in &report.served {
+            if served.state != "served" {
+                set.coverage
+                    .diagnostic(&format!("{}: {}", served.module, served.state));
+            }
+        }
+    }
     let map_after = inspect_perf_map(expected.target.pid);
     let map_matches = map_basis.sha256.is_some()
         && map_basis.sha256 == map_before.sha256
@@ -1339,7 +1406,9 @@ fn decode(job: &Job, perf: &Path) -> Result<(), String> {
     let matched: BTreeSet<_> = builds
         .iter()
         .filter(|b| {
-            b.state == "matched" && b.debug_files.iter().all(|d| d.state == "matchedCandidate")
+            b.state == "matched"
+                && !withheld.contains(b.module.as_str())
+                && b.debug_files.iter().all(|d| d.state == "matchedCandidate")
         })
         .map(|b| b.module.as_str())
         .collect();
@@ -1393,6 +1462,7 @@ fn decode(job: &Job, perf: &Path) -> Result<(), String> {
             .diagnostic(&format!("Loss scan incomplete: {e}"));
     }
     let mut m = job.manifest.lock().unwrap();
+    m.decode_revision = m.decode_revision.saturating_add(1);
     m.coverage = set.coverage.clone();
     m.summary = set.summary();
     m.loss_scan_ms = loss_started.elapsed().as_millis() as u64;
@@ -1476,6 +1546,29 @@ mod tests {
         let rows = recover_and_list(&base).unwrap();
         assert_eq!(rows.len(), 10);
         assert!(rows.iter().any(|m| m.id == "capture-0"));
+        fs::remove_dir_all(base).unwrap();
+    }
+    #[test]
+    fn retention_removes_private_cache_without_following_symbol_links() {
+        let base = root();
+        let original = base.join("producer.debug");
+        fs::write(&original, b"unchanged symbols").unwrap();
+        for n in 0..13 {
+            let id = format!("capture-{n}");
+            let dir = base.join(&id);
+            fs::create_dir(&dir).unwrap();
+            let cache = dir.join("symbol-cache");
+            fs::create_dir(&cache).unwrap();
+            std::os::unix::fs::symlink(&original, cache.join("debug")).unwrap();
+            let mut m = manifest(&id, n);
+            m.pinned = n < 2;
+            write_manifest(&dir, &m).unwrap();
+        }
+        retain(&base, "").unwrap();
+        assert!(!base.join("capture-2").exists());
+        assert!(base.join("capture-0/symbol-cache/debug").is_file());
+        assert_eq!(fs::read(&original).unwrap(), b"unchanged symbols");
+        assert_eq!(recover_and_list(&base).unwrap().len(), 12);
         fs::remove_dir_all(base).unwrap();
     }
     #[test]

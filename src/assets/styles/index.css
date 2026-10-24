@@ -738,3 +738,8 @@ select {
 .metric-workbench .metric-row-dock footer { font-size:10px; }
 .metric-workbench .metric-analysis.is-compact .metric-row-dock:not(.is-full),.metric-workbench .metric-analysis.is-compact .metric-dock-resize { display:none; }
 @container (max-width:1190px) { .metric-workbench .metric-inspector.is-explicit { position:absolute; right:0; top:0; bottom:0; width:290px; box-shadow:-12px 0 35px #0009; z-index:4; } }
+.perf-symbol-settings { margin:12px 0 3px; color:#b9cce1; font-size:11px; }
+.perf-symbol-settings p { max-width:800px; color:#a5b9d0; }
+.perf-symbol-settings label { display:flex; flex-direction:column; gap:6px; }
+.perf-symbol-settings textarea { width:min(100%,700px); margin-bottom:8px; resize:vertical; }
+.perf-served-symbols { margin:16px 0; border-top:1px solid #41516a; padding-top:12px; overflow-wrap:anywhere; }

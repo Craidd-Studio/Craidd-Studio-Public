@@ -36,6 +36,7 @@ for mode,unwind in [('native-fp',{'kind':'fp'}),('native-dwarf',{'kind':'dwarf',
   q={'direction':'bottomUp','path':[],'limit':200,'tid':None,'threadName':None,'module':None,'startNs':None,'endNs':None};tree=server.request('tree',id=ident,query=q);assert tree['ok'];assert tree['value']['totalWeight']==sum(periods);assert not tree['value']['omittedChildren'];assert sum(c['selfWeight'] for c in tree['value']['children'])==sum(periods)
   alive=target.poll() is None
   # Reopen while the same fixture and map incarnation are alive.
+  server.close();server=Server(a.harness,root)
   reopen=server.request('reopen',id=ident);assert reopen['ok'],reopen;reopened=server.finished(ident);assert reopened['summary']['unwindCoverage']['total']['weight']==sum(periods)
   case={'mode':mode,'fixturePid':target.pid,'fixtureLog':log,'raw':str(raw),'manifest':status,'independentLeafSamples':len(periods),'independentLeafWeight':sum(periods),'reconciled':parsed,'targetSurvived':alive,'tree':tree['value'],'reopenedTotals':reopened['summary']['unwindCoverage']['total'],'gates':{'leafSampleAndWeightTotals':'PASS','literalIPsRetained':'PASS','selfTreeTotals':'PASS','reopen':'PASS','targetSurvival':'PASS' if alive else 'FAIL','lossReporting':'PASS'}}
   if managed:case['gates']['unwindFailureReproduced']='PASS' if coverage['total']['empty']>0 else 'FAIL'
