@@ -1,0 +1,64 @@
+host  320301/320301  35018.832378:    1001001 cpu-clock:u:
+	    7f50a68f8061 [unknown] (/usr/lib/libmonosgen-2.0.so.1.0.0)
+	    7f50a68f8687 [unknown] (/usr/lib/libmonosgen-2.0.so.1.0.0)
+	    7f50a68f981c [unknown] (/usr/lib/libmonosgen-2.0.so.1.0.0)
+	    7f50a68dcab6 [unknown] (/usr/lib/libmonosgen-2.0.so.1.0.0)
+	    7f50a68e0294 [unknown] (/usr/lib/libmonosgen-2.0.so.1.0.0)
+	    7f50a686165b [unknown] (/usr/lib/libmonosgen-2.0.so.1.0.0)
+	    7f50a68235dc [unknown] (/usr/lib/libmonosgen-2.0.so.1.0.0)
+	    7f50a682a2ae [unknown] (/usr/lib/libmonosgen-2.0.so.1.0.0)
+	    7f50a68ba7e0 [unknown] (/usr/lib/libmonosgen-2.0.so.1.0.0)
+	    7f50a68bbe19 [unknown] (/usr/lib/libmonosgen-2.0.so.1.0.0)
+
+host  320301/320301  35018.833381:    1001001 cpu-clock:u:
+	    7f50a6ea7cf1 [unknown] (/usr/lib/libc.so.6)
+	    7f50a6b177af monoeg_g_calloc (/usr/lib/libmonosgen-2.0.so.1.0.0)
+	    7f50a6a06ad1 [unknown] (/usr/lib/libmonosgen-2.0.so.1.0.0)
+	    7f50a6a06cfb mono_method_signature_checked_slow (/usr/lib/libmonosgen-2.0.so.1.0.0)
+	    7f50a6a0747e mono_method_signature_internal_slow (/usr/lib/libmonosgen-2.0.so.1.0.0)
+	    7f50a699bd5d [unknown] (/usr/lib/libmonosgen-2.0.so.1.0.0)
+	    7f50a699fef6 [unknown] (/usr/lib/libmonosgen-2.0.so.1.0.0)
+	    7f50a69a0da8 [unknown] (/usr/lib/libmonosgen-2.0.so.1.0.0)
+	    7f50a69919cb [unknown] (/usr/lib/libmonosgen-2.0.so.1.0.0)
+	    7f50a68bbfbb [unknown] (/usr/lib/libmonosgen-2.0.so.1.0.0)
+
+host  320301/320301  35018.834382:    1001001 cpu-clock:u:
+	    7f50a6849468 [unknown] (/usr/lib/libmonosgen-2.0.so.1.0.0)
+	    7f50a68235dc [unknown] (/usr/lib/libmonosgen-2.0.so.1.0.0)
+	    7f50a682a2ae [unknown] (/usr/lib/libmonosgen-2.0.so.1.0.0)
+	    7f50a68ba7e0 [unknown] (/usr/lib/libmonosgen-2.0.so.1.0.0)
+	    7f50a68bbe19 [unknown] (/usr/lib/libmonosgen-2.0.so.1.0.0)
+
+host  320301/320301  35018.835391:    1001001 cpu-clock:u:
+
+host  320301/320301  35018.836401:    1001001 cpu-clock:u:
+
+host  320301/320301  35018.837401:    1001001 cpu-clock:u:
+
+host  320301/320301  35018.838402:    1001001 cpu-clock:u:
+
+host  320301/320301  35018.839394:    1001001 cpu-clock:u:
+
+host  320301/320301  35018.840405:    1001001 cpu-clock:u:
+
+host  320301/320301  35018.841405:    1001001 cpu-clock:u:
+
+host  320301/320301  35018.842406:    1001001 cpu-clock:u:
+
+host  320301/320301  35018.843407:    1001001 cpu-clock:u:
+
+host  320301/320301  35018.844408:    1001001 cpu-clock:u:
+
+host  320301/320301  35018.845400:    1001001 cpu-clock:u:
+
+host  320301/320301  35018.846401:    1001001 cpu-clock:u:
+
+host  320301/320301  35018.847412:    1001001 cpu-clock:u:
+
+host  320301/320301  35018.848403:    1001001 cpu-clock:u:
+
+host  320301/320301  35018.849414:    1001001 cpu-clock:u:
+
+host  320301/320301  35018.850405:    1001001 cpu-clock:u:
+
+host  320301/320301  35018.851406:    1001001 cpu-clock:u:

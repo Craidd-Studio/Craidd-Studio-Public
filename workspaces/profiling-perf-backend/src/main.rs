@@ -16,6 +16,23 @@ fn main() {
         Some("serve") => serve(&args[2]),
         Some("discover") => println!("{}", perf_capture::discover()),
         Some("exercise") => exercise(&args[2], &args[3], &args[4], &args[5]),
+        Some("reconcile") => {
+            let leaves = perf_model::parse_script(std::io::BufReader::new(
+                std::fs::File::open(&args[2]).unwrap(),
+            ))
+            .unwrap();
+            let chains = perf_model::parse_chains(std::io::BufReader::new(
+                std::fs::File::open(&args[3]).unwrap(),
+            ))
+            .unwrap();
+            let leaf_count = leaves.samples.len();
+            let leaf_weight: u64 = leaves.samples.iter().map(|s| s.period).sum();
+            let set = perf_model::reconcile(leaves, chains).unwrap();
+            println!(
+                "{}",
+                serde_json::json!({"summary":set.summary(),"leafCount":leaf_count,"leafWeight":leaf_weight,"selfCount":set.samples.len(),"selfWeight":set.samples.iter().map(|s|s.period).sum::<u64>(),"literalIpCount":set.samples.iter().filter(|s|!s.leaf_ip.is_empty()).count()})
+            );
+        }
         Some("parse") => {
             let set = perf_model::parse_script(std::io::BufReader::new(
                 std::fs::File::open(&args[2]).unwrap(),

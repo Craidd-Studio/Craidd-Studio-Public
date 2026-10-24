@@ -1136,6 +1136,69 @@ fn record(job: &Job, perf: &Path) -> Result<(), String> {
     decode(job, perf)
 }
 
+fn decode_samples(
+    job: &Job,
+    perf: &Path,
+    raw: &Path,
+    leaf_only: bool,
+) -> Result<(SampleSet, u64), String> {
+    let mut c = command(perf);
+    c.arg("script");
+    if leaf_only {
+        c.arg("-G");
+    }
+    c.args([
+        "--ns",
+        "--full-source-path",
+        "-F",
+        "comm,pid,tid,time,period,event,ip,sym,dso,srcline",
+        "-i",
+    ])
+    .arg(&raw)
+    .stdout(Stdio::piped())
+    .stderr(Stdio::piped());
+    let mut child = spawn(&mut c).map_err(|e| e.to_string())?;
+    let stdout = child.stdout.take().unwrap();
+    let stderr = child.stderr.take().unwrap();
+    let parse = thread::spawn(move || {
+        fn cpu_ns() -> u64 {
+            let mut ts = libc::timespec {
+                tv_sec: 0,
+                tv_nsec: 0,
+            };
+            unsafe {
+                libc::clock_gettime(libc::CLOCK_THREAD_CPUTIME_ID, &mut ts);
+            }
+            ts.tv_sec as u64 * 1_000_000_000 + ts.tv_nsec as u64
+        }
+        let start = cpu_ns();
+        let result = if leaf_only {
+            model::parse_script(BufReader::new(stdout.take(SCRIPT_LIMIT)))
+        } else {
+            model::parse_chains(BufReader::new(stdout.take(SCRIPT_LIMIT)))
+        };
+        (result, cpu_ns().saturating_sub(start) / 1_000_000)
+    });
+    let error = thread::spawn(move || drain(stderr, STDERR_LIMIT));
+    let status = wait_tool(&mut child, Duration::from_secs(60), Some(&job.closed));
+    let (parsed, parser_cpu_ms) = parse.join().map_err(|_| "Stack parser thread failed")?;
+    let mut set = parsed?;
+    let (err, _) = error
+        .join()
+        .map_err(|_| "Analysis diagnostic reader failed")?;
+    if !err.is_empty() {
+        set.coverage.diagnostic(&String::from_utf8_lossy(&err));
+    }
+    if !status.as_ref().is_ok_and(|s| s.success()) {
+        set.coverage.diagnostic(&format!(
+            "perf script incomplete: {:?}; {}",
+            status,
+            String::from_utf8_lossy(&err)
+        ));
+    }
+    Ok((set, parser_cpu_ms))
+}
+
 fn decode(job: &Job, perf: &Path) -> Result<(), String> {
     job.manifest.lock().unwrap().state = "parsing".into();
     if !job.manifest.lock().unwrap().attribution_valid {
@@ -1228,57 +1291,32 @@ fn decode(job: &Job, perf: &Path) -> Result<(), String> {
             })
     };
     let parse_started = Instant::now();
-    let mut c = command(perf);
-    c.args([
-        "script",
-        "--ns",
-        "--full-source-path",
-        "-F",
-        "comm,pid,tid,time,period,event,ip,sym,dso,srcline",
-        "-i",
-    ])
-    .arg(&raw)
-    .stdout(Stdio::piped())
-    .stderr(Stdio::piped());
-    let mut child = spawn(&mut c).map_err(|e| e.to_string())?;
-    let stdout = child.stdout.take().unwrap();
-    let stderr = child.stderr.take().unwrap();
-    let parse = thread::spawn(move || {
-        fn cpu_ns() -> u64 {
-            let mut ts = libc::timespec {
-                tv_sec: 0,
-                tv_nsec: 0,
-            };
-            unsafe {
-                libc::clock_gettime(libc::CLOCK_THREAD_CPUTIME_ID, &mut ts);
-            }
-            ts.tv_sec as u64 * 1_000_000_000 + ts.tv_nsec as u64
+    let (leaves, leaf_cpu_ms) = decode_samples(job, perf, &raw, true)?;
+    let (chains, chain_cpu_ms) = decode_samples(job, perf, &raw, false)?;
+    let mut set = model::reconcile(leaves, chains)?;
+    // Both passes must describe the same immutable raw capture, including on reopen.
+    let mut verify_file = File::open(&raw).map_err(|e| e.to_string())?;
+    let mut verify_hash = Sha256::new();
+    loop {
+        let n = verify_file.read(&mut buffer).map_err(|e| e.to_string())?;
+        if n == 0 {
+            break;
         }
-        let start = cpu_ns();
-        let result = model::parse_script(BufReader::new(stdout.take(SCRIPT_LIMIT)));
-        (result, cpu_ns().saturating_sub(start) / 1_000_000)
-    });
-    let error = thread::spawn(move || drain(stderr, STDERR_LIMIT));
-    let status = wait_tool(&mut child, Duration::from_secs(60), Some(&job.closed));
-    let (parsed, parser_cpu_ms) = parse.join().map_err(|_| "Stack parser thread failed")?;
-    let mut set = parsed?;
+        verify_hash.update(&buffer[..n]);
+        if job.closed.load(Ordering::Acquire) {
+            return Err("Decode cancelled".into());
+        }
+    }
+    if Some(format!("{:x}", verify_hash.finalize())) != job.manifest.lock().unwrap().raw_sha256 {
+        return Err(
+            "Raw capture changed between leaf and call-chain decodes; result quarantined".into(),
+        );
+    }
+
     {
         let mut m = job.manifest.lock().unwrap();
-        m.parser_cpu_ms = parser_cpu_ms;
+        m.parser_cpu_ms = leaf_cpu_ms.saturating_add(chain_cpu_ms);
         m.decode_and_parse_ms = parse_started.elapsed().as_millis() as u64;
-    }
-    let (err, _) = error
-        .join()
-        .map_err(|_| "Analysis diagnostic reader failed")?;
-    if !err.is_empty() {
-        set.coverage.diagnostic(&String::from_utf8_lossy(&err));
-    }
-    if !status.as_ref().is_ok_and(|s| s.success()) {
-        set.coverage.diagnostic(&format!(
-            "perf script incomplete: {:?}; {}",
-            status,
-            String::from_utf8_lossy(&err)
-        ));
     }
     let expected = job.manifest.lock().unwrap().clone();
     let tids: BTreeSet<_> = expected.threads_at_start.iter().map(|t| t.tid).collect();
@@ -1358,14 +1396,17 @@ fn decode(job: &Job, perf: &Path) -> Result<(), String> {
     m.coverage = set.coverage.clone();
     m.summary = set.summary();
     m.loss_scan_ms = loss_started.elapsed().as_millis() as u64;
-    if !err.is_empty() {
-        m.reasons
-            .push(String::from_utf8_lossy(&err).chars().take(2048).collect());
-    }
     if m.omitted_thread_observations > 0 {
         m.reasons.push("New-thread identity retention limit reached; gained-thread count is a lower bound; omitted observations can repeat".into());
     }
+    m.reasons.retain(|r| !r.starts_with("Unwind coverage:"));
     let expected_finish = m.reasons.iter().all(|r| r == "Timed duration completed");
+    if set.coverage.empty_chains > 0
+        || set.coverage.truncated_stacks > 0
+        || set.coverage.mismatched_chains > 0
+    {
+        m.reasons.push(format!("Unwind coverage: {} empty, {} truncated, {} mismatched chains; sampled leaves retained for self attribution",set.coverage.empty_chains,set.coverage.truncated_stacks,set.coverage.mismatched_chains));
+    }
     m.state = if !set.samples.is_empty() && !set.coverage.partial() && expected_finish {
         "complete"
     } else {

@@ -1,0 +1,1249 @@
+{
+  "machine": "sk27",
+  "kernel": "7.2.11-arch1-1",
+  "perf": "perf version 7.2.11-1",
+  "harness": {
+    "path": "/tmp/craidd-perf-20261024-leaf-target/release/craidd-perf-backend-fixture",
+    "sha256": "22d23128ebb05b91529447d4355b5e7942bb86f8bbe75b30880728b6e44065d8"
+  },
+  "cases": [
+    {
+      "mode": "native-fp",
+      "fixturePid": 445427,
+      "fixtureLog": [
+        "READY\n"
+      ],
+      "raw": "/tmp/craidd-perf-leaf-20261024-first/native-fp/cache/4b507744a80f64ab05946c2a751c0b7c8e52ebd23abc4b2b932e60e417e896ba/capture-1792800708404-445429-1/perf.data",
+      "manifest": {
+        "attributionValid": true,
+        "buildIds": [
+          {
+            "capturedBuildId": "8c344d1a55b51fca4c07597e2fe133d2be89391a",
+            "currentBuildId": "8c344d1a55b51fca4c07597e2fe133d2be89391a",
+            "debugFiles": [],
+            "module": "/tmp/craidd-perf-leaf-20261024-first/normal",
+            "state": "matched"
+          },
+          {
+            "capturedBuildId": "d320029ad1a23be2f4bce117fd321cbd23a2014b",
+            "currentBuildId": "d320029ad1a23be2f4bce117fd321cbd23a2014b",
+            "debugFiles": [],
+            "module": "/usr/lib/libc.so.6",
+            "state": "matched"
+          },
+          {
+            "capturedBuildId": "5b8d3de442de987b24d0e3679533068f2ae62497",
+            "currentBuildId": "5b8d3de442de987b24d0e3679533068f2ae62497",
+            "debugFiles": [],
+            "module": "/usr/lib/libstdc++.so.6.0.36",
+            "state": "matched"
+          }
+        ],
+        "clockDomain": "CLOCK_MONOTONIC",
+        "clockMapping": null,
+        "collectorExit": null,
+        "collectorIdentity": {
+          "birth": 4206285,
+          "pid": 445434
+        },
+        "collectorSignal": 2,
+        "coverage": {
+          "diagnostics": [],
+          "emptyChains": 0,
+          "lossScanComplete": true,
+          "lostCount": 0,
+          "lostRecords": 0,
+          "lostSampleCount": 0,
+          "lostSampleRecords": 0,
+          "mismatchedChains": 0,
+          "omittedSamples": 0,
+          "parsedSamples": 197,
+          "retainedSamples": 197,
+          "truncatedStacks": 0,
+          "unknownRecords": 0,
+          "unparsedLossRecords": 0
+        },
+        "createdMs": 1792800708404,
+        "decodeAndParseMs": 50,
+        "estimatedRawBytes": 86328,
+        "event": "cpu-clock:u",
+        "generation": 1,
+        "host": {
+          "birth": 4206283,
+          "pid": 445429
+        },
+        "id": "capture-1792800708404-445429-1",
+        "jitMap": null,
+        "label": "perf \u00b7 PID 445427",
+        "lossScanMs": 0,
+        "moduleIdentityMs": 176,
+        "omittedStderrBytes": 0,
+        "omittedThreadObservations": 0,
+        "options": {
+          "durationSeconds": 2,
+          "frequency": 99,
+          "unwind": {
+            "kind": "fp"
+          }
+        },
+        "owner": "probe",
+        "parserCpuMs": 0,
+        "perfVersion": "perf version 7.2.11-1",
+        "pinned": false,
+        "profileId": "probe-profile",
+        "rawBytes": 55972,
+        "rawLimit": 536870912,
+        "rawSha256": "17d6b5abea8d4c31220e609ea46b9f8992e25d44f4983d9cce8fd70482353522",
+        "reasons": [
+          "Timed duration completed"
+        ],
+        "recordArgv": [
+          "record",
+          "--no-buildid-cache",
+          "--clockid",
+          "mono",
+          "--timestamp",
+          "--per-thread",
+          "--no-inherit",
+          "--user-callchains",
+          "-e",
+          "cpu-clock:u",
+          "-F",
+          "99",
+          "--call-graph",
+          "fp",
+          "-t",
+          "445427,445428",
+          "-o",
+          "/tmp/craidd-perf-leaf-20261024-first/native-fp/cache/4b507744a80f64ab05946c2a751c0b7c8e52ebd23abc4b2b932e60e417e896ba/capture-1792800708404-445429-1/perf.data"
+        ],
+        "solution": "/tmp/craidd-perf-leaf-20261024-first/native-fp/fixture.cln",
+        "sourceKind": "nativeStackSamples",
+        "state": "complete",
+        "stderr": "[ perf record: Woken up 1 times to write data ]\n[ perf record: Captured and wrote 0.018 MB /tmp/craidd-perf-leaf-20261024-first/native-fp/cache/4b507744a80f64ab05946c2a751c0b7c8e52ebd23abc4b2b932e60e417e896ba/capture-1792800708404-445429-1/perf.data ]\n",
+        "summary": {
+          "attributionBasis": "Self: all retained sampled leaves. Inclusive: recovered chains only; completeness is not proven.",
+          "coverage": {
+            "diagnostics": [],
+            "emptyChains": 0,
+            "lossScanComplete": true,
+            "lostCount": 0,
+            "lostRecords": 0,
+            "lostSampleCount": 0,
+            "lostSampleRecords": 0,
+            "mismatchedChains": 0,
+            "omittedSamples": 0,
+            "parsedSamples": 197,
+            "retainedSamples": 197,
+            "truncatedStacks": 0,
+            "unknownRecords": 0,
+            "unparsedLossRecords": 0
+          },
+          "firstMonotonicNs": 42062885660084,
+          "frameCount": 4,
+          "lastMonotonicNs": 42064865692404,
+          "lossAccounting": "LOST and LOST_SAMPLES are separate reports and may overlap; never summed",
+          "retention": {
+            "frames": 100000,
+            "samples": 500000,
+            "stackReferences": 8000000
+          },
+          "threads": {
+            "445428": "native-hot"
+          },
+          "units": "sampled cpu-clock event period (ns); not exact function time",
+          "unwindCoverage": {
+            "basis": "Available means perf supplied a chain, not proof of complete unwinding; truncated chains include recovered callers only.",
+            "byLeafModule": {
+              "/tmp/craidd-perf-leaf-20261024-first/normal": {
+                "chainSamples": 197,
+                "chainWeight": 1989898970,
+                "empty": 0,
+                "mismatch": 0,
+                "samples": 197,
+                "truncated": 0,
+                "weight": 1989898970
+              }
+            },
+            "byThread": {
+              "445428": {
+                "chainSamples": 197,
+                "chainWeight": 1989898970,
+                "empty": 0,
+                "mismatch": 0,
+                "samples": 197,
+                "truncated": 0,
+                "weight": 1989898970
+              }
+            },
+            "total": {
+              "chainSamples": 197,
+              "chainWeight": 1989898970,
+              "empty": 0,
+              "mismatch": 0,
+              "samples": 197,
+              "truncated": 0,
+              "weight": 1989898970
+            }
+          }
+        },
+        "target": {
+          "birth": 4206283,
+          "pid": 445427
+        },
+        "threadPollMs": 100,
+        "threadsAtStart": [
+          {
+            "birth": 4206283,
+            "name": "normal",
+            "tid": 445427
+          },
+          {
+            "birth": 4206283,
+            "name": "native-hot",
+            "tid": 445428
+          }
+        ],
+        "threadsGained": [],
+        "version": 1
+      },
+      "independentLeafSamples": 197,
+      "independentLeafWeight": 1989898970,
+      "reconciled": {
+        "leafCount": 197,
+        "leafWeight": 1989898970,
+        "literalIpCount": 197,
+        "selfCount": 197,
+        "selfWeight": 1989898970,
+        "summary": {
+          "attributionBasis": "Self: all retained sampled leaves. Inclusive: recovered chains only; completeness is not proven.",
+          "coverage": {
+            "diagnostics": [],
+            "emptyChains": 0,
+            "lossScanComplete": null,
+            "lostCount": 0,
+            "lostRecords": 0,
+            "lostSampleCount": 0,
+            "lostSampleRecords": 0,
+            "mismatchedChains": 0,
+            "omittedSamples": 0,
+            "parsedSamples": 197,
+            "retainedSamples": 197,
+            "truncatedStacks": 0,
+            "unknownRecords": 0,
+            "unparsedLossRecords": 0
+          },
+          "firstMonotonicNs": 42062885660084,
+          "frameCount": 4,
+          "lastMonotonicNs": 42064865692404,
+          "lossAccounting": "LOST and LOST_SAMPLES are separate reports and may overlap; never summed",
+          "retention": {
+            "frames": 100000,
+            "samples": 500000,
+            "stackReferences": 8000000
+          },
+          "threads": {
+            "445428": "native-hot"
+          },
+          "units": "sampled cpu-clock event period (ns); not exact function time",
+          "unwindCoverage": {
+            "basis": "Available means perf supplied a chain, not proof of complete unwinding; truncated chains include recovered callers only.",
+            "byLeafModule": {
+              "/tmp/craidd-perf-leaf-20261024-first/normal": {
+                "chainSamples": 197,
+                "chainWeight": 1989898970,
+                "empty": 0,
+                "mismatch": 0,
+                "samples": 197,
+                "truncated": 0,
+                "weight": 1989898970
+              }
+            },
+            "byThread": {
+              "445428": {
+                "chainSamples": 197,
+                "chainWeight": 1989898970,
+                "empty": 0,
+                "mismatch": 0,
+                "samples": 197,
+                "truncated": 0,
+                "weight": 1989898970
+              }
+            },
+            "total": {
+              "chainSamples": 197,
+              "chainWeight": 1989898970,
+              "empty": 0,
+              "mismatch": 0,
+              "samples": 197,
+              "truncated": 0,
+              "weight": 1989898970
+            }
+          }
+        }
+      },
+      "targetSurvived": true,
+      "tree": {
+        "attributionBasis": "Self includes every retained leaf. Inclusive includes recovered chains only; both shares use all selected event weight.",
+        "chainSamples": 197,
+        "chainWeight": 1989898970,
+        "childCount": 1,
+        "children": [
+          {
+            "frame": {
+              "address": "55f74b064547",
+              "module": "/tmp/craidd-perf-leaf-20261024-first/normal",
+              "resolved": true,
+              "source": {
+                "line": 5,
+                "path": "/tmp/craidd-perf-leaf-20261024-first/normal.cpp"
+              },
+              "symbol": "known_hot(unsigned long)",
+              "symbolOrigin": "elfBuildId"
+            },
+            "frameId": 0,
+            "inclusiveWeight": 1989898970,
+            "sampleCount": 197,
+            "sampledEventSharePct": 100.0,
+            "selfEventSharePct": 100.0,
+            "selfWeight": 1989898970
+          }
+        ],
+        "clock": "elapsed ns from first retained monotonic sample; no session clock mapping",
+        "moduleFilterBasis": "samples containing this exact module; complete calling context retained",
+        "omittedChildren": 0,
+        "pathWeight": 1989898970,
+        "selectedSamples": 197,
+        "totalWeight": 1989898970
+      },
+      "reopenedTotals": {
+        "chainSamples": 197,
+        "chainWeight": 1989898970,
+        "empty": 0,
+        "mismatch": 0,
+        "samples": 197,
+        "truncated": 0,
+        "weight": 1989898970
+      },
+      "gates": {
+        "leafSampleAndWeightTotals": "PASS",
+        "literalIPsRetained": "PASS",
+        "selfTreeTotals": "PASS",
+        "reopen": "PASS",
+        "targetSurvival": "PASS",
+        "lossReporting": "PASS"
+      }
+    },
+    {
+      "mode": "native-dwarf",
+      "fixturePid": 445517,
+      "fixtureLog": [
+        "READY\n"
+      ],
+      "raw": "/tmp/craidd-perf-leaf-20261024-first/native-dwarf/cache/424337229b4d0d78218dc29cd43be892345f8dac7105d5782833a9f4da0bd17f/capture-1792800710714-445519-1/perf.data",
+      "manifest": {
+        "attributionValid": true,
+        "buildIds": [
+          {
+            "capturedBuildId": "8c344d1a55b51fca4c07597e2fe133d2be89391a",
+            "currentBuildId": "8c344d1a55b51fca4c07597e2fe133d2be89391a",
+            "debugFiles": [],
+            "module": "/tmp/craidd-perf-leaf-20261024-first/normal",
+            "state": "matched"
+          },
+          {
+            "capturedBuildId": "d320029ad1a23be2f4bce117fd321cbd23a2014b",
+            "currentBuildId": "d320029ad1a23be2f4bce117fd321cbd23a2014b",
+            "debugFiles": [],
+            "module": "/usr/lib/libc.so.6",
+            "state": "matched"
+          },
+          {
+            "capturedBuildId": "5b8d3de442de987b24d0e3679533068f2ae62497",
+            "currentBuildId": "5b8d3de442de987b24d0e3679533068f2ae62497",
+            "debugFiles": [],
+            "module": "/usr/lib/libstdc++.so.6.0.36",
+            "state": "matched"
+          }
+        ],
+        "clockDomain": "CLOCK_MONOTONIC",
+        "clockMapping": null,
+        "collectorExit": null,
+        "collectorIdentity": {
+          "birth": 4206517,
+          "pid": 445524
+        },
+        "collectorSignal": 2,
+        "coverage": {
+          "diagnostics": [
+            "Call-chain decode: \t    560145cae593 __invoke_impl<void, main()::<lambda()> >",
+            "Call-chain decode:   /usr/include/c++/16/bits/invoke.h:63 (inlined)",
+            "Call-chain decode: \t    560145cae593 __invoke<main()::<lambda()> >",
+            "Call-chain decode:   /usr/include/c++/16/bits/invoke.h:98 (inlined)",
+            "Call-chain decode: \t    560145cae593 _M_invoke<0>",
+            "Call-chain decode:   /usr/include/c++/16/bits/std_thread.h:303 (inlined)",
+            "Call-chain decode: \t    560145cae593 operator()",
+            "Call-chain decode:   /usr/include/c++/16/bits/std_thread.h:310 (inlined)",
+            "Call-chain decode: \t    560145cae593 _M_run",
+            "Call-chain decode:   /usr/include/c++/16/bits/std_thread.h:255 (inlined)",
+            "Call-chain decode: \t    7fcf790ea858 [unknown] (/usr/lib/libstdc++.so.6.0.36)",
+            "Call-chain decode:   libstdc++.so.6.0.36[ea858]",
+            "Call-chain decode: \t    7fcf78c98041 [unknown] (/usr/lib/libc.so.6)",
+            "Call-chain decode:   libc.so.6[98041]",
+            "Call-chain decode: \t    7fcf78d2072b [unknown] (/usr/lib/libc.so.6)",
+            "Call-chain decode:   libc.so.6[12072b]",
+            "Call-chain decode: \t    560145cae593 __invoke_impl<void, main()::<lambda()> >",
+            "Call-chain decode:   /usr/include/c++/16/bits/invoke.h:63 (inlined)",
+            "Call-chain decode: \t    560145cae593 __invoke<main()::<lambda()> >",
+            "Call-chain decode:   /usr/include/c++/16/bits/invoke.h:98 (inlined)",
+            "Call-chain decode: \t    560145cae593 _M_invoke<0>",
+            "Call-chain decode:   /usr/include/c++/16/bits/std_thread.h:303 (inlined)",
+            "Call-chain decode: \t    560145cae593 operator()",
+            "Call-chain decode:   /usr/include/c++/16/bits/std_thread.h:310 (inlined)",
+            "Call-chain decode: \t    560145cae593 _M_run",
+            "Call-chain decode:   /usr/include/c++/16/bits/std_thread.h:255 (inlined)",
+            "Call-chain decode: \t    7fcf790ea858 [unknown] (/usr/lib/libstdc++.so.6.0.36)",
+            "Call-chain decode:   libstdc++.so.6.0.36[ea858]",
+            "Call-chain decode: \t    7fcf78c98041 [unknown] (/usr/lib/libc.so.6)",
+            "Call-chain decode:   libc.so.6[98041]",
+            "Call-chain decode: \t    7fcf78d2072b [unknown] (/usr/lib/libc.so.6)",
+            "Call-chain decode:   libc.so.6[12072b]"
+          ],
+          "emptyChains": 0,
+          "lossScanComplete": true,
+          "lostCount": 0,
+          "lostRecords": 0,
+          "lostSampleCount": 0,
+          "lostSampleRecords": 0,
+          "mismatchedChains": 0,
+          "omittedSamples": 0,
+          "parsedSamples": 198,
+          "retainedSamples": 198,
+          "truncatedStacks": 0,
+          "unknownRecords": 32,
+          "unparsedLossRecords": 0
+        },
+        "createdMs": 1792800710714,
+        "decodeAndParseMs": 51,
+        "estimatedRawBytes": 3389364,
+        "event": "cpu-clock:u",
+        "generation": 1,
+        "host": {
+          "birth": 4206514,
+          "pid": 445519
+        },
+        "id": "capture-1792800710714-445519-1",
+        "jitMap": null,
+        "label": "perf \u00b7 PID 445517",
+        "lossScanMs": 0,
+        "moduleIdentityMs": 176,
+        "omittedStderrBytes": 0,
+        "omittedThreadObservations": 0,
+        "options": {
+          "durationSeconds": 2,
+          "frequency": 99,
+          "unwind": {
+            "kind": "dwarf",
+            "stackBytes": 8192
+          }
+        },
+        "owner": "probe",
+        "parserCpuMs": 1,
+        "perfVersion": "perf version 7.2.11-1",
+        "pinned": false,
+        "profileId": "probe-profile",
+        "rawBytes": 1710564,
+        "rawLimit": 536870912,
+        "rawSha256": "78a9ba69cc974a4ab78859098cdb629ca3651c585543bcbd60fadb1e4416c039",
+        "reasons": [
+          "Timed duration completed"
+        ],
+        "recordArgv": [
+          "record",
+          "--no-buildid-cache",
+          "--clockid",
+          "mono",
+          "--timestamp",
+          "--per-thread",
+          "--no-inherit",
+          "--user-callchains",
+          "-e",
+          "cpu-clock:u",
+          "-F",
+          "99",
+          "--call-graph",
+          "dwarf,8192",
+          "-t",
+          "445517,445518",
+          "-o",
+          "/tmp/craidd-perf-leaf-20261024-first/native-dwarf/cache/424337229b4d0d78218dc29cd43be892345f8dac7105d5782833a9f4da0bd17f/capture-1792800710714-445519-1/perf.data"
+        ],
+        "solution": "/tmp/craidd-perf-leaf-20261024-first/native-dwarf/fixture.cln",
+        "sourceKind": "nativeStackSamples",
+        "state": "partial",
+        "stderr": "[ perf record: Woken up 7 times to write data ]\n[ perf record: Captured and wrote 1.596 MB /tmp/craidd-perf-leaf-20261024-first/native-dwarf/cache/424337229b4d0d78218dc29cd43be892345f8dac7105d5782833a9f4da0bd17f/capture-1792800710714-445519-1/perf.data ]\n",
+        "summary": {
+          "attributionBasis": "Self: all retained sampled leaves. Inclusive: recovered chains only; completeness is not proven.",
+          "coverage": {
+            "diagnostics": [
+              "Call-chain decode: \t    560145cae593 __invoke_impl<void, main()::<lambda()> >",
+              "Call-chain decode:   /usr/include/c++/16/bits/invoke.h:63 (inlined)",
+              "Call-chain decode: \t    560145cae593 __invoke<main()::<lambda()> >",
+              "Call-chain decode:   /usr/include/c++/16/bits/invoke.h:98 (inlined)",
+              "Call-chain decode: \t    560145cae593 _M_invoke<0>",
+              "Call-chain decode:   /usr/include/c++/16/bits/std_thread.h:303 (inlined)",
+              "Call-chain decode: \t    560145cae593 operator()",
+              "Call-chain decode:   /usr/include/c++/16/bits/std_thread.h:310 (inlined)",
+              "Call-chain decode: \t    560145cae593 _M_run",
+              "Call-chain decode:   /usr/include/c++/16/bits/std_thread.h:255 (inlined)",
+              "Call-chain decode: \t    7fcf790ea858 [unknown] (/usr/lib/libstdc++.so.6.0.36)",
+              "Call-chain decode:   libstdc++.so.6.0.36[ea858]",
+              "Call-chain decode: \t    7fcf78c98041 [unknown] (/usr/lib/libc.so.6)",
+              "Call-chain decode:   libc.so.6[98041]",
+              "Call-chain decode: \t    7fcf78d2072b [unknown] (/usr/lib/libc.so.6)",
+              "Call-chain decode:   libc.so.6[12072b]",
+              "Call-chain decode: \t    560145cae593 __invoke_impl<void, main()::<lambda()> >",
+              "Call-chain decode:   /usr/include/c++/16/bits/invoke.h:63 (inlined)",
+              "Call-chain decode: \t    560145cae593 __invoke<main()::<lambda()> >",
+              "Call-chain decode:   /usr/include/c++/16/bits/invoke.h:98 (inlined)",
+              "Call-chain decode: \t    560145cae593 _M_invoke<0>",
+              "Call-chain decode:   /usr/include/c++/16/bits/std_thread.h:303 (inlined)",
+              "Call-chain decode: \t    560145cae593 operator()",
+              "Call-chain decode:   /usr/include/c++/16/bits/std_thread.h:310 (inlined)",
+              "Call-chain decode: \t    560145cae593 _M_run",
+              "Call-chain decode:   /usr/include/c++/16/bits/std_thread.h:255 (inlined)",
+              "Call-chain decode: \t    7fcf790ea858 [unknown] (/usr/lib/libstdc++.so.6.0.36)",
+              "Call-chain decode:   libstdc++.so.6.0.36[ea858]",
+              "Call-chain decode: \t    7fcf78c98041 [unknown] (/usr/lib/libc.so.6)",
+              "Call-chain decode:   libc.so.6[98041]",
+              "Call-chain decode: \t    7fcf78d2072b [unknown] (/usr/lib/libc.so.6)",
+              "Call-chain decode:   libc.so.6[12072b]"
+            ],
+            "emptyChains": 0,
+            "lossScanComplete": true,
+            "lostCount": 0,
+            "lostRecords": 0,
+            "lostSampleCount": 0,
+            "lostSampleRecords": 0,
+            "mismatchedChains": 0,
+            "omittedSamples": 0,
+            "parsedSamples": 198,
+            "retainedSamples": 198,
+            "truncatedStacks": 0,
+            "unknownRecords": 32,
+            "unparsedLossRecords": 0
+          },
+          "firstMonotonicNs": 42065184836209,
+          "frameCount": 2,
+          "lastMonotonicNs": 42067174816930,
+          "lossAccounting": "LOST and LOST_SAMPLES are separate reports and may overlap; never summed",
+          "retention": {
+            "frames": 100000,
+            "samples": 500000,
+            "stackReferences": 8000000
+          },
+          "threads": {
+            "445518": "native-hot"
+          },
+          "units": "sampled cpu-clock event period (ns); not exact function time",
+          "unwindCoverage": {
+            "basis": "Available means perf supplied a chain, not proof of complete unwinding; truncated chains include recovered callers only.",
+            "byLeafModule": {
+              "/tmp/craidd-perf-leaf-20261024-first/normal": {
+                "chainSamples": 198,
+                "chainWeight": 1999999980,
+                "empty": 0,
+                "mismatch": 0,
+                "samples": 198,
+                "truncated": 0,
+                "weight": 1999999980
+              }
+            },
+            "byThread": {
+              "445518": {
+                "chainSamples": 198,
+                "chainWeight": 1999999980,
+                "empty": 0,
+                "mismatch": 0,
+                "samples": 198,
+                "truncated": 0,
+                "weight": 1999999980
+              }
+            },
+            "total": {
+              "chainSamples": 198,
+              "chainWeight": 1999999980,
+              "empty": 0,
+              "mismatch": 0,
+              "samples": 198,
+              "truncated": 0,
+              "weight": 1999999980
+            }
+          }
+        },
+        "target": {
+          "birth": 4206514,
+          "pid": 445517
+        },
+        "threadPollMs": 100,
+        "threadsAtStart": [
+          {
+            "birth": 4206514,
+            "name": "normal",
+            "tid": 445517
+          },
+          {
+            "birth": 4206514,
+            "name": "native-hot",
+            "tid": 445518
+          }
+        ],
+        "threadsGained": [],
+        "version": 1
+      },
+      "independentLeafSamples": 198,
+      "independentLeafWeight": 1999999980,
+      "reconciled": {
+        "leafCount": 198,
+        "leafWeight": 1999999980,
+        "literalIpCount": 198,
+        "selfCount": 198,
+        "selfWeight": 1999999980,
+        "summary": {
+          "attributionBasis": "Self: all retained sampled leaves. Inclusive: recovered chains only; completeness is not proven.",
+          "coverage": {
+            "diagnostics": [],
+            "emptyChains": 0,
+            "lossScanComplete": null,
+            "lostCount": 0,
+            "lostRecords": 0,
+            "lostSampleCount": 0,
+            "lostSampleRecords": 0,
+            "mismatchedChains": 0,
+            "omittedSamples": 0,
+            "parsedSamples": 198,
+            "retainedSamples": 198,
+            "truncatedStacks": 0,
+            "unknownRecords": 0,
+            "unparsedLossRecords": 0
+          },
+          "firstMonotonicNs": 42065184836209,
+          "frameCount": 10,
+          "lastMonotonicNs": 42067174816930,
+          "lossAccounting": "LOST and LOST_SAMPLES are separate reports and may overlap; never summed",
+          "retention": {
+            "frames": 100000,
+            "samples": 500000,
+            "stackReferences": 8000000
+          },
+          "threads": {
+            "445518": "native-hot"
+          },
+          "units": "sampled cpu-clock event period (ns); not exact function time",
+          "unwindCoverage": {
+            "basis": "Available means perf supplied a chain, not proof of complete unwinding; truncated chains include recovered callers only.",
+            "byLeafModule": {
+              "/tmp/craidd-perf-leaf-20261024-first/normal": {
+                "chainSamples": 198,
+                "chainWeight": 1999999980,
+                "empty": 0,
+                "mismatch": 0,
+                "samples": 198,
+                "truncated": 0,
+                "weight": 1999999980
+              }
+            },
+            "byThread": {
+              "445518": {
+                "chainSamples": 198,
+                "chainWeight": 1999999980,
+                "empty": 0,
+                "mismatch": 0,
+                "samples": 198,
+                "truncated": 0,
+                "weight": 1999999980
+              }
+            },
+            "total": {
+              "chainSamples": 198,
+              "chainWeight": 1999999980,
+              "empty": 0,
+              "mismatch": 0,
+              "samples": 198,
+              "truncated": 0,
+              "weight": 1999999980
+            }
+          }
+        }
+      },
+      "targetSurvived": true,
+      "tree": {
+        "attributionBasis": "Self includes every retained leaf. Inclusive includes recovered chains only; both shares use all selected event weight.",
+        "chainSamples": 198,
+        "chainWeight": 1999999980,
+        "childCount": 1,
+        "children": [
+          {
+            "frame": {
+              "address": "560145cae547",
+              "module": "/tmp/craidd-perf-leaf-20261024-first/normal",
+              "resolved": true,
+              "source": {
+                "line": 5,
+                "path": "/tmp/craidd-perf-leaf-20261024-first/normal.cpp"
+              },
+              "symbol": "known_hot(unsigned long)",
+              "symbolOrigin": "elfBuildId"
+            },
+            "frameId": 0,
+            "inclusiveWeight": 1999999980,
+            "sampleCount": 198,
+            "sampledEventSharePct": 100.0,
+            "selfEventSharePct": 100.0,
+            "selfWeight": 1999999980
+          }
+        ],
+        "clock": "elapsed ns from first retained monotonic sample; no session clock mapping",
+        "moduleFilterBasis": "samples containing this exact module; complete calling context retained",
+        "omittedChildren": 0,
+        "pathWeight": 1999999980,
+        "selectedSamples": 198,
+        "totalWeight": 1999999980
+      },
+      "reopenedTotals": {
+        "chainSamples": 198,
+        "chainWeight": 1999999980,
+        "empty": 0,
+        "mismatch": 0,
+        "samples": 198,
+        "truncated": 0,
+        "weight": 1999999980
+      },
+      "gates": {
+        "leafSampleAndWeightTotals": "PASS",
+        "literalIPsRetained": "PASS",
+        "selfTreeTotals": "PASS",
+        "reopen": "PASS",
+        "targetSurvival": "PASS",
+        "lossReporting": "PASS"
+      }
+    },
+    {
+      "mode": "mono-dwarf",
+      "fixturePid": 445560,
+      "fixtureLog": [
+        "HOT_RANGE 415e9280 89\n",
+        "READY\n"
+      ],
+      "raw": "/tmp/craidd-perf-leaf-20261024-first/mono-dwarf/cache/b5c0c7715db58353ac585e17af06990370d7b49c0ee14ca8cf217238ef78000f/capture-1792800713034-445563-1/perf.data",
+      "manifest": {
+        "attributionValid": true,
+        "buildIds": [
+          {
+            "capturedBuildId": "d320029ad1a23be2f4bce117fd321cbd23a2014b",
+            "currentBuildId": "d320029ad1a23be2f4bce117fd321cbd23a2014b",
+            "debugFiles": [],
+            "module": "/usr/lib/libc.so.6",
+            "state": "matched"
+          },
+          {
+            "capturedBuildId": "0251fdbd2d63327d4c79994baff1b733e9449833",
+            "currentBuildId": "0251fdbd2d63327d4c79994baff1b733e9449833",
+            "debugFiles": [],
+            "module": "/usr/lib/libmonosgen-2.0.so.1.0.0",
+            "state": "matched"
+          }
+        ],
+        "clockDomain": "CLOCK_MONOTONIC",
+        "clockMapping": null,
+        "collectorExit": null,
+        "collectorIdentity": {
+          "birth": 4206748,
+          "pid": 445568
+        },
+        "collectorSignal": 2,
+        "coverage": {
+          "diagnostics": [],
+          "emptyChains": 1981,
+          "lossScanComplete": true,
+          "lostCount": 0,
+          "lostRecords": 0,
+          "lostSampleCount": 0,
+          "lostSampleRecords": 0,
+          "mismatchedChains": 0,
+          "omittedSamples": 0,
+          "parsedSamples": 1994,
+          "retainedSamples": 1994,
+          "truncatedStacks": 0,
+          "unknownRecords": 0,
+          "unparsedLossRecords": 0
+        },
+        "createdMs": 1792800713034,
+        "decodeAndParseMs": 58,
+        "estimatedRawBytes": 51302646,
+        "event": "cpu-clock:u",
+        "generation": 1,
+        "host": {
+          "birth": 4206746,
+          "pid": 445563
+        },
+        "id": "capture-1792800713034-445563-1",
+        "jitMap": {
+          "basis": "Names reported by perf from the PID map; no ELF build-ID or source-line verification",
+          "bytes": 7577,
+          "path": "/tmp/perf-445560.map",
+          "sha256": "051281fd5cf1f7daea96bf0bffb8206a2f652c73073db4dda88b6e0bc1481460",
+          "state": "matched"
+        },
+        "label": "perf \u00b7 PID 445560",
+        "lossScanMs": 1,
+        "moduleIdentityMs": 126,
+        "omittedStderrBytes": 0,
+        "omittedThreadObservations": 0,
+        "options": {
+          "durationSeconds": 2,
+          "frequency": 999,
+          "unwind": {
+            "kind": "dwarf",
+            "stackBytes": 8192
+          }
+        },
+        "owner": "probe",
+        "parserCpuMs": 4,
+        "perfVersion": "perf version 7.2.11-1",
+        "pinned": false,
+        "profileId": "probe-profile",
+        "rawBytes": 16844532,
+        "rawLimit": 536870912,
+        "rawSha256": "f308c0131339242bfba4eafd6639afc9f8b49565b58fd923fb5d8f5e8e256b14",
+        "reasons": [
+          "Timed duration completed"
+        ],
+        "recordArgv": [
+          "record",
+          "--no-buildid-cache",
+          "--clockid",
+          "mono",
+          "--timestamp",
+          "--per-thread",
+          "--no-inherit",
+          "--user-callchains",
+          "-e",
+          "cpu-clock:u",
+          "-F",
+          "999",
+          "--call-graph",
+          "dwarf,8192",
+          "-t",
+          "445560,445561,445562",
+          "-o",
+          "/tmp/craidd-perf-leaf-20261024-first/mono-dwarf/cache/b5c0c7715db58353ac585e17af06990370d7b49c0ee14ca8cf217238ef78000f/capture-1792800713034-445563-1/perf.data"
+        ],
+        "solution": "/tmp/craidd-perf-leaf-20261024-first/mono-dwarf/fixture.cln",
+        "sourceKind": "nativeStackSamples",
+        "state": "partial",
+        "stderr": "[ perf record: Woken up 65 times to write data ]\n[ perf record: Captured and wrote 16.029 MB /tmp/craidd-perf-leaf-20261024-first/mono-dwarf/cache/b5c0c7715db58353ac585e17af06990370d7b49c0ee14ca8cf217238ef78000f/capture-1792800713034-445563-1/perf.data ]\n",
+        "summary": {
+          "attributionBasis": "Self: all retained sampled leaves. Inclusive: recovered chains only; completeness is not proven.",
+          "coverage": {
+            "diagnostics": [],
+            "emptyChains": 1981,
+            "lossScanComplete": true,
+            "lostCount": 0,
+            "lostRecords": 0,
+            "lostSampleCount": 0,
+            "lostSampleRecords": 0,
+            "mismatchedChains": 0,
+            "omittedSamples": 0,
+            "parsedSamples": 1994,
+            "retainedSamples": 1994,
+            "truncatedStacks": 0,
+            "unknownRecords": 0,
+            "unparsedLossRecords": 0
+          },
+          "firstMonotonicNs": 42067500866702,
+          "frameCount": 36,
+          "lastMonotonicNs": 42069496897446,
+          "lossAccounting": "LOST and LOST_SAMPLES are separate reports and may overlap; never summed",
+          "retention": {
+            "frames": 100000,
+            "samples": 500000,
+            "stackReferences": 8000000
+          },
+          "threads": {
+            "445560": "host"
+          },
+          "units": "sampled cpu-clock event period (ns); not exact function time",
+          "unwindCoverage": {
+            "basis": "Available means perf supplied a chain, not proof of complete unwinding; truncated chains include recovered callers only.",
+            "byLeafModule": {
+              "/tmp/perf-445560.map": {
+                "chainSamples": 0,
+                "chainWeight": 0,
+                "empty": 1981,
+                "mismatch": 0,
+                "samples": 1981,
+                "truncated": 0,
+                "weight": 1982982981
+              },
+              "/usr/lib/libc.so.6": {
+                "chainSamples": 5,
+                "chainWeight": 5005005,
+                "empty": 0,
+                "mismatch": 0,
+                "samples": 5,
+                "truncated": 0,
+                "weight": 5005005
+              },
+              "/usr/lib/libmonosgen-2.0.so.1.0.0": {
+                "chainSamples": 8,
+                "chainWeight": 8008008,
+                "empty": 0,
+                "mismatch": 0,
+                "samples": 8,
+                "truncated": 0,
+                "weight": 8008008
+              }
+            },
+            "byThread": {
+              "445560": {
+                "chainSamples": 13,
+                "chainWeight": 13013013,
+                "empty": 1981,
+                "mismatch": 0,
+                "samples": 1994,
+                "truncated": 0,
+                "weight": 1995995994
+              }
+            },
+            "total": {
+              "chainSamples": 13,
+              "chainWeight": 13013013,
+              "empty": 1981,
+              "mismatch": 0,
+              "samples": 1994,
+              "truncated": 0,
+              "weight": 1995995994
+            }
+          }
+        },
+        "target": {
+          "birth": 4206745,
+          "pid": 445560
+        },
+        "threadPollMs": 100,
+        "threadsAtStart": [
+          {
+            "birth": 4206745,
+            "name": "host",
+            "tid": 445560
+          },
+          {
+            "birth": 4206746,
+            "name": "SGen worker",
+            "tid": 445561
+          },
+          {
+            "birth": 4206746,
+            "name": "Finalizer",
+            "tid": 445562
+          }
+        ],
+        "threadsGained": [],
+        "version": 1
+      },
+      "independentLeafSamples": 1994,
+      "independentLeafWeight": 1995995994,
+      "reconciled": {
+        "leafCount": 1994,
+        "leafWeight": 1995995994,
+        "literalIpCount": 1994,
+        "selfCount": 1994,
+        "selfWeight": 1995995994,
+        "summary": {
+          "attributionBasis": "Self: all retained sampled leaves. Inclusive: recovered chains only; completeness is not proven.",
+          "coverage": {
+            "diagnostics": [],
+            "emptyChains": 1981,
+            "lossScanComplete": null,
+            "lostCount": 0,
+            "lostRecords": 0,
+            "lostSampleCount": 0,
+            "lostSampleRecords": 0,
+            "mismatchedChains": 0,
+            "omittedSamples": 0,
+            "parsedSamples": 1994,
+            "retainedSamples": 1994,
+            "truncatedStacks": 0,
+            "unknownRecords": 0,
+            "unparsedLossRecords": 0
+          },
+          "firstMonotonicNs": 42067500866702,
+          "frameCount": 36,
+          "lastMonotonicNs": 42069496897446,
+          "lossAccounting": "LOST and LOST_SAMPLES are separate reports and may overlap; never summed",
+          "retention": {
+            "frames": 100000,
+            "samples": 500000,
+            "stackReferences": 8000000
+          },
+          "threads": {
+            "445560": "host"
+          },
+          "units": "sampled cpu-clock event period (ns); not exact function time",
+          "unwindCoverage": {
+            "basis": "Available means perf supplied a chain, not proof of complete unwinding; truncated chains include recovered callers only.",
+            "byLeafModule": {
+              "/tmp/perf-445560.map": {
+                "chainSamples": 0,
+                "chainWeight": 0,
+                "empty": 1981,
+                "mismatch": 0,
+                "samples": 1981,
+                "truncated": 0,
+                "weight": 1982982981
+              },
+              "/usr/lib/libc.so.6": {
+                "chainSamples": 5,
+                "chainWeight": 5005005,
+                "empty": 0,
+                "mismatch": 0,
+                "samples": 5,
+                "truncated": 0,
+                "weight": 5005005
+              },
+              "/usr/lib/libmonosgen-2.0.so.1.0.0": {
+                "chainSamples": 8,
+                "chainWeight": 8008008,
+                "empty": 0,
+                "mismatch": 0,
+                "samples": 8,
+                "truncated": 0,
+                "weight": 8008008
+              }
+            },
+            "byThread": {
+              "445560": {
+                "chainSamples": 13,
+                "chainWeight": 13013013,
+                "empty": 1981,
+                "mismatch": 0,
+                "samples": 1994,
+                "truncated": 0,
+                "weight": 1995995994
+              }
+            },
+            "total": {
+              "chainSamples": 13,
+              "chainWeight": 13013013,
+              "empty": 1981,
+              "mismatch": 0,
+              "samples": 1994,
+              "truncated": 0,
+              "weight": 1995995994
+            }
+          }
+        }
+      },
+      "targetSurvived": true,
+      "tree": {
+        "attributionBasis": "Self includes every retained leaf. Inclusive includes recovered chains only; both shares use all selected event weight.",
+        "chainSamples": 13,
+        "chainWeight": 13013013,
+        "childCount": 10,
+        "children": [
+          {
+            "frame": {
+              "address": "415e92d9",
+              "module": "/tmp/perf-445560.map",
+              "resolved": true,
+              "source": null,
+              "symbol": "EmbeddedHot:KnownManagedHot (ulong)",
+              "symbolOrigin": "perfMap"
+            },
+            "frameId": 2,
+            "inclusiveWeight": 0,
+            "sampleCount": 1980,
+            "sampledEventSharePct": 0.0,
+            "selfEventSharePct": 99.29789368104313,
+            "selfWeight": 1981981980
+          },
+          {
+            "frame": {
+              "address": "7fa98591a182",
+              "module": "/usr/lib/libmonosgen-2.0.so.1.0.0",
+              "resolved": true,
+              "source": null,
+              "symbol": "monoeg_g_utf16_to_utf8",
+              "symbolOrigin": "elfBuildId"
+            },
+            "frameId": 3,
+            "inclusiveWeight": 5005005,
+            "sampleCount": 5,
+            "sampledEventSharePct": 0.25075225677031093,
+            "selfEventSharePct": 0.25075225677031093,
+            "selfWeight": 5005005
+          },
+          {
+            "frame": {
+              "address": "7fa985c41ed0",
+              "module": "/usr/lib/libc.so.6",
+              "resolved": true,
+              "source": null,
+              "symbol": "getenv",
+              "symbolOrigin": "elfBuildId"
+            },
+            "frameId": 7,
+            "inclusiveWeight": 2002002,
+            "sampleCount": 2,
+            "sampledEventSharePct": 0.10030090270812438,
+            "selfEventSharePct": 0.10030090270812438,
+            "selfWeight": 2002002
+          },
+          {
+            "frame": {
+              "address": "7fa985825364",
+              "module": "/usr/lib/libmonosgen-2.0.so.1.0.0",
+              "resolved": false,
+              "source": null,
+              "symbol": "/usr/lib/libmonosgen-2.0.so.1.0.0+address 0x7fa985825364",
+              "symbolOrigin": "unresolved"
+            },
+            "frameId": 0,
+            "inclusiveWeight": 1001001,
+            "sampleCount": 1,
+            "sampledEventSharePct": 0.05015045135406219,
+            "selfEventSharePct": 0.05015045135406219,
+            "selfWeight": 1001001
+          },
+          {
+            "frame": {
+              "address": "7fa985c9d3d0",
+              "module": "/usr/lib/libc.so.6",
+              "resolved": true,
+              "source": null,
+              "symbol": "pthread_mutex_unlock",
+              "symbolOrigin": "elfBuildId"
+            },
+            "frameId": 1,
+            "inclusiveWeight": 1001001,
+            "sampleCount": 1,
+            "sampledEventSharePct": 0.05015045135406219,
+            "selfEventSharePct": 0.05015045135406219,
+            "selfWeight": 1001001
+          },
+          {
+            "frame": {
+              "address": "7fa985d8a4ee",
+              "module": "/usr/lib/libc.so.6",
+              "resolved": false,
+              "source": null,
+              "symbol": "/usr/lib/libc.so.6+address 0x7fa985d8a4ee",
+              "symbolOrigin": "unresolved"
+            },
+            "frameId": 4,
+            "inclusiveWeight": 1001001,
+            "sampleCount": 1,
+            "sampledEventSharePct": 0.05015045135406219,
+            "selfEventSharePct": 0.05015045135406219,
+            "selfWeight": 1001001
+          },
+          {
+            "frame": {
+              "address": "7fa985914f4a",
+              "module": "/usr/lib/libmonosgen-2.0.so.1.0.0",
+              "resolved": false,
+              "source": null,
+              "symbol": "/usr/lib/libmonosgen-2.0.so.1.0.0+address 0x7fa985914f4a",
+              "symbolOrigin": "unresolved"
+            },
+            "frameId": 5,
+            "inclusiveWeight": 1001001,
+            "sampleCount": 1,
+            "sampledEventSharePct": 0.05015045135406219,
+            "selfEventSharePct": 0.05015045135406219,
+            "selfWeight": 1001001
+          },
+          {
+            "frame": {
+              "address": "7fa985914f9a",
+              "module": "/usr/lib/libmonosgen-2.0.so.1.0.0",
+              "resolved": false,
+              "source": null,
+              "symbol": "/usr/lib/libmonosgen-2.0.so.1.0.0+address 0x7fa985914f9a",
+              "symbolOrigin": "unresolved"
+            },
+            "frameId": 6,
+            "inclusiveWeight": 1001001,
+            "sampleCount": 1,
+            "sampledEventSharePct": 0.05015045135406219,
+            "selfEventSharePct": 0.05015045135406219,
+            "selfWeight": 1001001
+          },
+          {
+            "frame": {
+              "address": "7fa985d8f384",
+              "module": "/usr/lib/libc.so.6",
+              "resolved": false,
+              "source": null,
+              "symbol": "/usr/lib/libc.so.6+address 0x7fa985d8f384",
+              "symbolOrigin": "unresolved"
+            },
+            "frameId": 8,
+            "inclusiveWeight": 1001001,
+            "sampleCount": 1,
+            "sampledEventSharePct": 0.05015045135406219,
+            "selfEventSharePct": 0.05015045135406219,
+            "selfWeight": 1001001
+          },
+          {
+            "frame": {
+              "address": "415e9a38",
+              "module": "/tmp/perf-445560.map",
+              "resolved": true,
+              "source": null,
+              "symbol": "Mono.SafeStringMarshal:Dispose ()",
+              "symbolOrigin": "perfMap"
+            },
+            "frameId": 9,
+            "inclusiveWeight": 0,
+            "sampleCount": 1,
+            "sampledEventSharePct": 0.0,
+            "selfEventSharePct": 0.05015045135406219,
+            "selfWeight": 1001001
+          }
+        ],
+        "clock": "elapsed ns from first retained monotonic sample; no session clock mapping",
+        "moduleFilterBasis": "samples containing this exact module; complete calling context retained",
+        "omittedChildren": 0,
+        "pathWeight": 1995995994,
+        "selectedSamples": 1994,
+        "totalWeight": 1995995994
+      },
+      "reopenedTotals": {
+        "chainSamples": 13,
+        "chainWeight": 13013013,
+        "empty": 1981,
+        "mismatch": 0,
+        "samples": 1994,
+        "truncated": 0,
+        "weight": 1995995994
+      },
+      "gates": {
+        "leafSampleAndWeightTotals": "PASS",
+        "literalIPsRetained": "PASS",
+        "selfTreeTotals": "PASS",
+        "reopen": "PASS",
+        "targetSurvival": "PASS",
+        "lossReporting": "PASS",
+        "unwindFailureReproduced": "PASS"
+      }
+    }
+  ],
+  "gates": {
+    "nativeFP": "PASS",
+    "nativeDWARF": "PASS",
+    "unwindDefeatingModule": "PASS",
+    "desktopCoverageUI": "NOT TESTED"
+  }
+}

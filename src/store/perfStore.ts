@@ -4,13 +4,14 @@ import { invoke } from "@tauri-apps/api/core";
 export interface PerfOptions { frequency: number; durationSeconds: number; unwind: {kind:"fp"} | {kind:"dwarf";stackBytes:number} }
 export interface PerfFrame { address:string; symbol:string; module:string; resolved:boolean; symbolOrigin:string; source:{path:string;line:number}|null }
 export interface PerfChild { frameId:number; frame:PerfFrame; inclusiveWeight:number; selfWeight:number; sampleCount:number; sampledEventSharePct:number }
-export interface PerfBranch { children:PerfChild[]; childCount:number; omittedChildren:number; selectedSamples:number; totalWeight:number; pathWeight:number }
+export interface PerfBranch { children:PerfChild[]; childCount:number; omittedChildren:number; selectedSamples:number; totalWeight:number; pathWeight:number;chainSamples?:number;chainWeight?:number }
+export interface UnwindCounts {samples:number;weight:number;chainSamples:number;chainWeight:number;empty:number;truncated:number;mismatch:number}
 export interface PerfCapture {
  id:string; label:string; createdMs:number; state:string; target:{pid:number;birth:number}; options:PerfOptions; event:string; pinned:boolean;
  rawBytes:number; rawLimit:number; estimatedRawBytes:number; perfVersion:string; clockDomain:string; reasons:string[];
  threadsAtStart:{tid:number;birth:number;name:string}[]; threadsGained:{tid:number;birth:number;name:string}[]; omittedThreadObservations:number; threadPollMs:number;
  coverage:{parsedSamples:number;retainedSamples:number;omittedSamples:number;lostRecords:number;lostCount:number;lostSampleRecords:number;lostSampleCount:number;unparsedLossRecords:number;unknownRecords:number;truncatedStacks:number;lossScanComplete:boolean|null;diagnostics:string[]};
- summary:{threads?:Record<string,string>;firstMonotonicNs?:number;lastMonotonicNs?:number;frameCount?:number}|null;
+ summary:{threads?:Record<string,string>;firstMonotonicNs?:number;lastMonotonicNs?:number;frameCount?:number;unwindCoverage?:{total:UnwindCounts;byThread:Record<string,UnwindCounts>;byLeafModule:Record<string,UnwindCounts>;basis:string}}|null;
  buildIds:{module:string;state:string;debugFiles:{path:string;state:string}[]}[]; stderr:string; decodeAndParseMs:number; moduleIdentityMs:number;
 }
 export interface PerfDiscovery { available:boolean;version:string|null;path:string|null;reason:string|null;perfEventParanoid:string|null;kptrRestrict:string|null;effectiveCapabilitiesHex:string|null }

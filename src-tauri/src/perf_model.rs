@@ -100,6 +100,16 @@ pub struct Frame {
     pub symbol_origin: SymbolOrigin,
     pub source: Option<SourceLocation>,
 }
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub enum ChainState {
+    #[default]
+    Available,
+    Empty,
+    Truncated,
+    Mismatch,
+}
+
 #[derive(Clone, Debug)]
 pub struct Sample {
     pub pid: u32,
@@ -107,6 +117,9 @@ pub struct Sample {
     pub time_ns: u64,
     pub period: u64,
     pub frames: Vec<u32>,
+    /// Literal sampled IP, independent of symbol interning and unwind results.
+    pub leaf_ip: String,
+    pub chain_state: ChainState,
 }
 #[derive(Clone, Default, Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -122,6 +135,10 @@ pub struct Coverage {
     pub unparsed_loss_records: u64,
     pub unknown_records: u64,
     pub truncated_stacks: u64,
+    #[serde(default)]
+    pub empty_chains: u64,
+    #[serde(default)]
+    pub mismatched_chains: u64,
     pub diagnostics: Vec<String>,
 }
 impl Coverage {
@@ -138,6 +155,8 @@ impl Coverage {
             || self.lost_sample_records > 0
             || self.unknown_records > 0
             || self.truncated_stacks > 0
+            || self.empty_chains > 0
+            || self.mismatched_chains > 0
     }
 }
 #[derive(Default, Debug)]
@@ -155,7 +174,55 @@ impl SampleSet {
             "firstMonotonicNs":self.first_ns,"lastMonotonicNs":self.last_ns,
             "units":"sampled cpu-clock event period (ns); not exact function time",
             "lossAccounting":"LOST and LOST_SAMPLES are separate reports and may overlap; never summed",
+            "unwindCoverage":self.unwind_coverage(),
+            "attributionBasis":"Self: all retained sampled leaves. Inclusive: recovered chains only; completeness is not proven.",
             "retention":{"samples":SAMPLE_LIMIT,"frames":FRAME_LIMIT,"stackReferences":STACK_REF_LIMIT}})
+    }
+    pub fn unwind_coverage(&self) -> serde_json::Value {
+        #[derive(Default, Serialize)]
+        #[serde(rename_all = "camelCase")]
+        struct Counts {
+            samples: u64,
+            weight: u64,
+            chain_samples: u64,
+            chain_weight: u64,
+            empty: u64,
+            truncated: u64,
+            mismatch: u64,
+        }
+        fn add(c: &mut Counts, s: &Sample) {
+            c.samples += 1;
+            c.weight = c.weight.saturating_add(s.period);
+            match s.chain_state {
+                ChainState::Empty => c.empty += 1,
+                ChainState::Mismatch => c.mismatch += 1,
+                ChainState::Truncated => {
+                    c.truncated += 1;
+                    c.chain_samples += 1;
+                    c.chain_weight = c.chain_weight.saturating_add(s.period);
+                }
+                ChainState::Available => {
+                    c.chain_samples += 1;
+                    c.chain_weight = c.chain_weight.saturating_add(s.period);
+                }
+            }
+        }
+        let mut total = Counts::default();
+        let mut threads = BTreeMap::<u32, Counts>::new();
+        let mut modules = BTreeMap::<String, Counts>::new();
+        for sample in &self.samples {
+            add(&mut total, sample);
+            add(threads.entry(sample.tid).or_default(), sample);
+            if let Some(id) = sample.frames.first() {
+                add(
+                    modules
+                        .entry(self.frames[*id as usize].module.clone())
+                        .or_default(),
+                    sample,
+                );
+            }
+        }
+        serde_json::json!({"total":total,"byThread":threads,"byLeafModule":modules,"basis":"Available means perf supplied a chain, not proof of complete unwinding; truncated chains include recovered callers only."})
     }
     /// One branch at a time; path contains frame IDs returned by a prior query.
     pub fn branch(&self, query: &TreeQuery) -> Result<serde_json::Value, String> {
@@ -170,6 +237,8 @@ impl SampleSet {
         let mut total_weight = 0_u64;
         let mut selected_samples = 0_u64;
         let mut path_weight = 0_u64;
+        let mut chain_weight = 0_u64;
+        let mut chain_samples = 0_u64;
         for sample in &self.samples {
             if query.tid.is_some_and(|t| t != sample.tid) {
                 continue;
@@ -195,6 +264,14 @@ impl SampleSet {
             }
             total_weight = total_weight.saturating_add(sample.period);
             selected_samples += 1;
+            let has_chain = matches!(
+                sample.chain_state,
+                ChainState::Available | ChainState::Truncated
+            );
+            if has_chain {
+                chain_weight = chain_weight.saturating_add(sample.period);
+                chain_samples += 1;
+            }
             let frame_at = |n: usize| match query.direction {
                 Direction::BottomUp => sample.frames[n],
                 Direction::TopDown => sample.frames[sample.frames.len() - 1 - n],
@@ -214,7 +291,9 @@ impl SampleSet {
             }
             let id = frame_at(query.path.len());
             let value = children.entry(id).or_default();
-            value.0 = value.0.saturating_add(sample.period);
+            if has_chain {
+                value.0 = value.0.saturating_add(sample.period);
+            }
             value.2 += 1;
             // Only the sampled leaf receives self weight, even in the reversed tree.
             if match query.direction {
@@ -226,14 +305,20 @@ impl SampleSet {
         }
         let count = children.len();
         let mut children: Vec<_> = children.into_iter().collect();
-        children.sort_by(|a, b| b.1 .0.cmp(&a.1 .0).then(a.0.cmp(&b.0)));
+        children.sort_by(|a, b| {
+            b.1 .0
+                .max(b.1 .1)
+                .cmp(&a.1 .0.max(a.1 .1))
+                .then(a.0.cmp(&b.0))
+        });
         let rows: Vec<_> = children.into_iter().take(query.limit).map(|(id,(inclusive,own,samples))| serde_json::json!({
             "frameId":id,"frame":self.frames[id as usize],"inclusiveWeight":inclusive,"selfWeight":own,
-            "sampleCount":samples,"sampledEventSharePct":if total_weight>0 {100.0*inclusive as f64/total_weight as f64}else{0.0}
+            "sampleCount":samples,"selfEventSharePct":if total_weight>0 {100.0*own as f64/total_weight as f64}else{0.0},"sampledEventSharePct":if total_weight>0 {100.0*inclusive as f64/total_weight as f64}else{0.0}
         })).collect();
         Ok(
             serde_json::json!({"children":rows,"childCount":count,"omittedChildren":count.saturating_sub(query.limit),
-            "selectedSamples":selected_samples,"totalWeight":total_weight,"pathWeight":path_weight,
+            "selectedSamples":selected_samples,"totalWeight":total_weight,"chainSamples":chain_samples,"chainWeight":chain_weight,
+            "attributionBasis":"Self includes every retained leaf. Inclusive includes recovered chains only; both shares use all selected event weight.","pathWeight":path_weight,
             "moduleFilterBasis":"samples containing this exact module; complete calling context retained",
             "clock":"elapsed ns from first retained monotonic sample; no session clock mapping"}),
         )
@@ -278,6 +363,13 @@ fn timestamp(s: &str) -> Option<u64> {
 
 /// Streaming parser for explicit perf-script fields, leaf-first frames. Malformed records never inherit another sample's stack.
 pub fn parse_script(reader: impl BufRead) -> Result<SampleSet, String> {
+    parse_script_mode(reader, false)
+}
+/// Intermediate chain decode preserves empty records for exact reconciliation.
+pub fn parse_chains(reader: impl BufRead) -> Result<SampleSet, String> {
+    parse_script_mode(reader, true)
+}
+fn parse_script_mode(reader: impl BufRead, retain_empty: bool) -> Result<SampleSet, String> {
     let header = Regex::new(
         r"^\s*(.*?)\s+(\d+)(?:/|\s+)(\d+)\s+(\d+\.\d+):\s+(\d+)\s+([^\s]+):(?:\s+(.*))?$",
     )
@@ -288,16 +380,25 @@ pub fn parse_script(reader: impl BufRead) -> Result<SampleSet, String> {
     let mut current: Option<Sample> = None;
     let mut refs = 0_usize;
     let mut rejected = false;
-    fn finish(set: &mut SampleSet, current: &mut Option<Sample>, refs: &mut usize, rejected: bool) {
-        if let Some(s) = current.take() {
+    fn finish(
+        set: &mut SampleSet,
+        current: &mut Option<Sample>,
+        refs: &mut usize,
+        rejected: bool,
+        retain_empty: bool,
+    ) {
+        if let Some(mut s) = current.take() {
             set.coverage.parsed_samples += 1;
             if rejected
-                || s.frames.is_empty()
+                || (s.frames.is_empty() && !retain_empty)
                 || set.samples.len() >= SAMPLE_LIMIT
                 || *refs + s.frames.len() > STACK_REF_LIMIT
             {
                 set.coverage.omitted_samples += 1;
                 return;
+            }
+            if s.frames.is_empty() {
+                s.chain_state = ChainState::Empty;
             }
             set.first_ns = Some(set.first_ns.map_or(s.time_ns, |v| v.min(s.time_ns)));
             set.last_ns = Some(set.last_ns.map_or(s.time_ns, |v| v.max(s.time_ns)));
@@ -319,7 +420,7 @@ pub fn parse_script(reader: impl BufRead) -> Result<SampleSet, String> {
             break;
         }
         if count > 65536 {
-            finish(&mut result, &mut current, &mut refs, true);
+            finish(&mut result, &mut current, &mut refs, true, retain_empty);
             rejected = true;
             result
                 .coverage
@@ -340,7 +441,7 @@ pub fn parse_script(reader: impl BufRead) -> Result<SampleSet, String> {
         let line = String::from_utf8_lossy(&buffer);
         let line = line.trim_end();
         if line.is_empty() {
-            finish(&mut result, &mut current, &mut refs, rejected);
+            finish(&mut result, &mut current, &mut refs, rejected, retain_empty);
             rejected = false;
             continue;
         }
@@ -348,7 +449,7 @@ pub fn parse_script(reader: impl BufRead) -> Result<SampleSet, String> {
             continue;
         }
         if let Some(c) = header.captures(line) {
-            finish(&mut result, &mut current, &mut refs, rejected);
+            finish(&mut result, &mut current, &mut refs, rejected, retain_empty);
             rejected = false;
             let parsed = c[2]
                 .parse::<u32>()
@@ -378,6 +479,8 @@ pub fn parse_script(reader: impl BufRead) -> Result<SampleSet, String> {
                     time_ns,
                     period,
                     frames: Vec::new(),
+                    leaf_ip: String::new(),
+                    chain_state: ChainState::Available,
                 });
                 if let Some(tail) = c.get(7).filter(|v| !v.as_str().trim().is_empty()) {
                     if let Some(f) = frame_parts(tail.as_str()) {
@@ -404,10 +507,10 @@ pub fn parse_script(reader: impl BufRead) -> Result<SampleSet, String> {
                 continue;
             }
             if current.as_ref().unwrap().frames.len() >= 256 {
-                if !rejected {
+                if current.as_ref().unwrap().chain_state != ChainState::Truncated {
                     result.coverage.truncated_stacks += 1;
+                    current.as_mut().unwrap().chain_state = ChainState::Truncated;
                 }
-                rejected = true;
                 continue;
             }
             if !push_frame(
@@ -445,18 +548,105 @@ pub fn parse_script(reader: impl BufRead) -> Result<SampleSet, String> {
             } else if text.ends_with(']') && text.contains('[') {
                 // perf's unresolved source rendering: module[address], retained as an unresolved frame.
             } else {
-                finish(&mut result, &mut current, &mut refs, rejected);
+                finish(&mut result, &mut current, &mut refs, rejected, retain_empty);
                 result.coverage.diagnostic(line);
                 rejected = true;
             }
         } else {
-            finish(&mut result, &mut current, &mut refs, rejected);
+            finish(&mut result, &mut current, &mut refs, rejected, retain_empty);
             result.coverage.diagnostic(line);
             rejected = true;
         }
     }
-    finish(&mut result, &mut current, &mut refs, rejected);
+    finish(&mut result, &mut current, &mut refs, rejected, retain_empty);
     Ok(result)
+}
+/// Leaves are authoritative. Unusable callers never remove their sample or self weight.
+pub fn reconcile(mut leaves: SampleSet, chains: SampleSet) -> Result<SampleSet, String> {
+    use std::collections::VecDeque;
+    type Key = (u64, u32, u32, u64);
+    fn key(s: &Sample) -> Key {
+        (s.time_ns, s.pid, s.tid, s.period)
+    }
+    let mut records = HashMap::<Key, VecDeque<Sample>>::new();
+    for sample in chains.samples {
+        records.entry(key(&sample)).or_default().push_back(sample);
+    }
+    let mut intern: HashMap<Frame, u32> = leaves
+        .frames
+        .iter()
+        .cloned()
+        .enumerate()
+        .map(|(i, f)| (f, i as u32))
+        .collect();
+    let mut text_bytes: usize = leaves
+        .frames
+        .iter()
+        .map(|f| f.address.len() + f.symbol.len() * 2 + f.module.len() * 2)
+        .sum();
+    let mut refs = leaves.samples.len();
+    leaves.coverage.empty_chains = 0;
+    leaves.coverage.mismatched_chains = 0;
+    leaves.coverage.truncated_stacks = 0;
+    for sample in &mut leaves.samples {
+        if sample.frames.len() != 1 || sample.leaf_ip.is_empty() {
+            return Err("Leaf-only decode did not supply exactly one sampled IP".into());
+        }
+        let matched = records.get_mut(&key(sample)).and_then(VecDeque::pop_front);
+        sample.chain_state = ChainState::Empty;
+        if let Some(chain) = matched {
+            if !chain.frames.is_empty() {
+                if !chain
+                    .leaf_ip
+                    .trim_start_matches('0')
+                    .eq_ignore_ascii_case(sample.leaf_ip.trim_start_matches('0'))
+                {
+                    sample.chain_state = ChainState::Mismatch;
+                } else {
+                    sample.chain_state = chain.chain_state;
+                    for id in chain.frames.iter().skip(1) {
+                        let frame = &chains.frames[*id as usize];
+                        let bytes =
+                            frame.address.len() + frame.symbol.len() * 2 + frame.module.len() * 2;
+                        if refs >= STACK_REF_LIMIT
+                            || (!intern.contains_key(frame)
+                                && (leaves.frames.len() >= FRAME_LIMIT
+                                    || text_bytes.saturating_add(bytes) > FRAME_TEXT_LIMIT))
+                        {
+                            sample.chain_state = ChainState::Truncated;
+                            break;
+                        }
+                        let id = if let Some(id) = intern.get(frame) {
+                            *id
+                        } else {
+                            let id = leaves.frames.len() as u32;
+                            leaves.frames.push(frame.clone());
+                            intern.insert(frame.clone(), id);
+                            text_bytes += bytes;
+                            id
+                        };
+                        sample.frames.push(id);
+                        refs += 1;
+                    }
+                }
+            }
+        }
+        match sample.chain_state {
+            ChainState::Empty => leaves.coverage.empty_chains += 1,
+            ChainState::Mismatch => leaves.coverage.mismatched_chains += 1,
+            ChainState::Truncated => leaves.coverage.truncated_stacks += 1,
+            _ => {}
+        }
+    }
+    if records.values().any(|v| !v.is_empty()) {
+        leaves.coverage.diagnostic("Call-chain decode contains records without authoritative retained leaves; callers withheld for those records");
+    }
+    for diagnostic in chains.coverage.diagnostics {
+        leaves
+            .coverage
+            .diagnostic(&format!("Call-chain decode: {diagnostic}"));
+    }
+    Ok(leaves)
 }
 // The final balanced parenthesized group is the module. Method arguments and
 // `(deleted)` paths can contain parentheses too; the first '(' is not a boundary.
@@ -539,7 +729,11 @@ fn push_frame(
         set.frames.push(value);
         id
     });
-    let frames = &mut sample.as_mut().unwrap().frames;
+    let sample = sample.as_mut().unwrap();
+    if sample.frames.is_empty() {
+        sample.leaf_ip = address.into();
+    }
+    let frames = &mut sample.frames;
     frames.push(id);
     true
 }
@@ -911,5 +1105,135 @@ mod tests {
         assert_eq!(set.frames[0].module, "/tmp/perf-10.map");
         assert_eq!(set.frames[1].module, "/memfd:doublemapper (deleted)");
         assert_eq!(set.frames[1].symbol, "native::operator()");
+    }
+}
+
+#[cfg(test)]
+mod leaf_reconciliation_tests {
+    use super::*;
+    fn query(direction: Direction) -> TreeQuery {
+        TreeQuery {
+            direction,
+            path: vec![],
+            limit: 200,
+            tid: None,
+            thread_name: None,
+            module: None,
+            start_ns: None,
+            end_ns: None,
+        }
+    }
+    #[test]
+    fn empty_chain_keeps_self_and_never_borrows_callers() {
+        let leaf="worker 20/21 10.000000001: 100 cpu-clock:u: aa hot (/jit)\nworker 20/21 10.000000002: 300 cpu-clock:u: bb normal (/native)\n";
+        let chain="worker 20/21 10.000000001: 100 cpu-clock:u:\n\nworker 20/21 10.000000002: 300 cpu-clock:u:\n bb normal (/native)\n cc caller (/app)\n";
+        let set = reconcile(
+            parse_script(leaf.as_bytes()).unwrap(),
+            parse_chains(chain.as_bytes()).unwrap(),
+        )
+        .unwrap();
+        assert_eq!(set.samples.len(), 2);
+        assert_eq!(set.coverage.empty_chains, 1);
+        assert_eq!(set.samples[0].leaf_ip, "aa");
+        assert_eq!(set.samples[0].frames.len(), 1);
+        let bottom = set.branch(&query(Direction::BottomUp)).unwrap();
+        let children = bottom["children"].as_array().unwrap();
+        assert_eq!(
+            children
+                .iter()
+                .map(|v| v["selfWeight"].as_u64().unwrap())
+                .sum::<u64>(),
+            400
+        );
+        assert_eq!(
+            children
+                .iter()
+                .map(|v| v["inclusiveWeight"].as_u64().unwrap())
+                .sum::<u64>(),
+            300
+        );
+        assert_eq!(bottom["totalWeight"], 400);
+        assert_eq!(bottom["chainWeight"], 300);
+        assert_eq!(set.unwind_coverage()["byLeafModule"]["/jit"]["empty"], 1);
+        assert_eq!(set.unwind_coverage()["byThread"]["21"]["samples"], 2);
+        let top = set.branch(&query(Direction::TopDown)).unwrap();
+        assert!(top["children"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|v| v["frame"]["symbol"] == "hot"
+                && v["selfWeight"] == 100
+                && v["inclusiveWeight"] == 0));
+    }
+    #[test]
+    fn duplicate_identity_mismatch_and_symbol_interning_keep_literal_ips() {
+        let leaf="worker 20/21 10.000000001: 100 cpu-clock:u: aa hot (/jit)\nworker 20/21 10.000000001: 100 cpu-clock:u: ab hot (/jit)\nworker 20/21 10.000000002: 100 cpu-clock:u: ac hot (/jit)\n";
+        let chain="worker 20/21 10.000000001: 100 cpu-clock:u:\n aa hot (/jit)\n 20 caller (/app)\n\nworker 20/21 10.000000001: 100 cpu-clock:u:\n ff wrong (/other)\n 30 unrelated (/app)\n";
+        let set = reconcile(
+            parse_script(leaf.as_bytes()).unwrap(),
+            parse_chains(chain.as_bytes()).unwrap(),
+        )
+        .unwrap();
+        assert_eq!(
+            set.samples
+                .iter()
+                .map(|s| s.leaf_ip.as_str())
+                .collect::<Vec<_>>(),
+            vec!["aa", "ab", "ac"]
+        );
+        assert_eq!(set.samples[1].chain_state, ChainState::Mismatch);
+        assert_eq!(set.samples[2].chain_state, ChainState::Empty);
+        assert_eq!(set.samples[1].frames.len(), 1);
+        let branch = set.branch(&query(Direction::BottomUp)).unwrap();
+        assert_eq!(branch["children"][0]["selfWeight"], 300);
+        assert_eq!(branch["children"][0]["inclusiveWeight"], 100);
+    }
+    #[test]
+    fn depth_limit_marks_truncated_callers_without_dropping_leaf() {
+        let leaf = "worker 20/21 10.000000001: 100 cpu-clock:u: aa hot (/module)\n";
+        let chain = format!(
+            "worker 20/21 10.000000001: 100 cpu-clock:u:\n aa hot (/module)\n{}",
+            (0..300)
+                .map(|i| format!(" {:x} caller{} (/app)\n", i + 200, i))
+                .collect::<String>()
+        );
+        let set = reconcile(
+            parse_script(leaf.as_bytes()).unwrap(),
+            parse_chains(chain.as_bytes()).unwrap(),
+        )
+        .unwrap();
+        assert_eq!(set.samples.len(), 1);
+        assert_eq!(set.samples[0].frames.len(), 256);
+        assert_eq!(set.samples[0].chain_state, ChainState::Truncated);
+        assert_eq!(set.coverage.truncated_stacks, 1);
+        assert_eq!(
+            set.branch(&query(Direction::BottomUp)).unwrap()["children"][0]["selfWeight"],
+            100
+        );
+    }
+}
+
+#[cfg(test)]
+mod recorded_leaf_regression {
+    use super::*;
+    #[test]
+    fn installed_perf_mono_empty_chains_keep_all_leaf_weight() {
+        let leaf =
+            include_str!("../../workspaces/profiling-perf-backend/fixtures/mono-empty.leaf.script");
+        let chain = include_str!(
+            "../../workspaces/profiling-perf-backend/fixtures/mono-empty.chain.script"
+        );
+        let leaves = parse_script(leaf.as_bytes()).unwrap();
+        let n = leaves.samples.len();
+        let weight = leaves.samples.iter().map(|s| s.period).sum::<u64>();
+        let set = reconcile(leaves, parse_chains(chain.as_bytes()).unwrap()).unwrap();
+        assert_eq!(set.samples.len(), n);
+        assert_eq!(set.samples.iter().map(|s| s.period).sum::<u64>(), weight);
+        assert!(set.coverage.empty_chains > 0);
+        assert!(set
+            .samples
+            .iter()
+            .filter(|s| s.chain_state == ChainState::Empty)
+            .all(|s| s.frames.len() == 1 && !s.leaf_ip.is_empty()));
     }
 }
