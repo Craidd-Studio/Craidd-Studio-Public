@@ -1,7 +1,7 @@
 # GR-003 / GR-004 source review and fixture qualification
 
 **Roadmap track:** Phase 3.5 profiling.
-**Status:** Native fixture evidence and proposed delivery, 23 October 2026. Neither revision is implemented in Craidd.
+**Status:** Historical source review and proposed-delivery evidence at 23 October 2026. Subsequent accepted local implementations are recorded in [GR-002 leaf results](gr-002-leaf-results.md), [GR-003 results](gr-003-results.md) and [GR-004 results](gr-004-results.md). The gates below describe the earlier source, not current delivery.
 **Source:** Qualified perf backend `464e407`, integrated with M1 fixes on `codex/profiling-profiler-ui`.
 **Machine:** sk27; Linux 7.2.11-arch1-1; perf 7.2.11-1; current user, zero effective capabilities; paranoid 2, kptr_restrict 0, ptrace_scope 1. No policy changes or privileged perf.
 

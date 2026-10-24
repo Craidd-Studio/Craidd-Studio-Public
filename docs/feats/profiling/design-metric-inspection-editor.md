@@ -1,7 +1,7 @@
 # Imported metric inspection in the Profiling editor
 
 **Roadmap track:** Phase 3.5 profiling.
-**Status:** Direction authorized for implementation on 23 October 2026. The initial chart-first implementation is on the local UI branch; [delivery and remaining gates](revisions/profiler-analysis-ui-results.md) are recorded separately. Human/public-release acceptance remains open.
+**Status:** Direction authorized for implementation on 23 October 2026. The editor layout and interactions are implemented on the local UI branch; [quality checkpoint and remaining gates](revisions/metric-editor-quality-results.md) are recorded separately. Human/public-release acceptance remains open.
 **Scope:** GR-001 imported CSV inspection in the existing **Profiling** editor tab. Standard process/Gold profiling retains its existing sidebar and editor hosts. GR-002 capture controls and trees follow the [analysis interface design](design-profiler-analysis-ui.md).
 **Companions:** [Source contract](design-profile-source-contract.md), [workspace hosts](design-profiler-workspace-modes.md), [scopes](design-profiler-scopes.md), [GR-001 decisions](revisions/implementation-decisions.md), [human acceptance](revisions/gr-001-m1-human-acceptance.md).
 

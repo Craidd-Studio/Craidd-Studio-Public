@@ -1,0 +1,17 @@
+{
+  "machine": "sk27",
+  "kernel": "7.2.11-arch1-1",
+  "cpu": "AMD Ryzen 9 9950X3D 16-Core Processor",
+  "logicalCpus": 32,
+  "ramKiB": 63297788,
+  "releaseSha256": "a7f1f63f40e79624608214833e4f0e210c48ef9a0d2d9c39ff88d9baf0a24b09",
+  "finalRunGates": {
+    "ordinary": "PASS",
+    "xvfb": "PASS",
+    "recoveryOrdinary": "PASS",
+    "recoveryXvfb": "PASS",
+    "nativeScaling": "NOT TESTED",
+    "humanAcceptance": "NOT TESTED"
+  },
+  "buildLogFormatting": "Trailing whitespace normalized; content otherwise as captured."
+}

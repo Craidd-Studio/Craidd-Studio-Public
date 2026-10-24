@@ -1,4 +1,4 @@
-import {useEffect,useId,useMemo,useRef,useState} from "react";
+import {useEffect,useLayoutEffect,useId,useMemo,useRef,useState} from "react";
 import type {MetricAxis,MetricColumn,MetricGraph,MetricRow} from "../../types/profileSource";
 import {graphPath,metricNumber,metricTime,seriesColor} from "./metricPresentation";
 type Range={startX:number;endX:number}|null;
@@ -15,6 +15,9 @@ export default function MetricPlot({graphs,columns,axis,unit,mode,selection,sele
  useEffect(()=>{const node=host.current;if(!node)return;const observer=new ResizeObserver(([v])=>setSize({width:Math.max(260,v.contentRect.width),height:Math.max(140,v.contentRect.height)}));observer.observe(node);return()=>observer.disconnect();},[]);
  useEffect(()=>{seq.current++;setHover(null);if(timer.current)clearTimeout(timer.current);},[graphs]);
  useEffect(()=>()=>{seq.current++;if(timer.current)clearTimeout(timer.current);},[]);
+ const tooltip=useRef<HTMLDivElement>(null),[tooltipSize,setTooltipSize]=useState({width:240,height:80});
+ useLayoutEffect(()=>{const node=tooltip.current;if(!node)return;const {width,height}=node.getBoundingClientRect();setTooltipSize(old=>old.width===width&&old.height===height?old:{width,height});},[!!hover,hover?.row,graphs.length]);
+ const popupBounds=hover?host.current?.getBoundingClientRect():null;
  const g=graphs[0];
  const geometry=useMemo(()=>{
   const left=56,right=size.width-18,top=18,bottom=size.height-36;
@@ -46,7 +49,7 @@ export default function MetricPlot({graphs,columns,axis,unit,mode,selection,sele
      {commit&&<rect x={x(commit.startX)} width={Math.max(2,x(commit.endX)-x(commit.startX))} y={top} height={bottom-top} className="metric-selection-fill"/>}
      {graphs.map((v,n)=><g key={v.column}>
       {mode==="line"&&<path d={geometry.paths[n]} fill="none" stroke={seriesColor(v.column)} strokeWidth={1.6} vectorEffect="non-scaling-stroke"/>}
-      {mode==="windows"&&axis.windowSeconds&&columns[v.column].meaning==="window statistic"?v.points.map((p,i)=><rect key={i} x={x(p.x)} width={Math.max(2,x(p.until+axis.windowSeconds!)-x(p.x))} y={y(p.max)} height={Math.max(2,y(p.min)-y(p.max))} fill={seriesColor(v.column)} opacity={.48}/>):v.points.map((p,i)=><line key={i} x1={x((p.x+p.until)/2)} x2={x((p.x+p.until)/2)} y1={y(p.max)} y2={y(p.min)+(mode==="line"?1:2)} stroke={seriesColor(v.column)} opacity={mode==="line"?.45:1} strokeWidth={mode==="line"?1:2.6} strokeLinecap="round" vectorEffect="non-scaling-stroke"/>)}
+      {mode==="windows"&&axis.windowSeconds&&columns[v.column].meaning==="window statistic"?v.points.map((p,i)=><rect key={i} x={x(p.x)} width={Math.max(2,x(p.until+axis.windowSeconds!)-x(p.x))} y={y(p.max)} height={Math.max(2,y(p.min)-y(p.max))} fill={seriesColor(v.column)} opacity={.48}/>):mode!=="line"&&v.points.map((p,i)=><line key={i} x1={x((p.x+p.until)/2)} x2={x((p.x+p.until)/2)} y1={y(p.max)} y2={y(p.min)+2} stroke={seriesColor(v.column)} opacity={1} strokeWidth={2.6} strokeLinecap="round" vectorEffect="non-scaling-stroke"/>)}
      </g>)}
      {thresholds.map((t,i)=><g key={i}><line x1={left} x2={right} y1={y(t.value)} y2={y(t.value)} stroke="#e8bf6b" strokeDasharray="6 4"/><text x={right-5} y={y(t.value)-5} textAnchor="end" className="metric-budget-label">{t.label||"Threshold"} · {metricNumber(t.value)} {unit}</text></g>)}
      {selected&&selected.index>=g.start&&selected.index<g.end&&<line x1={x(selected.x)} x2={x(selected.x)} y1={top} y2={bottom} className="metric-committed-line"/>}
@@ -55,7 +58,7 @@ export default function MetricPlot({graphs,columns,axis,unit,mode,selection,sele
     </g>
     {commit&&["start","end"].map(handle=><g key={handle}><line x1={x(handle==="start"?commit.startX:commit.endX)} x2={x(handle==="start"?commit.startX:commit.endX)} y1={top} y2={bottom} className="metric-selection-edge"/><rect data-handle={handle} x={x(handle==="start"?commit.startX:commit.endX)-4} y={top-3} width={8} height={12} rx={2} className="metric-selection-handle"/><rect data-handle={handle} x={x(handle==="start"?commit.startX:commit.endX)-4} y={bottom-9} width={8} height={12} rx={2} className="metric-selection-handle"/></g>)}
    </svg>
-   {hover&&<div className="metric-hover-card" role="status" aria-label="Metric hover values" style={{left:Math.max(4,Math.min(size.width-246,hover.x+14)),top:Math.max(4,Math.min(size.height-40-graphs.length*23,hover.y+12))}}>{hover.row?<><header>{metricTime(hover.row.x,axis.kind)}<small>Original row {hover.row.index+1}</small></header>{graphs.map(v=><div key={v.column}><i style={{background:seriesColor(v.column)}}/><span>{columns[v.column].name}</span><strong>{typeof hover.row!.cells[v.column]==="number"?String(hover.row!.cells[v.column]):"Empty"}</strong><small>{columns[v.column].unit}</small></div>)}</>:<span>Reading nearest original row…</span>}</div>}
+   {hover&&<div ref={tooltip} className="metric-hover-card" role="status" aria-label="Metric hover values" style={{position:"fixed",left:Math.max(8,Math.min(innerWidth-tooltipSize.width-8,(popupBounds?.left??0)+hover.x+14)),top:Math.max(8,Math.min(innerHeight-tooltipSize.height-8,(popupBounds?.top??0)+hover.y+12)),maxWidth:"calc(100vw - 16px)",maxHeight:"calc(100vh - 16px)",overflow:"auto"}}>{hover.row?<><header>{metricTime(hover.row.x,axis.kind)}<small>Original row {hover.row.index+1}</small></header>{graphs.map(v=><div key={v.column}><i style={{background:seriesColor(v.column)}}/><span>{columns[v.column].name}</span><strong>{typeof hover.row!.cells[v.column]==="number"?String(hover.row!.cells[v.column]):"Empty"}</strong><small>{columns[v.column].unit}</small></div>)}</>:<span>Reading nearest original row…</span>}</div>}
   </div>
  </figure>;
 }

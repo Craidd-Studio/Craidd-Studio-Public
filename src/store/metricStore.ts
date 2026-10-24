@@ -2,15 +2,20 @@ import { create } from "zustand";
 import { invoke } from "@tauri-apps/api/core";
 import type { MetricSource } from "../types/profileSource";
 
+let querySequence = 0;
 export function metricAction<T>(request: Record<string, unknown>): Promise<T> {
   const started = performance.now();
+  const measured=["graph","row","summary","page","hover"].includes(String(request.op));
+  const query=++querySequence,begin=`craidd.metrics.${request.op}.begin.${query}`;
+  if(measured)performance.mark(begin,{detail:{query,op:request.op}});
   return invoke<T>("metric_action", { request }).finally(() => {
-    if (request.op !== "graph" && request.op !== "row") return;
+    if (!measured) return;
+    performance.clearMarks(begin);
     // Retain one measurement per bounded query kind, not a growing trace.
     // This includes native queuing/IPC as well as the query, not UI painting.
     const name = `craidd.metrics.${request.op}`;
     performance.clearMeasures(name);
-    performance.measure(name, { start: started, end: performance.now() });
+    performance.measure(name, { start: started, end: performance.now(), detail:{query,op:request.op} });
   });
 }
 export interface MetricView {

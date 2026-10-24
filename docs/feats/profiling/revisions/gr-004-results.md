@@ -26,6 +26,10 @@ The desktop capture retained 1,987 leaves, including 1,975 empty caller chains, 
 
 The general solution writer now preserves the existing `[profiling]` table when saving run configurations, including explicit symbol locations. Unsupported hosts can turn off a previously saved helper option. Runtime compilation, attach injection, automatic runtime detection and map deletion are outside this delivery.
 
+## Integrated release smoke check
+
+The same final release binary as the [metric editor release gates](metric-editor-release-results.md), SHA-256 `a7f1f63f40e79624608214833e4f0e210c48ef9a0d2d9c39ff88d9baf0a24b09`, also passes the real run-configuration launch/capture workflow under Xvfb. Explicit opt-in and persistence, named managed leaves, helper version/hash, incomplete-startup label, absent attach option, unchanged external target environment and capture-target survival all PASS. [Release evidence](../../../../workspaces/profiling-embedded-mono/evidence-2026-10-24/release-mono-launch-results.json) records perf `perf version 7.2.11-1`, DWARF 8192 at 999 Hz for two seconds, 1,992 retained leaves and 1,983 empty chains, with zero LOST / LOST_SAMPLES records. The result remains PARTIAL for caller coverage. This does not repeat the matched-overhead matrix or establish ordinary-display/human acceptance of the helper workflow.
+
 ---
 
 *Last updated: 24 October 2026. Author(s): ShinkuKira21.*

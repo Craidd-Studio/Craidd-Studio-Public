@@ -2,7 +2,7 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {mkdtemp,mkdir,writeFile,readFile,readdir,readlink,stat} from 'node:fs/promises';
-import {tmpdir} from 'node:os';
+import {tmpdir,hostname,release} from 'node:os';
 import {join} from 'node:path';
 import {createHash} from 'node:crypto';
 import {launch,openSolution,switchToLabel,processIdentity} from './lib/harness.mjs';
@@ -40,10 +40,17 @@ async function setup(name){
     }return {done:false};
   });
   const mainLabel=await app.wd.execute('return window.__TAURI_INTERNALS__.metadata.currentWindow.label');
+  await app.wd.command('POST','/window/rect',{width:1600,height:1050});
   const oneWindow=await memory(host),owner=await openSolution(app,solution);
+  await app.wd.command('POST','/window/rect',{width:1600,height:1050});
   await showProfiler(app);
   await app.wd.execute('[...document.querySelectorAll("button")].find(b=>b.textContent==="Open metric imports").click()');
   await app.waitFor('metric editor',async()=>({done:await app.wd.execute('return !!document.querySelector(".metric-import-panel")')}));
+  await app.invoke('focus_linked_window',{targetLabel:owner});
+  await app.wd.click(await app.wd.find('//button[normalize-space()="Focus analysis"]'));
+  await app.wd.command('POST','/window/rect',{width:1600,height:1050});
+  await sleep(200);
+  app.record('measurement-window',await app.wd.execute('return {width:innerWidth,height:innerHeight,outerWidth,outerHeight,visible:document.visibilityState,focused:document.hasFocus(),dpr:devicePixelRatio}'));
   return {app,host,mainLabel,owner,oneWindow,root};
   } catch(error) { await app.close(); throw error; }
 }
@@ -57,40 +64,49 @@ const summary=values=>{const sorted=[...values].sort((a,b)=>a-b);return {n:sorte
 
 test('M1 release: 20 observations per operation with query/render diagnostics',{skip:!enabled,timeout:240000},async t=>{
   assert.ok(file);assert.ok(process.env.CRAIDD_UI_APP?.includes('/release/'),'explicit release binary required');
-  const {app,host,oneWindow,owner}=await setup('metric-release-distributions');t.after(()=>app.close());
+  const {app,host,oneWindow,owner}=await setup('metric-release-distributions');t.after(async()=>{try{const context=await app.wd.execute('return {visibility:document.visibilityState,focused:document.hasFocus(),width:innerWidth,height:innerHeight,diagnostics:window.__metricDiagnostic,graph:document.querySelector(`[aria-label="Metric range graph"]`)?.dataset}');await writeFile(join(app.dir,'final-diagnostics.json'),JSON.stringify(context,null,2));}finally{await app.close();}});
+  let stage="diagnostics";
+  t.after(async()=>{await writeFile(join(app.dir,'last-stage.json'),JSON.stringify({stage},null,2));});
   const baseline=await memory(host),input=await stat(file),originalHash=hash(await readFile(file));
-  await app.wd.execute(`window.__metricDiagnostic={entries:[],gaps:[],last:performance.now()};window.__metricDiagnosticTimer=setInterval(()=>{const now=performance.now(),d=window.__metricDiagnostic;d.gaps.push({start:d.last,end:now,gap:now-d.last});d.last=now;if(d.gaps.length>2000)d.gaps.shift()},16);window.__metricDiagnosticObserver=new PerformanceObserver(list=>{for(const e of list.getEntries())if(e.name.startsWith('craidd.metrics.')||e.entryType==='gc'||e.entryType==='longtask'){window.__metricDiagnostic.entries.push({type:e.entryType,name:e.name,start:e.startTime,ms:e.duration});if(window.__metricDiagnostic.entries.length>1000)window.__metricDiagnostic.entries.shift();}});const types=['measure','gc','longtask'].filter(t=>PerformanceObserver.supportedEntryTypes.includes(t));window.__metricDiagnosticObserver.observe({entryTypes:types});`);
+  await app.wd.execute(`window.__metricDiagnostic={entries:[],queries:[],gaps:[],last:performance.now()};window.__metricDiagnosticTimer=setInterval(()=>{const now=performance.now(),d=window.__metricDiagnostic;d.gaps.push({start:d.last,end:now,gap:now-d.last});d.last=now;if(d.gaps.length>2000)d.gaps.shift()},16);window.__metricDiagnosticObserver=new PerformanceObserver(list=>{for(const e of list.getEntries())if(e.name.startsWith('craidd.metrics.')||e.entryType==='gc'||e.entryType==='longtask'){window.__metricDiagnostic.entries.push({type:e.entryType,name:e.name,start:e.startTime,ms:e.duration});const detail=e.detail;if(detail?.query){const queries=window.__metricDiagnostic.queries;let q=queries.find(v=>v.query===detail.query);if(!q){q={query:detail.query,op:detail.op,started:e.startTime,ended:null};queries.push(q);if(queries.length>2000)queries.shift();}if(e.entryType==='measure'){q.started=e.startTime;q.ended=e.startTime+e.duration;}}if(window.__metricDiagnostic.entries.length>1000)window.__metricDiagnostic.entries.shift();}});const types=['mark','measure','gc','longtask'].filter(t=>PerformanceObserver.supportedEntryTypes.includes(t));window.__metricDiagnosticObserver.observe({entryTypes:types});`);
   let sampling=true,peak=baseline;const samples=[];t.after(()=>{sampling=false});
   const sampler=(async()=>{while(sampling){const m=await memory(host);samples.push(m);if(m.rssBytes>peak.rssBytes)peak=m;await sleep(50)}})();
   const started=performance.now();
   await app.wd.execute(`document.querySelector('.metric-paths').open=true;const el=document.querySelector('[aria-label="Metric import paths"]');Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype,'value').set.call(el,arguments[0]);el.dispatchEvent(new Event('input',{bubbles:true}));`,[file]);
   await app.wd.execute('[...document.querySelectorAll("button")].find(b=>b.textContent==="Import paths").click()');
-  let progressSeen=false;
-  await app.waitFor('million row graph',async()=>{const p=await app.wd.execute('return {loading:!!document.querySelector("[aria-label=\\"Metric import progress\\"]"),graph:!!document.querySelector("[aria-label=\\"Metric range graph\\"]"),error:document.querySelector(".metric-import-panel [role=alert]")?.textContent}');progressSeen ||=p.loading;if(p.error)throw Error(p.error);return {done:p.graph}},15000,20);
-  await app.wd.executeAsync(`const done=arguments[arguments.length-1];document.querySelector('.metric-paths').open=false;document.querySelector('[aria-label="Metric range graph"]').scrollIntoView({block:'center'});requestAnimationFrame(()=>requestAnimationFrame(done));`);
-  const firstViewMs=performance.now()-started;sampling=false;await sampler;
+  let progressSeen=false,loadingUiProbe=null;
+  await app.waitFor('million row graph',async()=>{const p=await app.wd.execute('return {loading:!!document.querySelector("[aria-label=\\"Metric import progress\\"]"),graph:!!document.querySelector("[aria-label=\\"Metric range graph\\"]"),error:document.querySelector(".metric-import-panel [role=alert]")?.textContent}');progressSeen ||=p.loading;if(p.loading&&!loadingUiProbe)loadingUiProbe=await app.wd.executeAsync(`const done=arguments[arguments.length-1],button=[...document.querySelectorAll('button')].find(b=>b.textContent==='Cancel import'),start=performance.now();button.focus();requestAnimationFrame(()=>requestAnimationFrame(()=>done({ms:performance.now()-start,focused:document.activeElement===button})));`);if(p.error)throw Error(p.error);return {done:p.graph}},15000,20);
+  stage='first view RAF';
+  await app.wd.executeAsync(`const done=arguments[arguments.length-1];const p=document.querySelector('.metric-paths');if(p)p.open=false;document.querySelector('[aria-label="Metric range graph"]').scrollIntoView({block:'center'});requestAnimationFrame(()=>requestAnimationFrame(done));`);
+  const firstViewMs=performance.now()-started;stage='initial summaries';
+  await app.waitFor('initial summaries complete',async()=>({done:await app.wd.execute('return document.querySelectorAll(`[aria-label="Metric selection statistics"] tbody tr`).length===4')}),30000);
+  await sleep(300);sampling=false;await sampler;
+  const loadDiagnostics=await app.wd.execute('return {gaps:window.__metricDiagnostic.gaps.slice(),queries:window.__metricDiagnostic.queries.slice(),visible:document.visibilityState,focused:document.hasFocus()}');
+  stage='wheel probe';
+  const wheelProbe=await app.wd.execute(`const node=document.querySelector('.metric-table-scroll'),event=new WheelEvent('wheel',{deltaY:120,bubbles:true,cancelable:true});const before=node.scrollTop;node.dispatchEvent(event);const horizontal=new WheelEvent('wheel',{deltaX:120,bubbles:true,cancelable:true});node.dispatchEvent(horizontal);return {defaultPrevented:event.defaultPrevented,horizontalDefaultPrevented:horizontal.defaultPrevented,before,after:node.scrollTop};`);
+  app.record('compressed-row-wheel-probe',wheelProbe);assert.equal(wheelProbe.defaultPrevented,true,'compressed row wheel must cancel native default scrolling');assert.equal(wheelProbe.horizontalDefaultPrevented,false,'horizontal wheel must remain available to the browser');
   async function operation(name,target){
-    return app.wd.executeAsync(`const [name,target,done]=arguments,panel=document.querySelector('.metric-import-panel'),before=panel.querySelector('[aria-label="Metric range graph"]'),old=before?.getAttribute('data-start')+':'+before?.getAttribute('data-end');
+    stage=name;return app.wd.executeAsync(`const [name,target,done]=arguments,panel=document.querySelector('.metric-import-panel'),before=panel.querySelector('[aria-label="Metric range graph"]'),old=before?.getAttribute('data-start')+':'+before?.getAttribute('data-end');
     const begin=performance.now();let changed=false,timeout;
-    const observer=new MutationObserver(()=>{let ready=false,el=panel.querySelector('[aria-label="Metric range graph"]');if(name==='Row inspection'){el=panel.querySelector('[aria-label="Inspected metric row"]');ready=el?.querySelector('h3')?.textContent.startsWith('Row '+target+' ·');}else if(name==='Series toggle'){ready=el?.getAttribute('data-column')===String(target);}else ready=el&&el.getAttribute('data-start')+':'+el.getAttribute('data-end')!==old;
-      if(ready&&!changed){changed=true;observer.disconnect();clearTimeout(timeout);const mutation=performance.now();el.scrollIntoView({block:'center'});requestAnimationFrame(()=>{const frame1=performance.now();requestAnimationFrame(()=>{const end=performance.now(),d=window.__metricDiagnostic;done({operation:name,target,start:begin,end,ms:end-begin,uiMutationMs:mutation-begin,afterMutationMs:end-mutation,frame1Ms:frame1-mutation,native:d.entries.filter(e=>e.start>=begin&&e.start<=end),timerGaps:d.gaps.filter(g=>g.end>=begin&&g.start<=end),heap:performance.memory?{used:performance.memory.usedJSHeapSize,total:performance.memory.totalJSHeapSize}:null})})})}});
+    const observer=new MutationObserver(()=>{let ready=false,el=panel.querySelector('[aria-label="Metric range graph"]');if(name==='Row inspection'){el=panel.querySelector('[aria-label="Inspected metric row"]');ready=el?.querySelector('h3')?.textContent==='Row '+target;}else if(name==='Series toggle'){ready=!!el&&el.querySelectorAll('path[stroke]').length===Number(target);}else ready=el&&el.getAttribute('data-start')+':'+el.getAttribute('data-end')!==old;
+      if(ready&&!changed){changed=true;observer.disconnect();clearTimeout(timeout);const mutation=performance.now();el.scrollIntoView({block:'center'});requestAnimationFrame(()=>{const frame1=performance.now();requestAnimationFrame(()=>{const end=performance.now(),d=window.__metricDiagnostic;done({operation:name,target,start:begin,end,ms:end-begin,uiMutationMs:mutation-begin,afterMutationMs:end-mutation,frame1Ms:frame1-mutation,native:d.entries.filter(e=>e.start+e.ms>=begin&&e.start<=end),queries:d.queries.filter(q=>q.started<=end&&(q.ended===null||q.ended>=begin)),timerGaps:d.gaps.filter(g=>g.end>=begin&&g.start<=end),heap:performance.memory?{used:performance.memory.usedJSHeapSize,total:performance.memory.totalJSHeapSize}:null})})})}});
     observer.observe(panel,{subtree:true,childList:true,attributes:true});timeout=setTimeout(()=>{observer.disconnect();done({error:'render timeout',name,target})},10000);
-    if(name==='Series toggle'){const el=panel.querySelector('[aria-label="Metric series"]');el.value=String(target);el.dispatchEvent(new Event('change',{bubbles:true}));}
+    if(name==='Series toggle'){panel.querySelector('[aria-label="Plot metric_3_ms"]').click();}
     else if(name==='Row inspection'){[...panel.querySelectorAll('button')].find(b=>b.textContent==='Inspect row').click();}
-    else [...panel.querySelectorAll('button')].find(b=>b.textContent===name).click();`,[name,target]);
+    else [...panel.querySelectorAll('button')].find(b=>b.getAttribute('aria-label')===name||b.textContent===name).click();`,[name,target]);
   }
   // Set a reproducible middle-half range so both pan directions always move.
   await operation('Zoom in');
   const observations=[],outliers=[];
   for(let round=0;round<20;round++)for(const name of ['Zoom in','Pan right','Pan left','Zoom out','Series toggle','Row inspection']){
     if(name==='Row inspection')await app.wd.execute(`const el=document.querySelector('[aria-label="Metric row number"]');Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(el,String(arguments[0]));el.dispatchEvent(new Event('input',{bubbles:true}));`,[500001+round]);
-    const result=await operation(name,name==='Series toggle'?(round%2?2:1):name==='Row inspection'?500001+round:null);assert.equal(result.error,undefined,JSON.stringify(result));result.round=round+1;
+    const result=await operation(name,name==='Series toggle'?(round%2?4:3):name==='Row inspection'?500001+round:null);assert.equal(result.error,undefined,JSON.stringify(result));result.round=round+1;
     observations.push(result);if(result.ms>=100)outliers.push({...result,processesAfter:await memory(host)});
   }
   const diagnostics=await app.wd.execute('clearInterval(window.__metricDiagnosticTimer);window.__metricDiagnosticObserver.disconnect();return {timeOrigin:performance.timeOrigin,supportedPerformanceEntries:PerformanceObserver.supportedEntryTypes,userAgent:navigator.userAgent,gcObservable:PerformanceObserver.supportedEntryTypes.includes("gc"),heapObservable:!!performance.memory}');
   const operations=Object.fromEntries(['Zoom in','Pan right','Pan left','Zoom out','Series toggle','Row inspection'].map(name=>[name,summary(observations.filter(v=>v.operation===name).map(v=>v.ms))]));
   const gcLog=app.timestampedLog.filter(v=>/GC<|GC END|Requesting GC/.test(v.line));
-  const evidence={gcLog,gcLogging:'JSC_logGC=1 (installed jsc --options: Basic); stderr arrival epoch timestamps, may be buffered and cannot establish causal attribution',gate:Object.values(operations).every(v=>v.p95<100)?'PASS':'FAIL',display:process.env.CRAIDD_METRIC_DISPLAY,sessionType:process.env.XDG_SESSION_TYPE,build:process.env.CRAIDD_UI_APP,binarySha256:hash(await readFile(process.env.CRAIDD_UI_APP)),fixture:{path:file,size:input.size,sha256:originalHash},owner,oneWindow,baseline,peak,incrementalRssBytes:peak.rssBytes-baseline.rssBytes,incrementalRatio:(peak.rssBytes-baseline.rssBytes)/input.size,memorySamples:samples,firstViewMs,progressSeen,operations,observations,outliers,diagnostics,method:'20 measured observations per operation, nearest-rank p50/p95, scripted application event to changed UI plus two RAFs, visible graph/inspector, warm file cache. Shared RSS pages double-counted; PSS separately sampled. No hardware input/display or GC attribution inferred.'};
+  const evidence={machine:hostname(),kernel:release(),wheelProbe,loadDiagnostics,loadingUiProbe,gcLog,gcLogging:'JSC_logGC=1 (installed jsc --options: Basic); stderr arrival epoch timestamps, may be buffered and cannot establish causal attribution',gate:Object.values(operations).every(v=>v.p95<100)?'PASS':'FAIL',display:process.env.CRAIDD_METRIC_DISPLAY,sessionType:process.env.XDG_SESSION_TYPE,build:process.env.CRAIDD_UI_APP,binarySha256:hash(await readFile(process.env.CRAIDD_UI_APP)),fixture:{path:file,size:input.size,sha256:originalHash},owner,oneWindow,baseline,peak,incrementalRssBytes:peak.rssBytes-baseline.rssBytes,incrementalRatio:(peak.rssBytes-baseline.rssBytes)/input.size,memorySamples:samples,firstViewMs,progressSeen,operations,observations,outliers,diagnostics,method:'20 measured observations per operation, nearest-rank p50/p95, scripted application event to changed UI plus two RAFs, visible graph/inspector, warm file cache. Shared RSS pages double-counted; PSS separately sampled. No hardware input/display or GC attribution inferred.'};
   app.record('release-distributions',evidence);await writeFile(join(app.dir,'release-evidence.json'),JSON.stringify(evidence,null,2)+'\n');console.log(JSON.stringify({evidence:app.dir,gate:evidence.gate,operations,incrementalRatio:evidence.incrementalRatio}));
   assert.equal(evidence.gate,'PASS');assert.ok(evidence.incrementalRatio<3);assert.ok(firstViewMs<15000);assert.ok(progressSeen);
 });
@@ -124,7 +140,7 @@ test('M1 release: owning window closes during million-row load',{skip:!enabled||
   await app.wd.execute(`document.querySelector('.metric-paths').open=true;const el=document.querySelector('[aria-label="Metric import paths"]');Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype,'value').set.call(el,arguments[0]);el.dispatchEvent(new Event('input',{bubbles:true}));`,[small]);
   await app.wd.execute('[...document.querySelectorAll("button")].find(b=>b.textContent==="Import paths").click()');
   await app.waitFor('surviving IDE renders a new import',async()=>({done:await app.wd.execute('return !!document.querySelector("[aria-label=\\"Metric range graph\\"]")')}));
-  const retryId=await app.wd.execute('return document.querySelector("[aria-label=\\"Metric source set\\"]").value');
+  const retryId=await app.wd.execute('return document.querySelector(".metric-import-panel").dataset.sourceId');
   const row=await app.invoke('metric_action',{request:{op:'row',id:retryId,table:0,row:1}});assert.equal(row.row.cells[1],2);
   const result={gate:'PASS',closeMethod:'application Window Manager close_linked_window native destroy path',display:process.env.CRAIDD_METRIC_DISPLAY,build:process.env.CRAIDD_UI_APP,binarySha256:hash(await readFile(process.env.CRAIDD_UI_APP)),fixtureSize:size,id,owner,mainLabel,oneWindow,before,during,afterSamples,after,loading,closeRequestedAt,trace,releaseAfterCloseMs:released.epochMs-closeRequestedAt,producerReaderFds:fds,removedJobError:unknown,producerSizeUnchanged:(await stat(file)).size===size,ideUsable:true,newImportRow:row};
   app.record('close-recovery',result);await writeFile(join(app.dir,'recovery-evidence.json'),JSON.stringify(result,null,2)+'\n');console.log(JSON.stringify({recoveryEvidence:app.dir,gate:'PASS',releaseAfterCloseMs:result.releaseAfterCloseMs,beforeRss:before.rssBytes,duringRss:during.rssBytes,afterRss:after.rssBytes}));

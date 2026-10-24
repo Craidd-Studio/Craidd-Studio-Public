@@ -12,7 +12,7 @@ The [results](gr-001-m1-results.md) describe supported CSV syntax and limits.
    CSV inspection must open in the **Profiling editor tab**, never the sidebar.
 2. Copy [run.csv](../../../../workspaces/profiling-metrics/fixtures/run.csv) and
    [run-sections.csv](../../../../workspaces/profiling-metrics/fixtures/run-sections.csv)
-   into a disposable folder. Use **Import CSV files…** to select both. Check
+   into a disposable folder. Use **Open CSV…** to select both. Check
    picker, keyboard focus, source label and progress/error clarity.
 3. Check main coverage: **5 retained rows, 2 invalid records, 1 unsupported
    multiline record and 1 empty cell**. Open **Import issues**. Continuation text must
@@ -20,14 +20,14 @@ The [results](gr-001-m1-results.md) describe supported CSV syntax and limits.
 4. In the Columns pane, select `p99_ms` to plot it. The axis initially says **ordinal**, and duration is unknown.
    Inspect retained row 2: `elapsed_s=1`, `p99_ms=70`, `objects=44`, `note=slow`.
    Row 5 preserves the quoted text `last, quoted`.
-5. In **Column meanings** (also reachable through **Interpretation and joins**), choose elapsed time using `elapsed_s`.
+5. In **Column meanings** (also reachable through **Columns… / Manage columns…**), choose elapsed time using `elapsed_s`.
    Leave duration blank first; spacing must not declare a window. Set duration
-   to 1 second and `p99_ms` meaning to **window statistic**, then apply. Check
+   to 1 second and `p99_ms` meaning to **window statistic**, preview, then apply. Check
    readable axis/units and declared-window display.
 6. Declare an exact companion join: main `elapsed_s` ↔ companion `time_s`.
    Inspect row 2: companion `section_ms=60`. Inspect row 3: companion is unjoined.
    The different physical row order must not pair files by position.
-7. Open **Largest values**, rank by `p99_ms`, and use **Find worst windows / largest values**. The highest percentile is 70;
+7. Open **Largest values** and rank by `p99_ms`. The highest per-window value is 70;
    jump to that row. Pan, zoom, switch series and inspect another row. Check
    labels, responsiveness and keyboard focus at your normal display scale.
 8. Open source/text code, then return using **Open metric imports**. The selected
@@ -40,7 +40,7 @@ The [results](gr-001-m1-results.md) describe supported CSV syntax and limits.
     the native chooser. Change an import unit afterwards; the saved snapshot
     must keep the old interpretation. Producer CSV bytes must remain unchanged.
 11. Close Craidd. Move the **copied** CSV fixtures elsewhere. Restart and use
-    **Open metric snapshot…**: values, units, coverage and joins must reopen
+    **Open snapshot…**: values, units, coverage and joins must reopen
     without those original paths; snapshot interpretation must be immutable.
 12. Generate the million-row fixture using the [fixture guide](../../../../workspaces/profiling-metrics/README.md).
     Import it and check progress, normal interaction and cancellation. In a

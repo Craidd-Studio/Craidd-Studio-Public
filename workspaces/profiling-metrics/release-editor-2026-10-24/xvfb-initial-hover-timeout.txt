@@ -1,0 +1,300 @@
+File
+Edit
+View
+Project
+Run
+Help
+🔨
+Add configuration…
+▶
+⏹
+🐛
+White · idle
+Profiling
+×
+Process / Gold
+CPU sampling
+Imported metrics
+server-metrics.csv
+20000 rows · complete
+Open CSV…
+Open snapshot…
+Save snapshot…
+Exit focus
+
+Bulk interpretation applied; existing snapshots are unchanged.×
+
+Sources
+‹
+server-metrics.csv
+20000 rows · 10 columns
+complete
+server-sections.csv
+20000 rows · 5 columns
+complete
+Columns
+4/8 shown
+s
+elapsed_ss *
+ms
+loop_ms_meanms *
+loop_ms_p95ms *
+loop_ms_p99ms *
+loop_ms_maxms *
+physics_msms *
+ai_msms *
+Unitless / unspecified
+entity_countunitless
+kb_s
+rx_kb_skb_s *
+* Suggested interpretation
+Manage columns…
+Time series
+Largest values
+Rows
+Import issues
+Columns…
+File details
+Inspector
+View
+Full
+←
+→
++
+−
+Y axes
+Draw
+Clear selection
+ms *
+loop_ms_mean
+loop_ms_p95
+loop_ms_p99
+loop_ms_max
+37.7
+28.2
+18.8
+9.42
+0
+0 s
+08:20
+16:40
+25:00
+33:20
+Program elapsed time
+Declared window 0.1 s · File clock only
+Overview · loop_ms_mean
+ms · full file
+
+Drag to select · Shift-drag to zoom · Click for original row · Lines guide the eye between original values; gaps stay open. No percentile aggregation.
+
+Rows
+Column meanings
+Selected range
+Go to row
+Inspect row
+Row
+elapsed_s
+s *
+loop_ms_mean
+ms *
+loop_ms_p95
+ms *
+loop_ms_p99
+ms *
+loop_ms_max
+ms *
+physics_ms
+ms *
+ai_ms
+ms *
+entity_count
+unitless
+rx_kb_s
+kb_s *
+note
+unitless
+Row 5697
+569.6
+6.033
+9.033
+12.033
+16.033
+3.299
+2.177
+9096
+136.8
+steady
+Row 5698
+569.7
+5.875
+8.875
+11.875
+15.875
+3.298
+2.172
+9097
+137.6
+steady
+Row 5699
+569.8
+5.872
+8.872
+11.872
+15.872
+3.296
+2.167
+9098
+138.4
+steady
+Row 5700
+569.9
+6.026
+9.026
+12.026
+16.026
+3.294
+2.161
+9099
+139.2
+steady
+Row 5701
+570
+6.262
+9.262
+12.262
+16.262
+3.292
+2.155
+9100
+100
+steady
+Row 5702
+570.1
+6.47
+9.47
+12.47
+16.47
+3.289
+2.148
+9101
+100.8
+steady
+Row 5703
+570.2
+6.552
+9.552
+12.552
+16.552
+3.285
+2.141
+9102
+101.6
+steady
+Row 5704
+570.3
+6.471
+9.471
+12.471
+16.471
+3.281
+2.134
+9103
+102.4
+steady
+Row 5705
+570.4
+6.266
+9.266
+12.266
+16.266
+3.277
+2.127
+9104
+103.2
+steady
+Row 5706
+570.5
+6.035
+9.035
+12.035
+16.035
+3.272
+2.119
+9105
+104
+steady
+Row 5707
+570.6
+5.889
+8.889
+11.889
+15.889
+3.267
+2.11
+9106
+104.8
+steady
+7131 rows in range · showing 5697–5700
+|‹
+‹
+›
+›|
+Virtual rows · text previews
+Inspector
+×
+Overview
+File
+server-metrics.csv
+Rows
+20000
+Columns
+10
+Clock
+elapsed
+Time column
+elapsed_s
+Units
+* denotes a suggestion
+Coverage
+complete
+Selection
+Start
+09:29.600
+End
+21:22.600
+Rows
+7131
+Window
+0.1 s (declared)
+Edit range by row
+Statistics · selection
+
+Descriptive values of each retained column. Per-window percentiles stay per-window values.
+
+Column	Median	Q1–Q3	Max
+loop_ms_mean
+7131 values · 0 empty · ms
+7.007	6.499–7.506	8.148
+loop_ms_p95
+7131 values · 0 empty · ms
+10.007	9.4995–10.5065	16.184
+loop_ms_p99
+7131 values · 0 empty · ms
+13.007	12.4995–13.5065	24.584
+loop_ms_max
+7131 values · 0 empty · ms
+17.007	16.4995–17.5065	33.984
+Original row
+
+Click a chart value or table row to inspect its original cells and declared companions.
+
+Metric editor quality
+|
+—
+|
+—
+|
+13px
+✓ 0
+⚠ 0
+✕ 0

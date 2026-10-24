@@ -14,11 +14,17 @@ export default function MetricRows({id,table,revision,columns,range,selected,onS
  useEffect(()=>{const n=++seq.current;if(!count)return;const key=`${id}:${table}:${revision}:${start}:${end}`;const found=cache.current.get(key);setError("");if(found){setRows(found);return;}
   void metricAction<MetricRow[]>({op:"page",id,table,start,count:Math.min(100,end-start)}).then(v=>{if(n===seq.current){cache.current.set(key,v);while(cache.current.size>3)cache.current.delete(cache.current.keys().next().value!);setRows(v);}}).catch(e=>{if(n===seq.current)setError(String(e));});return()=>{seq.current++;};
  },[id,table,revision,start,end,count]);
+ // React's delegated wheel listener is passive. Compressed row canvases need
+ // a cancellable listener or the browser also applies its unscaled scrolling.
+ useEffect(()=>{const node=host.current;if(!node||count*ROW<=MAX_HEIGHT)return;
+  const wheel=(event:WheelEvent)=>{if(event.shiftKey||!event.deltaY||Math.abs(event.deltaX)>Math.abs(event.deltaY))return;event.preventDefault();const pixels=event.deltaY*(event.deltaMode===1?ROW:event.deltaMode===2?height:1);node.scrollTop+=pixels/(count*ROW/MAX_HEIGHT);};
+  node.addEventListener("wheel",wheel,{passive:false});return()=>node.removeEventListener("wheel",wheel);
+ },[count,height]);
  const previousSelected=useRef<number|null>(null);
  useLayoutEffect(()=>{if(selected===null||selected===previousSelected.current)return;previousSelected.current=selected;if(selected<range[0]||selected>=range[1])return;const node=host.current;if(!node)return;if(selected<first||selected>=first+visible){const fraction=(selected-range[0])/Math.max(1,count-visible);node.scrollTop=Math.max(0,Math.min(scrollMax,fraction*scrollMax));setTop(node.scrollTop);}},[selected,range[0],range[1],scrollMax,visible]);
  const jump=(n:number)=>{const node=host.current;if(!node)return;node.scrollTop=Math.max(0,Math.min(scrollMax,(n-range[0])/Math.max(1,count-visible)*scrollMax));setTop(node.scrollTop);};
  const onKey=(event:React.KeyboardEvent)=>{const base=selected??first;if(event.key==="ArrowDown"||event.key==="ArrowUp"){event.preventDefault();onSelect(Math.max(range[0],Math.min(range[1]-1,base+(event.key==="ArrowDown"?1:-1))));}else if(event.key==="Home"||event.key==="End"){event.preventDefault();const index=event.key==="Home"?range[0]:range[1]-1;jump(index);onSelect(index);}};
- return <div className="metric-virtual-rows"><div className="metric-table-scroll" ref={host} onScroll={e=>setTop(e.currentTarget.scrollTop)} tabIndex={0} onKeyDown={onKey} aria-label="Metric rows viewport" onWheel={e=>{if(count*ROW>MAX_HEIGHT&&host.current&&!e.shiftKey){e.preventDefault();host.current.scrollTop+=e.deltaY/(count*ROW/MAX_HEIGHT);}}}>
+ return <div className="metric-virtual-rows"><div className="metric-table-scroll" ref={host} onScroll={e=>setTop(e.currentTarget.scrollTop)} tabIndex={0} onKeyDown={onKey} aria-label="Metric rows viewport">
   <table className="analysis-table metric-virtual-table" aria-label="Original metric rows" aria-rowcount={count+1} aria-colcount={columns.length+1}>
    <thead><tr style={{gridTemplateColumns:template}}><th>Row</th>{columns.map((c,i)=><th key={i} title={`${c.name} · ${c.unit} · ${c.meaning}`}>{c.name}<small>{c.unit}{c.unitSuggested?" *":""}</small></th>)}</tr></thead>
    <tbody style={{height:canvasHeight}}>{rows.map(row=><tr key={row.index} aria-rowindex={row.index-range[0]+2} aria-selected={row.index===selected} className={row.index===selected?"is-selected":""} style={{gridTemplateColumns:template,top:top+(row.index-first)*ROW}} onClick={()=>onSelect(row.index)}>

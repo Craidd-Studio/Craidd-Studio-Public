@@ -640,6 +640,7 @@ select {
 .metric-plot i,.metric-hover-card i,.metric-summary i { display:inline-block; width:6px; height:6px; border-radius:50%; flex-shrink:0; }
 .metric-plot-surface { position:relative; flex:1; min-height:140px; }
 .metric-plot-surface>svg { display:block; width:100%; height:100%; position:absolute; inset:0; cursor:crosshair; touch-action:none; }
+.metric-plot-surface>svg,.metric-overview svg { user-select:none; -webkit-user-select:none; }
 .metric-gridline { stroke:#303a46; stroke-width:.7; }
 .metric-gridline.is-vertical { opacity:.55; }
 .metric-tick { fill:#acbacb; font-family:inherit; font-size:10px; font-variant-numeric:tabular-nums; }
