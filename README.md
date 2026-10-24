@@ -1,5 +1,13 @@
 # Craidd Studio
 
+## Repository move
+***If you cloned this repository before it moved to the Craidd-Studio organisation, update its saved remote URL:***
+
+```bash
+git remote set-url origin git@github.com:Craidd-Studio/Craidd-Studio-Public.git
+git remote -v
+```
+
 **Alpha preview · Linux-targeted polyglot IDE**
 
 Craidd Studio brings the projects in a solution into one place while letting
