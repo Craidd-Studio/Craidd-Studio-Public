@@ -1,0 +1,68 @@
+{
+  "machine": "sk27",
+  "kernel": "7.2.11-arch1-1",
+  "binary": {
+    "path": "/home/skira24/.codex/worktrees/9b33/Craidd-Studio/src-tauri/target/debug/craidd-studio",
+    "sha256": "78ffb9b705930d82e703d6558f407475b331d1cf3adc7cf98cda954472fb1f0e"
+  },
+  "gates": {
+    "desktop": "PASS",
+    "responsive": "PASS",
+    "releaseMillionRows": "NOT TESTED",
+    "humanAcceptance": "NOT TESTED",
+    "scaledLayout": "NOT TESTED"
+  },
+  "tooltipBounds": {
+    "height": 1050,
+    "top": 473,
+    "clientHeight": 138,
+    "left": 844,
+    "right": 1084,
+    "width": 1600,
+    "contentHeight": 138,
+    "bottom": 613
+  },
+  "layouts": [
+    {
+      "requested": [
+        1920,
+        1080
+      ],
+      "sidebarCsv": false,
+      "chartWidth": 1314,
+      "chartHeight": 345.5,
+      "viewportHeight": 1080,
+      "width": 1876,
+      "scroll": 1876,
+      "bottom": 656
+    },
+    {
+      "requested": [
+        1280,
+        800
+      ],
+      "sidebarCsv": false,
+      "chartWidth": 674,
+      "chartHeight": 319,
+      "viewportHeight": 800,
+      "width": 1236,
+      "scroll": 1236,
+      "bottom": 629.5
+    },
+    {
+      "requested": [
+        900,
+        800
+      ],
+      "sidebarCsv": false,
+      "chartWidth": 640,
+      "chartHeight": 319,
+      "viewportHeight": 800,
+      "width": 856,
+      "scroll": 856,
+      "bottom": 629.5
+    }
+  ],
+  "scaled": [],
+  "zoomUnavailable": "Error: POST /session/b146806d-656f-4974-86c4-ab8ec9545a83/execute/async: webview.set_webview_zoom not allowed. Permissions associated with this command: core:webview:allow-set-webview-zoom"
+}

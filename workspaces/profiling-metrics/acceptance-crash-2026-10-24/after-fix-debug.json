@@ -1,0 +1,10 @@
+{
+  "machine": "sk27",
+  "kernel": "7.2.11-arch1-1",
+  "binary": {
+    "path": "/home/skira24/.codex/worktrees/9b33/Craidd-Studio/src-tauri/target/debug/craidd-studio",
+    "sha256": "78ffb9b705930d82e703d6558f407475b331d1cf3adc7cf98cda954472fb1f0e"
+  },
+  "gate": "PASS",
+  "dom": "File\nEdit\nView\nProject\nRun\nHelp\n🔨\nAdd configuration…\n▶\n⏹\n🐛\nWhite · idle\nSOLUTION EXPLORER\nNo projects yet.\nNew project\nAdd existing project…\nMetric source transitions\nFILE DISCOVERY\non disk\ncraidd-metric-transitions-isoQeu\nmain.csv\nsections.csv\nTransitions.cln\nProfiling\n×\nProcess / Gold\nCPU sampling\nImported metrics\nmain.csv\n2 rows · complete\nOpen CSV…\nOpen snapshot…\nSave snapshot…\nFocus analysis\nSources\n‹\nmain.csv\n2 rows · 2 columns\ncomplete\nColumns\n1/8 shown\ns\nelapsed_ss *\nms\nloop_ms_p99ms *\n* Suggested interpretation\nManage columns…\nTime series\nLargest values\nRows\nImport issues\nColumns…\nFile details\nInspector\nView\nFull\n←\n→\n+\n−\nY axes\nDraw\nClear selection\nms *\nloop_ms_p99\n73.5\n55.1\n36.8\n18.4\n0\n1\n1\n2\n2\n2\nRetained row ordinal · not time\nWindow duration unknown · File clock only\nOverview · loop_ms_p99\nms · full file\n\nRows are available in the Rows tab · Drag to select · Shift-drag to zoom · Click for original row · Lines guide the eye between original values; gaps stay open. No percentile aggregation.\n\nOutput\nProblems\nTerminal\n↓ Following\nNo output yet.\nMetric source transitions\n|\n—\n|\n—\n|\n13px\n✓ 0\n⚠ 0\n✕ 0"
+}

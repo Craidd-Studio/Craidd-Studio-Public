@@ -11,6 +11,13 @@ import {axisTitle,clampRows,metricNumber,metricTime,seriesColor} from "../profil
 const filename=(path:string)=>path.split("/").pop()??path;
 const text=(value:number|string|null)=>value===null||value===""?"Empty":String(value);
 export default function MetricImportPanel(){
+ const state=useMetrics(),source=state.sources.find(s=>s.id===state.selected);
+ // A new source can be selected before its metadata arrives. Reset the entire
+ // view at that boundary, before render: layout effects run too late to keep
+ // old graphs, summaries and inspected rows away from a different schema.
+ return <MetricSourceWorkbench key={`${state.selected}:${state.table}:${source?.tables[state.table]?.interpretationRevision}`}/>;
+}
+function MetricSourceWorkbench(){
  const state=useMetrics(),source=state.sources.find(s=>s.id===state.selected),group=source?.tables[state.table],rows=source?.rows[state.table]??0;
  const focus=useLayout(s=>s.profilerFocus),setFocus=useLayout(s=>s.setProfilerFocus);
  const [tab,setTab]=useState("Time series"),[visible,setVisible]=useState<number[]>([]),[search,setSearch]=useState("");
