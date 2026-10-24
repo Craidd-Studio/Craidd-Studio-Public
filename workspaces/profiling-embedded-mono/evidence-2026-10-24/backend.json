@@ -1,0 +1,848 @@
+{
+  "machine": "sk27",
+  "kernel": "7.2.11-arch1-1",
+  "perf": "perf version 7.2.11-1",
+  "mono": "Mono JIT compiler version 6.12.0 (makepkg/0cbf0e290c3 Sat Mar  9 11:37:33 UTC 2024)",
+  "artifact": {
+    "capability": {
+      "available": true,
+      "experimental": true,
+      "manifest": {
+        "compiler": "cc (GCC) 16.2.1 20260810",
+        "flags": [
+          "-std=c11",
+          "-O2",
+          "-g0",
+          "-fPIC",
+          "-fvisibility=hidden",
+          "-shared",
+          "-Wall",
+          "-Wextra",
+          "-Werror",
+          "-Wl,-z,relro,-z,now",
+          "-Wl,--build-id=sha1"
+        ],
+        "mapLimitBytes": 16777216,
+        "minimumGlibc": "2.34",
+        "nameLimitBytes": 4096,
+        "runtimeBuild": false,
+        "sha256": "f358701122fdd6e8fcf2983cb838436da1df63e5b05a45f25067a5e5720423fc",
+        "sourceSha256": "34542a467af48c9930377f1301089bea957051d2968a68baa34bcce3faeec51b",
+        "startupCoverage": "incomplete",
+        "supportedInitialization": "dlsym(mono_jit_init_version)",
+        "target": "linux-x86_64-gnu",
+        "version": "1.0.0"
+      },
+      "scope": "Launch only; dynamic dlsym(mono_jit_init_version). Startup coverage incomplete. No source or caller-unwind verification."
+    },
+    "identity": {
+      "activationBasis": "Requested for this launched process family; activation/map fingerprint observed separately. Map names are not verified source or inclusive time.",
+      "path": "/tmp/craidd-gr004-product-20261024-first/ide-cache/profiling/mono-helper/f358701122fdd6e8fcf2983cb838436da1df63e5b05a45f25067a5e5720423fc/libcraidd_mono_map.so",
+      "sha256": "f358701122fdd6e8fcf2983cb838436da1df63e5b05a45f25067a5e5720423fc",
+      "startupCoverageIncomplete": true,
+      "target": "linux-x86_64-gnu",
+      "version": "1.0.0"
+    }
+  },
+  "harness": {
+    "path": "/tmp/craidd-perf-20261024-gr4-target/release/craidd-perf-backend-fixture",
+    "sha256": "4802e07c660c74415df7e761bdac82563dd29e8af65a6264d7a3be58f6139c74"
+  },
+  "fixture": {
+    "/tmp/craidd-gr004-product-20261024-first/host": "e5ed2de1f9bfe8d261f8c406ea4fcc933a5a80b6bf88299d5d23521b5e057642",
+    "/tmp/craidd-gr004-product-20261024-first/Hot.exe": "0f0349b50231e56ad200e8e6ffac5153be38a07163349fbe6e39e7a2991ac898",
+    "/tmp/craidd-gr004-product-20261024-first/fake-runtime.so": "2d79b246a8d7b504a2a2221978b67b5648293ea60ea06c7977a00308347f0cab",
+    "/tmp/craidd-gr004-product-20261024-first/fake-host": "10402836387b866e54605b670c7f86fd545513891e24d9aba7bc33e5f529fa6a"
+  },
+  "failureCases": [
+    {
+      "mode": "without",
+      "pid": 469903,
+      "exit": 0,
+      "iterations": 2000,
+      "elapsedMs": 195.165,
+      "workPerSecond": 10247.739092562702,
+      "mapEntries": 0,
+      "knownHotEntries": 0,
+      "modeBits": null,
+      "stderr": ""
+    },
+    {
+      "mode": "enabled",
+      "pid": 469906,
+      "exit": 0,
+      "iterations": 2000,
+      "elapsedMs": 189.833,
+      "workPerSecond": 10535.576006279203,
+      "mapEntries": 553,
+      "knownHotEntries": 2,
+      "modeBits": "0o600",
+      "stderr": ""
+    },
+    {
+      "mode": "missing",
+      "pid": 469916,
+      "exit": 0,
+      "iterations": 2000,
+      "elapsedMs": 195.468,
+      "workPerSecond": 10231.853807272802,
+      "mapEntries": 0,
+      "knownHotEntries": 0,
+      "modeBits": null,
+      "stderr": "[Craidd Mono map v1.0.0] unavailable: required runtime export missing\n"
+    },
+    {
+      "mode": "normal",
+      "exit": 0,
+      "mapBytes": 37,
+      "mapEntries": 1,
+      "stderr": ""
+    },
+    {
+      "mode": "stale",
+      "exit": 0,
+      "mapBytes": 20,
+      "mapEntries": 1,
+      "stderr": "[Craidd Mono map v1.0.0] unavailable: map already exists or cannot be created\n"
+    },
+    {
+      "mode": "symlink",
+      "exit": 0,
+      "mapBytes": 8,
+      "mapEntries": 0,
+      "stderr": "[Craidd Mono map v1.0.0] unavailable: map already exists or cannot be created\n"
+    },
+    {
+      "mode": "fork",
+      "exit": 0,
+      "mapBytes": 37,
+      "mapEntries": 1,
+      "stderr": ""
+    },
+    {
+      "mode": "stress",
+      "exit": 0,
+      "mapBytes": 1184000,
+      "mapEntries": 32000,
+      "stderr": ""
+    },
+    {
+      "mode": "cap",
+      "exit": 0,
+      "mapBytes": 16777047,
+      "mapEntries": 4083,
+      "stderr": "[Craidd Mono map v1.0.0] unavailable: 16 MiB map limit reached; later methods remain unnamed\n"
+    }
+  ],
+  "naming": [
+    {
+      "mode": "without",
+      "knownRange": [
+        "0x40a15280",
+        "0x40a15309"
+      ],
+      "knownManagedWeight": 1972972971,
+      "namedManagedWeight": 0,
+      "namedPct": 0.0,
+      "productNamedSelfWeight": 0,
+      "capture": {
+        "attributionValid": true,
+        "buildIds": [
+          {
+            "capturedBuildId": "d320029ad1a23be2f4bce117fd321cbd23a2014b",
+            "currentBuildId": "d320029ad1a23be2f4bce117fd321cbd23a2014b",
+            "debugFiles": [],
+            "module": "/usr/lib/libc.so.6",
+            "state": "matched"
+          },
+          {
+            "capturedBuildId": "0251fdbd2d63327d4c79994baff1b733e9449833",
+            "currentBuildId": "0251fdbd2d63327d4c79994baff1b733e9449833",
+            "debugFiles": [],
+            "module": "/usr/lib/libmonosgen-2.0.so.1.0.0",
+            "state": "matched"
+          }
+        ],
+        "clockDomain": "CLOCK_MONOTONIC",
+        "clockMapping": null,
+        "collectorExit": null,
+        "collectorIdentity": {
+          "birth": 4402784,
+          "pid": 469966
+        },
+        "collectorSignal": 2,
+        "coverage": {
+          "diagnostics": [],
+          "emptyChains": 1973,
+          "lossScanComplete": true,
+          "lostCount": 0,
+          "lostRecords": 0,
+          "lostSampleCount": 0,
+          "lostSampleRecords": 0,
+          "mismatchedChains": 0,
+          "omittedSamples": 0,
+          "parsedSamples": 1983,
+          "retainedSamples": 1983,
+          "truncatedStacks": 0,
+          "unknownRecords": 0,
+          "unparsedLossRecords": 0
+        },
+        "createdMs": 1792802673393,
+        "decodeAndParseMs": 58,
+        "decodeRevision": 1,
+        "estimatedRawBytes": 51302646,
+        "event": "cpu-clock:u",
+        "generation": 1,
+        "host": {
+          "birth": 4402782,
+          "pid": 469961
+        },
+        "id": "capture-1792802673393-469961-1",
+        "jitMap": {
+          "basis": "Names reported by perf from the PID map; no ELF build-ID or source-line verification",
+          "bytes": 0,
+          "path": "/tmp/perf-469958.map",
+          "sha256": null,
+          "state": "unavailable"
+        },
+        "label": "perf \u00b7 PID 469958",
+        "launchHelper": null,
+        "lossScanMs": 1,
+        "moduleIdentityMs": 126,
+        "omittedStderrBytes": 0,
+        "omittedThreadObservations": 0,
+        "options": {
+          "durationSeconds": 2,
+          "frequency": 999,
+          "unwind": {
+            "kind": "dwarf",
+            "stackBytes": 8192
+          }
+        },
+        "owner": "probe",
+        "parserCpuMs": 3,
+        "perfVersion": "perf version 7.2.11-1",
+        "pinned": false,
+        "profileId": "probe-profile",
+        "rawBytes": 16750612,
+        "rawLimit": 536870912,
+        "rawSha256": "e2d253b8f7673b51439b5f5caf3ca74e5bccf35bb5ee4254583afa5068034c20",
+        "reasons": [
+          "Timed duration completed",
+          "Unwind coverage: 1973 empty, 0 truncated, 0 mismatched chains; sampled leaves retained for self attribution"
+        ],
+        "recordArgv": [
+          "record",
+          "--no-buildid-cache",
+          "--clockid",
+          "mono",
+          "--timestamp",
+          "--per-thread",
+          "--no-inherit",
+          "--user-callchains",
+          "-e",
+          "cpu-clock:u",
+          "-F",
+          "999",
+          "--call-graph",
+          "dwarf,8192",
+          "-t",
+          "469958,469959,469960",
+          "-o",
+          "/tmp/craidd-gr004-product-20261024-first/capture-without/cache/4c5e35896572881ab3e9c0b844f6955c0b7f68e0c78fe09f9001a7912a15b6ad/capture-1792802673393-469961-1/perf.data"
+        ],
+        "solution": "/tmp/craidd-gr004-product-20261024-first/capture-without/fixture.cln",
+        "sourceKind": "nativeStackSamples",
+        "state": "partial",
+        "stderr": "[ perf record: Woken up 64 times to write data ]\n[ perf record: Captured and wrote 15.939 MB /tmp/craidd-gr004-product-20261024-first/capture-without/cache/4c5e35896572881ab3e9c0b844f6955c0b7f68e0c78fe09f9001a7912a15b6ad/capture-1792802673393-469961-1/perf.data ]\n",
+        "summary": {
+          "attributionBasis": "Self: all retained sampled leaves. Inclusive: recovered chains only; completeness is not proven.",
+          "coverage": {
+            "diagnostics": [],
+            "emptyChains": 1973,
+            "lossScanComplete": true,
+            "lostCount": 0,
+            "lostRecords": 0,
+            "lostSampleCount": 0,
+            "lostSampleRecords": 0,
+            "mismatchedChains": 0,
+            "omittedSamples": 0,
+            "parsedSamples": 1983,
+            "retainedSamples": 1983,
+            "truncatedStacks": 0,
+            "unknownRecords": 0,
+            "unparsedLossRecords": 0
+          },
+          "firstMonotonicNs": 44027869837958,
+          "frameCount": 27,
+          "lastMonotonicNs": 44029854071931,
+          "lossAccounting": "LOST and LOST_SAMPLES are separate reports and may overlap; never summed",
+          "retention": {
+            "frames": 100000,
+            "samples": 500000,
+            "stackReferences": 8000000
+          },
+          "threads": {
+            "469958": "host"
+          },
+          "units": "sampled cpu-clock event period (ns); not exact function time",
+          "unwindCoverage": {
+            "basis": "Available means perf supplied a chain, not proof of complete unwinding; truncated chains include recovered callers only.",
+            "byLeafModule": {
+              "/tmp/perf-469958.map": {
+                "chainSamples": 0,
+                "chainWeight": 0,
+                "empty": 1973,
+                "mismatch": 0,
+                "samples": 1973,
+                "truncated": 0,
+                "weight": 1974974973
+              },
+              "/usr/lib/libc.so.6": {
+                "chainSamples": 7,
+                "chainWeight": 7007007,
+                "empty": 0,
+                "mismatch": 0,
+                "samples": 7,
+                "truncated": 0,
+                "weight": 7007007
+              },
+              "/usr/lib/libmonosgen-2.0.so.1.0.0": {
+                "chainSamples": 3,
+                "chainWeight": 3003003,
+                "empty": 0,
+                "mismatch": 0,
+                "samples": 3,
+                "truncated": 0,
+                "weight": 3003003
+              }
+            },
+            "byThread": {
+              "469958": {
+                "chainSamples": 10,
+                "chainWeight": 10010010,
+                "empty": 1973,
+                "mismatch": 0,
+                "samples": 1983,
+                "truncated": 0,
+                "weight": 1984984983
+              }
+            },
+            "total": {
+              "chainSamples": 10,
+              "chainWeight": 10010010,
+              "empty": 1973,
+              "mismatch": 0,
+              "samples": 1983,
+              "truncated": 0,
+              "weight": 1984984983
+            }
+          }
+        },
+        "symbolSearch": {
+          "index": {
+            "diagnostics": [],
+            "elapsedMs": 0,
+            "elfFiles": 0,
+            "entries": 0,
+            "incomplete": false
+          },
+          "locations": [],
+          "privateCache": "/tmp/craidd-gr004-product-20261024-first/capture-without/cache/4c5e35896572881ab3e9c0b844f6955c0b7f68e0c78fe09f9001a7912a15b6ad/capture-1792802673393-469961-1/symbol-cache",
+          "sealed": true,
+          "served": [],
+          "withheldModules": {}
+        },
+        "target": {
+          "birth": 4402781,
+          "pid": 469958
+        },
+        "threadPollMs": 100,
+        "threadsAtStart": [
+          {
+            "birth": 4402781,
+            "name": "host",
+            "tid": 469958
+          },
+          {
+            "birth": 4402782,
+            "name": "SGen worker",
+            "tid": 469959
+          },
+          {
+            "birth": 4402782,
+            "name": "Finalizer",
+            "tid": 469960
+          }
+        ],
+        "threadsGained": [],
+        "version": 1
+      },
+      "targetSurvived": true
+    },
+    {
+      "mode": "enabled",
+      "knownRange": [
+        "0x40c97280",
+        "0x40c97309"
+      ],
+      "knownManagedWeight": 1980980979,
+      "namedManagedWeight": 1980980979,
+      "namedPct": 100.0,
+      "productNamedSelfWeight": 1980980979,
+      "capture": {
+        "attributionValid": true,
+        "buildIds": [
+          {
+            "capturedBuildId": "c609e8ec75de304410d3c69f79d96c7bd4d4fdf8",
+            "currentBuildId": "c609e8ec75de304410d3c69f79d96c7bd4d4fdf8",
+            "debugFiles": [],
+            "module": "/usr/lib/ld-linux-x86-64.so.2",
+            "state": "matched"
+          },
+          {
+            "capturedBuildId": "d320029ad1a23be2f4bce117fd321cbd23a2014b",
+            "currentBuildId": "d320029ad1a23be2f4bce117fd321cbd23a2014b",
+            "debugFiles": [],
+            "module": "/usr/lib/libc.so.6",
+            "state": "matched"
+          },
+          {
+            "capturedBuildId": "0251fdbd2d63327d4c79994baff1b733e9449833",
+            "currentBuildId": "0251fdbd2d63327d4c79994baff1b733e9449833",
+            "debugFiles": [],
+            "module": "/usr/lib/libmonosgen-2.0.so.1.0.0",
+            "state": "matched"
+          }
+        ],
+        "clockDomain": "CLOCK_MONOTONIC",
+        "clockMapping": null,
+        "collectorExit": null,
+        "collectorIdentity": {
+          "birth": 4403149,
+          "pid": 470021
+        },
+        "collectorSignal": 2,
+        "coverage": {
+          "diagnostics": [],
+          "emptyChains": 1979,
+          "lossScanComplete": true,
+          "lostCount": 0,
+          "lostRecords": 0,
+          "lostSampleCount": 0,
+          "lostSampleRecords": 0,
+          "mismatchedChains": 0,
+          "omittedSamples": 0,
+          "parsedSamples": 1988,
+          "retainedSamples": 1988,
+          "truncatedStacks": 0,
+          "unknownRecords": 0,
+          "unparsedLossRecords": 0
+        },
+        "createdMs": 1792802677035,
+        "decodeAndParseMs": 58,
+        "decodeRevision": 1,
+        "estimatedRawBytes": 51302646,
+        "event": "cpu-clock:u",
+        "generation": 1,
+        "host": {
+          "birth": 4403146,
+          "pid": 470016
+        },
+        "id": "capture-1792802677035-470016-1",
+        "jitMap": {
+          "basis": "Names reported by perf from the PID map; no ELF build-ID or source-line verification",
+          "bytes": 7577,
+          "path": "/tmp/perf-470013.map",
+          "sha256": "f50916cd54e6f8c89dc7f0e9e0bdaa73978cd7e44f5f8b200a0b2c44cc2e7d35",
+          "state": "matched"
+        },
+        "label": "perf \u00b7 PID 470013",
+        "launchHelper": {
+          "helper": {
+            "activationBasis": "Requested for this launched process family; activation/map fingerprint observed separately. Map names are not verified source or inclusive time.",
+            "path": "/tmp/craidd-gr004-product-20261024-first/ide-cache/profiling/mono-helper/f358701122fdd6e8fcf2983cb838436da1df63e5b05a45f25067a5e5720423fc/libcraidd_mono_map.so",
+            "sha256": "f358701122fdd6e8fcf2983cb838436da1df63e5b05a45f25067a5e5720423fc",
+            "startupCoverageIncomplete": true,
+            "target": "linux-x86_64-gnu",
+            "version": "1.0.0"
+          },
+          "owner": "probe",
+          "root": {
+            "birth": 4403146,
+            "pid": 470013
+          }
+        },
+        "lossScanMs": 1,
+        "moduleIdentityMs": 176,
+        "omittedStderrBytes": 0,
+        "omittedThreadObservations": 0,
+        "options": {
+          "durationSeconds": 2,
+          "frequency": 999,
+          "unwind": {
+            "kind": "dwarf",
+            "stackBytes": 8192
+          }
+        },
+        "owner": "probe",
+        "parserCpuMs": 4,
+        "perfVersion": "perf version 7.2.11-1",
+        "pinned": false,
+        "profileId": "probe-profile",
+        "rawBytes": 16793876,
+        "rawLimit": 536870912,
+        "rawSha256": "f09bec950af626574c7e8b3361e01bd9ddb55bff97fa0f52433aebd8fe58f4c1",
+        "reasons": [
+          "Timed duration completed",
+          "Unwind coverage: 1979 empty, 0 truncated, 0 mismatched chains; sampled leaves retained for self attribution"
+        ],
+        "recordArgv": [
+          "record",
+          "--no-buildid-cache",
+          "--clockid",
+          "mono",
+          "--timestamp",
+          "--per-thread",
+          "--no-inherit",
+          "--user-callchains",
+          "-e",
+          "cpu-clock:u",
+          "-F",
+          "999",
+          "--call-graph",
+          "dwarf,8192",
+          "-t",
+          "470013,470014,470015",
+          "-o",
+          "/tmp/craidd-gr004-product-20261024-first/capture-enabled/cache/293f43313b84df56b57fdbfc1debd61f9523168eff295056582876b948f3fbff/capture-1792802677035-470016-1/perf.data"
+        ],
+        "solution": "/tmp/craidd-gr004-product-20261024-first/capture-enabled/fixture.cln",
+        "sourceKind": "nativeStackSamples",
+        "state": "partial",
+        "stderr": "[ perf record: Woken up 64 times to write data ]\n[ perf record: Captured and wrote 15.981 MB /tmp/craidd-gr004-product-20261024-first/capture-enabled/cache/293f43313b84df56b57fdbfc1debd61f9523168eff295056582876b948f3fbff/capture-1792802677035-470016-1/perf.data ]\n",
+        "summary": {
+          "attributionBasis": "Self: all retained sampled leaves. Inclusive: recovered chains only; completeness is not proven.",
+          "coverage": {
+            "diagnostics": [],
+            "emptyChains": 1979,
+            "lossScanComplete": true,
+            "lostCount": 0,
+            "lostRecords": 0,
+            "lostSampleCount": 0,
+            "lostSampleRecords": 0,
+            "mismatchedChains": 0,
+            "omittedSamples": 0,
+            "parsedSamples": 1988,
+            "retainedSamples": 1988,
+            "truncatedStacks": 0,
+            "unknownRecords": 0,
+            "unparsedLossRecords": 0
+          },
+          "firstMonotonicNs": 44031508810346,
+          "frameCount": 24,
+          "lastMonotonicNs": 44033498012002,
+          "lossAccounting": "LOST and LOST_SAMPLES are separate reports and may overlap; never summed",
+          "retention": {
+            "frames": 100000,
+            "samples": 500000,
+            "stackReferences": 8000000
+          },
+          "threads": {
+            "470013": "host"
+          },
+          "units": "sampled cpu-clock event period (ns); not exact function time",
+          "unwindCoverage": {
+            "basis": "Available means perf supplied a chain, not proof of complete unwinding; truncated chains include recovered callers only.",
+            "byLeafModule": {
+              "/tmp/perf-470013.map": {
+                "chainSamples": 0,
+                "chainWeight": 0,
+                "empty": 1979,
+                "mismatch": 0,
+                "samples": 1979,
+                "truncated": 0,
+                "weight": 1980980979
+              },
+              "/usr/lib/ld-linux-x86-64.so.2": {
+                "chainSamples": 1,
+                "chainWeight": 1001001,
+                "empty": 0,
+                "mismatch": 0,
+                "samples": 1,
+                "truncated": 0,
+                "weight": 1001001
+              },
+              "/usr/lib/libc.so.6": {
+                "chainSamples": 4,
+                "chainWeight": 4004004,
+                "empty": 0,
+                "mismatch": 0,
+                "samples": 4,
+                "truncated": 0,
+                "weight": 4004004
+              },
+              "/usr/lib/libmonosgen-2.0.so.1.0.0": {
+                "chainSamples": 4,
+                "chainWeight": 4004004,
+                "empty": 0,
+                "mismatch": 0,
+                "samples": 4,
+                "truncated": 0,
+                "weight": 4004004
+              }
+            },
+            "byThread": {
+              "470013": {
+                "chainSamples": 9,
+                "chainWeight": 9009009,
+                "empty": 1979,
+                "mismatch": 0,
+                "samples": 1988,
+                "truncated": 0,
+                "weight": 1989989988
+              }
+            },
+            "total": {
+              "chainSamples": 9,
+              "chainWeight": 9009009,
+              "empty": 1979,
+              "mismatch": 0,
+              "samples": 1988,
+              "truncated": 0,
+              "weight": 1989989988
+            }
+          }
+        },
+        "symbolSearch": {
+          "index": {
+            "diagnostics": [],
+            "elapsedMs": 0,
+            "elfFiles": 0,
+            "entries": 0,
+            "incomplete": false
+          },
+          "locations": [],
+          "privateCache": "/tmp/craidd-gr004-product-20261024-first/capture-enabled/cache/293f43313b84df56b57fdbfc1debd61f9523168eff295056582876b948f3fbff/capture-1792802677035-470016-1/symbol-cache",
+          "sealed": true,
+          "served": [],
+          "withheldModules": {}
+        },
+        "target": {
+          "birth": 4403146,
+          "pid": 470013
+        },
+        "threadPollMs": 100,
+        "threadsAtStart": [
+          {
+            "birth": 4403146,
+            "name": "host",
+            "tid": 470013
+          },
+          {
+            "birth": 4403146,
+            "name": "SGen worker",
+            "tid": 470014
+          },
+          {
+            "birth": 4403146,
+            "name": "Finalizer",
+            "tid": 470015
+          }
+        ],
+        "threadsGained": [],
+        "version": 1
+      },
+      "targetSurvived": true
+    }
+  ],
+  "matchedOverhead": {
+    "pairs": [
+      {
+        "order": [
+          "without",
+          "enabled"
+        ],
+        "cases": {
+          "without": {
+            "mode": "without",
+            "pid": 470081,
+            "exit": 0,
+            "iterations": 20000,
+            "elapsedMs": 1811.44,
+            "workPerSecond": 11040.939804796184,
+            "mapEntries": 0,
+            "knownHotEntries": 0,
+            "modeBits": null,
+            "stderr": ""
+          },
+          "enabled": {
+            "mode": "enabled",
+            "pid": 470106,
+            "exit": 0,
+            "iterations": 20000,
+            "elapsedMs": 1826.15,
+            "workPerSecond": 10952.00284752074,
+            "mapEntries": 553,
+            "knownHotEntries": 2,
+            "modeBits": "0o600",
+            "stderr": ""
+          }
+        },
+        "slowdownPct": 0.8055198094351512
+      },
+      {
+        "order": [
+          "enabled",
+          "without"
+        ],
+        "cases": {
+          "enabled": {
+            "mode": "enabled",
+            "pid": 470111,
+            "exit": 0,
+            "iterations": 20000,
+            "elapsedMs": 1809.77,
+            "workPerSecond": 11051.128043895082,
+            "mapEntries": 553,
+            "knownHotEntries": 2,
+            "modeBits": "0o600",
+            "stderr": ""
+          },
+          "without": {
+            "mode": "without",
+            "pid": 470121,
+            "exit": 0,
+            "iterations": 20000,
+            "elapsedMs": 1833.74,
+            "workPerSecond": 10906.671611024463,
+            "mapEntries": 0,
+            "knownHotEntries": 0,
+            "modeBits": null,
+            "stderr": ""
+          }
+        },
+        "slowdownPct": -1.3244776960608329
+      },
+      {
+        "order": [
+          "without",
+          "enabled"
+        ],
+        "cases": {
+          "without": {
+            "mode": "without",
+            "pid": 470125,
+            "exit": 0,
+            "iterations": 20000,
+            "elapsedMs": 1801.07,
+            "workPerSecond": 11104.510096775806,
+            "mapEntries": 0,
+            "knownHotEntries": 0,
+            "modeBits": null,
+            "stderr": ""
+          },
+          "enabled": {
+            "mode": "enabled",
+            "pid": 470136,
+            "exit": 0,
+            "iterations": 20000,
+            "elapsedMs": 1801.82,
+            "workPerSecond": 11099.887891132299,
+            "mapEntries": 553,
+            "knownHotEntries": 2,
+            "modeBits": "0o600",
+            "stderr": ""
+          }
+        },
+        "slowdownPct": 0.04162457959175914
+      },
+      {
+        "order": [
+          "enabled",
+          "without"
+        ],
+        "cases": {
+          "enabled": {
+            "mode": "enabled",
+            "pid": 470140,
+            "exit": 0,
+            "iterations": 20000,
+            "elapsedMs": 1805.21,
+            "workPerSecond": 11079.043435389789,
+            "mapEntries": 553,
+            "knownHotEntries": 2,
+            "modeBits": "0o600",
+            "stderr": ""
+          },
+          "without": {
+            "mode": "without",
+            "pid": 470143,
+            "exit": 0,
+            "iterations": 20000,
+            "elapsedMs": 1838.83,
+            "workPerSecond": 10876.48124078898,
+            "mapEntries": 0,
+            "knownHotEntries": 0,
+            "modeBits": null,
+            "stderr": ""
+          }
+        },
+        "slowdownPct": -1.8623872014890352
+      },
+      {
+        "order": [
+          "without",
+          "enabled"
+        ],
+        "cases": {
+          "without": {
+            "mode": "without",
+            "pid": 470153,
+            "exit": 0,
+            "iterations": 20000,
+            "elapsedMs": 1800.39,
+            "workPerSecond": 11108.704225195652,
+            "mapEntries": 0,
+            "knownHotEntries": 0,
+            "modeBits": null,
+            "stderr": ""
+          },
+          "enabled": {
+            "mode": "enabled",
+            "pid": 470156,
+            "exit": 0,
+            "iterations": 20000,
+            "elapsedMs": 1796.95,
+            "workPerSecond": 11129.97022732964,
+            "mapEntries": 553,
+            "knownHotEntries": 2,
+            "modeBits": "0o600",
+            "stderr": ""
+          }
+        },
+        "slowdownPct": -0.19143548791005216
+      }
+    ],
+    "medianSlowdownPct": -0.19143548791005216,
+    "minSlowdownPct": -1.8623872014890352,
+    "maxSlowdownPct": 0.8055198094351512,
+    "basis": "Five alternating pairs, equal 20,000 known-hot invocations, host steady-clock around mono_jit_exec, no collector, includes execution/JIT and excludes host setup; descriptive only.",
+    "q1SlowdownPct": -1.3244776960608329,
+    "q3SlowdownPct": 0.04162457959175914
+  },
+  "gates": {
+    "withoutMap": "PASS",
+    "enabledKnownMethodNaming": "PASS",
+    "missingExportOneDiagnosticAndSurvival": "PASS",
+    "staleAndSymlinkRefusal": "PASS",
+    "forkMapIsolation": "PASS",
+    "concurrentAppendRecords": "PASS",
+    "mapSizeCap": "PASS",
+    "versionHashProvenance": "PASS",
+    "targetSurvival": "PASS",
+    "matchedOverhead": "PASS",
+    "desktopRunAndAttachIsolation": "NOT TESTED"
+  },
+  "mapLifecycle": "Fixture maps retained; no automatic PID-path deletion performed."
+}

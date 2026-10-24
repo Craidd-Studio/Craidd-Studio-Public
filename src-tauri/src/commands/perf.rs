@@ -13,6 +13,7 @@ pub(crate) static PAIR: std::sync::Mutex<()> = std::sync::Mutex::new(());
 #[serde(tag = "action", rename_all = "camelCase", deny_unknown_fields)]
 pub enum Request {
     Discover,
+    MonoHelperCapability,
     SymbolSettings,
     SaveSymbolSettings {
         paths: Vec<String>,
@@ -80,6 +81,7 @@ pub async fn perf_action(
 ) -> Result<serde_json::Value, String> {
     let owner = w.label().to_owned();
     let manager = app.state::<PerfManager>().inner().clone();
+    if matches!(request,Request::MonoHelperCapability){return Ok(crate::mono_jit_helper::capability());}
     if matches!(request, Request::Discover) {
         return tauri::async_runtime::spawn_blocking(crate::perf_capture::discover)
             .await
@@ -115,7 +117,7 @@ pub async fn perf_action(
         }
     }
     match request{
-        Request::Discover=>unreachable!(),
+        Request::Discover|Request::MonoHelperCapability=>unreachable!(),
         Request::SymbolSettings=>crate::perf_symbols::locations(&solution).map(|paths|serde_json::json!(paths)),
         Request::SaveSymbolSettings{paths,expected}=>crate::perf_symbols::save_locations(&solution,paths,expected).map(|paths|serde_json::json!(paths)),
         Request::Prepare{options}=>manager.prepare(&solution,&target.unwrap().1,&options),

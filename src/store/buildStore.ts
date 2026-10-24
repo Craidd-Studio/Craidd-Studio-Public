@@ -85,6 +85,7 @@ export function listenToBuildEvents(): Promise<void> { return ensureEvents(); }
 import type { ConfigEntry, CraiddSolution, OrderRequest } from "../types/project";
 
 export interface RunSpec {
+  embeddedMonoJitMap?: boolean;
   label: string;
   program: string;
   args: string[];
@@ -106,7 +107,11 @@ export interface RunSpec {
  * is deliberately small and honest: it either knows what to do, or
  * it returns null and the toolbar shows a failure message.
  */
-export function resolveSpec(
+export function resolveSpec(...args:Parameters<typeof resolveSpecBase>):RunSpec|null {
+ const spec=resolveSpecBase(...args);
+ return spec&&args[0].kind==="run"&&args[0].embeddedMonoJitMap?{...spec,embeddedMonoJitMap:true}:spec;
+}
+function resolveSpecBase(
   config: ConfigEntry,
   solutionRoot: string,
   solution: CraiddSolution,

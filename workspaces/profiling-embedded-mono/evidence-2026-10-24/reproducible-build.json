@@ -1,0 +1,6 @@
+{
+  "gate": "PASS",
+  "rebuilds": 2,
+  "sha256": "f358701122fdd6e8fcf2983cb838436da1df63e5b05a45f25067a5e5720423fc",
+  "basis": "Two local rebuilds with the recorded compiler/flags match the qualified artifact bytes; cross-toolchain reproducibility is not asserted."
+}

@@ -5,6 +5,7 @@ mod metric_csv;
 mod perf_model;
 mod perf_capture;
 mod perf_symbols;
+mod mono_jit_helper;
 
 pub use process_supervisor::entry as process_supervisor_entry;
 

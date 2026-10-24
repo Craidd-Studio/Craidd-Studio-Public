@@ -3,9 +3,11 @@
 #include <chrono>
 #include <cstdint>
 #include <cstdlib>
+#include <unistd.h>
 using Init=void*(*)(const char*,const char*);
 int main(int argc,char**argv){
  if(argc!=3)return 2;
+ if(getenv("CRAIDD_MONO_FIXTURE_BEFORE_INIT")){std::cout<<"BEFORE_INIT "<<getpid()<<std::endl;std::string command;std::getline(std::cin,command);}
  void* lib=dlopen(argv[1],RTLD_NOW|RTLD_GLOBAL);if(!lib){std::cerr<<dlerror();return 3;}
  auto init=reinterpret_cast<Init>(dlsym(lib,"mono_jit_init_version"));
  auto open=reinterpret_cast<void*(*)(void*,const char*)>(dlsym(lib,"mono_domain_assembly_open"));

@@ -276,6 +276,8 @@ pub struct Manifest {
     pub jit_map: Option<PerfMapIdentity>,
     #[serde(default)]
     pub symbol_search: Option<crate::perf_symbols::Report>,
+    #[serde(default)]
+    pub launch_helper:Option<crate::mono_jit_helper::LaunchProvenance>,
     pub stderr: String,
     pub omitted_stderr_bytes: u64,
 }
@@ -591,6 +593,7 @@ impl PerfManager {
         let dir = base.join(&id);
         fs::create_dir(&dir).map_err(|e| e.to_string())?;
         fs::set_permissions(&dir, fs::Permissions::from_mode(0o700)).map_err(|e| e.to_string())?;
+        let launch_helper=crate::mono_jit_helper::provenance(&target);
         let symbol_locations = crate::perf_symbols::locations(Path::new(&solution))?;
         let mut m = Manifest {
             version: 1,
@@ -635,6 +638,7 @@ impl PerfManager {
             build_ids: vec![],
             jit_map: None,
             symbol_search: Some(crate::perf_symbols::Report::pending(symbol_locations)),
+            launch_helper,
             stderr: String::new(),
             omitted_stderr_bytes: 0,
         };

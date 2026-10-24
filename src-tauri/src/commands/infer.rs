@@ -189,7 +189,7 @@ fn infer_solution_default(solution: &CraiddSolution) -> Vec<ConfigEntry> {
         let Some(ts) = ts_project else { return vec![]; };
         let shared = vec![rust.path.clone(), ts.path.clone()];
         return vec![
-            ConfigEntry {
+            ConfigEntry { embedded_mono_jit_map:false,
                 name: "Tauri Dev".into(),
                 best_fit: true,
                 related_projects: shared.clone(),
@@ -204,7 +204,7 @@ fn infer_solution_default(solution: &CraiddSolution) -> Vec<ConfigEntry> {
                 default_profile: None,
                 linked: None, order: None,
             },
-            ConfigEntry {
+            ConfigEntry { embedded_mono_jit_map:false,
                 name: "Tauri Dev — Build".into(),
                 best_fit: true,
                 related_projects: shared.clone(),
@@ -219,7 +219,7 @@ fn infer_solution_default(solution: &CraiddSolution) -> Vec<ConfigEntry> {
                 default_profile: Some("debug".into()),
                 linked: None, order: None,
             },
-            ConfigEntry {
+            ConfigEntry { embedded_mono_jit_map:false,
                 name: "Tauri Dev — Debug".into(),
                 best_fit: true,
                 related_projects: shared.clone(),
@@ -248,7 +248,7 @@ fn infer_project_default(project: &CraiddProject) -> Option<ConfigEntry> {
                     .map(|b| !b.is_empty())
                     .unwrap_or(false);
                 let name = project.name.clone();
-                return Some(ConfigEntry {
+                return Some(ConfigEntry { embedded_mono_jit_map:false,
                     name: if has_bin {
                         format!("{name}: cargo build")
                     } else {
@@ -280,7 +280,7 @@ fn infer_project_default(project: &CraiddProject) -> Option<ConfigEntry> {
                     .and_then(|v| v.as_str());
                 let name = project.name.clone();
                 if let Some(_dev) = dev_script {
-                    return Some(ConfigEntry {
+                    return Some(ConfigEntry { embedded_mono_jit_map:false,
                         name: format!("{name}: {manager} run dev"),
                         best_fit: false,
                         related_projects: vec![],
@@ -307,7 +307,7 @@ fn infer_project_default(project: &CraiddProject) -> Option<ConfigEntry> {
                     .or_else(|| profiles.first())
                     .map(|profile| profile.name.clone());
                 if output_type == "Exe" || output_type == "WinExe" || sdk == "Microsoft.NET.Sdk.Web" {
-                    return Some(ConfigEntry {
+                    return Some(ConfigEntry { embedded_mono_jit_map:false,
                         name: format!("{name}: dotnet run"),
                         best_fit: false,
                         related_projects: vec![],
@@ -323,7 +323,7 @@ fn infer_project_default(project: &CraiddProject) -> Option<ConfigEntry> {
                         linked: None, order: None,
                     });
                 } else {
-                    return Some(ConfigEntry {
+                    return Some(ConfigEntry { embedded_mono_jit_map:false,
                         name: format!("{name}: dotnet build"),
                         best_fit: false,
                         related_projects: vec![],
@@ -342,7 +342,7 @@ fn infer_project_default(project: &CraiddProject) -> Option<ConfigEntry> {
             }
             "cmake" => {
                 let name = project.name.clone();
-                return Some(ConfigEntry {
+                return Some(ConfigEntry { embedded_mono_jit_map:false,
                     name: format!("{name}: cmake build"),
                     best_fit: false,
                     related_projects: vec![],

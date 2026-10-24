@@ -116,6 +116,7 @@ export type ConfigKind = "run" | "build" | "debug" | "test";
 export type ConfigOrigin = "user" | "inferred";
 
 export interface ConfigEntry {
+  embeddedMonoJitMap?: boolean;
   name: string;
   kind: ConfigKind;
   target: string;              // path to the target .craidd, "." for whole solution

@@ -3,11 +3,12 @@ import { invoke } from "@tauri-apps/api/core";
 
 export interface PerfOptions { frequency: number; durationSeconds: number; unwind: {kind:"fp"} | {kind:"dwarf";stackBytes:number} }
 export interface PerfFrame { address:string; symbol:string; module:string; resolved:boolean; symbolOrigin:string; source:{path:string;line:number}|null }
-export interface PerfChild { frameId:number; frame:PerfFrame; inclusiveWeight:number; selfWeight:number; sampleCount:number; sampledEventSharePct:number }
+export interface PerfChild { frameId:number; frame:PerfFrame; inclusiveWeight:number; selfWeight:number; selfEventSharePct?:number; sampleCount:number; sampledEventSharePct:number }
 export interface PerfBranch { children:PerfChild[]; childCount:number; omittedChildren:number; selectedSamples:number; totalWeight:number; pathWeight:number;chainSamples?:number;chainWeight?:number }
 export interface UnwindCounts {samples:number;weight:number;chainSamples:number;chainWeight:number;empty:number;truncated:number;mismatch:number}
 export interface PerfCapture {
  id:string; label:string; createdMs:number; state:string; target:{pid:number;birth:number}; options:PerfOptions; event:string; pinned:boolean;
+ launchHelper?:{root:{pid:number;birth:number};owner:string;helper:{version:string;sha256:string;path:string;target:string;startupCoverageIncomplete:boolean;activationBasis:string}}|null;
  symbolSearch?:{locations:string[];index:{entries:number;elfFiles:number;elapsedMs:number;incomplete:boolean;diagnostics:string[]};served:{module:string;buildId:string;debugFile:{path:string;sha256:string};state:string}[];withheldModules:Record<string,string>;sealed:boolean;privateCache:string}|null;
  rawBytes:number; rawLimit:number; estimatedRawBytes:number; perfVersion:string; clockDomain:string; reasons:string[];
  threadsAtStart:{tid:number;birth:number;name:string}[]; threadsGained:{tid:number;birth:number;name:string}[]; omittedThreadObservations:number; threadPollMs:number;

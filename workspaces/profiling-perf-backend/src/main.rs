@@ -8,6 +8,9 @@ mod perf_model;
 #[allow(dead_code)]
 #[path = "../../../src-tauri/src/perf_symbols.rs"]
 mod perf_symbols;
+#[allow(dead_code)]
+#[path="../../../src-tauri/src/mono_jit_helper.rs"]
+mod mono_jit_helper;
 mod process_supervisor {
     pub fn spawn(c: &mut std::process::Command) -> std::io::Result<std::process::Child> {
         c.spawn()
@@ -17,6 +20,7 @@ fn main() {
     let args: Vec<_> = std::env::args().collect();
     match args.get(1).map(String::as_str) {
         Some("serve") => serve(&args[2]),
+        Some("helper")=>println!("{}",serde_json::json!({"identity":mono_jit_helper::materialize(std::path::Path::new(&args[2])).unwrap(),"capability":mono_jit_helper::capability()})),
         Some("discover") => println!("{}", perf_capture::discover()),
         Some("exercise") => exercise(&args[2], &args[3], &args[4], &args[5]),
         Some("reconcile") => {
@@ -123,6 +127,7 @@ fn serve(root: &str) {
         let result = (|| -> Result<serde_json::Value, String> {
             let id = request["id"].as_str().unwrap_or_default();
             match request["action"].as_str().unwrap_or_default() {
+                "registerHelperLaunch"=>{let target=perf_capture::identity(request["pid"].as_i64().ok_or("Missing PID")? as i32)?;let helper=serde_json::from_value(request["helper"].clone()).map_err(|e|e.to_string())?;mono_jit_helper::register(target,"probe".into(),helper);Ok(serde_json::Value::Null)},
                 "symbolSettings" => {
                     perf_symbols::locations(&solution).map(|paths| serde_json::json!(paths))
                 }

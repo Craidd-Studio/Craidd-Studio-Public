@@ -1,0 +1,9 @@
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import {readFile} from 'node:fs/promises';
+import ts from 'typescript';
+const url=source=>`data:text/javascript;base64,${Buffer.from(source).toString('base64')}`;
+let code=ts.transpileModule(await readFile(new URL('../src/store/buildStore.ts',import.meta.url),'utf8'),{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ESNext}}).outputText;
+const replacements={'zustand':import.meta.resolve('zustand'),'../types/project':url('export const isFileTab=()=>false;'),'./solutionStore':url('export const useSolution={getState:()=>({}),setState:()=>{}};'),'../lib/buildDiagnostics':url('export const appendBuildProblem=()=>[];export const decodeBuildLine=()=>({});'),'../lib/outputPresentation':url('export const appendOutput=(a,b)=>a+b;')};for(const [name,path]of Object.entries(replacements))code=code.replaceAll(JSON.stringify(name),JSON.stringify(path));const {resolveSpec}=await import(url(code));
+const solution={projects:[],root:'/fixture'};
+test('Mono helper is opt-in on run specs and leaves profile environment literal',()=>{const config={name:'Run',kind:'run',target:'.',origin:'user',method:'shell',command:'/fixture/host mono.so Hot.exe',profiles:[{name:'With env',args:[],env:{LD_PRELOAD:'/user/helper.so',KEEP:'literal'}}]};const ordinary=resolveSpec(config,'/fixture',solution,null);assert.ok(!Object.hasOwn(ordinary,'embeddedMonoJitMap'));const enabled=resolveSpec({...config,embeddedMonoJitMap:true},'/fixture',solution,null);assert.equal(enabled.embeddedMonoJitMap,true);assert.deepEqual(enabled.env,ordinary.env);assert.deepEqual(enabled.args,ordinary.args);assert.equal(config.profiles[0].env.LD_PRELOAD,'/user/helper.so');for(const kind of ['build','debug','test'])assert.ok(!Object.hasOwn(resolveSpec({...config,kind,embeddedMonoJitMap:true},'/fixture',solution,null),'embeddedMonoJitMap'));});

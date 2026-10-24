@@ -1,6 +1,6 @@
 # GR-004: JIT maps for embedded runtimes that ignore environment options
 
-**Status:** Proposed revision, not implemented in Craidd. Priority 3, after GR-003 and the timed perf interface.
+**Status:** Implemented locally as an experimental, launch-only option after the GR-002 leaf fix and GR-003. Qualification and limitations: [GR-004 results](gr-004-results.md). Human acceptance pending (24 October 2026).
 **Baseline reviewed:** `codex/profiling-perf-timed` at `464e407`, with the current UI integration branch.
 **Area:** GR-002 timed capture; launch-only managed frame naming.
 
@@ -29,6 +29,14 @@ Deliver after the fixture's naming/overhead gates: hardened helper and export/ho
 ## Acceptance
 
 The owned fixture embeds installed Mono through `dlopen`/`dlsym` and `mono_jit_init_version`, without the Mono launcher or `--jitmap`. Qualify map absent/present, known hot names, one missing-export diagnostic and host survival; actual sampled managed-weight naming with and without the helper; matched alternating host-throughput repetitions; and unchanged attach environments. Desktop must enable the run option, launch, capture and inspect the map-origin label, while attach exposes no helper option. Gates remain independent. A fixture-only preload library is not a shipped feature.
+
+## Accepted delivery (24 October 2026)
+
+Ship a reproducibly built, source-reviewed helper for the qualified Linux x86_64 GNU ABI; other architectures/libcs are unavailable until independently qualified. A bundled manifest records version, source/artifact hashes and compiler/flags. Materialize verified prebuilt bytes in Craidd's private cache; never invoke a compiler at runtime. The experimental option is off by default on concrete run configurations, never on attach. The launch runner adds it only to the target command environment, preserving existing preload entries. Build prerequisites, collectors, adapters and Craidd's own environment remain unchanged.
+
+Bind helper provenance to the launched PID/start-time and, while ancestry can be verified, its descendants. A capture records the request, helper version/hash and incomplete startup coverage. That provenance is not independent proof of map correctness or helper activation; existing fingerprinted perf-map naming remains the decoder. Detached/reparented processes without a verifiable binding have no asserted helper provenance. Capture clocks and caller coverage stay separate.
+
+Conservative lifecycle decision: this delivery retains generated maps and does not automatically delete `/tmp/perf-<pid>.map`. A future cleanup action must prove creation, UID, inode, fingerprint and ended incarnation before removal; pathname/PID alone never authorizes it. This exercises the proposal's permission to retain rather than risk deleting another producer's map. The helper refuses an existing map, caps output at the decoder's existing 16 MiB limit and emits one diagnostic on unavailable exports / refused output. These starting resource/ABI bounds remain subject to qualification and user review.
 
 ---
 
