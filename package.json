@@ -27,7 +27,8 @@
     "test:ui:profiling:long": "CRAIDD_TEST_LONG=1 npm run test:ui:profiling",
     "test:profiler-workspace": "node tests/profilerWorkspace.test.mjs",
     "test:ui:profiler-workspace": "node tests/ui/profiler-workspace.test.mjs",
-    "test:ui:metric-release": "CRAIDD_TEST_METRIC_RELEASE=1 node --test --test-concurrency=1 tests/ui/metric-release-acceptance.test.mjs"
+    "test:ui:metric-release": "CRAIDD_TEST_METRIC_RELEASE=1 node --test --test-concurrency=1 tests/ui/metric-release-acceptance.test.mjs",
+    "test:ui:metric-editor": "CRAIDD_TEST_METRIC_EDITOR=1 node --test tests/ui/metric-editor-quality.test.mjs"
   },
   "dependencies": {
     "@monaco-editor/react": "^4.7.0",

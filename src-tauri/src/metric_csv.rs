@@ -69,6 +69,12 @@ impl Default for Axis {
     }
 }
 #[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct Threshold {
+    pub column: usize,
+    pub value: f64,
+    pub label: String,
+}
+#[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Metadata {
     pub source_id: String,
@@ -85,6 +91,8 @@ pub struct Metadata {
     pub schema_sidecar: Option<String>,
     pub snapshot: bool,
     pub original_range: Option<[usize; 2]>,
+    #[serde(default)]
+    pub thresholds: Vec<Threshold>,
 }
 pub enum Values {
     Numbers(Vec<f64>),
@@ -270,7 +278,11 @@ impl Table {
             _ => None,
         }
     }
-    pub fn interpret(&mut self, mut columns: Vec<Column>, axis: Axis) -> Result<(), String> {
+    fn interpretation_values(
+        &self,
+        mut columns: Vec<Column>,
+        axis: &Axis,
+    ) -> Result<(Vec<Column>, Vec<f64>), String> {
         if self.meta.snapshot {
             return Err(
                 "Snapshot interpretation is immutable; import the original as a new source to edit"
@@ -295,7 +307,23 @@ impl Table {
             column.unit_suggested &= old.unit_suggested && column.unit == old.unit;
             column.meaning_suggested &= old.meaning_suggested && column.meaning == old.meaning;
         }
-        let times = self.axis_values_with(&axis, &columns)?;
+        let times = self.axis_values_with(axis, &columns)?;
+        Ok((columns, times))
+    }
+    pub fn preview_interpretation(
+        &self,
+        columns: Vec<Column>,
+        axis: &Axis,
+    ) -> Result<serde_json::Value, String> {
+        let (columns, times) = self.interpretation_values(columns, axis)?;
+        let n = self.lines.len();
+        Ok(serde_json::json!({"columns":columns,"axis":axis,"rows":n,
+            "firstX":if n==0 {None}else{Some(times.first().copied().unwrap_or((1+self.meta.original_range.map(|r|r[0]).unwrap_or(0)) as f64))},
+            "lastX":if n==0 {None}else{Some(times.last().copied().unwrap_or((n+self.meta.original_range.map(|r|r[0]).unwrap_or(0)) as f64))},
+            "basis":"Preview only; rows, saved interpretation and snapshots are unchanged"}))
+    }
+    pub fn interpret(&mut self, columns: Vec<Column>, axis: Axis) -> Result<(), String> {
+        let (columns, times) = self.interpretation_values(columns, &axis)?;
         self.meta.columns = columns;
         self.meta.axis = axis;
         self.axis = times;
@@ -494,6 +522,7 @@ pub fn parse_limited(
             schema_sidecar: None,
             snapshot: false,
             original_range: None,
+            thresholds: Vec::new(),
         },
         lines: Vec::new(),
         values: Vec::new(),
@@ -892,9 +921,18 @@ pub struct Point {
 }
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
+pub struct Vertex {
+    pub row: usize,
+    pub x: f64,
+    pub value: f64,
+    pub break_before: bool,
+}
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct Graph {
     pub column: usize,
     pub points: Vec<Point>,
+    pub vertices: Vec<Vertex>,
     pub start: usize,
     pub end: usize,
     pub x_start: f64,
@@ -910,17 +948,48 @@ pub fn graph(t: &Table, column: usize, start: usize, end: usize) -> Result<Graph
     }
     let step = (end - start).div_ceil(600);
     let mut points = Vec::with_capacity(600);
+    let mut vertices = Vec::with_capacity(2400);
+    let mut previous: Option<usize> = None;
     for from in (start..end).step_by(step) {
         let to = (from + step).min(end);
         let mut min = f64::INFINITY;
         let mut max = f64::NEG_INFINITY;
-        for v in &values[from..to] {
+        let mut first = None;
+        let mut last = None;
+        let mut low = from;
+        let mut high = from;
+        for (offset, v) in values[from..to].iter().enumerate() {
+            let index = from + offset;
             if v.is_finite() {
-                min = min.min(*v);
-                max = max.max(*v);
+                first.get_or_insert(index);
+                last = Some(index);
+                if *v < min {
+                    min = *v;
+                    low = index;
+                }
+                if *v > max {
+                    max = *v;
+                    high = index;
+                }
             }
         }
-        if min.is_finite() {
+        if let (Some(first), Some(last)) = (first, last) {
+            let mut indices = vec![first, low, high, last];
+            indices.sort_unstable();
+            indices.dedup();
+            for row in indices {
+                let break_before = previous.is_none_or(|prev| {
+                    values[prev + 1..row].iter().any(|v| !v.is_finite())
+                        || t.lines[row].saturating_sub(t.lines[prev]) as usize > row - prev
+                });
+                vertices.push(Vertex {
+                    row,
+                    x: t.x(row),
+                    value: values[row],
+                    break_before,
+                });
+                previous = Some(row);
+            }
             points.push(Point {
                 x: t.x(from),
                 until: t.x(to - 1),
@@ -932,6 +1001,7 @@ pub fn graph(t: &Table, column: usize, start: usize, end: usize) -> Result<Graph
     Ok(Graph {
         column,
         points,
+        vertices,
         start,
         end,
         x_start: t.x(start),
@@ -1222,4 +1292,43 @@ pub fn load(path: &str, cancel: &AtomicBool) -> Result<(Dataset, Vec<JoinRule>),
         }
     }
     Ok((data, header.joins))
+}
+
+/// Exact order statistics of original row values, not reconstructed run percentiles.
+pub fn summarize(
+    mut columns: Vec<(usize, Vec<f64>)>,
+    total_rows: usize,
+    cancelled: &AtomicBool,
+) -> Result<serde_json::Value, String> {
+    let mut result = Vec::new();
+    for (column, mut values) in columns.drain(..) {
+        if cancelled.load(Ordering::Relaxed) {
+            return Err("Summary cancelled".into());
+        }
+        values.retain(|v| v.is_finite());
+        let count = values.len();
+        let quantile = |values: &mut Vec<f64>, q: f64| -> Option<f64> {
+            if values.is_empty() {
+                return None;
+            }
+            let pos = (values.len() - 1) as f64 * q;
+            let lower = pos.floor() as usize;
+            let upper = pos.ceil() as usize;
+            let low = *values
+                .select_nth_unstable_by(lower, |a, b| a.total_cmp(b))
+                .1;
+            let high = *values
+                .select_nth_unstable_by(upper, |a, b| a.total_cmp(b))
+                .1;
+            Some(low + (high - low) * (pos - lower as f64))
+        };
+        let median = quantile(&mut values, 0.5);
+        let q1 = quantile(&mut values, 0.25);
+        let q3 = quantile(&mut values, 0.75);
+        let maximum = values.iter().copied().reduce(f64::max);
+        result.push(serde_json::json!({"column":column,"count":count,"missing":total_rows-count,"median":median,"q1":q1,"q3":q3,"maximum":maximum}));
+    }
+    Ok(
+        serde_json::json!({"columns":result,"rows":total_rows,"basis":"Original retained row values; linear-interpolated order statistics, never a run percentile"}),
+    )
 }

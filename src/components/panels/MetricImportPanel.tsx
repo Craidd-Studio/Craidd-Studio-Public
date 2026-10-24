@@ -1,261 +1,104 @@
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { open, save } from "@tauri-apps/plugin-dialog";
-import { metricAction, useMetrics, type MetricView } from "../../store/metricStore";
-import type { MetricAxis, MetricColumn, MetricGraph, MetricInspection, MetricJoin, MetricRow } from "../../types/profileSource";
-
-import { worstKeyColumn, worstKeyValue } from "../../lib/metricRowKey";
-
-const filename = (path: string) => path.split("/").pop() ?? path;
-const cell = (value: number | string | null) => value === null || value === "" ? "Empty" : String(value);
-const palette = ["#62a9ff", "#e890bd", "#8dd5a1", "#e9c76b", "#bba2f4", "#7cd5dc", "#f4a16f", "#c3cbd5"];
-const format = (value: number) => Number.isInteger(value) ? String(value) : String(Number(value.toPrecision(6)));
-
-export default function MetricImportPanel() {
-  const state = useMetrics();
-  const source = state.sources.find(s => s.id === state.selected);
-  const group = source?.tables[state.table];
-  const rows = source?.rows[state.table] ?? 0;
-  const ready = !!group && rows > 0;
-  const [tab, setTab] = useState("Time series");
-  const [visible, setVisible] = useState<number[]>([]);
-  const [search, setSearch] = useState("");
-  const [charts, setCharts] = useState<MetricGraph[]>([]);
-  const [pageStart, setPageStart] = useState(0);
-  const [pageRows, setPageRows] = useState<MetricRow[]>([]);
-  const [showSources, setShowSources] = useState(true);
-  const [showInspector, setShowInspector] = useState(false);
-  const [paths, setPaths] = useState("");
-  const [savePath, setSavePath] = useState("");
-  const [column, setColumn] = useState(0);
-  const [span, setSpan] = useState<[number, number]>([0, 0]);
-  const [graph, setGraph] = useState<MetricGraph | null>(null);
-  const [inspection, setInspection] = useState<MetricInspection | null>(null);
-  const [keyChoice, setKeyChoice] = useState<number | null>(null);
-  const [bulkSelection, setBulkSelection] = useState<number[]>([]);
-  const [bulkScope, setBulkScope] = useState("unitless");
-  const [bulkUnit, setBulkUnit] = useState("ms");
-  const [bulkMeaning, setBulkMeaning] = useState("");
-  const [worst, setWorst] = useState<MetricRow[]>([]);
-  const [rowIndex, setRowIndex] = useState(1);
-  const [settings, setSettings] = useState(false);
-  const [columns, setColumns] = useState<MetricColumn[]>([]);
-  const [axis, setAxis] = useState<MetricAxis>({ kind: "ordinal", column: null, windowSeconds: null });
-  const [notice, setNotice] = useState("");
-  const [pending, setPending] = useState(false);
-  const [join, setJoin] = useState<MetricJoin>({ left: 0, right: 1, leftColumn: 0, rightColumn: 0, tolerance: null });
-  const graphSequence = useRef(0), rowSequence = useRef(0);
-  const key = `${source?.id}:${state.table}:${group?.interpretationRevision}`;
-  const currentKey = useRef(key); currentKey.current = key;
-  const viewKey = `${source?.id}:${state.table}`;
-  const [loadedKey, setLoadedKey] = useState("");
-  const resultRef = useRef<HTMLDivElement | null>(null);
-  const errorRef = useRef<HTMLParagraphElement | null>(null);
-  const scrollTop = useRef(0), restoreTop = useRef<number | null>(null), restoreRow = useRef<number | null>(null);
-  const lastView = useRef<MetricView>({ column: 0, span: [0, 0], rowIndex: 1, inspected: null, settings: false, scrollTop: 0, showWorst: false });
-  if (loadedKey === key) lastView.current = { column, span, rowIndex, inspected: inspection?.row.index ?? restoreRow.current, settings, scrollTop: scrollTop.current, showWorst: worst.length > 0, worstKeyColumn: keyChoice, visibleColumns: visible, analysisTab: tab, pageStart, showSources, showInspector };
-  const fail = (e: unknown) => state.setError(String(e));
-  useLayoutEffect(() => {
-    const saved = useMetrics.getState().views[viewKey];
-    const view: MetricView = saved ?? { column: group?.columns.findIndex(c => c.numeric) ?? 0, span: [0, rows], rowIndex: 1, inspected: null, settings: false, scrollTop: 0, showWorst: false };
-    setSpan(view.span); setInspection(null); setWorst([]); setGraph(null); setRowIndex(view.rowIndex); setSettings(view.settings);
-    setColumns(group?.columns ?? []); setAxis(group?.axis ?? { kind: "ordinal", column: null, windowSeconds: null });
-    setKeyChoice(view.worstKeyColumn ?? null); setBulkSelection([]);
-    const numeric = group?.columns.map((c,i)=>({c,i})).filter(({c,i})=>c.numeric && i!==group.axis.column && !/^(elapsed|time|timestamp)(_|$)/i.test(c.name)) ?? [];
-    const first = saved?.column ?? numeric[0]?.i ?? view.column;
-    setColumn(first); setVisible(view.visibleColumns ?? numeric.filter(v=>v.c.unit===group?.columns[first]?.unit).slice(0,4).map(v=>v.i));
-    setTab(view.analysisTab ?? tab); setPageStart(view.pageStart ?? 0);setShowSources(view.showSources ?? true);setShowInspector(view.showInspector ?? false);
-    setLoadedKey(key); lastView.current = view;
-    restoreTop.current = view.scrollTop; restoreRow.current = view.inspected; scrollTop.current = view.scrollTop;
-    setJoin({ left: state.table, right: state.table === 0 ? 1 : 0, leftColumn: 0, rightColumn: 0, tolerance: null });
-    rowSequence.current++;
-    if (source && group && view.inspected !== null) void inspect(view.inspected, false);
-    if (source && group && view.showWorst) void metricAction<MetricRow[]>({ op: "worst", id: source.id, table: state.table, column: view.column, start: view.span[0], end: view.span[1], count: 20 }).then(v => { if (currentKey.current === key) setWorst(v); }).catch(fail);
-    return () => { if (group) state.saveView(viewKey, { ...lastView.current, scrollTop: scrollTop.current }); };
-    // Metadata updates are the dependency; row payloads never participate.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [key, rows]);
-  useLayoutEffect(() => {
-    if (restoreTop.current !== null && graph && (restoreRow.current === null || inspection?.row.index === restoreRow.current)) {
-      if (resultRef.current) resultRef.current.scrollTop = restoreTop.current;
-      restoreTop.current = null; restoreRow.current = null;
-    }
-  }, [graph, inspection]);
-  useEffect(() => { if (state.error || source?.error) errorRef.current?.scrollIntoView({ block: "nearest" }); }, [state.error, source?.error]);
-  useEffect(() => {
-    const sequence = ++graphSequence.current;
-    if (!source || !ready || loadedKey !== key || column < 0 || span[0] >= span[1]) return;
-    setGraph(null);setCharts([]);
-    const chosen = [...new Set([column,...visible])].filter(i=>group?.columns[i]?.numeric).slice(0,8);
-    void Promise.all(chosen.map(i=>metricAction<MetricGraph>({ op: "graph", id: source.id, table: state.table, column:i, start: span[0], end: span[1] })))
-      .then(g => { if (sequence === graphSequence.current) {setGraph(g[0]);setCharts(g);} }).catch(e => { if (sequence === graphSequence.current) fail(e); });
-    return () => { graphSequence.current++; };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [key, loadedKey, ready, column, visible.join(","), span[0], span[1]]);
-  const inspect = async (index: number, reveal = true) => {
-    if (!source) return;
-    state.setError("");
-    const seq = ++rowSequence.current;
-    try {
-      const result = await metricAction<MetricInspection>({ op: "row", id: source.id, table: state.table, row: index });
-      if (seq === rowSequence.current) { setInspection(result); setRowIndex(index + 1);if(reveal){setPageStart(Math.floor(index/50)*50);setShowInspector(true);} }
-    } catch (e) { if (seq === rowSequence.current) fail(e); }
-  };
-  const chooseFiles = async (snapshot: boolean) => {
-    try {
-      const result = await open({ multiple: !snapshot, filters: [{ name: snapshot ? "Metric snapshot" : "Metric CSV", extensions: snapshot ? ["crmetrics"] : ["csv"] }] });
-      if (result) void state.start(Array.isArray(result) ? result : [result], snapshot);
-    } catch (e) { fail(e); }
-  };
-  const persist = async (path: string) => {
-    if (!source) return;
-    setPending(true); state.setError("");
-    try {
-      await metricAction({ op: "save", id: source.id, path, ranges: source.rows.map((n, i) => i === state.table ? span : [0, n]) });
-      setNotice(`Immutable snapshot saved: ${path}. Selected rows in this group; all retained rows in companion groups.`);
-    } catch (e) { fail(e); }
-    finally { setPending(false); }
-  };
-  const saveDialog = async () => {
-    try {
-      const path = await save({ defaultPath: `${filename(group?.path ?? "metrics").replace(/\.[^.]*$/, "")}-${new Date().toISOString().replace(/[:.]/g, "-")}.crmetrics`, filters: [{ name: "Metric snapshot", extensions: ["crmetrics"] }] });
-      if (path) await persist(path);
-    } catch (e) { fail(e); }
-  };
-  const changeView = (start: number, end: number) => {
-    const a = Math.max(0, Math.min(rows - 1, Math.round(start)));
-    const b=Math.max(a+1,Math.min(rows,Math.round(end)));
-    rowSequence.current++;setSpan([a,b]); setPageStart(a);setWorst([]);if(inspection && (inspection.row.index<a||inspection.row.index>=b)){setInspection(null);rowSequence.current++;}
-  };
-  const coverage = group?.coverage;
-  const duration = group?.axis.windowSeconds;
-  const xLabel = group?.axis.kind === "ordinal" ? "Retained row ordinal · not time" : `${group?.axis.kind} seconds · ${group?.columns[group.axis.column ?? 0]?.name}`;
-  const rowKey = worstKeyColumn(group?.columns ?? [], group?.axis ?? axis, keyChoice);
-  const axisKey = group?.axis.kind !== "ordinal" && rowKey !== null && rowKey === group?.axis.column;
-  const keyHeading = rowKey === null ? "Key value" : `${group?.columns[rowKey]?.name} · ${axisKey ? `${group?.axis.kind === "elapsed" ? "s" : "ISO 8601"} (axis)` : group?.columns[rowKey]?.unit}`;
-  const bulkApply = async () => {
-    if (!source) return;
-    setPending(true); state.setError("");
-    try {
-      await metricAction({ op: "bulkInterpret", id: source.id, table: state.table, selection: bulkScope === "unitless" ? null : bulkSelection, unit: bulkUnit, meaning: bulkMeaning || null });
-      await state.refresh(source.id); setNotice("Bulk interpretation applied. Existing snapshots are unchanged.");
-    } catch (e) { fail(e); } finally { setPending(false); }
-  };
-  useEffect(()=>{
-    let alive=true;if(!source||!ready||loadedKey!==key)return;
-    const start=Math.max(span[0],Math.min(pageStart,span[1]-1));
-    void metricAction<MetricRow[]>({op:"page",id:source.id,table:state.table,start,count:Math.min(50,span[1]-start)}).then(v=>{if(alive)setPageRows(v);}).catch(fail);
-    return()=>{alive=false;};
-  },[key,loadedKey,ready,pageStart,span[0],span[1]]);
-  const joinKey=JSON.stringify(source?.joins??[]);
-  useEffect(()=>{if(loadedKey===key&&inspection)void inspect(inspection.row.index,false);},[joinKey]);
-  const pickPoint=async(x:number)=>{
-    if(!source)return;const n=++rowSequence.current;
-    try{const result=await metricAction<MetricInspection>({op:"nearest",id:source.id,table:state.table,start:span[0],end:span[1],x});
-      if(n===rowSequence.current){setInspection(result);setRowIndex(result.row.index+1);setPageStart(Math.floor(result.row.index/50)*50);setShowInspector(true);}}
-    catch(e){if(n===rowSequence.current)fail(e);}
-  };
-  const rank=async()=>{if(!source)return;state.setError("");const k=key;try{const values=await metricAction<MetricRow[]>({op:"worst",id:source.id,table:state.table,column,start:span[0],end:span[1],count:20});if(currentKey.current===k){setWorst(values);setTab("Largest values");}}catch(e){fail(e);}};
-  const renderRow = (r: MetricRow, cols: MetricColumn[]) => <dl className="metric-row">{cols.map((c, i) => <div key={c.name}><dt>{c.name} <small>{c.unit}{c.unitSuggested ? " (suggested)" : ""} · {c.meaning}{c.meaningSuggested ? " (suggested)" : ""}</small></dt><dd><MetricCell value={r.cells[i]} /></dd></div>)}</dl>;
-  const plotted=charts.filter(g=>visible.includes(g.column));
-  const units=[...new Set(plotted.map(g=>group?.columns[g.column]?.unit ?? "unitless"))];
-  const issues=(coverage?.invalid??0)+(coverage?.unsupported??0);
-  return <section className="metric-import-panel profiler-panel analysis-panel metric-workbench" aria-label="Imported metric sources">
-    <header className="analysis-toolbar profiler-toolbar"><div className="analysis-title"><strong>{group?filename(group.path):"Imported measurements"}</strong><span>{group?`${rows.toLocaleString()} retained rows · ${group.completion}${group.snapshot?" · immutable snapshot":""}`:"Explore a program's recorded numbers"}</span></div>
-      <button disabled={state.busy} onClick={()=>void chooseFiles(false)}>Import CSV files…</button><button disabled={state.busy} onClick={()=>void chooseFiles(true)}>Open metric snapshot…</button><button disabled={!ready||pending} onClick={()=>void saveDialog()}>Save metric snapshot…</button>
-    </header>
-    {state.error&&<p className="analysis-alert" role="alert" ref={errorRef}>{state.error}</p>}{notice&&<p className="metric-notice" role="status">{notice}<button aria-label="Dismiss metric notice" onClick={()=>setNotice("")}>×</button></p>}
-    {source?.state==="loading"&&<div role="status" className="analysis-progress" aria-label="Metric import progress"><progress max={source.totalBytes||1} value={source.bytesRead}/>{source.bytesRead.toLocaleString()} / {source.totalBytes.toLocaleString()} bytes<button onClick={()=>void metricAction({op:"cancel",id:source.id}).catch(fail)}>Cancel import</button></div>}
-    {source?.error&&<p role="alert" className="analysis-alert">{source.state}: {source.error}</p>}
-    <nav className="analysis-tabs" aria-label="Metric analysis views">{["Time series","Largest values","Rows","Column meanings","Import issues","File details"].map(t=><button key={t} aria-pressed={tab===t} onClick={()=>{setTab(t);if(t==="Largest values")void rank();}}>{t}{t==="Import issues"&&issues?` (${issues})`:""}</button>)}</nav>
-    <div className="metric-workspace profiler-results" ref={resultRef}>
-      {showSources&&<aside className="analysis-sources metric-sources" aria-label="Metric sources and columns">
-       <header><strong>Sources</strong><button aria-label="Collapse metric sources" onClick={()=>setShowSources(false)}>‹</button></header>
-       {!!state.sources.length&&<label>Source set<select aria-label="Metric source set" value={state.selected} title={source?.paths.join("\n")} onChange={e=>state.choose(e.target.value)}>{state.sources.map(v=><option key={v.id} value={v.id}>{filename(v.paths[0]??"Import")} · {v.state}</option>)}</select></label>}
-       <div className="metric-file-list">{source?.tables.map((g,i)=><button key={i} className={`analysis-source ${state.table===i?"is-selected":""}`} aria-pressed={state.table===i} onClick={()=>state.setTable(i)}><strong>{filename(g.path)}</strong><span>{(source.rows[i]??0).toLocaleString()} rows · {g.columns.length} columns</span><small>{g.completion}{g.coverage.invalid||g.coverage.unsupported?" · import issues":""}</small></button>)}</div>
-       {group&&<><header><strong>Columns</strong><span>{visible.length}/8 shown</span></header><input className="metric-column-search" aria-label="Search metric columns" placeholder="Search columns…" value={search} onChange={e=>setSearch(e.target.value)}/><p className="analysis-muted">Units marked * are suggestions.</p><div className="metric-column-list">{group.columns.map((c,i)=>c.numeric&&c.name.toLowerCase().includes(search.toLowerCase())&&<label key={i} title={`${c.name} · ${c.unit} · ${c.meaning}${c.meaningSuggested?" (suggested)":""}`}><input type="checkbox" aria-label={`Plot ${c.name}`} checked={visible.includes(i)} disabled={!visible.includes(i)&&visible.length>=8} onChange={e=>{const next=e.target.checked?[...visible,i]:visible.filter(v=>v!==i);setVisible(next);if(e.target.checked&&!visible.length)setColumn(i);}}/><span className="metric-swatch" style={{background:palette[i%palette.length]}}/><span>{c.name}<small>{c.unit}{c.unitSuggested?" *":""} · {c.meaning}{c.meaningSuggested?" *":""}</small></span></label>)}</div></>}
-      </aside>}
-      <main className="metric-analysis">
-       {!showSources&&<button className="metric-show-sources" onClick={()=>setShowSources(true)}>Sources & columns ›</button>}
-       {!source&&<div className="metric-empty analysis-empty"><h2>Explore recorded measurements</h2><p>Open a finished CSV or a set of companion files. See the measurements, find large values and inspect the original rows.</p><button className="analysis-primary" onClick={()=>void chooseFiles(false)}>Choose CSV files…</button><p>No process connection required. Live follow comes later.</p></div>}
-       {group&&<>
-        {tab==="Time series"&&ready&&<>
-         <div className="metric-range-toolbar"><button onClick={()=>changeView(0,rows)}>Full file</button><button onClick={()=>changeView(span[0]-(span[1]-span[0])/2,span[1]-(span[1]-span[0])/2)}>Pan left</button><button onClick={()=>changeView(span[0]+(span[1]-span[0])/2,span[1]+(span[1]-span[0])/2)}>Pan right</button><button onClick={()=>changeView(span[0]+(span[1]-span[0])/4,span[1]-(span[1]-span[0])/4)}>Zoom in</button><button onClick={()=>changeView(span[0]-(span[1]-span[0])/2,span[1]+(span[1]-span[0])/2)}>Zoom out</button><button aria-expanded={showInspector} onClick={()=>setShowInspector(!showInspector)}>Row details</button><button onClick={()=>setTab("Column meanings")}>Interpretation and joins</button></div>
-         <div className="metric-axis-caption"><strong>{xLabel}</strong><span>Rows {span[0]+1}–{span[1]} · {duration?`Declared window ${duration} s`:"Window duration unknown"} · No session clock mapping</span></div>
-         <div className="metric-tracks" aria-busy={!graph}>{units.map(unit=><MetricChart key={unit} graphs={plotted.filter(g=>group.columns[g.column].unit===unit)} columns={group.columns} axis={group.axis.kind} unit={unit} window={duration??null} selected={inspection?.row??null} onPick={x=>void pickPoint(x)} onRange={(a,b)=>{if(!source||!graph)return;const requestKey=key;void Promise.all([a,b].map(f=>metricAction<MetricInspection>({op:"nearest",id:source.id,table:state.table,start:span[0],end:span[1],x:graph.xStart+f*(graph.xEnd-graph.xStart)}))).then(([left,right])=>{if(currentKey.current===requestKey)changeView(left.row.index,right.row.index+1);}).catch(fail);}}/>)}{!plotted.length&&<p className="analysis-empty">Select a numeric column to plot. Different units appear in separate tracks.</p>}</div>
-         <div className="metric-range-inputs"><label>First row<input aria-label="Metric range first row" type="number" min={1} max={rows} value={span[0]+1} onChange={e=>changeView(Number(e.target.value)-1,span[1])}/></label><input aria-label="Metric range overview start" type="range" min={0} max={Math.max(0,rows-1)} value={span[0]} onChange={e=>changeView(Number(e.target.value),span[1])}/><input aria-label="Metric range overview end" type="range" min={1} max={rows} value={span[1]} onChange={e=>changeView(span[0],Number(e.target.value))}/><label>Last row<input aria-label="Metric range last row" type="number" min={1} max={rows} value={span[1]} onChange={e=>changeView(span[0],Number(e.target.value))}/></label></div>
-         <p className="metric-graph-note">Points / extrema bands preserve bucket minima and maxima. Click for the nearest original row; drag to select rows. No percentile aggregation. * Suggested units/meanings are editable in Column meanings.</p>
-        </>}
-        {tab==="Largest values"&&ready&&<div className="metric-ranking"><div className="analysis-field-row"><label>Rank by<select aria-label="Metric series" value={column} onChange={e=>{setColumn(Number(e.target.value));setWorst([]);}}>{group.columns.map((c,i)=>c.numeric&&<option key={i} value={i}>{c.name} · {c.unit}</option>)}</select></label><button onClick={()=>void rank()}>Find worst windows / largest values</button><label>Row key<select aria-label="Metric worst key" disabled={axisKey} value={axisKey?String(rowKey):keyChoice===null?"auto":String(keyChoice)} onChange={e=>setKeyChoice(e.target.value==="auto"?null:Number(e.target.value))}><option value="auto">Auto · time / elapsed column</option>{group.columns.map((c,i)=><option key={i} value={i}>{c.name}</option>)}</select></label></div><p className="analysis-muted">{duration?"Worst declared windows":"Largest retained values · window duration unknown"}. Ranking asserts no cause or performance verdict.</p><table className="analysis-table" aria-label="Worst metric windows"><thead><tr><th>Original row</th><th>{keyHeading}</th><th>{group.columns[column]?.name} · {group.columns[column]?.unit}</th></tr></thead><tbody>{worst.map(r=><tr key={r.index} className={inspection?.row.index===r.index?"is-selected":""}><td><button onClick={()=>void inspect(r.index)}>Row {r.index+1}</button></td><td>{rowKey===null?"No key selected":<MetricCell value={worstKeyValue(r,group.axis,rowKey)}/>}</td><td>{cell(r.cells[column])}</td></tr>)}</tbody></table></div>}
-        {tab==="Import issues"&&<div className="metric-document"><h3>Import integrity</h3><dl className="analysis-facts" aria-label="Metric integrity">{[["Retained rows",rows],["Invalid records",coverage?.invalid??0],["Unsupported records",coverage?.unsupported??0],["Empty cells",coverage?.emptyCells??0],["Missing fields",coverage?.missingColumns??0],["Unterminated records",coverage?.unterminated??0]].map(([k,v])=><div key={k}><dt>{k}</dt><dd>{Number(v).toLocaleString()}</dd></div>)}</dl><p>Invalid rows are skipped as entire records. Empty cells count retained rows. Quoted multiline records are unsupported.</p>{coverage?.examples.map((v,i)=><p key={i}>{v}</p>)}{!issues&&<p>No rejected records reported.</p>}</div>}
-        {tab==="File details"&&<div className="metric-document"><h3>Source and provenance</h3><dl className="analysis-facts">{[["Path",group.path],["Source",group.sourceId],["Generation",group.generation],["File size",`${group.size.toLocaleString()} bytes`],["Modified",new Date(group.modifiedMs).toISOString()],["SHA-256",group.sha256],["Interpretation revision",group.interpretationRevision],["Snapshot",group.snapshot?"Immutable copy · original file not required":"Finished file import"]].map(([k,v])=><div key={k}><dt>{k}</dt><dd>{v}</dd></div>)}</dl><p className="metric-snapshot-scope">Snapshot scope: rows {span[0]+1}–{span[1]} in this file; all retained rows in companion groups. Includes original values, interpretation and provenance.</p><p>Limits: 2 source sets/window, 8 files/set, 1 GiB/file set, 512 MiB retained/set, 2,000,000 rows/file, 128 columns, 1 MiB/line.</p><button onClick={()=>void state.remove(state.selected).catch(fail)}>Remove source set</button></div>}
-          {tab === "Column meanings" && <div className="metric-settings"><p>{group.snapshot ? "Snapshot interpretation and join rules are immutable." : "First nonempty value determines numeric/text storage. Units and statistic suffixes are suggestions; ambiguous names are kept literally. Edits never change existing snapshots."}</p>
-            <label>Axis<select aria-label="Metric clock domain" disabled={group.snapshot} value={axis.kind} onChange={e => setAxis({ ...axis, kind: e.target.value as MetricAxis["kind"], windowSeconds: null })}>{["ordinal", "elapsed", "epoch", "iso8601"].map(k => <option key={k}>{k}</option>)}</select></label>
-            {axis.kind !== "ordinal" && <><label>Time column<select aria-label="Metric time column" disabled={group.snapshot} value={axis.column ?? ""} onChange={e => setAxis({ ...axis, column: Number(e.target.value) })}><option value="" disabled>Choose column</option>{columns.map((c, i) => <option value={i} key={i}>{c.name}</option>)}</select></label>
-              <label>Declared window duration (seconds; blank = unknown)<input aria-label="Metric window seconds" type="number" min="0" step="any" disabled={group.snapshot} value={axis.windowSeconds ?? ""} onChange={e => setAxis({ ...axis, windowSeconds: e.target.value === "" ? null : Number(e.target.value) })} /></label></>}
-            <fieldset disabled={group.snapshot || pending}><legend>Bulk column interpretation</legend>
-              <label>Apply to<select aria-label="Metric bulk scope" value={bulkScope} onChange={e => setBulkScope(e.target.value)}><option value="unitless">All unitless numeric columns in this file group</option><option value="selected">Selected numeric columns</option></select></label>
-              <label>Unit<input aria-label="Metric bulk unit" disabled={group.snapshot || pending} value={bulkUnit} onChange={e => setBulkUnit(e.target.value)} /></label>
-              <label>Meaning<select aria-label="Metric bulk meaning" value={bulkMeaning} onChange={e => setBulkMeaning(e.target.value)}><option value="">Keep each column's meaning</option>{["unknown", "gauge", "counter", "rate", "window statistic"].map(m => <option key={m}>{m}</option>)}</select></label>
-              <button disabled={bulkScope === "selected" && !bulkSelection.length} onClick={() => void bulkApply()}>Apply bulk interpretation</button>
-              <p>Applies one explicit edit to the saved interpretation, preserving its current axis and other columns. Individual unsaved draft edits are not included.</p>
-            </fieldset>
-            <table aria-label="Metric column interpretation"><thead><tr><th>Select</th><th>Column</th><th>Unit</th><th>Meaning</th></tr></thead><tbody>{columns.map((c, i) => <tr key={c.name}>
-              <td><input type="checkbox" aria-label={`Select column ${c.name}`} disabled={group.snapshot || !c.numeric || pending} checked={bulkSelection.includes(i)} onChange={e => setBulkSelection(e.target.checked ? [...bulkSelection, i] : bulkSelection.filter(v => v !== i))} /></td>
-              <td>{c.name} · {c.numeric ? "numeric" : "text"}</td><td><input aria-label={`Unit ${c.name}`} disabled={group.snapshot} value={c.unit} onChange={e => setColumns(columns.map((v, j) => j === i ? { ...v, unit: e.target.value, unitSuggested: false } : v))} />{c.unitSuggested && <small>Suggested from column name</small>}</td>
-              <td><select aria-label={`Meaning ${c.name}`} disabled={group.snapshot} value={c.meaning} onChange={e => setColumns(columns.map((v, j) => j === i ? { ...v, meaning: e.target.value as MetricColumn["meaning"], meaningSuggested: false } : v))}>{["unknown", "gauge", "counter", "rate", "window statistic"].map(m => <option key={m}>{m}</option>)}</select>{c.meaningSuggested && <small>Suggested from statistic suffix</small>}</td>
-            </tr>)}</tbody></table>
-            <button disabled={group.snapshot || pending} onClick={async () => { setPending(true); state.setError(""); try { await metricAction({ op: "interpret", id: source.id, table: state.table, columns, axis }); await state.refresh(source.id); setNotice("Interpretation applied. Existing snapshots are unchanged."); } catch (e) { fail(e); } finally { setPending(false); } }}>Apply interpretation</button>
-            {source.tables.length > 1 && <fieldset disabled={group.snapshot}><legend>Declared companion join</legend>
-              <label>Companion group<select aria-label="Metric join group" value={join.right} onChange={e => setJoin({ ...join, right: Number(e.target.value), rightColumn: 0 })}>{source.tables.map((t, i) => i !== state.table && <option key={i} value={i}>{filename(t.path)}</option>)}</select></label>
-              <label>Key in this group<select aria-label="Metric left key" value={join.leftColumn} onChange={e => setJoin({ ...join, leftColumn: Number(e.target.value) })}>{group.columns.map((c, i) => <option key={i} value={i}>{c.name}</option>)}</select></label>
-              <label>Key in companion<select aria-label="Metric right key" value={join.rightColumn} onChange={e => setJoin({ ...join, rightColumn: Number(e.target.value) })}>{source.tables[join.right]?.columns.map((c, i) => <option key={i} value={i}>{c.name}</option>)}</select></label>
-              <label>Numeric tolerance in key units (blank = exact)<input aria-label="Metric join tolerance" type="number" min="0" step="any" value={join.tolerance ?? ""} onChange={e => setJoin({ ...join, tolerance: e.target.value === "" ? null : Number(e.target.value) })} /></label>
-              <button onClick={async () => { state.setError(""); try { await metricAction({ op: "join", id: source.id, rules: [...source.joins.filter(r => r.left !== state.table || r.right !== join.right), join] }); await state.refresh(source.id); setInspection(null); setNotice("Declared join saved. Missing or ambiguous matches remain unjoined."); } catch (e) { fail(e); } }}>Set join rule</button>
-              <button onClick={async () => { state.setError(""); try { await metricAction({ op: "join", id: source.id, rules: source.joins.filter(r => r.left !== state.table) }); await state.refresh(source.id); setInspection(null); } catch (e) { fail(e); } }}>Clear this group's joins</button>
-            </fieldset>}
-            <p>{source.joins.length} declared join rules. Unmatched files are unjoined; grouping does not align clocks.</p>
-            <ul className="metric-join-rules">{source.joins.map((r, i) => <li key={i}>{filename(source.tables[r.left].path)} [{source.tables[r.left].columns[r.leftColumn].name}] ↔ {filename(source.tables[r.right].path)} [{source.tables[r.right].columns[r.rightColumn].name}] · {r.tolerance === null ? "exact key" : `±${r.tolerance} ${source.tables[r.left].columns[r.leftColumn].unit}`}</li>)}</ul>
-          </div>}
-
-       </>}
-       {(tab==="File details"||!source)&&<div className="metric-document">      <details className="metric-paths" open={tab === "File details" || !source}><summary>Import or save by path</summary>
-        <label>CSV paths · one per line<textarea aria-label="Metric import paths" value={paths} onChange={e => setPaths(e.target.value)} /></label>
-        <button disabled={state.busy || !paths.trim()} onClick={() => void state.start(paths.split("\n").map(s => s.trim()).filter(Boolean))}>Import paths</button>
-        <button disabled={state.busy || !paths.trim()} onClick={() => void state.start([paths.trim()], true)}>Open snapshot path</button>
-        <label>New snapshot path<input aria-label="Metric snapshot path" value={savePath} onChange={e => setSavePath(e.target.value)} /></label>
-        <button disabled={!ready || pending || !savePath} onClick={() => void persist(savePath)}>Save snapshot path</button>
-      </details>
-</div>}
-       {ready&&(tab==="Time series"||tab==="Rows")&&<div className={`metric-row-dock ${tab==="Rows"?"is-full":""}`}><header><strong>Rows</strong><span title="Long text is previewed; inspect a row for its complete original cells.">{span[1]-span[0]} in range</span><label>Go to row<input aria-label="Metric row number" type="number" min={1} max={rows} value={rowIndex} onChange={e=>setRowIndex(Number(e.target.value))} onKeyDown={e=>{if(e.key==="Enter")void inspect(rowIndex-1);}}/></label><button onClick={()=>void inspect(rowIndex-1)}>Inspect row</button></header><div className="metric-table-scroll"><table className="analysis-table" aria-label="Original metric rows"><thead><tr><th>Row</th>{group.columns.map((c,i)=><th key={i}>{c.name}<small>{c.unit}{c.unitSuggested?" *":""}</small></th>)}</tr></thead><tbody>{pageRows.map(r=><tr key={r.index} className={inspection?.row.index===r.index?"is-selected":""} aria-selected={inspection?.row.index===r.index}><td><button onClick={()=>void inspect(r.index)}>Row {r.index+1}</button></td>{r.cells.map((v,i)=><td key={i} title={r.truncatedColumns?.includes(i)?"Text preview · inspect this row for the full original value":undefined}>{typeof v==="string"&&v.length>80?<span title={v}>{v.slice(0,80)}…</span>:cell(v)}</td>)}</tr>)}</tbody></table></div><footer><span>{rows.toLocaleString()} retained · showing {pageRows[0]?.index!==undefined?pageRows[0].index+1:0}–{pageRows[pageRows.length-1]?.index!==undefined?pageRows[pageRows.length-1]!.index+1:0}</span><button disabled={pageStart<=span[0]} onClick={()=>setPageStart(Math.max(span[0],pageStart-50))}>Previous 50</button><button disabled={Math.max(span[0],pageStart)+50>=span[1]} onClick={()=>setPageStart(Math.min(span[1]-1,Math.max(span[0],pageStart)+50))}>Next 50</button></footer></div>}
-      </main>
-      {showInspector&&group&&<aside className="metric-inspector" aria-label="Inspected metric row"><header><strong>Row details</strong><button aria-label="Close metric row details" onClick={()=>setShowInspector(false)}>×</button></header>{inspection?<><h3>Row {inspection.row.index+1} · CSV line {inspection.row.line}</h3><p>{xLabel}: {format(inspection.row.x)}</p>{renderRow(inspection.row,group.columns)}{source.tables.length>1&&!inspection.companions.length&&<p>Companions unjoined: declare a named-key rule in Column meanings.</p>}{inspection.companions.map(c=><section key={c.table}><h3>{filename(source.tables[c.table].path)} · {c.state}</h3>{c.row?renderRow(c.row,source.tables[c.table].columns):<p>Unjoined; no unique match.</p>}</section>)}</>:<p>Click the chart or an original row to inspect every column and any declared companions.</p>}</aside>}
-    </div>
-  </section>;
+import {useEffect,useLayoutEffect,useRef,useState} from "react";
+import {open,save} from "@tauri-apps/plugin-dialog";
+import {metricAction,useMetrics,type MetricView} from "../../store/metricStore";
+import {useLayout} from "../../store/layoutStore";
+import type {MetricColumn,MetricGraph,MetricInspection,MetricRow,MetricSummary} from "../../types/profileSource";
+import {worstKeyColumn,worstKeyValue} from "../../lib/metricRowKey";
+import MetricPlot,{MetricOverview} from "../profiling/MetricPlot";
+import MetricRows from "../profiling/MetricRows";
+import MetricInterpretation from "../profiling/MetricInterpretation";
+import {axisTitle,clampRows,metricNumber,metricTime,seriesColor} from "../profiling/metricPresentation";
+const filename=(path:string)=>path.split("/").pop()??path;
+const text=(value:number|string|null)=>value===null||value===""?"Empty":String(value);
+export default function MetricImportPanel(){
+ const state=useMetrics(),source=state.sources.find(s=>s.id===state.selected),group=source?.tables[state.table],rows=source?.rows[state.table]??0;
+ const focus=useLayout(s=>s.profilerFocus),setFocus=useLayout(s=>s.setProfilerFocus);
+ const [tab,setTab]=useState("Time series"),[visible,setVisible]=useState<number[]>([]),[search,setSearch]=useState("");
+ const [span,setSpan]=useState<[number,number]>([0,0]),[selection,setSelection]=useState<[number,number]|null>(null),[bounds,setBounds]=useState<[MetricRow,MetricRow]|null>(null);
+ const [charts,setCharts]=useState<MetricGraph[]>([]),[overview,setOverview]=useState<MetricGraph|null>(null),[summary,setSummary]=useState<MetricSummary|null>(null),[summaryState,setSummaryState]=useState("");
+ const [inspection,setInspection]=useState<MetricInspection|null>(null),[rowIndex,setRowIndex]=useState(1),[column,setColumn]=useState(0),[keyChoice,setKeyChoice]=useState<number|null>(null),[worst,setWorst]=useState<MetricRow[]>([]);
+ const [mode,setMode]=useState<"line"|"points"|"windows">("line"),[scale,setScale]=useState<"unit"|"separate">("unit"),[showSources,setShowSources]=useState(true),[inspector,setInspector]=useState<boolean|null>(null),[dockHeight,setDockHeight]=useState(240);
+ const [compact,setCompact]=useState(false);
+ const [paths,setPaths]=useState(""),[savePath,setSavePath]=useState(""),[notice,setNotice]=useState(""),[pending,setPending]=useState(false),[loaded,setLoaded]=useState("");
+ const key=`${source?.id}:${state.table}:${group?.interpretationRevision}`,viewKey=`${source?.id}:${state.table}`,current=useRef(key);current.current=key;
+ const main=useRef<HTMLDivElement>(null),rowSeq=useRef(0),rangeSeq=useRef(0),lastView=useRef<MetricView|null>(null),ready=!!group&&rows>0;
+ const fail=(error:unknown)=>state.setError(String(error));
+ useEffect(()=>{const node=main.current;if(!node)return;const observer=new ResizeObserver(([v])=>setCompact(v.contentRect.height<650));observer.observe(node);return()=>observer.disconnect();},[]);
+ const range=selection??span,primary=visible[0]??column;
+ if(loaded===key)lastView.current={column,span,selection,rowIndex,inspected:inspection?.row.index??null,visibleColumns:visible,analysisTab:tab,showSources,inspectorOpen:inspector,dockHeight,displayMode:mode,scaleMode:scale,worstKeyColumn:keyChoice,settings:false,scrollTop:0,showWorst:worst.length>0};
+ useLayoutEffect(()=>{
+  const saved=useMetrics.getState().views[viewKey];
+  const numeric=group?.columns.map((c,i)=>({c,i})).filter(({c,i})=>c.numeric&&i!==group.axis.column&&!/^(elapsed|time|timestamp)(_|$)/i.test(c.name))??[];
+  const first=saved?.column??numeric[0]?.i??0;
+  setColumn(first);setVisible(saved?.visibleColumns??numeric.filter(v=>v.c.unit===group?.columns[first]?.unit).slice(0,4).map(v=>v.i));
+  setSpan(saved?.span??[0,rows]);setSelection(saved?.selection??null);setInspection(null);setRowIndex(saved?.rowIndex??1);setTab(saved?.analysisTab??"Time series");setShowSources(saved?.showSources??true);setInspector(saved?.inspectorOpen??null);setDockHeight(saved?.dockHeight??240);setMode(saved?.displayMode??"line");setScale(saved?.scaleMode??"unit");setKeyChoice(saved?.worstKeyColumn??null);
+  setCharts([]);setOverview(null);setSummary(null);setWorst([]);setBounds(null);setLoaded(key);rowSeq.current++;rangeSeq.current++;
+  if(saved?.inspected!==null&&saved?.inspected!==undefined)void inspect(saved.inspected,false);
+  return()=>{if(group&&lastView.current)state.saveView(viewKey,lastView.current);};
+  // Each source and interpretation restores only bounded view state.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+ },[key,rows]);
+ useEffect(()=>{let alive=true;if(!source||!ready||loaded!==key)return;setCharts([]);
+  void Promise.all(visible.slice(0,8).map(c=>metricAction<MetricGraph>({op:"graph",id:source.id,table:state.table,column:c,start:span[0],end:span[1]}))).then(v=>{if(alive)setCharts(v);}).catch(e=>{if(alive)fail(e);});return()=>{alive=false;};
+ },[key,loaded,visible.join(","),span[0],span[1],ready]);
+ useEffect(()=>{let alive=true;if(!source||!ready||loaded!==key||!group?.columns[primary]?.numeric)return;
+  void metricAction<MetricGraph>({op:"graph",id:source.id,table:state.table,column:primary,start:0,end:rows}).then(v=>{if(alive)setOverview(v);}).catch(e=>{if(alive)fail(e);});return()=>{alive=false;};
+ },[key,loaded,primary,ready,rows]);
+ useEffect(()=>{let alive=true;let retry:ReturnType<typeof setTimeout>;if(!source||!ready||loaded!==key||!visible.length){setSummary(null);return;}setSummary(null);setSummaryState("Calculating retained-value summaries…");
+  const run=()=>{void metricAction<MetricSummary>({op:"summary",id:source.id,table:state.table,columns:visible,start:range[0],end:range[1]}).then(v=>{if(alive){setSummary(v);setSummaryState("");}}).catch(e=>{if(!alive)return;if(String(e).includes("already running")){retry=setTimeout(run,120);}else setSummaryState(String(e));});};
+  retry=setTimeout(run,80);return()=>{alive=false;clearTimeout(retry);};
+ },[key,loaded,ready,visible.join(","),range[0],range[1]]);
+ useEffect(()=>{let alive=true;if(!source||!ready||loaded!==key)return;void Promise.all([range[0],range[1]-1].map(row=>metricAction<MetricRow[]>({op:"page",id:source.id,table:state.table,start:row,count:1}))).then(v=>{if(alive)setBounds([v[0][0],v[1][0]]);}).catch(e=>{if(alive)fail(e);});return()=>{alive=false;};},[key,loaded,ready,range[0],range[1]]);
+ const joins=JSON.stringify(source?.joins??[]);
+ useEffect(()=>{if(inspection)void inspect(inspection.row.index,false);},[joins]);
+ useEffect(()=>{const escape=(e:KeyboardEvent)=>{if(e.key==="Escape"&&focus)setFocus(false);};window.addEventListener("keydown",escape);return()=>window.removeEventListener("keydown",escape);},[focus]);
+ async function inspect(index:number,reveal=true){if(!source)return;const n=++rowSeq.current;try{const result=await metricAction<MetricInspection>({op:"row",id:source.id,table:state.table,row:index});if(n===rowSeq.current){setInspection(result);setRowIndex(index+1);if(reveal)setInspector(true);}}catch(e){if(n===rowSeq.current)fail(e);}}
+ const view=(a:number,b:number)=>setSpan(clampRows(a,b,rows));
+ const hover=(x:number)=>metricAction<MetricRow>({op:"hover",id:source!.id,table:state.table,start:span[0],end:span[1],x});
+ const pick=async(x:number)=>{try{const row=await hover(x);if(current.current===key)void inspect(row.index);}catch(e){fail(e);}};
+ const xRange=async(a:number,b:number,zoom=false)=>{if(!source)return;const n=++rangeSeq.current;try{const result=await Promise.all([a,b].map(x=>metricAction<MetricRow>({op:"hover",id:source.id,table:state.table,start:0,end:rows,x})));if(n===rangeSeq.current&&current.current===key){const next=clampRows(Math.min(...result.map(r=>r.index)),Math.max(...result.map(r=>r.index))+1,rows);if(zoom)setSpan(next);else{setSelection(next);if(inspection&&(inspection.row.index<next[0]||inspection.row.index>=next[1]))setInspection(null);}}}catch(e){fail(e);}};
+ const go=()=>{const index=Math.max(0,Math.min(rows-1,rowIndex-1));if(index<range[0]||index>=range[1]){setSelection(null);if(index<span[0]||index>=span[1])view(index-50,index+51);}void inspect(index);};
+ const rank=async()=>{if(!source)return;try{const values=await metricAction<MetricRow[]>({op:"worst",id:source.id,table:state.table,column,start:range[0],end:range[1],count:20});if(current.current===key)setWorst(values);}catch(e){fail(e);}};
+ useEffect(()=>{setWorst([]);if(tab==="Largest values")void rank();},[key,column,range[0],range[1],tab]);
+ const choose=async(snapshot:boolean)=>{try{const result=await open({multiple:!snapshot,filters:[{name:snapshot?"Metric snapshot":"Metric CSV",extensions:snapshot?["crmetrics"]:["csv"]}]});if(result)void state.start(Array.isArray(result)?result:[result],snapshot);}catch(e){fail(e);}};
+ const persist=async(path:string)=>{if(!source)return;setPending(true);try{await metricAction({op:"save",id:source.id,path,ranges:source.rows.map((n,i)=>i===state.table?range:[0,n])});setNotice(`Immutable snapshot saved: ${path}. Current range in this file; all retained companion rows.`);}catch(e){fail(e);}finally{setPending(false);}};
+ const saveDialog=async()=>{try{const path=await save({defaultPath:`${filename(group?.path??"metrics").replace(/\.[^.]*$/,"")}-${Date.now()}.crmetrics`,filters:[{name:"Metric snapshot",extensions:["crmetrics"]}]});if(path)await persist(path);}catch(e){fail(e);}};
+ const resize=(event:React.PointerEvent)=>{const node=main.current;if(!node)return;const initial=event.clientY,height=dockHeight;(event.target as Element).setPointerCapture(event.pointerId);const move=(e:PointerEvent)=>setDockHeight(Math.max(140,Math.min(node.clientHeight*.6,height+initial-e.clientY)));const up=()=>{window.removeEventListener("pointermove",move);window.removeEventListener("pointerup",up);window.removeEventListener("pointercancel",up);};window.addEventListener("pointermove",move);window.addEventListener("pointerup",up);window.addEventListener("pointercancel",up);};
+ const rowKey=worstKeyColumn(group?.columns??[],group?.axis??{kind:"ordinal",column:null,windowSeconds:null},keyChoice),axisKey=group?.axis.kind!=="ordinal"&&rowKey===group?.axis.column;
+ const issues=(group?.coverage.invalid??0)+(group?.coverage.unsupported??0),trackKeys=[...new Set(charts.map(g=>scale==="separate"?String(g.column):group!.columns[g.column].unit))];
+ const selectionX=selection&&bounds?{startX:bounds[0].x,endX:bounds[1].x}:null;
+ const facts=(values:[string,React.ReactNode][])=> <dl className="metric-inspector-facts">{values.map(([label,value])=><div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}</dl>;
+ const renderRow=(row:MetricRow,columns:MetricColumn[])=> <dl className="metric-row">{columns.map((c,i)=><div key={i}><dt>{c.name}<small>{c.unit}{c.unitSuggested?" *":""} · {c.meaning}{c.meaningSuggested?" *":""}</small></dt><dd><MetricCell value={row.cells[i]}/></dd></div>)}</dl>;
+ return <section className="metric-import-panel profiler-panel analysis-panel metric-workbench" aria-label="Imported metric sources">
+  <header className="analysis-toolbar profiler-toolbar"><div className="analysis-title"><strong>{group?filename(group.path):"Imported measurements"}</strong><span>{group?`${rows.toLocaleString()} rows · ${group.snapshot?"Immutable snapshot":group.completion}`:"Explore your program’s recorded measurements"}</span></div><button disabled={state.busy} onClick={()=>void choose(false)}>Open CSV…</button><button disabled={state.busy} onClick={()=>void choose(true)}>Open snapshot…</button><button disabled={!ready||pending} onClick={()=>void saveDialog()}>Save snapshot…</button><button aria-pressed={focus} title="Temporarily give this editor the workspace. Escape restores the surrounding panels." onClick={()=>setFocus(!focus)}>{focus?"Exit focus":"Focus analysis"}</button></header>
+  {state.error&&<p className="analysis-alert" role="alert">{state.error}<button aria-label="Dismiss metric error" onClick={()=>state.setError("")}>×</button></p>}{notice&&<p className="metric-notice" role="status">{notice}<button aria-label="Dismiss metric notice" onClick={()=>setNotice("")}>×</button></p>}
+  {source?.state==="loading"&&<div className="analysis-progress" role="status" aria-label="Metric import progress"><progress max={source.totalBytes||1} value={source.bytesRead}/>{source.bytesRead.toLocaleString()} / {source.totalBytes.toLocaleString()} bytes<button onClick={()=>void metricAction({op:"cancel",id:source.id}).catch(fail)}>Cancel import</button></div>}{source?.error&&<p className="analysis-alert" role="alert">{source.error}</p>}
+  <div className="metric-workspace profiler-results">
+   {showSources&&<aside className="analysis-sources metric-sources" aria-label="Metric sources and columns"><header><strong>Sources</strong><button aria-label="Collapse metric sources" onClick={()=>setShowSources(false)}>‹</button></header>{state.sources.length>1&&<label>Source set<select aria-label="Metric source set" value={state.selected} onChange={e=>state.choose(e.target.value)}>{state.sources.map(s=><option key={s.id} value={s.id}>{filename(s.paths[0]??"Import")}</option>)}</select></label>}<div className="metric-file-list">{source?.tables.map((t,i)=><button className={`analysis-source ${state.table===i?"is-selected":""}`} key={i} aria-pressed={state.table===i} onClick={()=>state.setTable(i)}><strong><i className={`metric-source-dot ${t.completion==="complete"?"":"is-partial"}`}/>{filename(t.path)}</strong><span>{source.rows[i].toLocaleString()} rows · {t.columns.length} columns</span><small>{t.snapshot?"Snapshot":t.completion}{t.coverage.invalid||t.coverage.unsupported?" · import issues":""}</small></button>)}</div>
+    {group&&<><header><strong>Columns</strong><small>{visible.length}/8 shown</small></header><input className="metric-column-search" aria-label="Search metric columns" placeholder="Search columns…" value={search} onChange={e=>setSearch(e.target.value)}/><div className="metric-column-list">{[...new Set(group.columns.filter(c=>c.numeric).map(c=>c.unit))].map(unit=><div className="metric-unit-group" key={unit}><h4>{unit==="unitless"?"Unitless / unspecified":unit}</h4>{group.columns.map((c,i)=>c.numeric&&c.unit===unit&&c.name.toLowerCase().includes(search.toLowerCase())&&<label key={i} title={`${c.name} · ${c.meaning}${c.meaningSuggested?" (suggested)":""}`}><input type="checkbox" aria-label={`Plot ${c.name}`} checked={visible.includes(i)} disabled={!visible.includes(i)&&visible.length>=8} onChange={e=>setVisible(e.target.checked?[...visible,i]:visible.filter(n=>n!==i))}/><span className="metric-swatch" style={{background:seriesColor(i)}}/><span>{c.name}<small>{c.unit}{c.unitSuggested?" *":""}</small></span></label>)}</div>)}</div><footer><span>* Suggested interpretation</span><button onClick={()=>setTab("Column meanings")}>Manage columns…</button></footer></>}
+   </aside>}
+   <main className={`metric-analysis ${compact?"is-compact":""}`} ref={main}>
+    <nav className="analysis-tabs metric-view-tabs" aria-label="Metric analysis views">{!showSources&&<button onClick={()=>setShowSources(true)}>Sources ›</button>}{["Time series","Largest values","Rows","Import issues"].map(t=><button key={t} aria-pressed={tab===t} onClick={()=>setTab(t)}>{t}{t==="Import issues"&&issues?` (${issues})`:""}</button>)}<div className="metric-view-spacer"/><button aria-pressed={tab==="Column meanings"} onClick={()=>setTab("Column meanings")}>Columns…</button><button aria-pressed={tab==="File details"} onClick={()=>setTab("File details")}>File details</button><button aria-expanded={inspector??undefined} onClick={()=>setInspector(inspector===null?(main.current?.parentElement?.clientWidth??0)<=1190:!inspector)}>Inspector</button></nav>
+    {!source&&<div className="metric-empty analysis-empty"><div className="metric-empty-symbol">⌁</div><h2>Explore recorded measurements</h2><p>Open a finished CSV or a set of companion files. Plot columns, select a range and inspect the original values.</p><button className="analysis-primary" onClick={()=>void choose(false)}>Choose CSV files…</button><p>No process connection required.</p></div>}
+    {group&&tab==="Time series"&&ready&&<><div className="metric-range-toolbar"><span>View</span><div className="metric-segment"><button aria-pressed={span[0]===0&&span[1]===rows} onClick={()=>view(0,rows)}>Full</button><button aria-label="Pan left" onClick={()=>view(span[0]-(span[1]-span[0])/2,span[1]-(span[1]-span[0])/2)}>←</button><button aria-label="Pan right" onClick={()=>view(span[0]+(span[1]-span[0])/2,span[1]+(span[1]-span[0])/2)}>→</button><button aria-label="Zoom in" onClick={()=>view(span[0]+(span[1]-span[0])/4,span[1]-(span[1]-span[0])/4)}>+</button><button aria-label="Zoom out" onClick={()=>view(span[0]-(span[1]-span[0])/2,span[1]+(span[1]-span[0])/2)}>−</button></div><label>Y axes<select aria-label="Metric axis layout" value={scale} onChange={e=>setScale(e.target.value as typeof scale)}><option value="unit">Group by unit</option><option value="separate">Separate series</option></select></label><label>Draw<select aria-label="Metric display mode" value={mode} onChange={e=>setMode(e.target.value as typeof mode)}><option value="line">Line guide</option><option value="points">Points / extrema</option><option value="windows">Declared windows</option></select></label><button disabled={!selection} onClick={()=>setSelection(null)}>Clear selection</button></div>
+     <div className="metric-tracks" aria-busy={!charts.length&&visible.length>0}>{trackKeys.map(track=>{const graphs=charts.filter(g=>(scale==="separate"?String(g.column):group.columns[g.column].unit)===track);return <MetricPlot key={track} graphs={graphs} columns={group.columns} axis={group.axis} unit={group.columns[graphs[0].column].unit} mode={mode} selection={selectionX} selected={inspection?.row??null} thresholds={(group.thresholds??[]).filter(t=>graphs.some(g=>g.column===t.column))} onPick={x=>void pick(x)} onSelect={(a,b)=>void xRange(a,b)} onZoom={(a,b)=>void xRange(a,b,true)} onHover={hover}/>;})}{!visible.length&&<div className="analysis-empty">Choose a numeric column from the Columns pane.</div>}</div>
+     <div className="metric-axis-caption"><strong>{axisTitle(group.axis)}</strong><span>{group.axis.windowSeconds?`Declared window ${group.axis.windowSeconds} s`:"Window duration unknown"} · File clock only</span></div>
+     {overview&&charts[0]&&<MetricOverview graph={overview} axis={group.axis} column={group.columns[primary]} viewport={[charts[0].xStart,charts[0].xEnd]} rowRange={span} onViewport={(a,b)=>void xRange(a,b,true)} onRows={view}/>}
+     <p className="metric-graph-note">{compact?"Rows are available in the Rows tab · ":""}Drag to select · Shift-drag to zoom · Click for original row · {mode==="line"?"Lines guide the eye between original values; gaps stay open.":"Extrema preserve minimum and maximum values."} No percentile aggregation.</p>
+     <div role="separator" aria-label="Resize metric rows" aria-orientation="horizontal" tabIndex={0} aria-valuemin={140} aria-valuemax={Math.round((main.current?.clientHeight??700)*.6)} aria-valuenow={Math.round(dockHeight)} className="metric-dock-resize" onPointerDown={resize} onKeyDown={e=>{if(e.key==="ArrowUp"||e.key==="ArrowDown"){e.preventDefault();setDockHeight(Math.max(140,Math.min((main.current?.clientHeight??700)*.6,dockHeight+(e.key==="ArrowUp"?20:-20))));}}}><span/></div>
+    </>}
+    {group&&(tab==="Column meanings")&&<MetricInterpretation source={source!} table={state.table} onRefresh={()=>state.refresh(source!.id)} onError={fail} onNotice={setNotice}/>}
+    {group&&ready&&(tab==="Rows"||tab==="Time series")&&<div className={`metric-row-dock ${tab==="Rows"?"is-full":""}`} style={tab==="Time series"?{height:dockHeight}:undefined}><header><button aria-pressed onClick={()=>setTab("Rows")}>Rows</button><button onClick={()=>setTab("Column meanings")}>Column meanings</button><span>{selection?"Selected range":"Visible range"}</span><label>Go to row<input aria-label="Metric row number" type="number" min={1} max={rows} value={rowIndex} onChange={e=>setRowIndex(Number(e.target.value))} onKeyDown={e=>{if(e.key==="Enter")go();}}/></label><button onClick={go}>Inspect row</button></header><MetricRows id={source!.id} table={state.table} revision={group.interpretationRevision} columns={group.columns} range={range} selected={inspection?.row.index??null} onSelect={index=>void inspect(index)}/></div>}
+    {group&&tab==="Largest values"&&<div className="metric-ranking"><header><h3>{group.axis.windowSeconds?"Worst windows":"Largest retained values"}</h3><p>Ranks the chosen original column in the {selection?"selected":"visible"} range. No causal or performance verdict.</p></header><div className="analysis-field-row"><label>Rank by<select aria-label="Metric series" value={column} onChange={e=>setColumn(Number(e.target.value))}>{group.columns.map((c,i)=>c.numeric&&<option key={i} value={i}>{c.name} · {c.unit}</option>)}</select></label><label>Row key<select aria-label="Metric worst key" disabled={axisKey} value={axisKey?String(rowKey):keyChoice===null?"auto":String(keyChoice)} onChange={e=>setKeyChoice(e.target.value==="auto"?null:Number(e.target.value))}><option value="auto">Auto · time / elapsed column</option>{group.columns.map((c,i)=><option key={i} value={i}>{c.name}</option>)}</select></label><button onClick={()=>void rank()}>Find worst windows / largest values</button></div><table className="analysis-table" aria-label="Worst metric windows"><thead><tr><th>Original row</th><th>{rowKey===null?"Key":group.columns[rowKey].name}{axisKey?" (axis)":""}</th><th>{group.columns[column]?.name}</th></tr></thead><tbody>{worst.map(r=><tr key={r.index} className={inspection?.row.index===r.index?"is-selected":""}><td><button onClick={()=>void inspect(r.index)}>Row {r.index+1}</button></td><td>{rowKey===null?"No key":text(worstKeyValue(r,group.axis,rowKey))}</td><td>{text(r.cells[column])} {group.columns[column]?.unit}</td></tr>)}</tbody></table></div>}
+    {group&&tab==="Import issues"&&<div className="metric-document"><h3>Import integrity</h3><dl className="analysis-facts">{[["Retained rows",rows],["Invalid records",group.coverage.invalid],["Unsupported records",group.coverage.unsupported],["Empty cells",group.coverage.emptyCells],["Missing fields",group.coverage.missingColumns],["Unterminated records",group.coverage.unterminated]].map(([label,value])=><div key={label}><dt>{label}</dt><dd>{Number(value).toLocaleString()}</dd></div>)}</dl><p>Invalid rows are skipped as entire records. Empty cells count retained rows. Quoted multiline records are unsupported.</p>{group.coverage.examples.map((v,i)=><p key={i}>{v}</p>)}{!issues&&<p>No rejected records reported.</p>}</div>}
+    {group&&tab==="File details"&&<div className="metric-document"><h3>Source & provenance</h3><dl className="analysis-facts">{[["Path",group.path],["Source",group.sourceId],["Generation",group.generation],["File size",`${group.size.toLocaleString()} bytes`],["Modified",new Date(group.modifiedMs).toISOString()],["SHA-256",group.sha256],["Interpretation revision",group.interpretationRevision],["Snapshot",group.snapshot?"Immutable copy; original file not required":"Finished-file import"]].map(([label,value])=><div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}</dl><p>Snapshot scope: rows {range[0]+1}–{range[1]} in this file; all retained companion rows. Includes original values, interpretation, thresholds and provenance.</p><button onClick={()=>void state.remove(source!.id).catch(fail)}>Remove source set</button></div>}
+    {(tab==="File details"||!source)&&<div className="metric-document"><details className="metric-paths"><summary>Import or save by path</summary><label>CSV paths · one per line<textarea aria-label="Metric import paths" value={paths} onChange={e=>setPaths(e.target.value)}/></label><button disabled={state.busy||!paths.trim()} onClick={()=>void state.start(paths.split("\n").map(s=>s.trim()).filter(Boolean))}>Import paths</button><button disabled={state.busy||!paths.trim()} onClick={()=>void state.start([paths.trim()],true)}>Open snapshot path</button><label>New snapshot path<input aria-label="Metric snapshot path" value={savePath} onChange={e=>setSavePath(e.target.value)}/></label><button disabled={!ready||pending||!savePath} onClick={()=>void persist(savePath)}>Save snapshot path</button></details></div>}
+   </main>
+   {group&&inspector!==false&&<aside className={`metric-inspector ${inspector===true?"is-explicit":"is-auto"}`} aria-label="Metric inspector"><header><strong>Inspector</strong><button aria-label="Close metric inspector" onClick={()=>setInspector(false)}>×</button></header><section className="metric-inspector-card"><h3>Overview</h3>{facts([["File",<span title={group.path}>{filename(group.path)}</span>],["Rows",rows.toLocaleString()],["Columns",group.columns.length],["Clock",group.axis.kind==="ordinal"?"Row ordinal (not time)":group.axis.kind],["Time column",group.axis.column===null?"Not declared":group.columns[group.axis.column].name],["Units","* denotes a suggestion"],["Coverage",group.completion]])}</section><section className="metric-inspector-card"><h3>{selection?"Selection":"Visible range"}</h3>{facts([["Start",bounds?metricTime(bounds[0].x,group.axis.kind):"—"],["End",bounds?metricTime(bounds[1].x,group.axis.kind):"—"],["Rows",(range[1]-range[0]).toLocaleString()],["Window",group.axis.windowSeconds?`${group.axis.windowSeconds} s (declared)`:"Unknown"]])}<details className="metric-selection-edit"><summary>Edit range by row</summary><label>First row<input aria-label="Metric selection first row" type="number" value={range[0]+1} min={1} max={rows} onChange={e=>setSelection(clampRows(Number(e.target.value)-1,range[1],rows))}/></label><label>Last row<input aria-label="Metric selection last row" type="number" value={range[1]} min={1} max={rows} onChange={e=>setSelection(clampRows(range[0],Number(e.target.value),rows))}/></label><button disabled={!selection} onClick={()=>setSelection(null)}>Clear selection</button></details></section>
+    <section className="metric-inspector-card metric-summary"><h3>Statistics · {selection?"selection":"visible range"}</h3><p>Descriptive values of each retained column. Per-window percentiles stay per-window values.</p>{summaryState&&<p role="status">{summaryState}</p>}{summary&&<table aria-label="Metric selection statistics"><thead><tr><th>Column</th><th>Median</th><th>Q1–Q3</th><th>Max</th></tr></thead><tbody>{summary.columns.map(s=><tr key={s.column}><th title={`${group.columns[s.column].meaning}${group.columns[s.column].meaningSuggested?" (suggested)":""}`}><i style={{background:seriesColor(s.column)}}/>{group.columns[s.column].name}<small>{s.count.toLocaleString()} values · {s.missing} empty · {group.columns[s.column].unit}</small></th><td>{metricNumber(s.median)}</td><td>{metricNumber(s.q1)}–{metricNumber(s.q3)}</td><td>{metricNumber(s.maximum)}</td></tr>)}</tbody></table>}</section>
+    <section className="metric-inspector-card metric-inspected-row" aria-label="Inspected metric row"><h3>{inspection?`Row ${inspection.row.index+1}`:"Original row"}</h3>{inspection?<><p>CSV line {inspection.row.line} · {metricTime(inspection.row.x,group.axis.kind)}</p>{renderRow(inspection.row,group.columns)}{source!.tables.length>1&&!inspection.companions.length&&<p>Companions unjoined: declare a named-key rule in Column meanings.</p>}{inspection.companions.map(c=><details open key={c.table}><summary>{filename(source!.tables[c.table].path)} · {c.state}</summary>{c.row?renderRow(c.row,source!.tables[c.table].columns):<p>Unjoined: no unique match.</p>}</details>)}</>:<p>Click a chart value or table row to inspect its original cells and declared companions.</p>}</section>
+   </aside>}
+  </div>
+ </section>;
 }
-
-function MetricChart({graphs,columns,axis,unit,window:windowSeconds,selected,onPick,onRange}:{graphs:MetricGraph[];columns:MetricColumn[];axis:string;unit:string;window:number|null;selected:MetricRow|null;onPick:(x:number)=>void;onRange:(a:number,b:number)=>void}) {
- const drag=useRef<number|null>(null), [selection,setSelection]=useState<[number,number]|null>(null);
- const points=graphs.flatMap(g=>g.points),low=Math.min(...points.map(p=>p.min)),high=Math.max(...points.map(p=>p.max));
- const g=graphs[0];if(!g)return null;
- const duration=graphs.some(v=>columns[v.column].meaning==="window statistic")?windowSeconds:null;
- const end=g.xEnd+(duration??0),width=end-g.xStart;
- const x=(v:number)=>60+(width?(v-g.xStart)/width:0.5)*910;
- const y=(v:number)=>high===low?105:170-(v-low)/(high-low)*150;
- const axisValue=(v:number)=>axis==="epoch"||axis==="iso8601"?new Date(v*1000).toISOString():format(v);
- const fraction=(e:React.PointerEvent<SVGSVGElement>)=>{const r=e.currentTarget.getBoundingClientRect();return Math.max(0,Math.min(1,((e.clientX-r.left)/r.width*1000-60)/910));};
- const id=`metric-chart-description-${unit.replace(/[^a-z0-9]/gi,"")}`;
- return <figure className="profiler-chart metric-chart" aria-label="Imported metric timeline"><figcaption id={id}><strong>{unit}{graphs.some(v=>columns[v.column].unitSuggested)?" *":""}</strong><span>{graphs.map(v=><span key={v.column} style={{color:palette[v.column%palette.length]}}>{columns[v.column].name} </span>)}</span></figcaption>
-  <svg role="img" aria-label="Metric range graph" aria-describedby={id} data-start={g.start} data-end={g.end} data-column={g.column} viewBox="0 0 1000 210" preserveAspectRatio="none" onPointerDown={e=>{drag.current=fraction(e);e.currentTarget.setPointerCapture(e.pointerId);}} onPointerMove={e=>{if(drag.current!==null)setSelection([drag.current,fraction(e)]);}} onPointerUp={e=>{const a=drag.current,b=fraction(e);drag.current=null;setSelection(null);if(a===null)return;if(Math.abs(b-a)>.015){onRange(Math.min(a,b),Math.max(a,b));}else onPick(g.xStart+b*(g.xEnd-g.xStart));}} onPointerCancel={()=>{drag.current=null;setSelection(null);}}>
-   {[0,.25,.5,.75,1].map(t=><g key={t}><line x1={60} x2={970} y1={20+t*150} y2={20+t*150} stroke="#35414f"/><text x={50} y={24+t*150} textAnchor="end" fill="#a8b9cb" fontSize={11}>{format(high-(high-low)*t)}</text></g>)}
-   {graphs.map(v=><g key={v.column}>{v.points.map((p,i)=>columns[v.column].meaning==="window statistic"&&duration?<rect key={i} x={x(p.x)} y={y(p.max)} width={Math.max(2,x(p.until+duration)-x(p.x))} height={Math.max(2,y(p.min)-y(p.max))} fill={palette[v.column%palette.length]} opacity={.75}/>:<line key={i} x1={x((p.x+p.until)/2)} x2={x((p.x+p.until)/2)} y1={y(p.max)} y2={y(p.min)+2} stroke={palette[v.column%palette.length]} strokeWidth={2.5} strokeLinecap="round" vectorEffect="non-scaling-stroke"/>)}</g>)}
-   {selected&&selected.index>=g.start&&selected.index<g.end&&<line x1={x(selected.x)} x2={x(selected.x)} y1={16} y2={175} stroke="#ecf5ff" strokeDasharray="4 3" vectorEffect="non-scaling-stroke"/>}
-   {selection&&<rect x={60+Math.min(...selection)*910} y={16} width={Math.abs(selection[1]-selection[0])*910} height={160} fill="#579fea" opacity={.2}/>}
-   {[0,.25,.5,.75,1].map(t=><text key={t} x={60+t*910} y={198} textAnchor={t===0?"start":t===1?"end":"middle"} fill="#a8b9cb" fontSize={11}>{axisValue(g.xStart+(g.xEnd-g.xStart)*t)}</text>)}
-  </svg>
- </figure>;
-}
-
-function MetricCell({ value }: { value: number | string | null }) {
-  if (typeof value !== "string" || value.length <= 160) return <>{cell(value)}</>;
-  return <details className="metric-long-value"><summary>{value.slice(0, 90)}… <span>Show full value</span></summary><div>{value}</div></details>;
-}
+function MetricCell({value}:{value:number|string|null}){if(typeof value!=="string"||value.length<=160)return <>{text(value)}</>;return <details className="metric-long-value"><summary>{value.slice(0,90)}… Show full value</summary><div>{value}</div></details>;}

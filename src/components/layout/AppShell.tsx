@@ -270,6 +270,7 @@ export default function AppShell({ startProjectDialog = false, onCloseStartProje
   const setSidebarWidth = useLayout((s) => s.setSidebarWidth);
   const rightPanelWidth = useLayout((s) => s.rightPanelWidth);
   const setRightPanelWidth = useLayout((s) => s.setRightPanelWidth);
+  const profilerFocus = useLayout(s=>s.profilerFocus) && profilerActive;
   const bottomPanelHeight = useLayout((s) => s.bottomPanelHeight);
   const setBottomPanelHeight = useLayout((s) => s.setBottomPanelHeight);
 
@@ -303,7 +304,7 @@ export default function AppShell({ startProjectDialog = false, onCloseStartProje
 
       <div className="flex-1 flex min-h-0">
         <ActivityBar />
-        {sidebarVisible && (
+        {sidebarVisible && !profilerFocus && (
           <>
             <div style={{ width: sidebarWidth }} className="h-full shrink-0"><Sidebar /></div>
             <ResizeHandle orientation="vertical" onDrag={(delta) => setSidebarWidth(sidebarWidth + delta)} />
@@ -322,7 +323,7 @@ export default function AppShell({ startProjectDialog = false, onCloseStartProje
             </div>
             {remoteContext && !remoteEditing && <div className="absolute inset-0 flex flex-col min-h-0"><RemoteEditorPane context={remoteContext} /></div>}
           </div>
-          {bottomPanelVisible && (
+          {bottomPanelVisible && !profilerFocus && (
             <>
               <ResizeHandle orientation="horizontal" onDrag={(delta) => setBottomPanelHeight(bottomPanelHeight - delta)} />
               <div style={{ height: bottomPanelHeight }} className="shrink-0"><BottomPanel /></div>

@@ -1,6 +1,8 @@
 import { create } from "zustand";
 
 interface LayoutState {
+  profilerFocus: boolean;
+  setProfilerFocus: (focus:boolean)=>void;
   activeView: "solution" | "search" | "docs" | "debug" | "settings";
   setActiveView: (v: "solution" | "search" | "docs" | "debug" | "settings") => void;
   discoveryReveal: { path: string; serial: number } | null;
@@ -18,6 +20,7 @@ interface LayoutState {
 }
 
 export const useLayout = create<LayoutState>((set) => ({
+  profilerFocus:false, setProfilerFocus:profilerFocus=>set({profilerFocus}),
   activeView: "solution",
   setActiveView: (v) => set({ activeView: v }),
   discoveryReveal: null,

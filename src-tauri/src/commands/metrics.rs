@@ -16,6 +16,7 @@ struct Job {
     owner: String,
     paths: Vec<String>,
     cancel: AtomicBool,
+    summary_busy: AtomicBool,
     read: AtomicU64,
     total: AtomicU64,
     state: Mutex<String>,
@@ -82,6 +83,42 @@ pub enum Request {
         start: usize,
         end: usize,
         x: f64,
+    },
+    Hover {
+        id: String,
+        table: usize,
+        start: usize,
+        end: usize,
+        x: f64,
+    },
+    Summary {
+        id: String,
+        table: usize,
+        columns: Vec<usize>,
+        start: usize,
+        end: usize,
+    },
+    PreviewInterpret {
+        id: String,
+        table: usize,
+        columns: Vec<Column>,
+        axis: Axis,
+        rules: Option<Vec<JoinRule>>,
+        thresholds: Option<Vec<csv::Threshold>>,
+    },
+    CommitInterpret {
+        id: String,
+        table: usize,
+        columns: Vec<Column>,
+        axis: Axis,
+        rules: Vec<JoinRule>,
+        thresholds: Vec<csv::Threshold>,
+        expected_revision: u32,
+    },
+    Thresholds {
+        id: String,
+        table: usize,
+        thresholds: Vec<csv::Threshold>,
     },
     Graph {
         id: String,
@@ -186,6 +223,7 @@ impl MetricManager {
                 owner: owner.into(),
                 paths: paths.clone(),
                 cancel: AtomicBool::new(false),
+                summary_busy: AtomicBool::new(false),
                 read: AtomicU64::new(0),
                 total: AtomicU64::new(total),
                 state: Mutex::new("loading".into()),
@@ -268,6 +306,11 @@ impl MetricManager {
             | Request::Row { id, .. }
             | Request::Page { id, .. }
             | Request::Nearest { id, .. }
+            | Request::Hover { id, .. }
+            | Request::Summary { id, .. }
+            | Request::PreviewInterpret { id, .. }
+            | Request::CommitInterpret { id, .. }
+            | Request::Thresholds { id, .. }
             | Request::Graph { id, .. }
             | Request::Worst { id, .. }
             | Request::Interpret { id, .. }
@@ -324,6 +367,52 @@ impl MetricManager {
             })
             .map_err(|e| e.to_string());
         }
+        if let Request::Summary {
+            table,
+            columns,
+            start,
+            end,
+            ..
+        } = &request
+        {
+            if columns.len() > 8 || columns.is_empty() {
+                return Err("Choose 1–8 numeric columns".into());
+            }
+            if job.summary_busy.swap(true, Ordering::AcqRel) {
+                return Err("Summary already running; retry after it finishes".into());
+            }
+            struct Busy<'a>(&'a AtomicBool);
+            impl Drop for Busy<'_> {
+                fn drop(&mut self) {
+                    self.0.store(false, Ordering::Release);
+                }
+            }
+            let _busy = Busy(&job.summary_busy);
+            let (copied, n) = {
+                let data = job.data.lock().map_err(|e| e.to_string())?;
+                let t = data
+                    .as_ref()
+                    .and_then(|d| d.tables.get(*table))
+                    .ok_or("Source is not ready")?;
+                let end = (*end).min(t.lines.len());
+                if *start >= end {
+                    return Err("Empty summary range".into());
+                }
+                let mut copied = Vec::new();
+                let mut seen = std::collections::HashSet::new();
+                for c in columns {
+                    if !seen.insert(*c) {
+                        return Err("Duplicate summary column".into());
+                    }
+                    match t.values.get(*c) {
+                        Some(csv::Values::Numbers(v)) => copied.push((*c, v[*start..end].to_vec())),
+                        _ => return Err("Choose numeric summary columns".into()),
+                    }
+                }
+                (copied, end - *start)
+            };
+            return csv::summarize(copied, n, &job.cancel);
+        }
         let mut guard = job.data.lock().map_err(|e| e.to_string())?;
         let data = guard.as_mut().ok_or("Source is not ready")?;
         let table = |i: usize| {
@@ -333,6 +422,79 @@ impl MetricManager {
         };
         let json = |v| serde_json::to_value(v).map_err(|e| e.to_string());
         match request {
+            Request::Hover {
+                table: i,
+                start,
+                end,
+                x,
+                ..
+            } => {
+                let row = csv::nearest(table(i)?, start, end, x)?;
+                serde_json::to_value(csv::page(table(i)?, row, 1)?.remove(0))
+                    .map_err(|e| e.to_string())
+            }
+            Request::PreviewInterpret {
+                table: i,
+                columns,
+                axis,
+                rules,
+                thresholds,
+                ..
+            } => {
+                let saved = job.joins.lock().map_err(|e| e.to_string())?;
+                validate_settings(
+                    data,
+                    i,
+                    &columns,
+                    &axis,
+                    rules.as_deref().unwrap_or(&saved),
+                    thresholds.as_deref().unwrap_or(&table(i)?.meta.thresholds),
+                )
+            }
+            Request::CommitInterpret {
+                table: i,
+                columns,
+                axis,
+                rules,
+                thresholds,
+                expected_revision,
+                ..
+            } => {
+                let mut saved = job.joins.lock().map_err(|e| e.to_string())?;
+                if table(i)?.meta.interpretation_revision != expected_revision {
+                    return Err(
+                        "Interpretation changed; review the current values before applying".into(),
+                    );
+                }
+                validate_settings(data, i, &columns, &axis, &rules, &thresholds)?;
+                let t = data.tables.get_mut(i).unwrap();
+                t.interpret(columns, axis)?;
+                t.meta.thresholds = thresholds;
+                *saved = rules;
+                Ok(serde_json::Value::Null)
+            }
+            Request::Thresholds {
+                table: i,
+                thresholds,
+                ..
+            } => {
+                let t = data.tables.get_mut(i).ok_or("Unknown file group")?;
+                if t.meta.snapshot {
+                    return Err("Snapshot thresholds are immutable".into());
+                }
+                if thresholds.len() > 16
+                    || thresholds.iter().any(|r| {
+                        !r.value.is_finite()
+                            || r.label.len() > 80
+                            || !t.meta.columns.get(r.column).is_some_and(|c| c.numeric)
+                    })
+                {
+                    return Err("Choose up to 16 numeric thresholds with finite values and labels under 80 bytes".into());
+                }
+                t.meta.thresholds = thresholds;
+                t.meta.interpretation_revision += 1;
+                Ok(serde_json::Value::Null)
+            }
             Request::Row { table: i, row, .. } => Ok(
                 serde_json::json!({"row":table(i)?.row(row)?,"companions":csv::companions(data,i,row,&job.joins.lock().map_err(|e|e.to_string())?)?}),
             ),
@@ -454,20 +616,81 @@ impl MetricManager {
 }
 
 // Shared by individual and bulk edits, so neither can bypass snapshot, axis or join guards.
-fn apply_interpretation(
-    data: &mut Dataset,
+fn validate_settings(
+    data: &Dataset,
+    i: usize,
+    columns: &[Column],
+    axis: &Axis,
+    rules: &[JoinRule],
+    thresholds: &[csv::Threshold],
+) -> Result<serde_json::Value, String> {
+    let t = data.tables.get(i).ok_or("Unknown file group")?;
+    let mut preview = t.preview_interpretation(columns.to_vec(), axis)?;
+    if rules.len() > 8 {
+        return Err("Use at most eight companion rules".into());
+    }
+    for rule in rules {
+        if rule.left == rule.right || rule.tolerance.is_some_and(|v| !v.is_finite() || v < 0.) {
+            return Err("Invalid join rule".into());
+        }
+        let left = if rule.left == i {
+            columns
+        } else {
+            &data
+                .tables
+                .get(rule.left)
+                .ok_or("Unknown companion group")?
+                .meta
+                .columns
+        };
+        let right = if rule.right == i {
+            columns
+        } else {
+            &data
+                .tables
+                .get(rule.right)
+                .ok_or("Unknown companion group")?
+                .meta
+                .columns
+        };
+        let a = left
+            .get(rule.left_column)
+            .ok_or("Choose a named left key")?;
+        let b = right
+            .get(rule.right_column)
+            .ok_or("Choose a named right key")?;
+        if rule.tolerance.is_some() && (!a.numeric || !b.numeric || a.unit != b.unit) {
+            return Err("Toleranced joins require numeric keys with the same declared unit".into());
+        }
+    }
+    if thresholds.len() > 16
+        || thresholds.iter().any(|v| {
+            !v.value.is_finite()
+                || v.label.len() > 80
+                || !columns.get(v.column).is_some_and(|c| c.numeric)
+        })
+    {
+        return Err(
+            "Use up to 16 numeric threshold lines with finite values and short labels".into(),
+        );
+    }
+    preview["joins"] = serde_json::to_value(rules).unwrap();
+    preview["thresholds"] = serde_json::to_value(thresholds).unwrap();
+    Ok(preview)
+}
+fn check_join_units(
+    data: &Dataset,
     rules: &[JoinRule],
     i: usize,
-    columns: Vec<Column>,
-    axis: Axis,
+    columns: &[Column],
 ) -> Result<(), String> {
     let table = data.tables.get(i).ok_or("Unknown file group")?;
     if columns.len() != table.meta.columns.len() {
         return Err("Column schema changed".into());
     }
     for rule in rules.iter().filter(|r| r.tolerance.is_some()) {
-        let left = if rule.left == i {
-            &columns
+        let left: &[Column] = if rule.left == i {
+            columns
         } else {
             &data
                 .tables
@@ -476,8 +699,8 @@ fn apply_interpretation(
                 .meta
                 .columns
         };
-        let right = if rule.right == i {
-            &columns
+        let right: &[Column] = if rule.right == i {
+            columns
         } else {
             &data
                 .tables
@@ -490,6 +713,16 @@ fn apply_interpretation(
             return Err("Unit override conflicts with a declared toleranced join; edit or clear that join first".into());
         }
     }
+    Ok(())
+}
+fn apply_interpretation(
+    data: &mut Dataset,
+    rules: &[JoinRule],
+    i: usize,
+    columns: Vec<Column>,
+    axis: Axis,
+) -> Result<(), String> {
+    check_join_units(data, rules, i, &columns)?;
     data.tables.get_mut(i).unwrap().interpret(columns, axis)
 }
 
@@ -809,5 +1042,126 @@ mod tests {
         assert_eq!(std::fs::read(snap).unwrap(), bytes);
         manager.close("a");
         std::fs::remove_dir_all(root).unwrap();
+    }
+}
+
+#[cfg(test)]
+mod editor_completion_tests {
+    use super::*;
+    fn action(
+        manager: &MetricManager,
+        request: serde_json::Value,
+    ) -> Result<serde_json::Value, String> {
+        manager.handle("editor", serde_json::from_value(request).unwrap())
+    }
+    #[test]
+    fn preview_commit_quantiles_gaps_and_snapshot_thresholds() {
+        let dir = std::env::temp_dir().join(format!(
+            "metric-editor-{}-{}",
+            std::process::id(),
+            NEXT.fetch_add(1, Ordering::Relaxed)
+        ));
+        std::fs::create_dir_all(&dir).unwrap();
+        let file = dir.join("run.csv");
+        std::fs::write(
+            &file,
+            "elapsed_s,loop_ms_p99,note\n0,10,a\n1,,b\n2,30,c\nbad,record\n3,50,d\n",
+        )
+        .unwrap();
+        let manager = MetricManager::default();
+        let id = action(
+            &manager,
+            serde_json::json!({"op":"start","paths":[file],"snapshot":false}),
+        )
+        .unwrap()["id"]
+            .as_str()
+            .unwrap()
+            .to_owned();
+        let mut status = serde_json::Value::Null;
+        for _ in 0..500 {
+            status = action(&manager, serde_json::json!({"op":"status","id":id})).unwrap();
+            if status["state"] != "loading" {
+                break;
+            }
+            std::thread::sleep(std::time::Duration::from_millis(2));
+        }
+        let columns = status["tables"][0]["columns"].clone();
+        let axis = serde_json::json!({"kind":"elapsed","column":0,"windowSeconds":1.0});
+        let thresholds = serde_json::json!([{"column":1,"value":40.0,"label":"User budget"}]);
+        let preview = serde_json::json!({"op":"previewInterpret","id":id,"table":0,"columns":columns,"axis":axis,"rules":[],"thresholds":thresholds});
+        assert_eq!(action(&manager, preview).unwrap()["lastX"], 3.0);
+        assert_eq!(
+            action(&manager, serde_json::json!({"op":"status","id":id})).unwrap()["tables"][0]
+                ["axis"]["kind"],
+            "ordinal"
+        );
+        let revision = status["tables"][0]["interpretationRevision"]
+            .as_u64()
+            .unwrap();
+        let commit = serde_json::json!({"op":"commitInterpret","id":id,"table":0,"columns":columns,"axis":axis,"rules":[],"thresholds":thresholds,"expectedRevision":revision});
+        let mut invalid = commit.clone();
+        invalid["thresholds"][0]["column"] = serde_json::json!(999);
+        assert!(action(&manager, invalid).is_err());
+        assert_eq!(
+            action(&manager, serde_json::json!({"op":"status","id":id})).unwrap()["tables"][0]
+                ["interpretationRevision"],
+            revision
+        );
+        action(&manager, commit.clone()).unwrap();
+        assert!(action(&manager, commit).is_err());
+        let summary = action(
+            &manager,
+            serde_json::json!({"op":"summary","id":id,"table":0,"columns":[1],"start":0,"end":4}),
+        )
+        .unwrap();
+        assert_eq!(summary["columns"][0]["count"], 3);
+        assert_eq!(summary["columns"][0]["missing"], 1);
+        assert_eq!(summary["columns"][0]["median"], 30.0);
+        assert_eq!(summary["columns"][0]["q1"], 20.0);
+        assert_eq!(summary["columns"][0]["q3"], 40.0);
+        let graph = action(
+            &manager,
+            serde_json::json!({"op":"graph","id":id,"table":0,"column":1,"start":0,"end":4}),
+        )
+        .unwrap();
+        let vertices = graph["vertices"].as_array().unwrap();
+        assert_eq!(vertices.len(), 3);
+        assert!(vertices.iter().all(|v| v["breakBefore"] == true));
+        assert_eq!(vertices[2]["value"], 50.0);
+        let snapshot = dir.join("copy.crmetrics");
+        action(
+            &manager,
+            serde_json::json!({"op":"save","id":id,"path":snapshot,"ranges":[[0,4]]}),
+        )
+        .unwrap();
+        let bytes = std::fs::read(&snapshot).unwrap();
+        action(
+            &manager,
+            serde_json::json!({"op":"thresholds","id":id,"table":0,"thresholds":[]}),
+        )
+        .unwrap();
+        assert_eq!(std::fs::read(&snapshot).unwrap(), bytes);
+        let reopened = action(
+            &manager,
+            serde_json::json!({"op":"start","paths":[snapshot],"snapshot":true}),
+        )
+        .unwrap();
+        let sid = reopened["id"].as_str().unwrap();
+        let mut loaded = serde_json::Value::Null;
+        for _ in 0..500 {
+            loaded = action(&manager, serde_json::json!({"op":"status","id":sid})).unwrap();
+            if loaded["state"] != "loading" {
+                break;
+            }
+            std::thread::sleep(std::time::Duration::from_millis(2));
+        }
+        assert_eq!(loaded["tables"][0]["thresholds"], thresholds);
+        assert!(action(
+            &manager,
+            serde_json::json!({"op":"thresholds","id":sid,"table":0,"thresholds":[]})
+        )
+        .is_err());
+        manager.close("editor");
+        std::fs::remove_dir_all(dir).unwrap();
     }
 }
