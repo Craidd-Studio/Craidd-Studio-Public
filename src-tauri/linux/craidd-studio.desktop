@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=Craidd Studio
+Comment=A Linux desktop IDE for linked projects and debugging
+Exec=craidd-studio
+Icon=craidd-studio
+StartupWMClass=craidd-studio
+StartupNotify=true
+Categories=Development;IDE;
+Terminal=false

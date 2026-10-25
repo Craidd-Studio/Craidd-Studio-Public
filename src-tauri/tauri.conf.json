@@ -28,6 +28,14 @@
   "bundle": {
     "active": true,
     "targets": "all",
+    "linux": {
+      "deb": {
+        "desktopTemplate": "linux/hidden-desktop.desktop.hbs",
+        "files": {
+          "/usr/share/applications/craidd-studio.desktop": "linux/craidd-studio.desktop"
+        }
+      }
+    },
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",
