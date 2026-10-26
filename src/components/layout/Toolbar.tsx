@@ -28,6 +28,7 @@ function Toolbar() {
   const activeConfigName = useBuild((s) => s.activeConfigName);
 
   const linked = useLinkedWindows();
+  const ldiOrigin = linked.windows.find((item) => item.windowLabel === linked.ldiOriginLabel);
   const ldi = useLdi((state) => state.session);
   const blues = useLdi((state) => state.blues);
   const debugStatus = useDebug((s) => s.status);
@@ -206,6 +207,11 @@ function Toolbar() {
         )}
       </div>
       {native && <div className="ml-auto 2xl:hidden" />}
+
+      {ldiOrigin && <span className="text-[11px] text-blue-300 whitespace-nowrap"
+        title="Several C# windows share this solution. Native Debugging Breakpoints and Gold Linked Debug use the window where a Blue was last set.">
+        LDI origin: CS{ldiOrigin.windowId}{ldiOrigin.windowLabel === linked.ownWindowLabel ? " (this window)" : ""}
+      </span>}
 
       <WindowManager />
 

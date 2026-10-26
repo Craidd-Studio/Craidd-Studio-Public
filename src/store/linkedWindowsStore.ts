@@ -26,6 +26,8 @@ export interface LinkedSnapshot {
   activeActionId: number | null;
   activeCount: number;
   problems: (BuildProblem & { windowLabel: string; projectName: string })[];
+  /** Declared LDI origin; set only while several C# windows share the solution. */
+  ldiOriginLabel: string | null;
 }
 
 export interface LinkedMember {
@@ -66,7 +68,7 @@ interface LinkedView {
 const empty: LinkedSnapshot = {
   sequence: 0, linked: false, members: [], windows: [], canBuild: false,
   canRun: false, canDebug: false, debugAdapterAvailable: false, busy: false, activeAction: null, activeActionId: null, activeCount: 0,
-  problems: [],
+  problems: [], ldiOriginLabel: null,
 };
 
 export const useLinkedWindows = create<LinkedSnapshot & LinkedView>((set) => ({

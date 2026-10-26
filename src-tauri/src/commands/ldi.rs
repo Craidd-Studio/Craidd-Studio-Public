@@ -553,16 +553,56 @@ pub async fn set_ldi_blue(
     line: u32,
     partner_label: String,
     condition: Option<String>,
+    move_origin: Option<bool>,
 ) -> Result<Blue, String> {
     let owner = window.label().to_owned();
-    tauri::async_runtime::spawn_blocking(move || set_blue_for_label(&app, &owner, file, line, partner_label, condition))
-        .await.map_err(|error| error.to_string())?
+    tauri::async_runtime::spawn_blocking(move || {
+        if file.ends_with(".rs") {
+            return super::native_debug::set_blue(&app, &owner, &file, line, &partner_label, condition);
+        }
+        set_blue_declaring_origin(&app, &owner, file, line, partner_label, condition, move_origin.unwrap_or(false))
+    }).await.map_err(|error| error.to_string())?
+}
+
+/// Prefix of the error that asks the user before moving the LDI origin; the
+/// frontend confirms and retries with `move_origin`.
+const ORIGIN_MOVE_PROMPT: &str = "LDI_ORIGIN_MOVE:";
+
+/// Setting a Blue declares the clicked C# window as its solution's LDI origin
+/// (design-ldi-declared-origin.md). Taking the origin from a window that owns
+/// Blues needs explicit consent and discards that window's Blue intents.
+fn set_blue_declaring_origin(app: &AppHandle, owner: &str, file: String, line: u32, partner_label: String,
+    condition: Option<String>, move_origin: bool) -> Result<Blue, String> {
+    let competing = super::linked_windows::competing_ldi_origin(app, owner)?;
+    if let Some((current, window_id)) = &competing {
+        let manager = app.state::<LdiManager>();
+        let state = manager.0.lock().map_err(|error| error.to_string())?;
+        if state.pairs.get(current).is_some_and(|pair| !pair.cancelled.load(Ordering::Acquire)) {
+            return Err(format!("CS{window_id} is in a Gold Linked Debug session. Stop it before moving the LDI origin to this window."));
+        }
+        if state.blues.get(current).is_some_and(|blues| !blues.is_empty()) && !move_origin {
+            return Err(format!("{ORIGIN_MOVE_PROMPT}CS{window_id} owns this solution's Native Debugging Breakpoints. \
+                Move the LDI origin to this window? CS{window_id}'s Blue breakpoints will be removed."));
+        }
+    }
+    let undo = super::linked_windows::declare_ldi_origin(app, owner)?;
+    match set_blue_for_label(app, owner, file, line, partner_label, condition) {
+        Ok(blue) => {
+            if let Some((current, _)) = competing {
+                let manager = app.state::<LdiManager>();
+                let removed = manager.0.lock().map_err(|error| error.to_string())?.blues.remove(&current).is_some();
+                if removed { let _ = app.emit("craidd:ldi-blues", ()); }
+            }
+            Ok(blue)
+        }
+        Err(error) => {
+            if let Some(undo) = undo { super::linked_windows::restore_ldi_origin(app, undo); }
+            Err(error)
+        }
+    }
 }
 
 fn set_blue_for_label(app: &AppHandle, owner: &str, file: String, line: u32, partner_label: String, condition: Option<String>) -> Result<Blue, String> {
-    if file.ends_with(".rs") {
-        return super::native_debug::set_blue(app, owner, &file, line, &partner_label, condition);
-    }
     let (origin, partner) =
         super::linked_windows::ldi_selections(app, owner, &partner_label)?;
     let manager = app.state::<LdiManager>();
