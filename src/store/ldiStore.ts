@@ -50,6 +50,7 @@ export interface LdiSession {
 }
 export const useLdi = create<{ blues: LdiBlue[]; session: LdiSession | null; nativeSourceVersion: number }>(() => ({ blues: [], session: null, nativeSourceVersion: 0 }));
 let refreshSequence = 0;
+const ORIGIN_MOVE_PROMPT = "LDI_ORIGIN_MOVE:";
 let mutationVersion = 0;
 
 export async function refreshLdiBlues() {
@@ -66,7 +67,19 @@ export async function setLdiBlue(file: string, line: number, partnerLabel: strin
   const current = useSolution.getState();
   await publishLinkedWindow(current.solution, current.clnPath);
   const { invoke } = await import("@tauri-apps/api/core");
-  const blue = await invoke<LdiBlue>("set_ldi_blue", { file, line, partnerLabel, condition: condition ?? null });
+  const request = (moveOrigin: boolean) => invoke<LdiBlue>("set_ldi_blue",
+    { file, line, partnerLabel, condition: condition ?? null, moveOrigin });
+  let blue: LdiBlue;
+  try {
+    blue = await request(false);
+  } catch (error) {
+    // Several C# windows: the backend asks before taking the LDI origin from a
+    // window that owns Blues (design-ldi-declared-origin.md). Declining changes nothing.
+    const message = String(error);
+    if (!message.startsWith(ORIGIN_MOVE_PROMPT)) throw error;
+    if (!window.confirm(message.slice(ORIGIN_MOVE_PROMPT.length))) return;
+    blue = await request(true);
+  }
   ++mutationVersion;
   useLdi.setState((state) => ({ blues: [...state.blues.filter((point) =>
     point.originLabel !== blue.originLabel || point.file !== blue.file || point.line !== blue.line), blue] }));
