@@ -17,3 +17,4 @@ pub(crate) mod registry;
 mod fake_server;
 #[cfg(test)]
 mod tests;
+pub(crate) mod rust_adapter;

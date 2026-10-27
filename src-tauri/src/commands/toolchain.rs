@@ -40,7 +40,8 @@ fn catalog(language: &str) -> Result<&'static [(&'static str, &'static str)], St
     match language {
         "rust" => Ok(&[("build", "cargo"), ("compiler", "rustc"), ("manager", "rustup"),
             ("debugger", "lldb-dap"), ("debugger", "lldb-dap-19"), ("debugger", "lldb-dap-18"),
-            ("debugger", "lldb-dap-17"), ("debugger", "lldb-vscode")]),
+            ("debugger", "lldb-dap-17"), ("debugger", "lldb-vscode"),
+            ("language_server", "rust-analyzer")]),
         "typescript" | "javascript" => Ok(&[("runtime", "node"), ("package_manager", "pnpm"), ("package_manager", "yarn"), ("package_manager", "npm"), ("package_manager", "bun")]),
         "cpp" => Ok(&[("compiler", "g++"), ("compiler", "clang++"), ("build_system", "cmake"),
             ("build_system", "ninja"), ("build_system", "make"),
@@ -114,6 +115,24 @@ fn probe(role: &str, name: &str, path: &Path) -> ToolEntry {
     ToolEntry { role: role.into(), name: name.into(), path: path.to_string_lossy().into_owned(), version }
 }
 
+/// Roles whose tool must be usable, not just present. A rustup proxy for a
+/// component that is not installed exists on PATH but exits non-zero, so it
+/// is not offered. Other roles keep their existing display (see the design,
+/// "Discovery and configuration").
+const USABLE_CHECK_ROLES: &[&str] = &["language_server"];
+
+fn probe_usable(role: &str, name: &str, path: &Path) -> Option<ToolEntry> {
+    let output = Command::new(path).arg("--version").output().ok()?;
+    if !output.status.success() { return None; }
+    let version = String::from_utf8_lossy(&output.stdout).lines().next().unwrap_or("Version unavailable").trim().to_string();
+    Some(ToolEntry { role: role.into(), name: name.into(), path: path.to_string_lossy().into_owned(), version })
+}
+
+fn discover(role: &str, name: &str) -> Option<ToolEntry> {
+    let path = find_executable(name)?;
+    if USABLE_CHECK_ROLES.contains(&role) { probe_usable(role, name, &path) } else { Some(probe(role, name, &path)) }
+}
+
 fn snapshot(language: &str, prefs: &toml::Value, path: &Path) -> ToolchainSnapshot {
     let table = language_table(prefs, language);
     let tools = table.and_then(|t| t.get("tools")).and_then(toml::Value::as_array)
@@ -148,8 +167,7 @@ pub fn get_toolchain(language: String) -> Result<ToolchainSnapshot, String> {
 #[tauri::command]
 pub fn scan_toolchain(language: String) -> Result<ToolchainSnapshot, String> {
     let definitions = catalog(&language)?;
-    let found: Vec<ToolEntry> = definitions.iter().filter_map(|(role, name)|
-        find_executable(name).map(|path| probe(role, name, &path))).collect();
+    let found: Vec<ToolEntry> = definitions.iter().filter_map(|(role, name)| discover(role, name)).collect();
     let _guard = PREFS_LOCK.lock().map_err(|e| e.to_string())?;
     let path = prefs_path()?;
     let mut prefs = read_prefs(&path)?;
@@ -208,6 +226,9 @@ pub fn set_tool_default(language: String, role: String, path: Option<String>) ->
     if !catalog(&language)?.iter().any(|(r, _)| *r == role) { return Err(format!("Unsupported role: {role}")); }
     if let Some(ref chosen) = path {
         if !Path::new(chosen).is_file() { return Err(format!("Tool does not exist: {chosen}")); }
+        if USABLE_CHECK_ROLES.contains(&role.as_str()) && probe_usable(&role, "", Path::new(chosen)).is_none() {
+            return Err(format!("{chosen} reported a failure for --version; it is not usable"));
+        }
     }
     let _guard = PREFS_LOCK.lock().map_err(|e| e.to_string())?;
     let prefs_path = prefs_path()?;
@@ -246,6 +267,20 @@ pub fn resolve_tool(language: &str, role: &str) -> Result<PathBuf, String> {
     let fresh = scan_toolchain(language.into())?;
     fresh.tools.iter().find(|tool| tool.role == role).map(|tool| PathBuf::from(&tool.path))
         .ok_or_else(|| format!("No {role} tool found for {language}. Install it or choose a path in Preferences."))
+}
+
+/// `resolve_tool` plus the probed version, which is part of a language
+/// server's identity. A chosen path that was never scanned is probed now.
+pub fn resolve_tool_entry(language: &str, role: &str) -> Result<ToolEntry, String> {
+    let path = resolve_tool(language, role)?;
+    let known = get_toolchain(language.into())?.tools.into_iter()
+        .find(|tool| tool.role == role && Path::new(&tool.path) == path);
+    match known {
+        Some(tool) => Ok(tool),
+        None if USABLE_CHECK_ROLES.contains(&role) => probe_usable(role, "", &path)
+            .ok_or_else(|| format!("{} reported a failure for --version; it is not usable", path.display())),
+        None => Ok(probe(role, "", &path)),
+    }
 }
 
 /// Check a configured command against known toolchains before launching it.
@@ -459,4 +494,38 @@ fn find_cln_file(root: &Path) -> Result<PathBuf, String> {
         }
     }
     Err(format!("No .cln found in {}", root.display()))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::os::unix::fs::PermissionsExt;
+
+    fn script(name: &str, body: &str) -> PathBuf {
+        let dir = std::env::temp_dir().join(format!("craidd-probe-{}-{name}", std::process::id()));
+        fs::create_dir_all(&dir).unwrap();
+        let path = dir.join("rust-analyzer");
+        fs::write(&path, format!("#!/bin/sh\n{body}\n")).unwrap();
+        fs::set_permissions(&path, fs::Permissions::from_mode(0o755)).unwrap();
+        path
+    }
+
+    #[test]
+    fn a_language_server_that_fails_its_version_probe_is_not_usable() {
+        let working = script("ok", "echo 'rust-analyzer 1.99.1 (abc 2026-08-27)'");
+        let tool = probe_usable("language_server", "rust-analyzer", &working).unwrap();
+        assert_eq!(tool.version, "rust-analyzer 1.99.1 (abc 2026-08-27)");
+        // Shape of a rustup proxy whose component is missing: present, but exits non-zero.
+        let shim = script("shim", "echo \"error: Unknown binary 'rust-analyzer' in official toolchain\" >&2; exit 1");
+        assert!(probe_usable("language_server", "rust-analyzer", &shim).is_none());
+        // Existing roles keep their display, which ignores the exit status.
+        assert!(probe("compiler", "rustc", &shim).version.contains("Unknown binary"));
+        for path in [working, shim] { fs::remove_dir_all(path.parent().unwrap()).unwrap(); }
+    }
+
+    #[test]
+    fn rust_catalog_offers_a_language_server_role() {
+        assert!(catalog("rust").unwrap().contains(&("language_server", "rust-analyzer")));
+        assert!(!catalog("cpp").unwrap().iter().any(|(role, _)| *role == "language_server"), "Stage 1 is Rust only");
+    }
 }

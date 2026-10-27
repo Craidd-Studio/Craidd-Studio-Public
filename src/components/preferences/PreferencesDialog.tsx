@@ -56,7 +56,7 @@ const languageLabels: Record<string, string> = {
   csharp: "C#", python: "Python", config: "Config",
 };
 const roles: Record<string, string[]> = {
-  rust: ["build", "compiler", "manager", "debugger"],
+  rust: ["build", "compiler", "manager", "debugger", "language_server"],
   typescript: ["runtime", "package_manager"],
   javascript: ["runtime", "package_manager"],
   cpp: ["compiler", "build_system", "debugger"],
