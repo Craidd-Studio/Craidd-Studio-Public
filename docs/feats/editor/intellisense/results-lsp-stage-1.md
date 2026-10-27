@@ -193,7 +193,7 @@ Facts the design depends on but has not confirmed. They are not gates, but none 
 | V4 | `cargo.targetDir` set to use a subdirectory of `target/` behaves as documented | Adapter options (1b) | Revert to the shared directory or find another isolation | Unverified |
 | V5 | The real `initialize` result (sync kind, save, `resolveProvider`, trigger characters) against the validation table | Rust adapter merge (1a) | Adjust the validation table | **Verified.** The real result passes the adapter's unchanged `caps::validate`: sync incremental, save plain, completion with resolve and 4 trigger characters, all four providers on. No table change needed. |
 | V6 | The server accepts `utf-16` as the only offered position encoding | Rust adapter merge (1a) | Offer more encodings and re-encode | **Verified.** The server answers `positionEncoding: "utf-16"`, and a hover after a non-BMP character resolves at the UTF-16 column but not at the code-point column. |
-| V7 | The rustup shim when the component is missing; the usable check treats a non-zero exit as failure | Toolchain role (1a) | Probe by another method | **Partly verified.** The real pacman binary exits 0 from `--version` with a usable first line, so the usable check offers it. The rustup-shim case is **Unverified**: this machine has no rustup, and a pacman install has no shim. The shim shape is covered only by the scripted stand-in test. Existing roles still ignore the exit status. |
+| V7 | The rustup shim when the component is missing; the usable check treats a non-zero exit as failure | Toolchain role (1a) | Probe by another method | **Partly verified.** The real pacman binary exits 0 from `--version` with a usable first line, so the usable check offers it. The rustup-shim case is **Unverified**: this machine has no rustup, and a pacman install has no shim. The shim shape is covered only by the scripted stand-in test. Existing roles still ignore the exit status. **Architect decision:** the installed-binary case is accepted as passed for the current environment; the shim case stays Unverified and is a release qualification requirement (see [Architect decision on V7](#architect-decision-on-v7)). |
 | V8 | `cargo metadata --no-deps` never creates or rewrites `Cargo.lock`; its failure modes and typical duration | Rust adapter merge (1a) | Workspace root discovery must change (breaches the no-silent-mutation rule) | **Verified** for cargo 1.99.1. Stop condition not triggered. See [V8 evidence](#v8-evidence). |
 | V9 | The model URI from `@monaco-editor/react` for `path={fileId}`; what happens to a model when a view unmounts or `path` changes; which model events fire | Document lifetimes (1b) | Adjust the bridge's model observation | Unverified. `SideEditor` is confirmed to use `keepCurrentModel`. |
 | V10 | Monaco: whether accept waits for a pending resolve; behaviour when resolve fails; whether a post-accept command can revert | Atomic acceptance (1c) | Use eager mode (F2); if V18 also fails, completion cannot ship | Unverified |
@@ -331,10 +331,31 @@ These are behaviours the design did not spell out, or found to need. They are im
 
 - `0d110f1` (foundation) needs no real server.
 - `8f7801f` was gated on V1, V5, V6 and V7 being recorded against an installed `rust-analyzer` (the user installs it; Craidd never does). V1, V5, V6 and V8 are now **Verified**. V7 is verified for the installed binary; only the rustup-shim case remains Unverified.
-- **Decision for the architect:** accept V7 as recorded (the shim case stays Unverified and is checked when a rustup machine is available), or require rustup to be installed so the shim case can be measured before the merge.
+- ~~**Decision for the architect:** accept V7 as recorded, or require rustup before the merge.~~ **Decided:** see below.
 - The V1 stop condition was checked and **not triggered**.
+
+### Architect decision on V7
+
+Recorded from the architect's decision after the V1, V5, V6 and V7 evidence above.
+
+- **V7, installed binary:** accepted as **passed for the current environment** (pacman `rust-analyzer 20260907-1`, no rustup).
+- **V7, rustup shim:** remains **Unverified** (scripted stand-in tested only). V7 is not marked fully Verified, and not Not Applicable.
+- **Release qualification requirement:** the real rustup-shim case must be verified in an isolated environment before Craidd claims complete Stage 1 support for rustup installations.
+- **No workaround:** implementation must not silently change toolchain discovery semantics to work around this requirement.
+- **Adapter merge:** integrating `8f7801f` into `feat/intellisense-ws` is **conditionally approved**, subject to clean integration, the relevant regression tests passing, and no outstanding mandatory adapter gates.
+- **Scope:** no expansion into Stage 1b or 1c, no push, and no merge to `master` without further approval.
+
+### Follow-up investigations
+
+The three early warnings from the V1–V7 runs are kept as separate investigations. None is a 1a failure, and none is resolved by this record.
+
+| # | Investigation | Source | Status |
+|---|---|---|---|
+| F1 | **V3:** diagnostics for an open file were not republished after an external change to an unopened file it imports | Observation 1 above | Open; feeds the V3 design in 1b |
+| F2 | **`workspace/diagnostic/refresh`:** determine whether an explicit response is required by the negotiated protocol, given the client did not advertise `refreshSupport` | Observation 2 above | Open |
+| F3 | **V13:** no `window/showMessageRequest` arrived from the real server. Await a reproducible real-server request, or construct a targeted protocol test | Observation 3 above | Open |
 
 ---
 
-*Last updated: Phase 3 (Stage 1a, V1/V5/V6/V7 verification). Author: ShinkuKira21.*
+*Last updated: Phase 3 (Stage 1a, V7 decision and adapter merge approval). Author: ShinkuKira21.*
 *This document is a record.*
