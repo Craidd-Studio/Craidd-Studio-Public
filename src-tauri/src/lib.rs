@@ -1,6 +1,8 @@
 mod commands;
 mod types;
 mod process_supervisor;
+mod lsp;
+mod ownership;
 
 pub use process_supervisor::entry as process_supervisor_entry;
 

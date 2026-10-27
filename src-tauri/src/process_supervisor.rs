@@ -156,10 +156,26 @@ pub(crate) fn process_birth(pid: i32) -> Option<u64> { process(pid).map(|item| i
 /// Capture only this adapter's identity-checked tree before disconnect can
 /// orphan descendants. Never signal a PID that belongs to a replacement.
 pub(crate) fn capture_cancel_tree(pid: i32, birth: u64) -> Option<impl FnOnce() + Send> {
+    let tree = capture_tree(pid, birth)?;
+    Some(move || tree.cancel())
+}
+
+/// A long-lived owner of one identity-checked tree. Refreshing it while the
+/// root is alive keeps descendants known after the root exits and they are
+/// reparented (a server that exits on stdin EOF, or crashes).
+pub(crate) struct OwnedTree(Tree);
+
+pub(crate) fn capture_tree(pid: i32, birth: u64) -> Option<OwnedTree> {
     let root = process(pid).filter(|item| item.birth == birth && item.group == pid)?;
     let mut tree = Tree { roots: HashMap::from([(pid, root.birth)]), known: HashMap::from([(pid, root.birth)]) };
     tree.refresh(&processes());
-    Some(move || tree.cleanup())
+    Some(OwnedTree(tree))
+}
+
+impl OwnedTree {
+    pub(crate) fn refresh(&mut self) { self.0.refresh(&processes()); }
+    /// TERM, bounded grace, then KILL for every known member.
+    pub(crate) fn cancel(mut self) { self.0.cleanup(); }
 }
 
 #[derive(Default)]

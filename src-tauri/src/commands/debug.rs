@@ -15,6 +15,7 @@ use tauri::{AppHandle, Emitter, Manager, WebviewWindow};
 use super::breakpoints::Breakpoint;
 use super::linked_windows::{note_debug_details, note_debug_output, note_debug_state};
 use super::toolchain::{get_toolchain, resolve_known_program};
+use crate::lsp::framing::{read_frame, FrameError, FrameLimits};
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -525,20 +526,18 @@ fn schedule_debug_stop(session: &Session) {
     }
 }
 
+const DAP_FRAME_LIMITS: FrameLimits = FrameLimits { max_body: 8_000_000, max_header_line: None };
+
+/// DAP keeps its historical policy over the shared framing: EOF anywhere in
+/// the headers is a clean end, and errors keep their original wording.
 fn read_message(reader: &mut impl BufRead) -> Result<Option<Value>, String> {
-    let mut length = None;
-    loop {
-        let mut line = String::new();
-        if reader.read_line(&mut line).map_err(|e| e.to_string())? == 0 { return Ok(None); }
-        if line == "\r\n" || line == "\n" { break; }
-        if let Some(number) = line.to_ascii_lowercase().strip_prefix("content-length:") {
-            length = Some(number.trim().parse::<usize>().map_err(|e| e.to_string())?);
-        }
-    }
-    let length = length.ok_or("DAP response omitted Content-Length")?;
-    if length > 8_000_000 { return Err("DAP response is too large".into()); }
-    let mut bytes = vec![0; length];
-    reader.read_exact(&mut bytes).map_err(|e| e.to_string())?;
+    let bytes = match read_frame(reader, DAP_FRAME_LIMITS) {
+        Ok(Some(bytes)) => bytes,
+        Ok(None) | Err(FrameError::EofInHeaders) => return Ok(None),
+        Err(FrameError::MissingLength) => return Err("DAP response omitted Content-Length".into()),
+        Err(FrameError::TooLarge { .. }) => return Err("DAP response is too large".into()),
+        Err(error) => return Err(error.to_string()),
+    };
     serde_json::from_slice(&bytes).map(Some).map_err(|e| e.to_string())
 }
 

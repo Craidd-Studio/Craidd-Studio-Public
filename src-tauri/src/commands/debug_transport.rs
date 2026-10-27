@@ -1,29 +1,18 @@
 //! DAP pipe writes must not run on the UI thread or under session/LDI locks.
 use std::io::Write;
-use std::sync::mpsc::{sync_channel, SyncSender};
+use crate::lsp::framing::{encode, FrameWriter, QueueError};
 
-pub(super) struct DapWriter(SyncSender<Vec<u8>>);
+pub(super) struct DapWriter(FrameWriter);
 
 impl DapWriter {
     pub(super) fn spawn(writer: impl Write + Send + 'static, on_error: impl FnOnce(String) + Send + 'static) -> Self {
-        let (sender, receiver) = sync_channel::<Vec<u8>>(128);
-        std::thread::spawn(move || {
-            let mut writer = writer;
-            while let Ok(packet) = receiver.recv() {
-                if let Err(error) = writer.write_all(&packet).and_then(|_| writer.flush()) {
-                    on_error(format!("Debugger transport failed: {error}"));
-                    return;
-                }
-            }
-        });
-        Self(sender)
+        Self(FrameWriter::spawn(writer, 128, move |error| on_error(format!("Debugger transport failed: {error}"))))
     }
 
     pub(super) fn send(&self, body: &str) -> Result<(), String> {
-        let packet = format!("Content-Length: {}\r\n\r\n{}", body.len(), body).into_bytes();
-        self.0.try_send(packet).map_err(|error| match error {
-            std::sync::mpsc::TrySendError::Full(_) => "Debugger request queue is full; Stop remains available".into(),
-            std::sync::mpsc::TrySendError::Disconnected(_) => "Debugger transport is closed".into(),
+        self.0.try_send(encode(body)).map_err(|error| match error {
+            QueueError::Full => "Debugger request queue is full; Stop remains available".into(),
+            QueueError::Closed => "Debugger transport is closed".into(),
         })
     }
 }

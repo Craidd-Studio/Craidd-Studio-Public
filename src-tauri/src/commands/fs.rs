@@ -269,6 +269,25 @@ pub fn create_folder(path: String) -> Result<(), String> {
 }
 
 
+/// Explicit project membership for one tree node, shared by the Explorer
+/// tree and `crate::ownership`, so both answer "is this file in the
+/// project?" with one rule. `path` is relative to the project folder.
+pub(crate) fn membership_override(path: &str, nested_boundary: bool, includes: &[String], excludes: &[String],
+    inherited: Option<bool>) -> Option<bool> {
+    let inherited = if nested_boundary && inherited.is_none() { Some(false) } else { inherited };
+    if includes.iter().any(|p| p == path) { Some(true) }
+    else if excludes.iter().any(|p| p == path) { Some(false) }
+    else { inherited }
+}
+
+/// Default membership for a file with no explicit choice.
+pub(crate) fn file_matches(name: &str, extensions: &[String], wnf: &[String]) -> bool {
+    let lower = name.to_lowercase();
+    let ext_ok = lower.contains('.')
+        && extensions.iter().any(|e| lower.ends_with(&format!(".{}", e.to_lowercase())));
+    ext_ok || wnf.iter().any(|w| w == name)
+}
+
 fn filter_tree(node: FileNode, extensions: &[String], wnf: &[String], shallow: bool, stop_at_craidd: bool,
     includes: &[String], excludes: &[String], inherited: Option<bool>) -> Option<FileNode> {
     // A nested project is automatic exclusion, not a locked boundary. An
@@ -276,18 +295,11 @@ fn filter_tree(node: FileNode, extensions: &[String], wnf: &[String], shallow: b
     let boundary = stop_at_craidd && node.path != "." && node.kind == "folder"
         && node.children.as_ref().is_some_and(|children|
             children.iter().any(|child| child.kind == "file" && child.name.ends_with(".craidd")));
-    let inherited = if boundary && inherited.is_none() { Some(false) } else { inherited };
-    let forced = if includes.iter().any(|p| p == &node.path) { Some(true) }
-        else if excludes.iter().any(|p| p == &node.path) { Some(false) }
-        else { inherited };
+    let forced = membership_override(&node.path, boundary, includes, excludes, inherited);
     match node.kind.as_str() {
         "file" => {
             if node.name.ends_with(".craidd") { return None; }
-            let lower = node.name.to_lowercase();
-            let ext_ok = lower.contains('.')
-                && extensions.iter().any(|e| lower.ends_with(&format!(".{}", e.to_lowercase())));
-            let wnf_ok = wnf.iter().any(|w| w == &node.name);
-            if forced.unwrap_or(ext_ok || wnf_ok) { Some(node) } else { None }
+            if forced.unwrap_or_else(|| file_matches(&node.name, extensions, wnf)) { Some(node) } else { None }
         }
         _ => {
             // In shallow mode, folders do not appear in the result at all.
