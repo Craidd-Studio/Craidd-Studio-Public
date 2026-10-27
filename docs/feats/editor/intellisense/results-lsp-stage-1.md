@@ -2,7 +2,7 @@
 
 **Roadmap track:** Phase 3 language intelligence, Stage 1. See the [current roadmap](../../../roadmaps/Roadmap-v0.0.4A.md).
 
-**Status:** Record. Stage 1a is implemented and its fake-server evidence is recorded in [Stage 1a record](#stage-1a-record). Every gate is still **Unmeasured**: no gate's own evidence is complete, and nothing here was measured against a real `rust-analyzer`.
+**Status:** Record. Stage 1a is implemented and its fake-server evidence is recorded in [Stage 1a record](#stage-1a-record). Every gate is still **Unmeasured**: no gate's own evidence is complete. V1, V5 and V6 are verified against a real `rust-analyzer`; V7 is verified for the real binary only (see [V1, V5, V6 and V7 evidence](#v1-v5-v6-and-v7-evidence)).
 
 **Design:** [design-lsp-stage-1-rust.md](design-lsp-stage-1-rust.md), revised after the [comparison review](review-lsp-stage-1-comparison.md) and the [independent review](review-lsp-stage-1-independent-reconciliation.md). Items from the independent review are approved. The revision added measurements and test evidence below; it added no numeric budget and no pass claim. The gates, pass conditions and acceptance criteria are defined there and are authoritative. This file records evidence against them; it does not redefine them.
 
@@ -59,7 +59,7 @@ Stage exit evidence (not gates):
 
 | Stage | Exit evidence required | Status |
 |---|---|---|
-| 1a | Fake-server tests (framing, transport, delivery classes, overflow, pending table, capability validation, terminate table, process tree); DAP suite unchanged; verifications V1, V5, V6, V7, V8 recorded before the Rust adapter merges | **Partial.** Tests recorded and DAP suite unchanged; V8 recorded. V1, V5, V6 and V7 are Unverified, so the Rust adapter commit may not merge. |
+| 1a | Fake-server tests (framing, transport, delivery classes, overflow, pending table, capability validation, terminate table, process tree); DAP suite unchanged; verifications V1, V5, V6, V7, V8 recorded before the Rust adapter merges | **Partial.** Tests recorded and DAP suite unchanged; V1, V5, V6 and V8 verified. V7 is verified for the installed binary, but the rustup-shim case is Unverified (no rustup on this machine); whether that blocks the adapter merge is the architect's decision. |
 | 1b | Real-server diagnostics, document lifetimes and file identity; G1, G2, G5, G6, G7 evidence; first G3 and G3b measurements; verifications V2–V4, V9, V13–V16 | Unmeasured |
 | 1c | Completion and atomic-acceptance tests; G3 and G4 under provider load; verifications V10–V12 and V18; acceptance criterion 1 | Unmeasured |
 
@@ -75,7 +75,7 @@ Recorded once per measurement session, and repeated per entry if it changes. Lef
 | Craidd commit | `0d110f1` (foundation), `8f7801f` (Rust adapter), on top of `e44d824` |
 | Machine (CPU, RAM, disk type) | 32 logical CPUs, 60 GiB RAM, mixed SSD and HDD |
 | OS and kernel | Arch Linux, kernel 7.2.11-arch1-1 |
-| `rust-analyzer` version and how it was installed | **Not installed.** No rustup either: Rust is Arch's packaged toolchain. |
+| `rust-analyzer` version and how it was installed | 1a: **not installed**. Verification session (2026-10-27): `rust-analyzer 1 (9074e9b4c6 2026-09-06)`, Arch package `rust-analyzer 20260907-1` at `/usr/bin/rust-analyzer`, installed by the user with pacman. No rustup: Rust is Arch's packaged toolchain. |
 | Rust toolchain version | cargo 1.99.1 (5f94df478 2026-08-27), Arch Linux rust 1:1.99.1-1 |
 | Monaco version | not exercised in 1a |
 | `fs.inotify.max_user_watches` | 524288 |
@@ -187,13 +187,13 @@ Facts the design depends on but has not confirmed. They are not gates, but none 
 
 | ID | Item | Blocks | Flip condition if it fails | Status |
 |---|---|---|---|---|
-| V1 | `rust-analyzer.files.watcher`: accepted values, and self-watching when the client registers no watchers; pinned version recorded | Rust adapter merge (1a) | The server cannot self-watch: watcher ownership must be redesigned and a Craidd watcher with `didChangeWatchedFiles` moves into Stage 1 | Unverified |
+| V1 | `rust-analyzer.files.watcher`: accepted values, and self-watching when the client registers no watchers; pinned version recorded | Rust adapter merge (1a) | The server cannot self-watch: watcher ownership must be redesigned and a Craidd watcher with `didChangeWatchedFiles` moves into Stage 1 | **Verified.** Accepted values are `client` (default) and `server`. With `server` and no registered watchers, the server picked up edits to an unopened file by itself. Stop condition not triggered. See [evidence](#v1-v5-v6-and-v7-evidence). |
 | V2 | Watcher failure (for example the inotify limit): whether and how the server reports it | "Watcher failure surfaced" claim (1b) | The claim must be reworded | Unverified |
 | V3 | A change to an unopened file updates the server's diagnostics | Real-server smoke test (1b) | As V1 | Unverified |
 | V4 | `cargo.targetDir` set to use a subdirectory of `target/` behaves as documented | Adapter options (1b) | Revert to the shared directory or find another isolation | Unverified |
-| V5 | The real `initialize` result (sync kind, save, `resolveProvider`, trigger characters) against the validation table | Rust adapter merge (1a) | Adjust the validation table | Unverified |
-| V6 | The server accepts `utf-16` as the only offered position encoding | Rust adapter merge (1a) | Offer more encodings and re-encode | Unverified |
-| V7 | The rustup shim when the component is missing; the usable check treats a non-zero exit as failure | Toolchain role (1a) | Probe by another method | Unverified against a real shim: this machine has no rustup. The usable check is implemented for the `language_server` role and tested against scripted stand-ins (exit 0 is offered, exit 1 is not). Existing roles still ignore the exit status. |
+| V5 | The real `initialize` result (sync kind, save, `resolveProvider`, trigger characters) against the validation table | Rust adapter merge (1a) | Adjust the validation table | **Verified.** The real result passes the adapter's unchanged `caps::validate`: sync incremental, save plain, completion with resolve and 4 trigger characters, all four providers on. No table change needed. |
+| V6 | The server accepts `utf-16` as the only offered position encoding | Rust adapter merge (1a) | Offer more encodings and re-encode | **Verified.** The server answers `positionEncoding: "utf-16"`, and a hover after a non-BMP character resolves at the UTF-16 column but not at the code-point column. |
+| V7 | The rustup shim when the component is missing; the usable check treats a non-zero exit as failure | Toolchain role (1a) | Probe by another method | **Partly verified.** The real pacman binary exits 0 from `--version` with a usable first line, so the usable check offers it. The rustup-shim case is **Unverified**: this machine has no rustup, and a pacman install has no shim. The shim shape is covered only by the scripted stand-in test. Existing roles still ignore the exit status. |
 | V8 | `cargo metadata --no-deps` never creates or rewrites `Cargo.lock`; its failure modes and typical duration | Rust adapter merge (1a) | Workspace root discovery must change (breaches the no-silent-mutation rule) | **Verified** for cargo 1.99.1. Stop condition not triggered. See [V8 evidence](#v8-evidence). |
 | V9 | The model URI from `@monaco-editor/react` for `path={fileId}`; what happens to a model when a view unmounts or `path` changes; which model events fire | Document lifetimes (1b) | Adjust the bridge's model observation | Unverified. `SideEditor` is confirmed to use `keepCurrentModel`. |
 | V10 | Monaco: whether accept waits for a pending resolve; behaviour when resolve fails; whether a post-accept command can revert | Atomic acceptance (1c) | Use eager mode (F2); if V18 also fails, completion cannot ship | Unverified |
@@ -261,6 +261,59 @@ cargo 1.99.1, run directly, and also by the adapter tests:
 
 `--no-deps` is therefore required, not just faster, and the adapter always passes it.
 
+### V1, V5, V6 and V7 evidence
+
+Verification session, 2026-10-27. The probe was a Python LSP client in the verification lane's scratch directory. It sent the adapter's exact `initialize` params from `8f7801f`: `caps::client_capabilities(false)`, the `session::handshake` fields and `rust_adapter::default_init_options()`. It answered server requests with the same table as `session::answer_server_request`, and the configuration answer was `{"rust-analyzer": <init options>}`. The test crate is a binary with `src/main.rs` and `src/util.rs`. `main.rs` imports and calls `util::ok()`, and one of its lines puts `"😀"` before `util::ok()`. Only `main.rs` was opened (`didOpen`); `util.rs` was never opened. No code was changed.
+
+**V1 — file watching.**
+
+- `rust-analyzer --print-config-schema`: `files.watcher` is an enum of `client` (default, "Use the client (editor) to watch files for changes") and `server` ("Use server-side file watching"). `cargo.targetDir` accepts null, a boolean or a string.
+- Watcher `server` (the adapter default), with no `workspace.didChangeWatchedFiles` capability advertised:
+  1. After indexing went quiet, `util.rs` was edited on disk (`ok` renamed) with no notification of any kind.
+  2. The server log shows a `Vfs` event and a new database revision for the edit, and again for the revert.
+  3. A hover on `util::ok` in `main.rs` returned the function signature before the edit, `null` after it, and the signature again after the revert. Go-to-definition after the edit returned `[]`.
+  4. The server therefore saw the unopened file's changes by itself.
+- Contrast: with watcher `client` and the same capabilities, the server also self-watched (same hover result). It falls back to its own watching when the client offers no `didChangeWatchedFiles` registration. The adapter's explicit `server` value removes that reliance on fallback.
+- Server log: `WARN notify error: No path was found.` appeared twice during the initial load. It did not affect watching. It may be relevant to V2.
+- **Stop condition not triggered.**
+
+**V5 — `initialize` result.** Raw capability fields from the real server:
+
+| Field | Value |
+|---|---|
+| `positionEncoding` | `"utf-16"` |
+| `textDocumentSync` | `{"openClose": true, "change": 2, "save": {}}` |
+| `completionProvider` | `{"triggerCharacters": [":", ".", "'", "("], "resolveProvider": true, "completionItem": {"labelDetailsSupport": false}}` |
+| `hoverProvider`, `definitionProvider`, `referencesProvider`, `documentSymbolProvider` | `true` |
+| `diagnosticProvider` | `{"identifier": "rust-analyzer", "interFileDependencies": true, "workspaceDiagnostics": false}` |
+| `serverInfo` | `rust-analyzer`, `1 (9074e9b4c6 2026-09-06)` |
+
+The result was then passed to `caps::validate` from `8f7801f`. The file was byte-identical to the commit (sha256 `027eba81…`), compiled on its own against serde and serde_json. The summary line it produced:
+
+`sync Incremental, save Plain, completion on (resolve on, 4 trigger characters), hover on, definition on, references on, symbols on`
+
+Its only note was "pull diagnostics offered; not used in Stage 1". `save: {}` maps to `Plain` (no `includeText`), so `didSave` is sent without text, as the design intends.
+
+**V6 — position encoding.**
+
+- The server chose `utf-16`, the only encoding offered, and the handshake passes validation.
+- On line 4 (zero-based), `ok` starts at UTF-16 column 32, code-point column 31 and byte column 34.
+- A hover at column 32 returned the signature with range 32–34. A hover at column 31 returned `null`.
+- The server therefore counts columns in UTF-16 code units.
+
+**V7 — usable check.**
+
+- `/usr/bin/rust-analyzer --version` exits 0 and prints `rust-analyzer 1 (9074e9b4c6 2026-09-06)` on stdout, so `probe_usable` offers it.
+- `command -v rustup` finds nothing, and `~/.cargo/bin` holds no `rust-analyzer`. A pacman install has no rustup proxy, so the missing-component shim cannot occur here and could not be measured.
+- The shim's exit status is covered only by the scripted stand-in test, `a_language_server_that_fails_its_version_probe_is_not_usable`. **Unverified against a real shim.**
+
+**Observations outside the 1a checks (for 1b, not verdicts):**
+
+1. **Push diagnostics were not republished after the unopened-file edit.** With `main.rs` open, the edit broke its import. The server's model changed (V1), but no new `publishDiagnostics` for `main.rs` arrived within 60 s. A cold start with the edit already present does publish them: ``unresolved import `util::ok` ``, ``no `ok` in `util` `` and rustc's ``cannot find function `ok` in module `util` ``. This is an early signal against **V3**, not its formal test. V3 should be designed around it, for example by checking whether diagnostics refresh on the next `didChange` or `didSave`.
+2. **The server sends `workspace/diagnostic/refresh`** about 2 s after `initialize`, even though the client did not advertise `workspace.diagnostics.refreshSupport`. The static table has no entry for it, so it is answered with `-32601 Unhandled method`. The server carried on normally. Whether to add an explicit `null` reply is for the Implementation lane and the architect. It is not a 1a failure: every server request still got exactly one response.
+3. Server requests seen in all runs: `window/workDoneProgress/create` and `workspace/diagnostic/refresh`. No `client/registerCapability`, `workspace/configuration` or `window/showMessageRequest` arrived. V13 is therefore still unexercised.
+4. `shutdown` then `exit` ended the server with exit code 0 in every run.
+
 ### Findings from implementation (for review)
 
 These are behaviours the design did not spell out, or found to need. They are implemented as described. Each needs the architect's decision before the design text is changed.
@@ -272,15 +325,16 @@ These are behaviours the design did not spell out, or found to need. They are im
 5. **Ownership precedence.** When several projects claim a file: an explicit include beats default membership; then the deepest project folder wins; then a project's main tree beats its config facet. Any remaining tie is reported as ambiguous, never guessed. The resolver receives the per-language extension tables from its caller (the frontend's `languageMeta`), so the backend holds no second copy. One test compares its single-path answers with the Explorer tree on disk for every file in a fixture. The existing frontend ownership lookups (for example `saveRestartPolicy.ts`) still use their own prefix logic. Moving them onto this resolver is 1b work.
 6. **Routing needs a document filter.** Project membership includes `Cargo.toml`, `Cargo.lock` and explicitly included files. The router sends a file to the server only if the adapter's document extensions match (`rs` for Rust). The language still comes from `.craidd`; the extension only filters within the project.
 7. **G1 in 1a is backend-only.** `LspRegistry::revalidate_and_ensure` covers "solution closing", "project no longer resolves", "attach to an existing identity" and "a changed toolchain or root is a new identity". The visible-and-active document check and the idle deferral are frontend work (1b).
-8. **rust-analyzer defaults are provisional.** `files.watcher = "server"` (V1) and `cargo.targetDir = true` (V4) are written in the adapter but unverified.
+8. **rust-analyzer defaults.** `files.watcher = "server"` is verified (V1). `cargo.targetDir = true` is accepted by the server's config schema, but its behaviour is unverified (V4, 1b).
 
 ### Merge gate
 
 - `0d110f1` (foundation) needs no real server.
-- `8f7801f` must not merge into `feat/intellisense-ws` until V1, V5, V6 and V7 are recorded against an installed `rust-analyzer` (the user installs it; Craidd never does). V8 is recorded.
-- Stop and revisit the design if V1 shows rust-analyzer cannot watch files itself.
+- `8f7801f` was gated on V1, V5, V6 and V7 being recorded against an installed `rust-analyzer` (the user installs it; Craidd never does). V1, V5, V6 and V8 are now **Verified**. V7 is verified for the installed binary; only the rustup-shim case remains Unverified.
+- **Decision for the architect:** accept V7 as recorded (the shim case stays Unverified and is checked when a rustup machine is available), or require rustup to be installed so the shim case can be measured before the merge.
+- The V1 stop condition was checked and **not triggered**.
 
 ---
 
-*Last updated: Phase 3 (Stage 1a). Author: ShinkuKira21.*
+*Last updated: Phase 3 (Stage 1a, V1/V5/V6/V7 verification). Author: ShinkuKira21.*
 *This document is a record.*
