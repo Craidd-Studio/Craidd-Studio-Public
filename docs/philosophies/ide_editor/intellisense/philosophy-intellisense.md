@@ -129,10 +129,14 @@ This is a hard rule and it exists because startup latency is the
 single thing that keeps an IDE feeling fast. See
 `docs/future/future-ide-considerations.md`, "Startup performance at scale."
 
-**One server per (project, language) pair.** Not one per file, not
-one per solution. If two projects declare Rust and they both have
-`Cargo.toml`, they get two `rust-analyzer` instances. Servers are
-scoped to their project's working directory. This is what makes
+**One server per server identity.** Not one per file, not one per
+solution. A server identity is the implementation, the resolved root
+and the configuration identity; a per-language adapter resolves the
+root. Many projects may share one server: two Rust projects in the
+same Cargo workspace share one `rust-analyzer`. Project ownership and
+server ownership are separate. Which server analyses which project is
+an implementation detail; which project owns which file is not.
+Servers are scoped to a working directory. This is what makes
 Craidd's routing correct; VS Code cannot do this because it has no
 project model.
 
@@ -159,13 +163,18 @@ The framing code can be shared between LSP and DAP clients. One
 `framing.rs` module, two consumers. This is the same pattern the
 existing `debug.rs` already uses for its DAP client.
 
+Extraction must not change DAP behaviour. The inbound size cap is a
+parameter of each consumer, not a shared constant. The DAP test suite
+must pass unchanged after extraction. A behaviour change is a
+regression.
+
 ### Message handling
 
 The initial slice supports:
 
 **Client -> Server:**
 
-- `initialize` — with the project's working directory as `rootUri`
+- `initialize` — with the server identity's resolved root as `rootUri`
 - `initialized`
 - `textDocument/didOpen`
 - `textDocument/didChange`
@@ -177,13 +186,29 @@ The initial slice supports:
 - `textDocument/references`
 - `textDocument/documentSymbol`
 - `shutdown` / `exit`
+- `$/cancelRequest` — when the editor abandons a request
 
-**Server -> Client:**
+`didSave` is sent without text after a successful save, and only if
+the server asked for it. A failed save sends nothing.
+
+**Server -> Client (notifications):**
 
 - `textDocument/publishDiagnostics`
 - `window/showMessage`
 - `window/logMessage`
 - `$/progress`
+
+**Server -> Client (requests that must be answered):**
+
+- `window/workDoneProgress/create`
+- `workspace/configuration`
+- `workspace/workspaceFolders`
+- `client/registerCapability` / `client/unregisterCapability`
+- `window/showMessageRequest`
+
+An unanswered server request stalls the server. The frontend cannot
+cause a server request to go unanswered. The backend answers every
+server request from a static table without waiting on the frontend.
 
 That is the minimum useful slice. Everything else is additive.
 
