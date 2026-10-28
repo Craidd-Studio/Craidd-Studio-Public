@@ -6,7 +6,7 @@
 
 **Revision:** Revised after the [comparison review](review-lsp-stage-1-comparison.md) (findings N1–N9) and four earlier design-review concerns. The architecture is unchanged; the changes are clarifications and safeguards. What was already covered, what was refined and what is new is listed in [Review reconciliation](#review-reconciliation). A further independent review is reconciled in [review-lsp-stage-1-independent-reconciliation.md](review-lsp-stage-1-independent-reconciliation.md); the changes it prompted are **approved** (decisions 11–15). Philosophy amendments A1, A2, A3, A4 and A5 are approved and applied to the philosophy; A6 and A7 remain pending.
 
-**Revision (pull diagnostics).** The architect moved pull diagnostics into Stage 1b after the [F1 evidence](results-lsp-stage-1.md#f1f3-evidence) showed that `rust-analyzer` delivers its own diagnostics only when asked. The design now has two diagnostic routes per file, push and pull, described once in [Pull and push diagnostics](#pull-and-push-diagnostics); the rules elsewhere refer to it. Amendment A4 is reworded to match and is still a proposal. The architect has since approved decisions 16, 17 and 18 (the `null` reply to the refresh request, server-status reporting of silent failures, and clearing a closed document's pull set). Decision 19 (cross-document refresh) is now **approved**, and amendments A2 and A4 are **approved and applied** to the philosophy; see [Open decisions](#open-decisions-for-review). A6 and A7 remain pending.
+**Revision (pull diagnostics).** The architect moved pull diagnostics into Stage 1b after the [F1 evidence](results-lsp-stage-1.md#f1f3-evidence) showed that `rust-analyzer` delivers its own diagnostics only when asked. The design now has two diagnostic routes per file, push and pull, described once in [Pull and push diagnostics](#pull-and-push-diagnostics); the rules elsewhere refer to it. Amendment A4 is reworded to match and is still a proposal. The architect has since approved decisions 16, 17 and 18 (the `null` reply to the refresh request, server-status reporting of silent failures, and clearing a closed document's pull set). Decision 19 (cross-document refresh) is now **approved**, and amendments A2 and A4 are **approved and applied** to the philosophy; see [Open decisions](#open-decisions-for-review). A6 and A7 remain pending. The architect's Stage 1b verification decisions (20–27: readiness gating, workspace reload, retention, measurement hooks and methods) are recorded in the same list and in the sections they name.
 
 **Applies to:** Rust only, through `rust-analyzer`.
 
@@ -665,7 +665,7 @@ Dynamic registration is out of Stage 1. If `rust-analyzer` turns out to require 
 - **(a) Status notification.** The Rust adapter declares `experimental.serverStatusNotification`. The backend parses `experimental/serverStatus` by shape (`health`, `quiescent`, `message`) and keeps the latest value in the class T record: one fixed-size field, latest wins, message length bounded. An unknown `health` value or a malformed body is ignored with a log note. Health is **separate from the session phase**: a session can be Ready with health `error`.
 - **Surfacing.** `error` and `warning` show on the existing status chip with the server's raw message on hover and in Output; `ok` clears it. This is the same surface and rule as the watcher warning. Craidd does not interpret or rewrite the message.
 - **(b) Bounded log reporting.** Stderr and `logMessage` stay in the class L ring (bounded, oldest dropped first, error severity kept in preference, with the dropped-lines counter) and appear in Output under the `[lsp:rust-analyzer]` prefix. This is the only signal for a server version that never sends the notification, and the detail behind the chip. No new matching of stderr text is added beyond the existing best-effort watcher case.
-- **Scope.** Nothing here gates the editor or the pull/push routes. Whether the notification reliably returns to `ok` and what `quiescent` means is verification V27; it may also inform V24 (readiness before the first pull), and is not relied on for that until measured.
+- **Scope.** Nothing here gates the editor or the pull/push routes. Whether the notification reliably returns to `ok` and what `quiescent` means is verification V27; it is also the readiness signal for [pull gating](#readiness-gating-decision-20) (decision 20), and what `quiescent` means is fixed by V27 before the gate is implemented against it.
 
 ---
 
@@ -710,7 +710,7 @@ Diagnostic {
 
 | Trigger | Rule |
 |---|---|
-| Open | After `didOpen` has been flushed (also after a resume or a resync). |
+| Open | After `didOpen` has been flushed (also after a resume or a resync), and **not before the workspace is ready** ([Readiness gating](#readiness-gating-decision-20)). |
 | After a change, debounced | A time debounce applies **to the pull, never to `didChange`** (the change queue above stays undelayed). Each new change restarts the timer and cancels that document's in-flight pull. The pull is sent after the pending changes are flushed. The debounce value is ◇ and is set from G3b and G5; none is chosen here. |
 | Save | After `didSave` has been sent (a successful save only). Seeds the saved document, and the cross-document seed below. |
 | `workspace/diagnostic/refresh` | Answered by the backend with `null` (class Q), which increments the refresh counter in the T record. The frontend seeds a wave with the visible Open documents; the rest are flagged pull-needed. |
@@ -733,6 +733,29 @@ All triggers feed one scheduler, the **wave**, described in [Cross-document refr
 - **Terminate.** `terminate()` resolves pending pulls to "no result" with all other entries, and clears both routes' sets, their `resultId`s, the pull-needed marks and the markers. Reports that arrive for a dead session are dropped.
 - **Delivery.** A pull report is class R: it is never lossy and never passes through the S coalescing map. It reaches the store through the frontend's own per-frame coalescing, hash comparison and marker diffing ([Flood control](#flood-control)). The backend is bounded by the pending-table cap, the one-in-flight rule and the concurrency cap, not by queue growth.
 - **Retention.** Pull sets exist only for Open documents, so they are bounded by the number of open tabs and the per-file cap. They are never evicted while the document is open. Push sets follow the closed-document retention policy unchanged.
+
+#### Readiness gating (decision 20)
+
+*Approved (V24).* Measured in a dry run against `rust-analyzer 1 (9074e9b4c6 2026-09-06)`: a pull sent before the workspace has loaded returns an **empty `full` report**. Taken at face value that is "no diagnostics", which is false.
+
+- **The gate.** The first pull for a session is held until the server reports the workspace ready: the status record has `quiescent: true` and health is not `error` ([Server health](#server-health-silent-failures)). The same gate applies again after a [workspace reload](#workspace-reload-decision-21). It is **not** applied to ordinary change pulls once the session has been ready: `quiescent` is false during routine analysis, and gating every pull on it would stall typing feedback.
+- **An empty report received while not ready is not proof of zero diagnostics.** It is discarded, not stored. The pull route for that uri stays **unknown**, which is distinct from an authoritative empty set. The store therefore has three states per `(session, uri, pull)`: unknown, a set, an authoritative empty set. Nothing renders "no problems" from the first.
+- **Transition to ready.** A transition from not-ready to ready seeds a wave with every Open document, visible first ([Cross-document refresh](#cross-document-refresh-decision-19-revised)). Pending pulls from before the transition are cancelled and their reports dropped.
+- **Health `error`.** The workspace did not load, so readiness never arrives. Pull reports stay non-authoritative while it lasts; the chip already shows why.
+- **No status notification.** For a server that never sends one, the first pull waits a bounded time (◇), after which empty reports are still not authoritative; non-empty reports are stored. The first `workspace/diagnostic/refresh` is a candidate readiness hint for that case, to be settled by V23 and V24, not assumed.
+- **Not a gate on the push route.** Pushed sets are unaffected.
+
+#### Workspace reload (decision 21)
+
+*Approved conditionally (V27).* Measured in a dry run: after a broken `Cargo.toml` is fixed, server health stays `error` until `rust-analyzer/reloadWorkspace` is sent. So Craidd sends it, within bounds.
+
+- **Adapter-owned.** The request is a `rust-analyzer` extension and lives in the Rust adapter, never inferred from `serverInfo`. The core sees an optional adapter hook, "reload request", which other languages leave empty.
+- **Trigger.** A **successful change to an affected `Cargo.toml`**: a successful save of that file in Craidd, or a reload of it from disk through Craidd's existing external-change flow. Affected means a manifest that belongs to the session's resolved workspace (the adapter's cached `cargo metadata` result already tracks manifest paths and stamps); when metadata could not be resolved because the manifest is broken, any `Cargo.toml` under the session root. A manifest changed by another program while Craidd is not looking is not detected by Craidd and falls under the accepted external-change limitation; the user's manual restart remains.
+- **Bounded and coalesced.** Changes within a window (◇) collapse into one request. At most one reload is in flight; one more may be pending, never a queue. The request is class R through the pending table with its own timeout (◇); a timeout is logged, not fatal.
+- **No redundant reloads.** None is sent when the manifest content equals the one last reloaded against, when the session is not Ready, or when the change altered the server identity (a changed root or membership is a new identity and a clean restart under A1, not a reload). Whether a reload is also needed when health is already `ok` (the server may reload by itself) is part of V27; if it is not, the trigger narrows to health other than `ok`.
+- **After a reload** the readiness gate re-arms and a wave follows when the server reports ready.
+- **Manual restart is preserved.** The chip's restart action is unchanged and always available.
+- **Verification.** Recovery from a broken manifest is verified against the real server (V27): break the manifest, observe `error`, fix and save, observe the reload and the return to `ok` with diagnostics again.
 
 #### Cross-document refresh (decision 19, revised)
 
@@ -758,7 +781,9 @@ All triggers feed one scheduler, the **wave**, described in [Cross-document refr
 | Server asks for a refresh | Refresh seed |
 | Edit to an unopened file by another program while Craidd stays focused | **Not covered.** Refreshes at the document's next trigger. Recorded as a known limitation, not hidden. |
 
-The last row is deliberate: covering it needs either polling or a Craidd-side watcher, and the first is excluded and the second is the future `notify_files_changed` seam.
+The last row is deliberate: covering it needs either polling or a Craidd-side watcher, and the first is excluded and the second is the future `notify_files_changed` seam. The limitation is accepted.
+
+**Preliminary observation, not a verdict (V23, dry run).** With `refreshSupport` advertised, the server sent `workspace/diagnostic/refresh` after edits to unopened files too, not only at startup. If the formal V23 and V3 runs confirm it, the refresh seed would cover part of the "edited while Craidd stays focused" case, and the accepted limitation would shrink. Until then the limitation stands as written.
 
 **Measurement.** V3 (as revised) measures the interval from each kind of change to the updated diagnostics reaching the store. V26 records request volume. Both feed G3/G5; neither sets a budget. See below.
 
@@ -771,10 +796,10 @@ V3 is revised and six items are added (V22–V27). They are entered in the [resu
 | V3 (revised) | With pull and the wave implemented, the **measured interval** from each change to the updated diagnostics reaching the store, for: an external edit to an unopened file followed by window focus; an edit in an open document affecting another open document; a save; a server refresh. Several runs each; the distribution is recorded and no budget is invented. Also whether the save seed adds anything over the change seed. | Smoke test (1b), decision 19 | A case that never updates is recorded as not covered and returned to the architect; a trigger that adds nothing is dropped |
 | V22 | Whether the server returns a `resultId` and answers `unchanged` to `previousResultId`; its `retriggerRequest` data on cancellation; its answer to `$/cancelRequest` on a pull | Pull request handling (1b) | Send no `previousResultId`; every pull is a full report (still correct, costs more) |
 | V23 | With `refreshSupport` advertised: when the server sends `workspace/diagnostic/refresh` (startup only, after indexing, after file changes) | Refresh trigger (1b) | Refresh is not a sufficient re-pull trigger; rely on the other triggers and decision 19 |
-| V24 | What a pull returns **before the workspace has loaded** (empty report, `ContentModified`, an error) | Pull on open (1b) | Gate the first pull on readiness or on the first refresh; an empty early report must not show as "no problems" |
+| V24 | What a pull returns **before the workspace has loaded** (empty report, `ContentModified`, an error) | Pull on open (1b) | **Decided (decision 20):** the first pull is gated on workspace readiness and an empty report before readiness is never proof of zero. Dry run: a pull before load returns an empty `full` report. The exact readiness signal is fixed by V27 |
 | V25 | Pull and cargo-check overlap in practice: how often the two routes report the same error | None (informs a later display-level dedup) | n/a |
 | V26 | Wave request volume and performance effect: pulls per wave, waves per minute of scripted editing, documents flagged pull-needed, `unchanged` ratio, server CPU and keystroke latency with waves active. Recorded as part of G3/G3b and G5, not as a separate gate | G3, G5 (1b) | Tighten the bounds (caps, spacing, per-wave maximum) |
-| V27 | `experimental/serverStatus` with Craidd's advertisement: values seen for a healthy load, a failed load and a missing proc-macro server; whether `health` returns to `ok` after the cause is fixed; what `quiescent` means; message length | Server health surfacing (1b) | Rely on bounded log reporting (b) alone and say the chip cannot show these failures |
+| V27 | `experimental/serverStatus` with Craidd's advertisement: values seen for a healthy load, a failed load and a missing proc-macro server; whether `health` returns to `ok` after the cause is fixed; what `quiescent` means; message length | Server health surfacing (1b) | Rely on bounded log reporting (b) alone and say the chip cannot show these failures. Dry run: after a manifest fix, health stays `error` until `rust-analyzer/reloadWorkspace`; decision 21 sends it. Also decides whether the reload is needed when health is `ok` |
 
 ### Semantics
 
@@ -800,8 +825,9 @@ Each LSP route replaces the full diagnostic set for a URI: `publishDiagnostics` 
   - Sets for **open** models are never evicted.
   - A per-file limit (◇) caps the diagnostics stored for one file and route; the excess is summarised as "+N not retained" and is visible.
   - For **closed** documents, which hold push sets only, global limits (◇) on files and total diagnostics apply. When exceeded, the least recently published closed set is evicted first.
-  - **Eviction is visible, never silent.** The Problems header says that diagnostics for N files are not retained, and counts are labelled "at least". An evicted file returns only when the server publishes for it again; whether the server republishes on open is verification V15.
+  - **Eviction is visible, never silent.** The Problems header says that diagnostics for N files are not retained, and counts are labelled "at least". An evicted file returns only when the server publishes for it again. Measured in a dry run (V15): the server does **not** republish push diagnostics on `didOpen`, so an evicted push set comes back only with the next check (startup or save), and the notice says so.
   - Eviction never touches open models or build problems.
+  - **Bounded retention is kept (decision 22, modified approval).** Retention does not become unlimited for cargo-check diagnostics. G5 investigates whether the policy can hold **complete** sets within a measured memory budget (the `fx-many` fixture produces about 2,400 pushed diagnostics); if it cannot, the limitation is reported. Craidd never claims a set is complete unless the measurement shows nothing was truncated or evicted; truncation and eviction stay visible.
   - **No limit value is chosen here.** G5 records the stored count and memory under a large check; the limits are set from that evidence. Until then they are provisional ◇ values acting as a safety net only.
 
 ---
@@ -846,7 +872,17 @@ Principle: **the editor is never gated on a server.** Every path above degrades 
 
 Stage 1 is not accepted on feel. Each gate has a measurable check, a baseline, and a recorded result. **No numeric budget is declared here**; budgets would be invented. The requirement is that results are measured, recorded in a results record (`results-lsp-stage-1.md`), compared with a baseline, and reviewed before acceptance. Absolute gates (counts that must be zero or one) have fixed pass conditions.
 
-A development-only switch (`CRAIDD_LSP=0`) disables the LSP subsystem so a baseline run exists on the same build. It is not a user setting.
+A development-only switch (`CRAIDD_LSP=0`) disables the LSP subsystem so a baseline run exists on the same build. It is not a user setting. It must exist in the 1b build (decision 23).
+
+### Measurement hooks and methods (decisions 23–26)
+
+*Approved.* The Verification lane's open questions about what can be observed are answered as follows. (They are labelled VA1–VA5 here to keep them apart from the philosophy amendments A1–A5.)
+
+- **Development-only, read-only hooks (VA1, VA2; decision 23).** Small hooks expose what the wire does not show: store writes per frame, `setModelMarkers` calls, pull-needed flags, wave sizes, Channel message counts and bytes, stored diagnostics per route, and timestamps for the readiness and startup events that define the four G1 timings. They are enabled only by a development-only switch (named at implementation), only observe (counter increments and timestamps), take no lock across I/O and sit outside the reader's O(1) path. **They must not change production LSP behaviour:** with them off the code paths behave identically, and a test asserts that. How they are presented (Output lines or a debug command) is the Implementation lane's choice. With `CRAIDD_LSP=0` the baseline run is available on the same build.
+- **Long-task substitute (VA3; decision 24).** G3 asks for main-thread long-task counts. First check whether the WebKitGTK runtime exposes long-task entries; if it does, use them. Where it does not, record **frame-gap** (a `requestAnimationFrame` gap sampler) and **input-to-paint** latency as documented substitutes. The record states the method and its limits: frame gaps measure cadence, not task duration; the sampler adds a little load; animation frames are throttled when the window is hidden, so runs are foreground; input-to-paint is measured from a dispatched event to the next paint callback, not to the display. Results are labelled "substitute", never "long-task count". The gate's wording is unchanged.
+- **UI-level checks (VA4; decision 25).** Scripted manual UI verification with the user's visual review, per the existing rule that the user checks by eye. Each UI item (chip, markers, Problems, tab, focus and model behaviour, V9, G1, G3, G7) has a written step script; the record notes the script, who ran it and the date, and marks the evidence "manual, scripted". Behaviour that can be tested without the UI keeps automated tests (fake server, `node --test`). Manual evidence never replaces an automated test that is possible.
+- **File-watch limit (VA5; decision 26).** V2 uses a helper process that holds inotify watches to exhaust the user's limit, so no `sudo` and no persistent system configuration change is involved. The helper takes just enough watches to starve the server, runs in its own process group, dies with its parent, has a hard timeout, and the run asserts afterwards that the user's watch usage returned to the baseline (the kernel releases watches when the process exits). The user is told before it runs, because other programs share the quota while it is held.
+- **Tooling isolation (decision 27).** The verification tooling stays on `verify/lsp-stage-1b` and is not merged into `feat/intellisense-ws` without the architect's approval.
 
 | # | Gate | Check | Baseline | Pass condition |
 |---|---|---|---|---|
@@ -873,6 +909,10 @@ Per the project's habit of exercising the production path, not mocks of it.
 - **delivery classes:** with a stalled consumer and a flooding fake server, assert that the reader keeps draining stdout; every response (R) is delivered exactly once; every server request (Q) is answered without the frontend; the last diagnostics set per uri is delivered, **including an empty clearing set**; every progress `end` is delivered and `begin` + `end` before a delivery yields one completed record; the terminal phase (T) is never lost and is pullable after the consumer was stalled; a later non-terminal write cannot overwrite it; the coalescing map never exceeds the number of distinct keys; dropped log lines are counted and reported.
 - **overflow recovery:** with scripted writer capacity, assert that a rejected sync notification yields `Desynced`; the pending queue is discarded and never replayed; the resync unit is admitted atomically (both messages or neither); the server-side reconstructed text equals the model text; edits made while `Desynced` appear exactly once; results from the old epoch are dropped; request admission respects the reserve; the Unresponsive bound triggers.
 - **pull diagnostics (fake server):** a `full` report replaces the pull set; an `unchanged` report keeps it and causes no store write; `previousResultId` is sent only after an accepted report with a `resultId`; a report for an older epoch or `versionId` is dropped and records no `resultId`; one pull in flight per document (a newer cancels the older); `ContentModified` yields no result; `ServerCancelled` with `retriggerRequest` re-arms once per window and stops at the bound; a pull not admitted is re-issued on a capacity event; `workspace/diagnostic/refresh` is answered by the backend with the consumer stalled, increments the counter once per refresh, and many refreshes cause one re-pull; a pull and a push for the same uri are stored apart; session death resolves pending pulls and clears both routes; a server without `diagnosticProvider` gets no pull.
+- **readiness gating (fake server), regression for decision 20:** no pull is sent before the status reports ready; an empty `full` report received before ready is discarded and the route stays unknown (nothing renders as "no problems"); the transition to ready seeds one wave over the Open documents, visible first; an empty report after ready is stored as an authoritative empty set; health `error` keeps reports non-authoritative; a reload re-arms the gate; change pulls after the first ready are not gated by `quiescent`; a server that sends no status gets the bounded wait and non-authoritative empties.
+- **workspace reload (fake server), decision 21:** a successful save of an affected `Cargo.toml` sends one reload; several within the window send one; a reload in flight plus a pending one never exceeds two; an unchanged manifest, a non-affected `Cargo.toml`, a failed save and a session that is not Ready send none; a changed server identity restarts instead of reloading; the request times out without failing the session; manual restart still works; after a reload the gate re-arms and a wave follows. The recovery from a broken manifest is a real-server check (V27).
+- **retention (decision 22):** a push set above the per-file cap shows "+N not retained"; eviction of a closed set is reported with the next-check wording; no path claims completeness after truncation or eviction.
+- **hooks off (decision 23):** with the measurement hooks off, the delivery, wave and sync tests give identical results; the hooks never write to the store, the writer queue or the pending table.
 - **F2 regression (fake server):** `workspace/diagnostic/refresh` is answered with `result: null` (never an error), exactly once, with pull enabled and with pull disabled, with the consumer stalled, and with a string id echoed verbatim; with pull enabled the counter increments and a bounded wave follows; with pull disabled no pull is sent.
 - **waves (fake server):** seeds from save, focus, refresh and a cross-document change merge into one pending wave; a document appears once; visible documents are pulled first; the concurrency cap and the per-wave maximum hold; documents beyond the maximum are flagged pull-needed and pulled on activation; no wave runs without an event; `interFileDependencies: false` adds no cross-document seeds; many refreshes in a burst cause one wave.
 - **server health (fake server):** `experimental/serverStatus` with `ok`, `warning` and `error` updates the T record field; an unknown `health` or malformed body is ignored and logged; an over-long message is truncated; health does not change the session phase; the chip shows and clears accordingly; stderr and `logMessage` stay bounded with the dropped-lines counter, error severity kept in preference.
@@ -906,7 +946,7 @@ Per the project's habit of exercising the production path, not mocks of it.
 
 ### UI
 
-Live-IDE verification is run only when requested; the user checks by eye. This document does not assume UI harness runs.
+Live-IDE verification is run only when requested; the user checks by eye. This document does not assume UI harness runs. Stage 1b UI checks follow the scripted manual method in [Measurement hooks and methods](#measurement-hooks-and-methods-decisions-2326).
 
 ---
 
@@ -918,7 +958,7 @@ Stage 1 is accepted when all of the following are true and recorded:
 2. No server runs during startup or session restore, the deferred launch is bounded and revalidated, and startup cost is measured apart from server cost (G1).
 3. One Cargo workspace shared by several Craidd projects yields one server (G2).
 4. Indexing, rapid typing and file switching never block the editor, with measured evidence against baseline (G3, G4).
-5. Diagnostics from both routes reach Monaco and the Problems panel with correct project attribution and source labels, bounded and coalesced (G5).
+5. Diagnostics from both routes reach Monaco and the Problems panel with correct project attribution and source labels, bounded and coalesced (G5). An empty pull report received before the workspace is ready is never shown as "no problems".
 6. Closing a solution, a window, or the IDE leaves no server or stream thread behind (G6).
 7. Edits stay synchronised across the cases in G7, with deterministic repair on desync: pending changes are discarded rather than replayed, and no edit is applied twice.
 8. Every failure in [Error recovery](#error-recovery) degrades to a working editor with a visible, accurate status.
@@ -1037,7 +1077,20 @@ These are not designed here. They are recorded so Stage 1 does not close doors o
 18. ~~**Closing a document clears its pull set.**~~ **Approved:** the pull set is cleared on close, the push set is retained under the existing retention policy, and source separation is preserved.
 19. ~~**Cross-document refresh.**~~ **Approved (revised design),** with the external-change limitation accepted. Bounded refresh waves seeded by save, window focus, the server's refresh request and cross-document changes, visible documents first, with a concurrency cap and no polling. See [Cross-document refresh](#cross-document-refresh-decision-19-revised). The numeric bounds are ◇ values to be set from V26, G3 and G5.
 
-The ◇ values introduced by this revision (admission reserve, cancelled-entry expiry, bad-body tolerance, Unresponsive bound; class T has none because it is a fixed-size record) are initial proposals to be tuned from measured results. The pull revision adds more: the pull debounce, the concurrency cap, the retrigger bound and the consecutive-failure bound.
+**Stage 1b verification decisions (all approved).** They answer the Verification lane's dry-run findings against `rust-analyzer 1 (9074e9b4c6 2026-09-06)`; the plan is `verification/lsp-1b/VERIFY-PLAN.md` on `verify/lsp-stage-1b`, which is not merged here.
+
+20. ~~**Gate the initial pull on workspace readiness (V24).**~~ **Approved.** An empty result before readiness is not proof of zero diagnostics. Regression coverage added. See [Readiness gating](#readiness-gating-decision-20).
+21. ~~**Workspace reload after a manifest change (V27).**~~ **Approved conditionally:** a bounded, coalesced `rust-analyzer/reloadWorkspace` after a successful change to an affected `Cargo.toml`; no redundant reloads; manual restart preserved; recovery from a broken manifest verified against the real server. See [Workspace reload](#workspace-reload-decision-21).
+22. ~~**Diagnostic retention (V15).**~~ **Modified approval:** no unlimited cargo-check retention; bounded storage and visible truncation and eviction stay; investigate whether complete sets fit a measured budget and report the limitation if not. See [Flood control](#flood-control).
+23. ~~**Measurement hooks and `CRAIDD_LSP=0` (VA1, VA2).**~~ **Approved:** small, development-only, read-only; no change to production LSP behaviour.
+24. ~~**Long-task substitute (VA3).**~~ **Approved:** frame-gap and input-to-paint, with the method and limits recorded.
+25. ~~**UI verification method (VA4).**~~ **Approved:** scripted manual verification with the user's visual review; automated tests where possible without the UI.
+26. ~~**File-watch-limit test (VA5).**~~ **Approved:** helper-process method, no `sudo`, no persistent system change, reliable cleanup.
+27. ~~**Verification tooling location.**~~ **Approved:** stays on `verify/lsp-stage-1b`; not merged into `feat/intellisense-ws` without approval.
+
+Checked against the applied philosophy: nothing in decisions 20–27 contradicts it. `rust-analyzer/reloadWorkspace` and the status notification are adapter-owned extensions beneath the philosophy's "every other server is a table entry" rule, and the manual restart button it requires is preserved.
+
+The ◇ values introduced by this revision (admission reserve, cancelled-entry expiry, bad-body tolerance, Unresponsive bound; class T has none because it is a fixed-size record) are initial proposals to be tuned from measured results. The pull revision adds more: the pull debounce, the concurrency cap, the retrigger bound, the consecutive-failure bound, the reload coalescing window and timeout, and the readiness wait for a server with no status notification.
 
 ---
 
@@ -1055,9 +1108,9 @@ The ◇ values introduced by this revision (admission reserve, cancelled-entry e
 
 ### Stage 1b — documents, synchronisation and diagnostics
 
-- **Scope.** Document lifetimes, ordered incremental sync, deterministic resync, save; file identity rules; the deferred launch for the real active document; `lspStore`, delivery to Monaco markers, Problems source badges; status chip; Output source; watcher-failure surfacing; the retention policy. **Pull diagnostics:** the client capabilities `textDocument.diagnostic` and `workspace.diagnostics.refreshSupport` (a change to the 1a `caps` module), `diagnosticProvider` validation, the three pull triggers with `resultId` handling, the refresh counter in the T record, the backend's answer to `workspace/diagnostic/refresh`, and separate push and pull sets merged at display.
+- **Scope.** Document lifetimes, ordered incremental sync, deterministic resync, save; file identity rules; the deferred launch for the real active document; `lspStore`, delivery to Monaco markers, Problems source badges; status chip; Output source; watcher-failure surfacing; the retention policy. **Pull diagnostics:** the client capabilities `textDocument.diagnostic` and `workspace.diagnostics.refreshSupport` (a change to the 1a `caps` module), `diagnosticProvider` validation, the three pull triggers with `resultId` handling, the refresh counter in the T record, the backend's answer to `workspace/diagnostic/refresh`, and separate push and pull sets merged at display; **readiness gating** (decision 20); the adapter's **workspace reload** (decision 21); the development-only **measurement hooks** and `CRAIDD_LSP=0` (decision 23).
 - **User-visible.** Status chip, diagnostics, markers, lock glyph.
-- **Exit evidence.** With a real `rust-analyzer`: diagnostics from both routes appear and clear (the push set persists across close; the pull set clears on close); G1 (all four timings), G2, G5, G6 (real process tree) and G7 recorded; first G3 measurements including G3b; V2–V4 (V3 revised), V9, V13–V16 and V22–V27 recorded; decision 19 approved by the architect.
+- **Exit evidence.** With a real `rust-analyzer`: diagnostics from both routes appear and clear (the push set persists across close; the pull set clears on close); G1 (all four timings), G2, G5, G6 (real process tree) and G7 recorded; first G3 measurements including G3b; V2–V4 (V3 revised), V9, V13–V16 and V22–V27 recorded, by the methods in [Measurement hooks and methods](#measurement-hooks-and-methods-decisions-2326); decisions 19–27 approved by the architect.
 - **Does not claim** completion, hover, definition, references or symbols.
 
 **Open before 1b implementation starts.**
@@ -1090,5 +1143,5 @@ Philosophy amendments are applied or withdrawn before the stage they govern is m
 
 ---
 
-*Last updated: Phase 3 (Stage 1 proposal; pull diagnostics in Stage 1b, decisions 16–18 approved, decision 19 and amendments A2, A4 approved). Author: ShinkuKira21.*
+*Last updated: Phase 3 (Stage 1 proposal; pull diagnostics in Stage 1b, decisions 16–18 approved, decisions 19 and 20–27 and amendments A2, A4 approved). Author: ShinkuKira21.*
 *This document is a design.*

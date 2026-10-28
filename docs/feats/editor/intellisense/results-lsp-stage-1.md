@@ -119,6 +119,8 @@ Required measurements, reported as separate numbers and never combined:
 
 Also required: server process count over time; a never-idle startup showing the bounded deferral still launches; a mid-deferral file switch showing revalidation; an active non-Rust tab with background Rust tabs showing no server.
 
+Method (decision 23): the four timings and the process counts use the development-only hooks' timestamps; the `CRAIDD_LSP=0` baseline must exist in the 1b build. Without the hooks the timings stay **Unmeasured**.
+
 Status: **Unmeasured**. No runs recorded.
 
 ## G2 — One server per shared workspace
@@ -128,6 +130,8 @@ Status: **Unmeasured**. No runs recorded.
 ## G3 — Indexing does not block interaction
 
 Required, in addition to the main-thread and keystroke measurements: extra disk use, first-check time, and whether a Build issued during a check waits on the lock, with the separate target directory **on and off**. Also required: Channel message rate and bytes per second during initial indexing, and pull-request and wave volume with waves active (V26).
+
+Method (decision 24): long-task counts if the WebKitGTK runtime exposes them; otherwise frame-gap and input-to-paint latency, recorded and labelled as substitutes with the method and limits. UI steps follow the scripted manual method (decision 25).
 
 Status: **Unmeasured**. No runs recorded.
 
@@ -141,6 +145,8 @@ Status: **Unmeasured**. No runs recorded.
 
 Required in addition: the stored diagnostic count (per route) and approximate store memory after a large check, and the `unchanged` to `full` ratio and wave volume (V26).
 
+Method (decisions 22, 23): store writes and marker calls come from the development-only hooks. Also required: whether the default retention limits kept the complete `fx-many` set (about 2,400 pushed diagnostics), and if not, the limitation reported rather than a completeness claim.
+
 Status: **Unmeasured**. No runs recorded.
 
 ## G6 — Solution close terminates servers and descendants
@@ -152,6 +158,8 @@ Status: **Unmeasured**. No runs recorded.
 ## G7 — Synchronisation correctness, document lifetimes and forced overflow
 
 Required in addition to the editing cases: tab switching, model disposal and recreation with the tab open, reload from disk while the model is disposed, and a forced writer overflow during typing, each compared against the server's view of the text.
+
+Method (decision 25): UI-level cases use the scripted manual method with the user's review; the server's text is rebuilt from the sync events Craidd sent.
 
 Status: **Unmeasured**. No runs recorded.
 
@@ -176,6 +184,10 @@ Deterministic tests specified in the design. They are not gates, but a required 
 | Diagnostics on document close: push set kept and markers restored from the store; pull set cleared (decision 18, approved) | Testing → Frontend | Unmeasured |
 | **F2 regression:** `workspace/diagnostic/refresh` answered with `result: null`, exactly once, with pull enabled and disabled, with a stalled consumer, with a string id echoed; with pull enabled a bounded wave follows, with pull disabled no pull is sent | Testing → Rust (fake server, `asks` script) | Unmeasured (decision 16 approved) |
 | Pull scheduling: debounce, one in flight per document, wave coalescing, visible-first order, concurrency cap, per-wave maximum, pull-needed on activation, no wave without an event | Testing → Rust and Frontend | Unmeasured (decision 19 approved) |
+| **V24 regression:** no pull before readiness; an empty report before ready is discarded and never rendered as "no problems"; ready seeds one wave; empties after ready are authoritative; health `error` keeps reports non-authoritative; a reload re-arms the gate | Testing → Rust and Frontend (fake server) | Unmeasured (decision 20 approved) |
+| **Workspace reload:** one bounded, coalesced `rust-analyzer/reloadWorkspace` after a successful affected `Cargo.toml` change; none when redundant, not Ready, failed save or identity change; timeout not fatal; manual restart intact. Recovery from a broken manifest against the real server | Testing → Rust (fake server) and Real server | Unmeasured (decision 21 approved conditionally) |
+| **Retention wording and bounds:** truncation and eviction visible, next-check wording, no completeness claim without measurement | Testing → Frontend | Unmeasured (decision 22) |
+| **Hooks off:** identical behaviour with the measurement hooks disabled; hooks never write to store, writer queue or pending table | Testing → Rust and Frontend | Unmeasured (decision 23) |
 | **Silent failures:** `experimental/serverStatus` health `ok`, `warning`, `error` reaches the T record and the status chip; unknown or malformed bodies ignored and logged; message length bounded; health does not alter the session phase | Testing → Rust and Frontend | Unmeasured (decision 17 approved) |
 | **Bounded stderr in Output:** stderr and `logMessage` stay in the bounded ring with the dropped-lines counter and error severity preferred | Testing → Rust | Unmeasured (decision 17 approved) |
 | Completion context and `isIncomplete` mapping | Testing → Frontend | Unmeasured |
@@ -205,7 +217,7 @@ Facts the design depends on but has not confirmed. They are not gates, but none 
 | V12 | Primary and additional edits undo as one step | Atomic acceptance (1c) | Apply them as one grouped edit | Unverified |
 | V13 | `window/showMessageRequest` answered with no selection | Server-to-client requests (1b) | Different handling for that request | **Unverified against the real server.** No real request could be provoked in 9 scenarios (F3). The no-selection reply is covered by the fake-server test `server_requests_are_answered_by_the_backend_alone`; edge cases are proposed in F3. |
 | V14 | Names and number of child processes the server starts (for the G6 process-tree check) | G6 | Adjust the tree assertion | Unverified; inferred from the server's design, not checked |
-| V15 | Whether the server republishes diagnostics on open, after a retention eviction | Retention policy (1b) | Evicted diagnostics cannot be recovered; tighten the policy | Unverified |
+| V15 | Whether the server republishes diagnostics on open, after a retention eviction | Retention policy (1b) | Evicted diagnostics cannot be recovered; tighten the policy | **Dry-run observation, formal run pending.** `didOpen` does not republish push diagnostics (cargo-check only). **Architect decision 22 (modified approval):** keep bounded retention with visible eviction, say that an evicted push set returns with the next check, and investigate under G5/V20 whether complete sets fit a measured budget; report the limitation if not. |
 | V16 | How the server reports locations for symlinked paths; the four symlinked-vendor navigation cases | File identity (1b) | Revisit the holder and navigation rules | Unverified |
 | V17 | A single file-to-owning-project resolver exists or is introduced | Router (1a) | Introduce it as the first 1a task | **Introduced:** `crate::ownership::owning_project`. Frontend callers are not migrated yet (see the Stage 1a record). |
 | V18 | When the client does not declare lazy `additionalTextEdits`, the server sends them in the completion list | Eager mode fallback (1c) | Fallback F2 is unavailable | Unverified |
@@ -213,15 +225,15 @@ Facts the design depends on but has not confirmed. They are not gates, but none 
 | V20 | Diagnostic store size and memory under a large check (this is a G5 measurement) | Retention limits (1b) | n/a | Unmeasured |
 | V21 | Save-triggered check responsiveness and CPU contention with a concurrent Build (this is G3b) | None | Consider CPU priority or withholding `didSave` | Unmeasured |
 | V22 | Whether the server returns a `resultId` and answers `unchanged`; its `retriggerRequest` data on cancellation; its answer to `$/cancelRequest` on a pull | Pull request handling (1b) | Send no `previousResultId`; every pull is full | Unverified |
-| V23 | With `refreshSupport` advertised: when the server sends `workspace/diagnostic/refresh` | Refresh trigger (1b) | Refresh is not a sufficient trigger; rely on the others | Unverified |
-| V24 | What a pull returns before the workspace has loaded | Pull on open (1b) | Gate the first pull on readiness | Unverified |
+| V23 | With `refreshSupport` advertised: when the server sends `workspace/diagnostic/refresh` | Refresh trigger (1b) | Refresh is not a sufficient trigger; rely on the others | **Preliminary observation, not a verdict** (dry run): with `refreshSupport`, refresh also arrives after edits to unopened files. It bears on the accepted external-change limitation of decision 19; the limitation stands until the formal V23 and V3 runs. |
+| V24 | What a pull returns before the workspace has loaded | Pull on open (1b) | Gate the first pull on readiness | **Dry-run observation, formal run pending:** a pull before load returns an empty `full` report. **Architect decision 20 (approved):** gate the first pull on workspace readiness; an empty result before readiness is not proof of zero. Regression coverage listed below. |
 | V25 | How often pull and cargo-check report the same error | None (informs a later dedup) | n/a | Unverified |
 | V26 | Wave request volume and performance effect (a G3/G3b and G5 measurement) | G3, G5 (1b) | Tighten the wave bounds | Unmeasured |
-| V27 | `experimental/serverStatus` lifecycle with Craidd's advertisement: values, return to `ok`, `quiescent`, message length | Server health surfacing (1b) | Rely on bounded log reporting alone | Unverified |
+| V27 | `experimental/serverStatus` lifecycle with Craidd's advertisement: values, return to `ok`, `quiescent`, message length; recovery from a broken manifest | Server health surfacing and workspace reload (1b) | Rely on bounded log reporting alone; narrow or drop the reload | **Dry-run observation, formal run pending:** after a manifest fix, health stays `error` until `rust-analyzer/reloadWorkspace` is sent. **Architect decision 21 (approved conditionally):** bounded, coalesced reload after a successful affected `Cargo.toml` change; verify recovery from a broken manifest with the real server; also decide whether a reload is needed when health is `ok`. |
 
 Pull diagnostics are no longer deferred: they moved into Stage 1b ([design](design-lsp-stage-1-rust.md#pull-and-push-diagnostics)).
 
-Definitions of V22–V27 are in the design's [verifications for pull diagnostics](design-lsp-stage-1-rust.md#verifications-for-pull-diagnostics).
+Methods for the 1b verifications are fixed by the architect's decisions 23–27: development-only read-only hooks and `CRAIDD_LSP=0`; frame-gap and input-to-paint substitutes where WebKitGTK exposes no long tasks (recorded as substitutes); scripted manual UI verification reviewed by the user (recorded as "manual, scripted"); a helper process for the file-watch-limit test (V2). The verification tooling stays on `verify/lsp-stage-1b` and is not merged. Definitions of V22–V27 are in the design's [verifications for pull diagnostics](design-lsp-stage-1-rust.md#verifications-for-pull-diagnostics).
 
 Deferred and not tracked as blockers: bounded automatic restart, a missing standard-library-source message, a Craidd-native file watcher (unless V1 or V3 fails), and any new UI surface.
 
@@ -482,5 +494,5 @@ The config schema has no push/pull switch. `diagnostics.enable` (default true) o
 
 ---
 
-*Last updated: Phase 3 (Stage 1a, adapter integrated as 99863a4; F1–F3 investigated; decisions 16–19 approved). Author: ShinkuKira21.*
+*Last updated: Phase 3 (Stage 1a, adapter integrated as 99863a4; F1–F3 investigated; decisions 16–27 approved). Author: ShinkuKira21.*
 *This document is a record.*
