@@ -122,8 +122,18 @@ as `docs/philosophies/ide_editor/tool-discovery/philosophy-tool-discovery.md`.
 ### Lifecycle
 
 **Launch on demand.** A language server starts when a file of that
-language is first opened in the editor. It does not start when a
-solution opens. It does not start at app launch.
+language is first opened in the editor. "Opened" means the document
+becomes the visible, active editor model, after startup and session
+restore have completed. It does not start when a solution opens. It
+does not start at app launch, and restored background tabs do not
+start a server. The launch is deferred to idle with a bounded maximum
+wait and revalidated before it executes. Startup never waits for
+server initialization.
+
+A failure to start (missing tool, bad version, handshake timeout) or to
+load the workspace is visible to the user, through the server's own
+status where it reports one and through bounded server output
+otherwise, and never gates the editor.
 
 This is a hard rule and it exists because startup latency is the
 single thing that keeps an IDE feeling fast. See
@@ -185,6 +195,7 @@ The initial slice supports:
 - `textDocument/definition`
 - `textDocument/references`
 - `textDocument/documentSymbol`
+- `textDocument/diagnostic` — pull diagnostics, for open documents
 - `shutdown` / `exit`
 - `$/cancelRequest` — when the editor abandons a request
 
@@ -205,6 +216,7 @@ the server asked for it. A failed save sends nothing.
 - `workspace/workspaceFolders`
 - `client/registerCapability` / `client/unregisterCapability`
 - `window/showMessageRequest`
+- `workspace/diagnostic/refresh` — answered with success, `null`
 
 An unanswered server request stalls the server. The frontend cannot
 cause a server request to go unanswered. The backend answers every
@@ -237,6 +249,19 @@ not install, and does not work around a missing tool.
 profile entries. A diagnostic is a diagnostic. It has a file, a line,
 a column, a severity, a message, a code. The Problems panel does not
 care what produced it.
+
+**Two routes.** A server delivers diagnostics by push
+(`textDocument/publishDiagnostics`), by pull
+(`textDocument/diagnostic`), or both, and the client must support both.
+`rust-analyzer` answers its own diagnostics only to a pull; what it
+pushes is cargo-check output. Each route carries ranges, source, tags
+and related information, and each replaces the set for a file. Each is
+stored separately and merged only at display, with build problems as a
+third source that accumulates. A closed document's pull set is cleared,
+because nothing can refresh it; its push set is retained. Pull is
+refreshed by bounded, event-driven triggers (open, change, save, window
+focus, the server's refresh request, a change in another document),
+never by polling and never per keystroke.
 
 **In linked mode**, diagnostics from a hidden window appear in the
 group's Problems list, labeled by owning window, clickable to reveal

@@ -2,7 +2,7 @@
 
 **Roadmap track:** Phase 3 language intelligence, Stage 1 pre-implementation. See the [current roadmap](../../../roadmaps/Roadmap-v0.0.4A.md).
 
-**Status:** Approved by the architect (the class T record, the three-identity file model, atomic completion acceptance, the 1a/1b/1c split and the existing-surfaces UI plan). Philosophy amendments A1, A3 and A5 and their added wording are **approved and applied**; A2, A4, A6 and A7 remain **pending approval**. Nothing is implemented.
+**Status:** Approved by the architect (the class T record, the three-identity file model, atomic completion acceptance, the 1a/1b/1c split and the existing-surfaces UI plan). Philosophy amendments A1, A2, A3, A4 and A5 and their added wording are **approved and applied** (A2 and A4 in the revised form after F3 and the pull-diagnostics decisions); A6 and A7 remain **pending approval**. Nothing is implemented.
 
 **Subject:** [design-lsp-stage-1-rust.md](design-lsp-stage-1-rust.md), [results-lsp-stage-1.md](results-lsp-stage-1.md). Earlier review: [review-lsp-stage-1-comparison.md](review-lsp-stage-1-comparison.md).
 
@@ -89,7 +89,7 @@ Everything else in the review about Monaco 0.56.x, `rust-analyzer` and `cargo` w
 
 ### Philosophy amendments A1–A7
 
-Reviewer verdict: accept A1–A7, with one added sentence on each of A1, A2, A3, A5, A6 and A7. All are **Accepted as proposed wording**. A1, A3 and A5 are approved and applied; the rest are pending your approval. The wording is under [Proposed additions to amendment text](#proposed-additions-to-amendment-text).
+Reviewer verdict: accept A1–A7, with one added sentence on each of A1, A2, A3, A5, A6 and A7. All are **Accepted as proposed wording**. A1, A2, A3 and A5 are approved and applied (A4 was reworded and applied separately); A6 and A7 are pending your approval. The wording is under [Proposed additions to amendment text](#proposed-additions-to-amendment-text).
 
 ---
 
@@ -153,12 +153,12 @@ Acceptance criterion 1 is not weakened. If neither 1–2 nor 3 can be verified, 
 
 ## Proposed additions to amendment text
 
-A1, A3 and A5 are approved and applied to the philosophy. The rest are for your approval.
+A1, A2, A3 and A5 are approved and applied to the philosophy; A2 in its revised form below. A6 and A7 are for your approval.
 
 | # | Proposed addition |
 |---|---|
 | A1 | "Which server analyses which project is an implementation detail; which project owns which file is not." |
-| A2 | "A failure to start (missing tool, bad version, handshake timeout) or to load the workspace is visible to the user, through the server's own status where it reports one and through bounded server output otherwise, and never gates the editor." *(Revised after F3 and decision 17; still a proposal.)* |
+| A2 | "A failure to start (missing tool, bad version, handshake timeout) or to load the workspace is visible to the user, through the server's own status where it reports one and through bounded server output otherwise, and never gates the editor." *(Revised after F3 and decision 17. Approved and applied.)* |
 | A3 | "The frontend cannot cause a server request to go unanswered. The backend answers every server request from a static table without waiting on the frontend." |
 | A5 | "The DAP test suite must pass unchanged after extraction. A behaviour change is a regression." |
 | A6 | "Automatic restart is revisitable only with recorded crash-frequency evidence, and not before Stage 1 is accepted." |
@@ -173,7 +173,7 @@ A1, A3 and A5 are approved and applied to the philosophy. The rest are for your 
 1. **Your approval** of the three judgement decisions (class T record, three identities, atomic completion) and the stage mapping.
 2. **A user action:** `rust-analyzer` is not installed on this machine. The transport, session, delivery and terminate work in 1a uses a fake server and is not blocked. The Rust adapter merge in 1a is gated on V1, V5, V6, V7 and V8, which need the real binary.
 3. **A task, not a blocker:** there is no single file-to-owning-project resolver today. The router in 1a must introduce one over the loaded solution model, which is its first piece of work.
-4. **Philosophy amendments** are needed before the parts they govern are merged (A1, A3, A5 touch 1a). A1, A3 and A5 are approved and applied; the rest remain pending.
+4. **Philosophy amendments** are needed before the parts they govern are merged (A1, A3, A5 touch 1a). A1, A3 and A5 are approved and applied, and so are A2 and A4 (which govern 1b); A6 and A7 remain pending.
 
 ## Sign-off
 
@@ -189,5 +189,5 @@ A1, A3 and A5 are approved and applied to the philosophy. The rest are for your 
 
 ---
 
-*Last updated: Phase 3 (Stage 1 pre-implementation). Author: ShinkuKira21.*
+*Last updated: Phase 3 (Stage 1 pre-implementation; A2 and A4 applied). Author: ShinkuKira21.*
 *This document is a record.*
