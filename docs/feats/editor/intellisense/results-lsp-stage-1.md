@@ -189,7 +189,7 @@ Facts the design depends on but has not confirmed. They are not gates, but none 
 |---|---|---|---|---|
 | V1 | `rust-analyzer.files.watcher`: accepted values, and self-watching when the client registers no watchers; pinned version recorded | Rust adapter merge (1a) | The server cannot self-watch: watcher ownership must be redesigned and a Craidd watcher with `didChangeWatchedFiles` moves into Stage 1 | **Verified.** Accepted values are `client` (default) and `server`. With `server` and no registered watchers, the server picked up edits to an unopened file by itself. Stop condition not triggered. See [evidence](#v1-v5-v6-and-v7-evidence). |
 | V2 | Watcher failure (for example the inotify limit): whether and how the server reports it | "Watcher failure surfaced" claim (1b) | The claim must be reworded | Unverified |
-| V3 | A change to an unopened file updates the server's diagnostics | Real-server smoke test (1b) | As V1 | Unverified |
+| V3 | A change to an unopened file updates the server's diagnostics | Real-server smoke test (1b) | As V1 | **Failed for push-only diagnostics** (measured, F1). The server's model updates (V1), but it never pushes its own diagnostics. They are available only through pull (`textDocument/diagnostic`). Push carries only cargo-check results, after `didSave`. The flip condition "As V1" does not fit: watching works, and the gap is the diagnostic delivery model. See [F1–F3 evidence](#f1f3-evidence). |
 | V4 | `cargo.targetDir` set to use a subdirectory of `target/` behaves as documented | Adapter options (1b) | Revert to the shared directory or find another isolation | Unverified |
 | V5 | The real `initialize` result (sync kind, save, `resolveProvider`, trigger characters) against the validation table | Rust adapter merge (1a) | Adjust the validation table | **Verified.** The real result passes the adapter's unchanged `caps::validate`: sync incremental, save plain, completion with resolve and 4 trigger characters, all four providers on. No table change needed. |
 | V6 | The server accepts `utf-16` as the only offered position encoding | Rust adapter merge (1a) | Offer more encodings and re-encode | **Verified.** The server answers `positionEncoding: "utf-16"`, and a hover after a non-BMP character resolves at the UTF-16 column but not at the code-point column. |
@@ -199,7 +199,7 @@ Facts the design depends on but has not confirmed. They are not gates, but none 
 | V10 | Monaco: whether accept waits for a pending resolve; behaviour when resolve fails; whether a post-accept command can revert | Atomic acceptance (1c) | Use eager mode (F2); if V18 also fails, completion cannot ship | Unverified |
 | V11 | Monaco's incomplete-list flag name and re-request behaviour on 0.56.x; the completion context fields available | Completion requests (1c) | Document the limitation; no `isIncomplete` benefit | Unverified |
 | V12 | Primary and additional edits undo as one step | Atomic acceptance (1c) | Apply them as one grouped edit | Unverified |
-| V13 | `window/showMessageRequest` answered with no selection | Server-to-client requests (1b) | Different handling for that request | Unverified |
+| V13 | `window/showMessageRequest` answered with no selection | Server-to-client requests (1b) | Different handling for that request | **Unverified against the real server.** No real request could be provoked in 9 scenarios (F3). The no-selection reply is covered by the fake-server test `server_requests_are_answered_by_the_backend_alone`; edge cases are proposed in F3. |
 | V14 | Names and number of child processes the server starts (for the G6 process-tree check) | G6 | Adjust the tree assertion | Unverified; inferred from the server's design, not checked |
 | V15 | Whether the server republishes diagnostics on open, after a retention eviction | Retention policy (1b) | Evicted diagnostics cannot be recovered; tighten the policy | Unverified |
 | V16 | How the server reports locations for symlinked paths; the four symlinked-vendor navigation cases | File identity (1b) | Revisit the holder and navigation rules | Unverified |
@@ -357,11 +357,116 @@ The three early warnings from the V1–V7 runs are kept as separate investigatio
 
 | # | Investigation | Source | Status |
 |---|---|---|---|
-| F1 | **V3:** diagnostics for an open file were not republished after an external change to an unopened file it imports | Observation 1 above | Open; feeds the V3 design in 1b |
-| F2 | **`workspace/diagnostic/refresh`:** determine whether an explicit response is required by the negotiated protocol, given the client did not advertise `refreshSupport` | Observation 2 above | Open |
-| F3 | **V13:** no `window/showMessageRequest` arrived from the real server. Await a reproducible real-server request, or construct a targeted protocol test | Observation 3 above | Open |
+| F1 | **V3:** diagnostics for an open file were not republished after an external change to an unopened file it imports | Observation 1 above | **Investigated: V3 Failed for push-only.** The server's own diagnostics are pull-only in this version. See [F1](#f1--what-republishes-diagnostics-v3). Needs an architect decision before 1b. |
+| F2 | **`workspace/diagnostic/refresh`:** determine whether an explicit response is required by the negotiated protocol, given the client did not advertise `refreshSupport` | Observation 2 above | **Investigated: Verified.** A reply is mandatory; `null` is the spec's success value. rust-analyzer treats `null` and the current error identically. Recommendation: reply `null`. See [F2](#f2--workspacediagnosticrefresh). |
+| F3 | **V13:** no `window/showMessageRequest` arrived from the real server. Await a reproducible real-server request, or construct a targeted protocol test | Observation 3 above | **Investigated: V13 Unverified (not reproducible).** `workspace/configuration` measured; `registerCapability` never arrived. New finding: startup failures are silent on the protocol. See [F3](#f3--showmessagerequest-configuration-and-registration-v13). |
+
+
+### F1–F3 evidence
+
+Investigation session, 2026-10-28, on `4d61dd0` (adapter `99863a4`). Server: `rust-analyzer 1 (9074e9b4c6 2026-09-06)`, Arch package `rust-analyzer 20260907-1`; cargo and rustc 1.99.1 (Arch). The same probe client as the V1–V7 session, extended into scenario scripts. It used the client capabilities, init options and server-request table of `4d61dd0`, and each scenario got a fresh copy of the two-file test crate. No code was changed.
+
+**Measured** means observed on the wire or in the server log in these runs. **Inferred** means reasoned from the spec or from the behaviour, not observed directly.
+
+#### F1 — What republishes diagnostics (V3)
+
+**Setup.** `main.rs` was open. `util.rs` was never opened and was edited on disk only. There were two kinds of break:
+
+- **Import break** (as in the V1 run): renaming `ok` breaks `use util::ok`.
+- **Argument-count break**: `ok()` gains a parameter. The server diagnoses this itself (E0061).
+
+**Results.** All measured; each row is one fresh server.
+
+| Trigger after the on-disk edit | Push for `main.rs`? | What arrived |
+|---|---|---|
+| Nothing; waited 175 s (both breaks) | No | Only the initial empty publish at about 0.5 s |
+| Nothing, with `workspace/diagnostic/refresh` answered `null` instead of an error (both breaks) | No | Same |
+| `didChange` on `main.rs` (a newline appended at the end; both breaks; and with the refresh answered `null`) | No, within 60 s | Same |
+| `didOpen` of `util.rs` | No, within 60 s | Same |
+| `didSave` on `main.rs` | **Yes**, 0.08 s after `didSave` | `source: "rustc"` only. Import break: ``unresolved import `util::ok` ``, ``no `ok` in `util` `` and ``cannot find function `ok` in module `util` ``. Argument break: `this function takes 1 argument but 0 arguments were supplied`, plus its sub-diagnostics. |
+| `textDocument/diagnostic` (pull) on `main.rs`, sent without the client advertising pull | Push: no. **Pull reply: yes, immediately** | Argument break: `{"kind": "full", "items": [{"source": "rust-analyzer", "code": "E0061", …}]}`. Import break: `items: []`; the server's own analysis does not flag that import, only `rustc` does. |
+
+**Control: does the server ever push its own diagnostics?** An error was typed into the open `main.rs` itself: `didChange` from `util::ok()` to `util::ok(1, 2)`.
+
+| Client capabilities | Push with items within 30 s | Pull reply |
+|---|---|---|
+| Craidd's (no `textDocument.diagnostic`) | **No**; only the initial empty publish | `rust-analyzer` E0061 `expected 0 arguments, found 2` |
+| Craidd's plus `textDocument.diagnostic` | **No**; no publish at all | Same |
+
+The config schema has no push/pull switch. `diagnostics.enable` (default true) only turns the server's own diagnostics on or off.
+
+**Conclusions.**
+
+1. **Measured:** this rust-analyzer build delivers its own diagnostics only through pull, whatever the client advertises. Push carries only cargo-check (`rustc`) diagnostics, which run at startup and after `didSave` (`checkOnSave` defaults to true).
+2. **Measured:** a change to an unopened file updates the server's model (V1) and the pull answer, but produces no push until the next `didSave`, and then only cargo-check results.
+3. **Inferred:** the empty publish at about 0.5 s is cargo check's initial clear. The cold-start errors in the V1 run were also all `rustc`; this explains why they appeared and the live update did not.
+4. **Push-only diagnostics cannot satisfy V3.** With push alone, Craidd would show no rust-analyzer diagnostics at all, only cargo-check results, refreshed on save. Measured for this version; whether other versions behave the same is not checked.
+5. **What the design would need (for the architect; not designed here).** Pull diagnostics, currently "deferred, not tracked as a blocker", move into Stage 1b:
+   - **Advertise** `textDocument.diagnostic` and `workspace.diagnostics.refreshSupport`.
+   - **Pull** `textDocument/diagnostic` for open documents: on open, after `didChange` (debounced), and on `workspace/diagnostic/refresh`.
+   - **Use `resultId`** so an unchanged answer is cheap.
+   - **Keep two sources per file**, pull (server) and push (cargo check), merged at display. A4 already separates sources.
+   - **Bound and cancel** pull requests like other requests.
+
+   The alternative is accepting save-only, cargo-check diagnostics in Stage 1. That keeps the push design but shows nothing between saves. A4 and the "pull diagnostics deferred" line would change in either case.
+
+#### F2 — `workspace/diagnostic/refresh`
+
+**Spec, LSP 3.17 (quoted).**
+
+- Requests: "Every processed request must send a response back to the sender of the request." A void result: "The result property of the ResponseMessage should be set to `null` in this case to signal a successful request."
+- Diagnostics Refresh: `params: none`, `result: void`, error "code and message set in case an exception happens during the 'workspace/diagnostic/refresh' request".
+- The client capability `workspace.diagnostics.refreshSupport` is described as "Whether the client implementation supports a refresh request sent from the server to the client."
+
+**Measured.**
+
+- The server sent `workspace/diagnostic/refresh` exactly once per run, 0.4–3.8 s after start, in every scenario with a valid workspace. Craidd does not advertise `refreshSupport`.
+- With the current `-32601 Unhandled method` reply and with a `null` reply, the server's log has no line about the response, it sends no retry, and the scenario results are identical (F1 table).
+- Exit code was 0 in every run.
+
+**Conclusions.**
+
+1. **A response is mandatory**, because it is a request. The spec gives `null` as the success value; an error is for an exception while handling it.
+2. **Inferred:** the server should not send this request without `refreshSupport`. Sending it anyway is a server deviation, not a Craidd fault, and it makes no difference to rust-analyzer which reply it gets.
+3. **Recommendation for the Implementation lane:** add `workspace/diagnostic/refresh` → `Ok(Value::Null)` to the static table in `session::answer_server_request`, with a test in the `asks` fake-server script. Reasons:
+   - `null` is the spec's success value. `-32601` claims the method is unknown, which is wrong for a method the protocol defines.
+   - It keeps server stderr clean if a future version starts logging failed replies.
+   - If F1's pull model is adopted, this request becomes the trigger to re-pull the visible documents. At that point Craidd must also advertise `refreshSupport`.
+4. **Not a 1a defect:** every server request still gets exactly one response.
+
+#### F3 — `showMessageRequest`, configuration and registration (V13)
+
+**Scenarios.** Each scenario used Craidd's capabilities unless stated otherwise. All measured.
+
+| Scenario | `window/showMessageRequest` | `window/showMessage` | Other server requests | How the failure surfaced |
+|---|---|---|---|---|
+| Malformed `Cargo.toml` | none | none | progress only | stderr only: `failed fetching cargo workspace root … unclosed table` |
+| Same, plus `experimental.openServerLogs` and `window.showMessage.messageActionItem` (not Craidd's) | none | none | progress only | stderr only |
+| No `Cargo.toml` anywhere | none | none | progress only | stderr only: `failed to find any projects`, `FetchWorkspaceError` |
+| `cargo.sysroot = "/nonexistent/sysroot"` | none | none | refresh | stderr only |
+| A proc-macro crate with `procMacro.server = "/nonexistent/proc-macro-srv"` | none | none | refresh | stderr only |
+| Same proc-macro crate, default server | none | none | refresh | — (works) |
+| `workspace/didChangeConfiguration {"settings": {}}` after startup | none | none | **`workspace/configuration`** `{"items": [{"section": "rust-analyzer"}]}`, 6.05 s, answered from the table | — |
+| Malformed `Cargo.toml`, plus `experimental.serverStatusNotification` (not Craidd's) | none | none | — | `experimental/serverStatus`: `{"health": "error", "quiescent": true, "message": "Failed to load workspaces."}` |
+| Missing proc-macro server, plus `experimental.serverStatusNotification` (not Craidd's) | none | none | — | `experimental/serverStatus`: `{"health": "warning", "message": "Failed spawning proc-macro server … No such file or directory"}` |
+
+`client/registerCapability` never arrived in any F1, F3 or V1–V7 run. **Inferred:** Craidd sets `dynamicRegistration: false` everywhere, and `files.watcher = "server"` removes the one registration rust-analyzer would otherwise make (watched files).
+
+**Conclusions.**
+
+1. **V13 stays Unverified.** No real `showMessageRequest` was reproducible in 9 scenarios. The fake-server test `server_requests_are_answered_by_the_backend_alone` already checks the no-selection reply (`id 1004` → `result: null`, one notice, message logged). Proposed additions for the Implementation lane, all in the fake server:
+   1. A `showMessageRequest` with no `type` and no `actions`: the reply is `null` and the notice severity is 3.
+   2. One sent while the server is `Initializing`, before the `initialize` reply: it must still be answered exactly once.
+   3. One sent while the delivery consumer is stalled (reuse `flood`): the reply must not wait on the frontend (A3).
+   4. A string `id`, echoed back verbatim.
+2. **`workspace/configuration` is now measured.** It arrives after `didChangeConfiguration`, never at startup, and the static table answers it with the adapter's init options under `rust-analyzer`.
+3. **New finding, outside F1–F3, for the architect.** With Craidd's capabilities, a failed workspace load or proc-macro server is **silent on the protocol**: no `showMessage`, no `logMessage`, no diagnostic, only stderr. This conflicts with amendment A2's proposed wording ("A failure to start … is visible to the user"). Options, none designed here:
+   - **(a)** Advertise rust-analyzer's `experimental.serverStatusNotification` and show `health` and `message` in the existing language-server status (measured to work).
+   - **(b)** Surface the server's stderr `ERROR` lines in Output.
+
+   (a) is server-specific, through the adapter; (b) is generic.
 
 ---
 
-*Last updated: Phase 3 (Stage 1a, adapter integrated as 99863a4). Author: ShinkuKira21.*
+*Last updated: Phase 3 (Stage 1a, adapter integrated as 99863a4; F1–F3 investigated). Author: ShinkuKira21.*
 *This document is a record.*
