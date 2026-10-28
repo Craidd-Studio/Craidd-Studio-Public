@@ -6,6 +6,8 @@
 
 **Revision:** Revised after the [comparison review](review-lsp-stage-1-comparison.md) (findings N1–N9) and four earlier design-review concerns. The architecture is unchanged; the changes are clarifications and safeguards. What was already covered, what was refined and what is new is listed in [Review reconciliation](#review-reconciliation). A further independent review is reconciled in [review-lsp-stage-1-independent-reconciliation.md](review-lsp-stage-1-independent-reconciliation.md); the changes it prompted are **approved** (decisions 11–15). Philosophy amendments A1, A3 and A5 are approved and applied to the philosophy; A2, A4, A6 and A7 remain pending.
 
+**Revision (pull diagnostics).** The architect moved pull diagnostics into Stage 1b after the [F1 evidence](results-lsp-stage-1.md#f1f3-evidence) showed that `rust-analyzer` delivers its own diagnostics only when asked. The design now has two diagnostic routes per file, push and pull, described once in [Pull and push diagnostics](#pull-and-push-diagnostics); the rules elsewhere refer to it. Amendment A4 is reworded to match and is still a proposal. Four points are open for the architect and are listed, not decided: [decisions 16–19](#open-decisions-for-review).
+
 **Applies to:** Rust only, through `rust-analyzer`.
 
 **Governs:** The architecture of Craidd's language-server client, as proven on one language. Later stages add table entries and adapters on top of it.
@@ -26,6 +28,7 @@ Stage 1 is done when the shape is correct under stress: server identity, routing
 - No multiple servers per language. The catalog shape allows it; nothing orchestrates it.
 - No user-editable server settings, no settings UI.
 - No rename, code actions, signature help, inlay hints, semantic tokens, workspace symbols, formatting.
+- No workspace-wide pull (`workspace/diagnostic`). Pull is per open document only.
 - No cross-window diagnostic aggregation (philosophy stage 6). The diagnostic record is shaped so stage 6 does not need a rewrite.
 - No bundling, installing or bootstrapping of `rust-analyzer`.
 
@@ -117,9 +120,9 @@ Streaming is safe only if it can never starve or corrupt correctness. So every i
 
 | Class | Examples | Path | Coalesced? | Dropped? |
 |---|---|---|---|---|
-| **R** Responses to our requests | completion, hover, definition, references, symbols, resolve results and errors | Pending table → the awaiting command's one-shot channel → returned as that command's result. **Not** sent over the Channel. | Never | Never, except a deliberate, counted drop when nobody wants it any more (superseded, closed document, cancelled, dead session) |
-| **Q** Server-to-client requests | `window/workDoneProgress/create`, `workspace/configuration`, `workspace/workspaceFolders`, registration, `window/showMessageRequest` | Answered **by the backend itself** from a static handler table; the frontend is not involved. The reply uses the writer's reserved capacity. | n/a | Never. Every request gets exactly one response. |
-| **S** Replaceable snapshots | `publishDiagnostics` (key: session + uri), `$/progress` (key: token) | Backend coalescing map → batched delivery | Latest-wins per key, under the rules below | Only values already superseded by a newer one for the same key |
+| **R** Responses to our requests | completion, hover, definition, references, symbols, resolve results, **pull diagnostic reports**, and errors | Pending table → the awaiting command's one-shot channel → returned as that command's result. **Not** sent over the Channel. | Never | Never, except a deliberate, counted drop when nobody wants it any more (superseded, closed document, cancelled, dead session) |
+| **Q** Server-to-client requests | `window/workDoneProgress/create`, `workspace/configuration`, `workspace/workspaceFolders`, registration, `window/showMessageRequest`, `workspace/diagnostic/refresh` | Answered **by the backend itself** from a static handler table; the frontend is not involved. The reply uses the writer's reserved capacity. | n/a | Never. Every request gets exactly one response. |
+| **S** Replaceable snapshots | `publishDiagnostics` (the push route; key: session + uri), `$/progress` (key: token) | Backend coalescing map → batched delivery | Latest-wins per key, under the rules below | Only values already superseded by a newer one for the same key |
 | **L** Lossy by declaration | `window/logMessage`, `window/showMessage`, stderr | Bounded ring per session | n/a | Oldest first, with a visible "N lines dropped" counter. Error severity is kept in preference to lower severities. |
 | **T** Session status (a record, not a queue) | session phase, session-ready, negotiated-capability summary, the set of documents needing resync | A per-session **status record** read by the delivery task; changed fields go out in the next batch; also available by pull | Latest state wins; the **terminal phase is absorbing** | Never. A terminal phase cannot be overwritten or discarded, and the record cannot overflow. |
 
@@ -142,10 +145,11 @@ Streaming is safe only if it can never starve or corrupt correctness. So every i
 
 **Class T is state, not a queue**
 
-- The record holds: the session generation, the phase, the terminal reason, the negotiated-capability summary (set once, when Ready), and a **set** of document URIs needing resync.
+- The record holds: the session generation, the phase, the terminal reason, the negotiated-capability summary (set once, when Ready), a **set** of document URIs needing resync, and a **diagnostics-refresh counter** (see [Pull and push diagnostics](#pull-and-push-diagnostics)).
 - **Terminal is absorbing.** It is set by compare-and-set inside `terminate()` ([One terminal transition](#one-terminal-transition)); once set, nothing overwrites it.
 - Intermediate phases may collapse. The frontend needs the current state, not the history. Anything that seems to need "exactly once" (registering documents when Ready, for instance) is derived idempotently from `(generation, phase)`.
 - The resync set is bounded by the number of open documents and is idempotent.
+- The refresh counter is one integer. The backend increments it when it answers `workspace/diagnostic/refresh`; the frontend re-pulls when the value differs from the one it last acted on. Missing intermediate values loses nothing, because one re-pull covers any number of refreshes.
 - The frontend can pull the current record, so a window reload or a missed batch loses nothing.
 - There is no queue to overflow, so there is no failure-on-overflow rule and no panic path. A violated internal invariant terminates that one session via `terminate("internal error")`; threads remain wrapped by `containment::guard`, so the IDE process is never at risk.
 
@@ -506,7 +510,7 @@ Corollaries:
 
 - The session status shows "File watching: server-side" while Ready.
 - `window/showMessage`, `window/logMessage` and stderr lines are retained in the Output channel. Messages that indicate a watcher problem (for example inotify limits) are promoted to a visible, non-blocking status warning on the session, with the raw text. Matching is on server-reported text and is best-effort; unmatched failures still appear in the Output channel.
-- The real-server smoke test includes an unopened-file case: change a file on disk outside the editor and assert the server's diagnostics update. A failure there fails the test rather than being tolerated.
+- The real-server smoke test includes an unopened-file case: change a file on disk outside the editor and assert that the server's model updated and that an open file's pulled diagnostics reflect it once pulled. Which trigger makes that happen is verification V3 as re-scoped in [Pull and push diagnostics](#verifications-for-pull-diagnostics). A failure there fails the test rather than being tolerated.
 - This machine reports `fs.inotify.max_user_watches` = 524288; Linux defaults are often lower, so the limit warning path is a real case, not hypothetical.
 
 ### Unsaved buffers
@@ -523,6 +527,7 @@ Corollaries:
 - Per kind and document, the newest request supersedes the previous: a new `completion` cancels the in-flight one.
 - Monaco's `CancellationToken` triggers `$/cancelRequest` and drops the result.
 - The backend pending table is bounded. At the cap, new requests fail fast with a typed "server busy" error, never queue unboundedly. Providers return empty on it.
+- Pull diagnostics (`textDocument/diagnostic`) are requests of this kind, with the additions in [Pull and push diagnostics](#pull-and-push-diagnostics).
 - No Tauri command holds a lock or blocks a thread across a server round trip.
 
 ### Pending-request table and cancelled requests
@@ -546,7 +551,8 @@ Cancellation is best-effort. The server may answer anyway, or answer `ContentMod
 
 - A position-dependent response (completion, hover, definition, references) is applied only if the document's current epoch and the model's current `versionId` equal the captured ones **and** the request is still the newest of its kind.
 - `ContentModified` / `ServerCancelled` are treated as "no result", not errors.
-- Diagnostics carrying a `version` older than the document's current server-side version are ignored.
+- Pushed diagnostics carrying a `version` older than the document's current server-side version are ignored.
+- A pull report is applied only if the document's epoch and the model's `versionId` equal those captured when the pull was sent and it is the newest pull for that document. A dropped report does not record its `resultId`.
 - Responses for a closed document or a dead session are dropped.
 
 ### Accepting a completion, including `additionalTextEdits`
@@ -595,6 +601,8 @@ Anything not listed is omitted, not set to false-by-accident.
 | `textDocument.references` | yes |
 | `textDocument.documentSymbol` | hierarchical |
 | `textDocument.publishDiagnostics` | `relatedInformation`, `versionSupport`, tag support (unnecessary/deprecated) |
+| `textDocument.diagnostic` | no dynamic registration; `relatedDocumentSupport: false`; the same `relatedInformation` and tag support as `publishDiagnostics` |
+| `workspace.diagnostics` | `refreshSupport: true`. Advertising it commits Craidd to answering `workspace/diagnostic/refresh` (class Q) and to re-pulling when it arrives. |
 | `window.workDoneProgress` | yes |
 | `workspace` | `workspaceFolders`, `configuration`; **no** `didChangeWatchedFiles`, **no** `applyEdit`, **no** dynamic registration for anything |
 
@@ -618,7 +626,7 @@ The `initialize` result is untrusted input. One function builds an immutable `Ne
 | `completionProvider.triggerCharacters` | array of non-empty strings | invalid entries are dropped. The frontend receives only the validated list. |
 | `completionProvider.resolveProvider` | boolean `true` only | absent/`false`/any other value → `completionItem/resolve` is **never sent**; Monaco's resolve hook returns the item unchanged without a request. |
 | hover, definition, references, document symbol providers | boolean or options object | `false`, absent, or any other shape → that feature is disabled with a note. |
-| `diagnosticProvider` (pull) | any | Not advertised by Craidd in Stage 1. If present it is ignored and noted. |
+| `diagnosticProvider` (pull) | an options object `{ identifier?, interFileDependencies, workspaceDiagnostics }`, or the same with registration fields (`documentSelector`, `id`) | Absent, `false` or any other shape → **pull is disabled for the session** with a note; the push route still works. `identifier`: a string is kept and echoed in each pull; any other type is dropped. `interFileDependencies` and `workspaceDiagnostics`: booleans only, anything else reads as `false`. `workspaceDiagnostics` is recorded and never used (no workspace-wide pull). |
 | `serverInfo` | `{ name, version }` | Recorded for status display only; never used for logic. |
 | unknown fields | any | Ignored. |
 
@@ -667,30 +675,96 @@ Diagnostic {
 - `windowLabel` and `projectName` are present now so linked aggregation later is additive.
 - `source` shows where it came from, so rust-analyzer diagnostics and `cargo build` problems are distinguishable.
 
+### Pull and push diagnostics
+
+*Architect decision; detailed design proposed.* Evidence: against `rust-analyzer 1 (9074e9b4c6 2026-09-06)`, the server's own diagnostics arrive **only when the client asks** (`textDocument/diagnostic`). Unprompted push carries only cargo-check (`rustc`) results, on startup and after `didSave` ([F1](results-lsp-stage-1.md#f1--what-republishes-diagnostics-v3), measured, one version). Push alone would show no server diagnostics. The design therefore never assumes which route a given diagnostic takes.
+
+**Two routes, stored separately**
+
+| Route | In practice (measured, one version) | A set is replaced by | Cleared by |
+|---|---|---|---|
+| **Push** | cargo check (`rustc`) | the next `publishDiagnostics` for that uri, including an empty set | session end |
+| **Pull** | `rust-analyzer`'s own analysis | the next `full` report for that uri; an `unchanged` report keeps the set | session end; closing the document (see below) |
+
+- Sets are keyed `(session, uri, route)` in `lspStore`. The route, not the `source` string, decides where a set lives. `source` is displayed and never used for logic, because "pull is rust-analyzer, push is cargo check" is a measured fact about one version.
+- Neither route writes the other's set. They are **merged only at display**, beside build problems, which remain a third, separate source ([Semantics](#semantics)). There is no deduplication in Stage 1 (decision 5); the measured argument-count break appears once from each route, as `rust-analyzer` E0061 and as `rustc`.
+
+**Client side**
+
+- The client advertises `textDocument.diagnostic` and `workspace.diagnostics.refreshSupport` ([Client capabilities](#client-capabilities-advertise-only-what-is-implemented)).
+- Pull is used only for a session whose validated `diagnosticProvider` is present. Otherwise only the push route exists, and the status notes it.
+- Pull covers **Open** documents only. Pending, Suspended and alias documents are not pulled. A document that Resumes or is resynchronised is pulled again once it is Open at its new epoch.
+
+**When to pull**
+
+| Trigger | Rule |
+|---|---|
+| Open | After `didOpen` has been flushed (also after a resume or a resync). |
+| After a change, debounced | A time debounce applies **to the pull, never to `didChange`** (the change queue above stays undelayed). Each new change restarts the timer and cancels that document's in-flight pull. The pull is sent after the pending changes are flushed. The debounce value is ◇ and is set from G3b and G5; none is chosen here. |
+| `workspace/diagnostic/refresh` | Answered by the backend (class Q), which increments the refresh counter in the T record. The frontend then re-pulls the Open documents: visible ones first, the rest behind a concurrency cap (◇). |
+
+Switching tabs pulls nothing. The three triggers do not cover every case; see [Known gap](#known-gap-and-open-points).
+
+**Request handling.** Pulls follow the existing rules and add these:
+
+- Each pull is a cancellable request in the [pending table](#pending-request-table-and-cancelled-requests). At most **one pull is in flight per document**; a newer one cancels the older. A cap (◇) limits pulls in flight across documents, so a refresh with many open tabs is spread out, not sent at once.
+- Pulls are admitted only below `capacity − reserve`, like any request. A pull that is not admitted is not lost: the document is marked pull-needed, and the writer's capacity event or the next trigger re-issues it.
+- A `ContentModified` or `ServerCancelled` answer is "no result". If the cancellation data says `retriggerRequest`, as the specification defines for diagnostic requests, the document is re-armed once per debounce window, up to a bounded number of consecutive times (◇), so it cannot loop.
+- `previousResultId` is sent only when the last **accepted** report for this uri carried a `resultId`. A `resultId` is reset when the document is resynchronised, closed, or the session ends, so an `unchanged` answer can never confirm a set that was discarded.
+- Staleness follows the existing key: `(epoch, versionId)` captured at send ([Independent stale rejection](#independent-stale-rejection)).
+
+**Lifecycle and the existing rules**
+
+- **Closing a document clears its pull set**, unlike its push set. The N7 rule (a close does not clear diagnostics) rests on the server keeping the set current; nothing refreshes a pulled set for a closed file, and showing it as current would mislead. This is a consequence of pull, raised for confirmation as decision 18.
+- **Terminate.** `terminate()` resolves pending pulls to "no result" with all other entries, and clears both routes' sets, their `resultId`s, the pull-needed marks and the markers. Reports that arrive for a dead session are dropped.
+- **Delivery.** A pull report is class R: it is never lossy and never passes through the S coalescing map. It reaches the store through the frontend's own per-frame coalescing, hash comparison and marker diffing ([Flood control](#flood-control)). The backend is bounded by the pending-table cap, the one-in-flight rule and the concurrency cap, not by queue growth.
+- **Retention.** Pull sets exist only for Open documents, so they are bounded by the number of open tabs and the per-file cap. They are never evicted while the document is open. Push sets follow the closed-document retention policy unchanged.
+
+#### Known gap and open points
+
+The three triggers react to changes **in a document the client has open**. They do not directly cover:
+
+1. An edit to an **unopened** file on disk (V1 shows the server's model updates; F1 shows its answer is current if asked) that changes the diagnostics of an open file. No trigger asks. F1 measured `workspace/diagnostic/refresh` once per run, about 0.4–3.8 s after start, and not after later changes.
+2. An edit in one open document that changes the diagnostics of **another** open document. The server reports `interFileDependencies: true`.
+
+These are not designed here. Candidates, none chosen: pull the other Open documents after the changed document's pull settles (bounded, visible first); pull the visible document when the window regains focus; pull after `didSave`. The choice is [decision 19](#open-decisions-for-review). Until it is made, the other document's diagnostics refresh at its own next trigger.
+
+#### Verifications for pull diagnostics
+
+V3 is re-scoped, and four items are added. The ids are **proposed**; the Verification lane enters them in the [results record](results-lsp-stage-1.md#pending-verifications). All need a real `rust-analyzer`.
+
+| ID | Item | Blocks | Flip condition if it fails |
+|---|---|---|---|
+| V3 (re-scoped) | With pull implemented: after an external edit to an unopened file, which trigger makes an open file's diagnostics current, and how long after. Includes the cross-document case (point 2). | Smoke test (1b), decision 19 | Add a trigger from decision 19, or accept refresh-at-own-trigger and say so |
+| V22 | Whether the server returns a `resultId` and answers `unchanged` to `previousResultId`; its `retriggerRequest` data on cancellation; its answer to `$/cancelRequest` on a pull | Pull request handling (1b) | Send no `previousResultId`; every pull is a full report (still correct, costs more) |
+| V23 | With `refreshSupport` advertised: when the server sends `workspace/diagnostic/refresh` (startup only, after indexing, after file changes) | Refresh trigger (1b) | Refresh is not a sufficient re-pull trigger; rely on the other triggers and decision 19 |
+| V24 | What a pull returns **before the workspace has loaded** (empty report, `ContentModified`, an error) | Pull on open (1b) | Gate the first pull on readiness or on the first refresh; an empty early report must not show as "no problems" |
+| V25 | Pull and cargo-check overlap in practice: how often the two routes report the same error | None (informs a later display-level dedup) | n/a |
+
 ### Semantics
 
-LSP `publishDiagnostics` **replaces** the full diagnostic set for a URI. `BuildProblem` accumulates until the next build resets it. The two are different sources with different lifecycles and stay that way:
+Each LSP route replaces the full diagnostic set for a URI: `publishDiagnostics` for the push set, a `full` pull report for the pull set. `BuildProblem` accumulates until the next build resets it. These are different sources with different lifecycles and stay that way:
 
-- **Separate storage.** LSP diagnostics live in `lspStore`; build problems stay in `useBuild.problems`. Neither writes into the other. Merging happens only in the display layer.
-- **Separate clearing.** LSP sets are replaced by the server's next publish for that file, and cleared when the session ends. Build problems are cleared only by Craidd's existing build start/clear paths. Closing a file, saving, or a server publishing an empty set never touches build problems, and a build never touches LSP sets.
+- **Separate storage.** LSP diagnostics (both routes, kept apart) live in `lspStore`; build problems stay in `useBuild.problems`. None of the three writes into another. Merging happens only in the display layer.
+- **Separate clearing.** LSP sets are replaced by the next publish or accepted pull report for that file, and cleared when the session ends (the pull set also when its document closes). Build problems are cleared only by Craidd's existing build start/clear paths. Closing a file, saving, or a server publishing an empty set never touches build problems, and a build never touches LSP sets.
 - **Clearly distinguished in the UI.** Every row states its source. LSP rows are labelled as live language-server results; build rows are labelled as from the last build, with the build they came from where known. A user must be able to tell "the server currently says this" from "the last build said this".
-- **No deduplication in Stage 1.** The same compiler error can appear twice, once from each source. Because build problems persist until the next build, **a duplicate can persist after the error is fixed and the server's copy is gone**, not for a short time: the build copy remains until the next build clears it. This is expected behaviour in Stage 1 and is documented as such.
-- **Counts.** Error/warning counts include both sources and may count one error twice. The Problems panel shows per-source counts so this is visible.
+- **No deduplication in Stage 1.** The same compiler error can appear twice, or three times, once from each source (pull, push, build). Because build problems persist until the next build, **a duplicate can persist after the error is fixed and the server's copy is gone**, not for a short time: the build copy remains until the next build clears it. This is expected behaviour in Stage 1 and is documented as such.
+- **Counts.** Error/warning counts include every source and may count one error more than once. The Problems panel shows per-source counts so this is visible.
 - **Kept open for later.** The display layer takes both sources as separate typed inputs, so source filtering or display-level deduplication can be added later, once real usage shows how often they overlap, without changing storage, clearing or the protocol layer.
 
 ### Flood control
 
 - Two complementary layers, not duplicates. The **backend** layer ([delivery classes](#server-to-frontend-delivery-and-message-classes)) bounds channel traffic and queue memory. The **frontend** layer below bounds store writes and marker calls.
-- Store updates are coalesced to one per animation frame across all incoming publishes.
-- A publish whose set equals the stored one (hash compare) causes no store write and no marker call.
-- Monaco markers (`setModelMarkers`) are set only for **open** models, with one owner string per session, and only when that file's set changed. Files not open exist only in the store for the Problems panel.
+- Store updates are coalesced to one per animation frame across all incoming publishes and accepted pull reports.
+- A publish or pull report whose set equals the stored one for that route (hash compare), and an `unchanged` report, cause no store write and no marker call.
+- Monaco markers (`setModelMarkers`) are set only for **open** models, with one owner string per session and route, and only when that file's set changed. Files not open exist only in the store for the Problems panel.
 - The Problems panel renders a bounded window of a possibly large list (virtualised or capped display), while the stored and counted totals stay accurate.
-- On session end (crash, stop, restart), that session's diagnostics and markers are cleared. Stale diagnostics from a dead server are not shown as if current.
-- **Closing a document does not clear its diagnostics.** For project-based languages the server's diagnostics for a closed file remain valid. A set leaves the store only through a server publish for that URI (including an empty set) or the end of the session. Monaco markers belong to a model: they go when the model is disposed and are re-applied from the store when a model is created again.
+- On session end (crash, stop, restart), that session's diagnostics (both routes) and markers are cleared. Stale diagnostics from a dead server are not shown as if current.
+- **Closing a document does not clear its pushed diagnostics.** For project-based languages the server's pushed diagnostics for a closed file remain valid. A pushed set leaves the store only through a server publish for that URI (including an empty set) or the end of the session. The exception is the pull set, which nothing can refresh once the document is closed; see [Pull and push diagnostics](#pull-and-push-diagnostics). Monaco markers belong to a model: they go when the model is disposed and are re-applied from the store when a model is created again.
 - **Retention policy**. The panel bounds *rendering*, so the store needs its own limits:
   - Sets for **open** models are never evicted.
-  - A per-file limit (◇) caps the diagnostics stored for one file; the excess is summarised as "+N not retained" and is visible.
-  - For **closed** documents, global limits (◇) on files and total diagnostics apply. When exceeded, the least recently published closed set is evicted first.
+  - A per-file limit (◇) caps the diagnostics stored for one file and route; the excess is summarised as "+N not retained" and is visible.
+  - For **closed** documents, which hold push sets only, global limits (◇) on files and total diagnostics apply. When exceeded, the least recently published closed set is evicted first.
   - **Eviction is visible, never silent.** The Problems header says that diagnostics for N files are not retained, and counts are labelled "at least". An evicted file returns only when the server publishes for it again; whether the server republishes on open is verification V15.
   - Eviction never touches open models or build problems.
   - **No limit value is chosen here.** G5 records the stored count and memory under a large check; the limits are set from that evidence. Until then they are provisional ◇ values acting as a safety net only.
@@ -705,13 +779,15 @@ LSP `publishDiagnostics` **replaces** the full diagnostic set for a URI. `BuildP
 | rustup proxy present but component missing | Version probe must treat a non-zero exit as unavailable. (Verify on target systems.) |
 | Spawn refused / fails | `Failed` with reason in Output. No retry loop. |
 | `initialize` timeout or error | Terminate the process tree (bounded), `Failed`, reason shown. |
-| Unexpected exit | `Crashed`, signal name if any, last stderr lines in Output, markers/diagnostics cleared, **no automatic restart**. A restart action in the status lets the user decide, as the philosophy states. |
+| Unexpected exit | `Crashed`, signal name if any, last stderr lines in Output, markers and diagnostics (both routes) cleared, **no automatic restart**. A restart action in the status lets the user decide, as the philosophy states. |
 | Framing error: missing, invalid or oversize `Content-Length`, EOF mid-body | `Failed`. The stream position is lost; do not guess at resync. |
 | Message body that is not valid JSON or not a valid JSON-RPC message, **framing intact** | The stream is still aligned. The message is skipped, counted and logged; the session continues. More than a bounded number of bad bodies (◇) → `Failed`. A skipped message that was a response leaves its pending entry to expire or be resolved at session end; it never leaves a caller hanging at a terminal state. |
 | Write queue full | Never silently drop a sync notification. Mark the document `Desynced`, discard its pending changes without replay, bump its epoch, and resynchronise with an atomic `didClose` + `didOpen` when the writer has room. See [Desynchronisation and writer-queue overflow](#desynchronisation-and-writer-queue-overflow). |
 | Writer cannot admit a resync within the bound | Session reported **Unresponsive**; requests fail fast; documents stay visibly `Desynced`; user can restart. |
 | Frontend not consuming | Reader keeps draining the server. Class S keeps coalescing within its key bound; R and Q are unaffected; class T is a fixed-size record, so nothing accumulates and nothing fails. The terminal phase, if reached, is held until read or pulled. See [delivery classes](#server-to-frontend-delivery-and-message-classes). |
 | Any terminal session state | Handled only by `terminate()`: see [One terminal transition](#one-terminal-transition). Every pending request, `Awaiting` or `Cancelled`, resolves to "no result"; documents return to Pending for any future session. |
+| Server does not offer pull | Pull is disabled for the session with a note; only the push route exists. The editor is unaffected. |
+| A pull fails with an error other than `ContentModified` / `ServerCancelled` | "No result"; the document's last pull set is kept, the error is logged, and the next trigger tries again. After a bounded run of consecutive failures (◇) the status notes that pull diagnostics are degraded. No retry loop. |
 | Hung server (alive, not responding) | Requests time out to "no result". Typing is never affected. User can restart. |
 | Frontend loses a window | Sessions owned by that window stop through the normal stop path. |
 | Resolver error (e.g. cargo metadata fails) | Fall back with a visible note; never block the editor. |
@@ -740,9 +816,9 @@ A development-only switch (`CRAIDD_LSP=0`) disables the LSP subsystem so a basel
 |---|---|---|---|---|
 | G1 | No server during startup or restore; deferral is bounded; startup measured apart from server cost | Launch, open a Rust solution with restored tabs (active tab Rust, and active tab non-Rust with Rust tabs in the background). Count language-server processes over time. Record the four timings in [Launch trigger](#launch-trigger). Also force a never-idle startup and confirm the bounded deferral still launches. Also switch the active file during the deferral and confirm revalidation. | Same build with `CRAIDD_LSP=0` for startup-to-interactive | Zero server processes until startup and restore have completed. Background Rust tabs never start a server. Startup-to-interactive not measurably different from baseline, with measurements recorded. Server initialization and indexing cost reported separately and never counted as startup. |
 | G2 | No duplicate servers for a shared Cargo workspace | Solution with ≥2 Craidd projects in one Cargo workspace; open files from each | n/a (count) | Exactly one `rust-analyzer` for that workspace. A project outside the workspace gets its own. |
-| G3 | Indexing never blocks interaction | Open a large Rust workspace; type, scroll, switch tabs during initial indexing. Also record, with the separate target directory on and off: extra disk use, first-check time, and whether a Build issued during a check waits on the lock. | Same actions with no session, same machine | Main-thread long-task count and keystroke-to-paint latency during indexing recorded and compared with baseline. Typing remains responsive; any regression is explained or fixed before acceptance. Also recorded: Channel message rate and bytes per second during indexing. **G3b (sub-case, not a new gate):** the same measurements while typing in one file during a save-triggered check, plus whether CPU contention with a concurrent user Build appears. Lowering the server's CPU priority, or not sending `didSave`, are considered only if G3b shows contention. |
-| G4 | Rapid typing, file switching and a stalled consumer are bounded | Scripted burst typing and rapid tab switching; separately, stall the frontend consumer during a diagnostics and progress flood | n/a (count) | In-flight requests never exceed the cap; no per-keystroke request backlog; exactly one process per identity; superseded requests are cancelled or dropped; document table returns to consistent state; with the consumer stalled the server's stdout keeps draining, every response is delivered exactly once, every server request is answered, and the terminal status and each progress `end` are delivered once the consumer resumes. |
-| G5 | Diagnostics do not flood Monaco | Trigger a check producing many diagnostics across many files | Count marker calls without coalescing | `setModelMarkers` called only for changed open files; at most one store write per frame; identical republishes cause no writes. Counts recorded, plus the stored diagnostic count and approximate memory. |
+| G3 | Indexing never blocks interaction | Open a large Rust workspace; type, scroll, switch tabs during initial indexing. Also record, with the separate target directory on and off: extra disk use, first-check time, and whether a Build issued during a check waits on the lock. | Same actions with no session, same machine | Main-thread long-task count and keystroke-to-paint latency during indexing recorded and compared with baseline. Typing remains responsive; any regression is explained or fixed before acceptance. Also recorded: Channel message rate and bytes per second during indexing, and the pull-request rate and server CPU while typing with the pull debounce active. **G3b (sub-case, not a new gate):** the same measurements while typing in one file during a save-triggered check, plus whether CPU contention with a concurrent user Build appears. Lowering the server's CPU priority, or not sending `didSave`, are considered only if G3b shows contention. |
+| G4 | Rapid typing, file switching and a stalled consumer are bounded | Scripted burst typing and rapid tab switching; separately, stall the frontend consumer during a diagnostics and progress flood | n/a (count) | In-flight requests never exceed the cap; no per-keystroke request backlog (at most one pull in flight per document, and no pull per keystroke); exactly one process per identity; superseded requests are cancelled or dropped; document table returns to consistent state; with the consumer stalled the server's stdout keeps draining, every response is delivered exactly once, every server request is answered, and the terminal status and each progress `end` are delivered once the consumer resumes. |
+| G5 | Diagnostics do not flood Monaco | Trigger a check producing many diagnostics across many files; pull every open document after a refresh | Count marker calls without coalescing | `setModelMarkers` called only for changed open files; at most one store write per frame; identical republishes, identical pull reports and `unchanged` reports cause no writes. Counts recorded, plus the stored diagnostic count (per route) and approximate memory, and the ratio of `unchanged` to `full` reports. |
 | G6 | Closing a solution terminates its servers and their descendants | Open, then close the solution; also kill the IDE. List the server's full process tree before and after, including `cargo` check processes and any proc-macro server it started. | n/a (count) | No server process, **no descendant process**, and no stream thread remains for that solution. IDE SIGKILL leaves no orphan (supervisor backstop). |
 | G7 | Sync correctness | Edit, undo/redo, multi-cursor, paste, EOL change, non-BMP characters, large paste; switching tabs, disposing and recreating a model while its tab stays open, reloading a file from disk while its model is disposed; a forced writer overflow during typing; compare server-side view | n/a | Server and Monaco agree after each, or desync is detected and repaired by resync. After a forced overflow the server's text equals the model's text and no edit is applied twice. |
 
@@ -760,6 +836,7 @@ Per the project's habit of exercising the production path, not mocks of it.
 - **transport:** a non-reading server cannot block the caller (analogue of the existing DAP writer test); queue-full yields desync, not silence.
 - **delivery classes:** with a stalled consumer and a flooding fake server, assert that the reader keeps draining stdout; every response (R) is delivered exactly once; every server request (Q) is answered without the frontend; the last diagnostics set per uri is delivered, **including an empty clearing set**; every progress `end` is delivered and `begin` + `end` before a delivery yields one completed record; the terminal phase (T) is never lost and is pullable after the consumer was stalled; a later non-terminal write cannot overwrite it; the coalescing map never exceeds the number of distinct keys; dropped log lines are counted and reported.
 - **overflow recovery:** with scripted writer capacity, assert that a rejected sync notification yields `Desynced`; the pending queue is discarded and never replayed; the resync unit is admitted atomically (both messages or neither); the server-side reconstructed text equals the model text; edits made while `Desynced` appear exactly once; results from the old epoch are dropped; request admission respects the reserve; the Unresponsive bound triggers.
+- **pull diagnostics (fake server):** a `full` report replaces the pull set; an `unchanged` report keeps it and causes no store write; `previousResultId` is sent only after an accepted report with a `resultId`; a report for an older epoch or `versionId` is dropped and records no `resultId`; one pull in flight per document (a newer cancels the older); `ContentModified` yields no result; `ServerCancelled` with `retriggerRequest` re-arms once per window and stops at the bound; a pull not admitted is re-issued on a capacity event; `workspace/diagnostic/refresh` is answered by the backend with the consumer stalled, increments the counter once per refresh, and many refreshes cause one re-pull; a pull and a push for the same uri are stored apart; session death resolves pending pulls and clears both routes; a server without `diagnosticProvider` gets no pull.
 - **pending table:** cancel keeps an entry until the reply; a reply to a `Cancelled` entry is dropped and counted; an unknown id is ignored; eviction prefers `Cancelled` entries; every entry resolves to no result at a terminal state; ids are never reused.
 - **capability validation:** table-driven over every row of the validation table with valid, absent and malformed values, including a non-utf-16 `positionEncoding` (handshake failure), sync as number and as object, `openClose` missing, `resolveProvider` absent/false/non-boolean (no resolve request is ever sent), and a resolve response that tries to change `textEdit` (ignored and logged).
 - **framing vs body errors:** a framing error fails the session; a bad body with intact framing is skipped and counted; the tolerance bound fails the session.
@@ -778,13 +855,14 @@ Per the project's habit of exercising the production path, not mocks of it.
 - diagnostic coalescing, hash-skip, marker diffing, panel bounding; closing a document keeps its diagnostics in the store; a recreated model gets its markers back from the store.
 - completion context: trigger kind and character are passed; `isIncomplete` is carried to Monaco's incomplete flag.
 - file identity: a symlinked directory and its canonical path produce one registration; the alias tab sends nothing and shows its note; the holder is the owned editable tab; promotion on holder close; a server-returned location focuses the holder rather than opening a second tab; the four symlinked-vendor cases (a)–(d).
-- source separation: an LSP publish (including an empty set) never alters build problems; a build start/clear never alters LSP sets; session end clears only LSP sets; rows carry correct source labels and per-source counts.
+- source separation: an LSP publish (including an empty set) never alters build problems or the pull set; a pull report never alters the push set; a build start/clear never alters LSP sets; session end clears only LSP sets; closing a document clears its pull set and keeps its push set; rows carry correct source labels and per-source counts.
+- pull scheduling: the debounce restarts on each change and cancels the in-flight pull; no pull on a tab switch; a refresh pulls visible documents first and respects the concurrency cap; Pending, Suspended and alias documents are never pulled; a resumed or resynchronised document is pulled once.
 - provider dispatch with and without capability.
 - accepting a completion: `additionalTextEdits` applied at the right mapped ranges (including non-BMP lines before the edit); overlapping or same-position edits reject the whole item and never leave a primary-only result; a stale document rejects or re-resolves; primary and additional edits undo together; accept-before-resolve-completes; a failed or timed-out resolve leaves the document unchanged; accept after the session died applies only a complete item.
 
 ### Real server
 
-- An opt-in smoke test against an installed `rust-analyzer` on a small fixture crate, skipped cleanly when it is absent. It checks handshake, diagnostics, completion, hover, definition and clean shutdown.
+- An opt-in smoke test against an installed `rust-analyzer` on a small fixture crate, skipped cleanly when it is absent. It checks handshake, diagnostics through both routes (including the argument-count break that only pull reports), completion, hover, definition and clean shutdown.
 - Lab workspaces under `workspaces/` for G1–G7.
 
 ### UI
@@ -797,11 +875,11 @@ Live-IDE verification is run only when requested; the user checks by eye. This d
 
 Stage 1 is accepted when all of the following are true and recorded:
 
-1. A Rust file in a Rust project gets diagnostics, completion (accepting an auto-import completion inserts both the symbol and the `use` edit correctly, as one undo step), hover, go-to-definition, references and document symbols from `rust-analyzer`, using only capabilities the server advertised.
+1. A Rust file in a Rust project gets diagnostics (the server's own through pull, cargo check through push), completion (accepting an auto-import completion inserts both the symbol and the `use` edit correctly, as one undo step), hover, go-to-definition, references and document symbols from `rust-analyzer`, using only capabilities the server advertised.
 2. No server runs during startup or session restore, the deferred launch is bounded and revalidated, and startup cost is measured apart from server cost (G1).
 3. One Cargo workspace shared by several Craidd projects yields one server (G2).
 4. Indexing, rapid typing and file switching never block the editor, with measured evidence against baseline (G3, G4).
-5. Diagnostics reach Monaco and the Problems panel with correct project attribution, bounded and coalesced (G5).
+5. Diagnostics from both routes reach Monaco and the Problems panel with correct project attribution and source labels, bounded and coalesced (G5).
 6. Closing a solution, a window, or the IDE leaves no server or stream thread behind (G6).
 7. Edits stay synchronised across the cases in G7, with deterministic repair on desync: pending changes are discarded rather than replayed, and no edit is applied twice.
 8. Every failure in [Error recovery](#error-recovery) degrades to a working editor with a visible, accurate status.
@@ -845,24 +923,28 @@ How each review item maps onto this design, so a requirement lives in exactly on
 
 An independent review (Conditional Go) is reconciled item by item, with each recommendation marked accepted, modified, rejected or deferred, in [review-lsp-stage-1-independent-reconciliation.md](review-lsp-stage-1-independent-reconciliation.md). The resulting rules appear once, in the sections marked, and are not repeated here.
 
+### Change after the F1 investigation
+
+The architect moved pull diagnostics from "deferred" into Stage 1b because V3 failed for push-only diagnostics. No earlier decision is reversed. N7 is refined for the pull route only (decision 18). Where it landed: [Pull and push diagnostics](#pull-and-push-diagnostics), the capability and validation tables, the Q and T rows of the delivery classes, [Flood control](#flood-control), [Error recovery](#error-recovery), G3–G5, [Testing](#testing), acceptance criteria 1 and 5, the 1b plan, and amendment A4. The "pull diagnostics deferred" line in the results record's deferred list is superseded by this change; the results record is cross-referenced, not rewritten.
+
 ### Not changed
 
 - Approved decisions 1–7 are unchanged.
-- No new gate was added. G3–G7 gained measurements and pass-condition detail.
+- No new gate was added. G3–G7 gained measurements and pass-condition detail, including for pull diagnostics.
 - **No new philosophy amendment is required.** Amendment A3 already covers answering server-to-client requests; the rule that the backend answers them itself is a design detail beneath it. The philosophy remains unchanged.
 
 ---
 
 ## Philosophy amendments required
 
-Exact edits needed to `philosophy-intellisense.md`. **A1, A3 and A5 are approved by the architect and applied**, with their added sentences. A2, A4, A6 and A7 remain pending; A8 belongs to the C# stage.
+Exact edits needed to `philosophy-intellisense.md`. **A1, A3 and A5 are approved by the architect and applied**, with their added sentences. A2, A4, A6 and A7 remain pending; A8 belongs to the C# stage. A4 was reworded after the F1 evidence to cover pull as well as push; the philosophy document is unchanged.
 
 | # | Current text | Required change | Reason |
 |---|---|---|---|
 | A1 | "**One server per (project, language) pair.** … they get two `rust-analyzer` instances." | Replace with: one server per **server identity** — implementation, resolved root and configuration identity — where a per-language adapter resolves the root. Many projects may share one server. Project ownership and server ownership are separate. Keep "servers are scoped to a working directory" and the no-cross-solution rule. | Two projects in one Cargo workspace would otherwise start duplicate `rust-analyzer` instances. |
 | A2 | "**Launch on demand.** A language server starts when a file of that language is first opened in the editor." | Clarify "opened" as the document becoming the visible, active editor model, after startup and session restore complete. Restored background tabs do not start a server. The launch is deferred to idle with a bounded maximum wait and revalidated before execution. Startup never waits for server initialization. | Session restore would otherwise start servers at launch, breaking the startup rule. |
 | A3 | "Server -> Client" message list (notifications only) | Add the server-to-client **requests** that must be answered (`workDoneProgress/create`, `workspace/configuration`, `workspaceFolders`, registration, `showMessageRequest`), and the client-to-server `$/cancelRequest` and `didSave` semantics. | Unanswered server requests stall servers; the minimum slice must say so. |
-| A4 | "Where the server's diagnostics go … A diagnostic is a diagnostic. It has a file, a line, a column…" | Note that LSP diagnostics carry ranges, source, tags and related information, replace per-file, and need their own store merged at display. Build problems and LSP diagnostics are separate sources. | `BuildProblem` has no range and accumulates; LSP sets replace. |
+| A4 *(reworded after F1; still a proposal)* | "Where the server's diagnostics go … A diagnostic is a diagnostic. It has a file, a line, a column…"; and the client-to-server and server-to-client lists, which name only `publishDiagnostics` | Note that LSP diagnostics arrive by **two routes**, push (`textDocument/publishDiagnostics`) and pull (`textDocument/diagnostic`), and that a server may use either or both, so the client must support both. Each route carries ranges, source, tags and related information and replaces per file; each is stored separately and merged at display, with build problems as a third source that accumulates. Add `textDocument/diagnostic` to the client-to-server list and `workspace/diagnostic/refresh` to the server-to-client requests that must be answered. | `rust-analyzer` (measured, one version) answers its own diagnostics only to a pull; push carries cargo-check results. `BuildProblem` has no range and accumulates; LSP sets replace. A3 is applied and is not reopened: the added request belongs to A4 because it exists only for pull. |
 | A5 | "The framing code can be shared between LSP and DAP clients. One `framing.rs` module." | Add: extraction must not change DAP behaviour; the inbound size cap is a parameter, not a shared constant. | DAP's 8 MB cap is a private constant today. |
 | A6 | "**What if a language server crashes?** … A restart button" | Add: no automatic restart in Stage 1; diagnostics from a dead session are cleared. | Stale diagnostics from a dead server mislead. |
 | A7 | "How are server settings surfaced? Not in Phase 3." | Add: defaults are held by the adapter and hashed into server identity. A configuration change is a new identity, not a live mutation. | Defines what "defaults" means operationally. |
@@ -909,7 +991,14 @@ These are not designed here. They are recorded so Stage 1 does not close doors o
 14. ~~**Stages 1a, 1b and 1c with per-stage evidence.**~~ **Approved,** and the gate mapping above. See [Delivery plan](#delivery-plan-inside-stage-1).
 15. ~~**User-visible surfaces on existing UI only.**~~ **Approved,** including a small source extension to the Output tab. See [User-visible surfaces](#user-visible-surfaces).
 
-The ◇ values introduced by this revision (admission reserve, cancelled-entry expiry, bad-body tolerance, Unresponsive bound; class T has none because it is a fixed-size record) are initial proposals to be tuned from measured results.
+**Open for the architect (raised by the pull-diagnostics change; none is decided here):**
+
+16. **Reply to `workspace/diagnostic/refresh` (F2).** Recommendation recorded in the results record: reply `null`. Under that choice the request becomes the re-pull trigger described in [Pull and push diagnostics](#pull-and-push-diagnostics). Advertising `refreshSupport` means the request is answered either way; the open question is the value. The design text assumes `null`.
+17. **Silent workspace-load or proc-macro failure.** With Craidd's capabilities such a failure is silent on the protocol (F3), which conflicts with the proposed A2 wording that a failure to start is visible. Options: (a) advertise `experimental.serverStatusNotification` and show `health` and `message` in the status chip (adapter-specific; measured to work); (b) surface the server's stderr `ERROR` lines in Output (generic).
+18. **Closing a document clears its pull set.** Raised while designing: N7 keeps pushed sets on close, but a pulled set cannot be refreshed once its document is closed. The design clears it and keeps the push set. Alternative: keep it, labelled as not refreshed.
+19. **Extra pull triggers.** The three specified triggers leave two gaps (an unopened file edited on disk; a change in one open document affecting another). See [Known gap](#known-gap-and-open-points). V3 as re-scoped measures it.
+
+The ◇ values introduced by this revision (admission reserve, cancelled-entry expiry, bad-body tolerance, Unresponsive bound; class T has none because it is a fixed-size record) are initial proposals to be tuned from measured results. The pull revision adds more: the pull debounce, the concurrency cap, the retrigger bound and the consecutive-failure bound.
 
 ---
 
@@ -927,9 +1016,9 @@ The ◇ values introduced by this revision (admission reserve, cancelled-entry e
 
 ### Stage 1b — documents, synchronisation and diagnostics
 
-- **Scope.** Document lifetimes, ordered incremental sync, deterministic resync, save; file identity rules; the deferred launch for the real active document; `lspStore`, delivery to Monaco markers, Problems source badges; status chip; Output source; watcher-failure surfacing; the retention policy.
+- **Scope.** Document lifetimes, ordered incremental sync, deterministic resync, save; file identity rules; the deferred launch for the real active document; `lspStore`, delivery to Monaco markers, Problems source badges; status chip; Output source; watcher-failure surfacing; the retention policy. **Pull diagnostics:** the client capabilities `textDocument.diagnostic` and `workspace.diagnostics.refreshSupport` (a change to the 1a `caps` module), `diagnosticProvider` validation, the three pull triggers with `resultId` handling, the refresh counter in the T record, the backend's answer to `workspace/diagnostic/refresh`, and separate push and pull sets merged at display.
 - **User-visible.** Status chip, diagnostics, markers, lock glyph.
-- **Exit evidence.** With a real `rust-analyzer`: diagnostics appear, clear and persist across close; G1 (all four timings), G2, G5, G6 (real process tree) and G7 recorded; first G3 measurements including G3b; V2–V4, V9, V13–V16 recorded.
+- **Exit evidence.** With a real `rust-analyzer`: diagnostics from both routes appear and clear (the push set persists across close; the pull set clears on close); G1 (all four timings), G2, G5, G6 (real process tree) and G7 recorded; first G3 measurements including G3b; V2–V4 (V3 re-scoped), V9, V13–V16 and the pull verifications V22–V25 recorded; decisions 16–19 resolved or deferred by the architect.
 - **Does not claim** completion, hover, definition, references or symbols.
 
 ### Stage 1c — providers
@@ -956,5 +1045,5 @@ Philosophy amendments are applied or withdrawn before the stage they govern is m
 
 ---
 
-*Last updated: Phase 3 (Stage 1 proposal). Author: ShinkuKira21.*
+*Last updated: Phase 3 (Stage 1 proposal; pull diagnostics moved into Stage 1b). Author: ShinkuKira21.*
 *This document is a design.*

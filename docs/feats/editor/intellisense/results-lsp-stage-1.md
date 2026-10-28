@@ -189,7 +189,7 @@ Facts the design depends on but has not confirmed. They are not gates, but none 
 |---|---|---|---|---|
 | V1 | `rust-analyzer.files.watcher`: accepted values, and self-watching when the client registers no watchers; pinned version recorded | Rust adapter merge (1a) | The server cannot self-watch: watcher ownership must be redesigned and a Craidd watcher with `didChangeWatchedFiles` moves into Stage 1 | **Verified.** Accepted values are `client` (default) and `server`. With `server` and no registered watchers, the server picked up edits to an unopened file by itself. Stop condition not triggered. See [evidence](#v1-v5-v6-and-v7-evidence). |
 | V2 | Watcher failure (for example the inotify limit): whether and how the server reports it | "Watcher failure surfaced" claim (1b) | The claim must be reworded | Unverified |
-| V3 | A change to an unopened file updates the server's diagnostics | Real-server smoke test (1b) | As V1 | **Failed for push-only diagnostics** (measured, F1). The server's model updates (V1), but it never pushes its own diagnostics. They are available only through pull (`textDocument/diagnostic`). Push carries only cargo-check results, after `didSave`. The flip condition "As V1" does not fit: watching works, and the gap is the diagnostic delivery model. See [F1–F3 evidence](#f1f3-evidence). |
+| V3 | A change to an unopened file updates the server's diagnostics | Real-server smoke test (1b) | As V1 | **Failed for push-only diagnostics** (measured, F1). The server's model updates (V1), but it never pushes its own diagnostics. They are available only through pull (`textDocument/diagnostic`). Push carries only cargo-check results, after `didSave`. The flip condition "As V1" does not fit: watching works, and the gap is the diagnostic delivery model. See [F1–F3 evidence](#f1f3-evidence). **Re-scoped around pull** by the architect's decision; see the design's [verifications for pull diagnostics](design-lsp-stage-1-rust.md#verifications-for-pull-diagnostics), which also proposes V22–V25. |
 | V4 | `cargo.targetDir` set to use a subdirectory of `target/` behaves as documented | Adapter options (1b) | Revert to the shared directory or find another isolation | Unverified |
 | V5 | The real `initialize` result (sync kind, save, `resolveProvider`, trigger characters) against the validation table | Rust adapter merge (1a) | Adjust the validation table | **Verified.** The real result passes the adapter's unchanged `caps::validate`: sync incremental, save plain, completion with resolve and 4 trigger characters, all four providers on. No table change needed. |
 | V6 | The server accepts `utf-16` as the only offered position encoding | Rust adapter merge (1a) | Offer more encodings and re-encode | **Verified.** The server answers `positionEncoding: "utf-16"`, and a hover after a non-BMP character resolves at the UTF-16 column but not at the code-point column. |
@@ -209,7 +209,9 @@ Facts the design depends on but has not confirmed. They are not gates, but none 
 | V20 | Diagnostic store size and memory under a large check (this is a G5 measurement) | Retention limits (1b) | n/a | Unmeasured |
 | V21 | Save-triggered check responsiveness and CPU contention with a concurrent Build (this is G3b) | None | Consider CPU priority or withholding `didSave` | Unmeasured |
 
-Deferred and not tracked as blockers: bounded automatic restart, pull diagnostics, a missing standard-library-source message, a Craidd-native file watcher (unless V1 or V3 fails), and any new UI surface.
+Pull diagnostics are no longer deferred: they moved into Stage 1b ([design](design-lsp-stage-1-rust.md#pull-and-push-diagnostics)).
+
+Deferred and not tracked as blockers: bounded automatic restart, a missing standard-library-source message, a Craidd-native file watcher (unless V1 or V3 fails), and any new UI surface.
 
 ---
 
@@ -357,7 +359,7 @@ The three early warnings from the V1–V7 runs are kept as separate investigatio
 
 | # | Investigation | Source | Status |
 |---|---|---|---|
-| F1 | **V3:** diagnostics for an open file were not republished after an external change to an unopened file it imports | Observation 1 above | **Investigated: V3 Failed for push-only.** The server's own diagnostics are pull-only in this version. See [F1](#f1--what-republishes-diagnostics-v3). Needs an architect decision before 1b. |
+| F1 | **V3:** diagnostics for an open file were not republished after an external change to an unopened file it imports | Observation 1 above | **Investigated: V3 Failed for push-only.** The server's own diagnostics are pull-only in this version. See [F1](#f1--what-republishes-diagnostics-v3). **Architect decision: pull diagnostics move into Stage 1b**; see the [design](design-lsp-stage-1-rust.md#pull-and-push-diagnostics). |
 | F2 | **`workspace/diagnostic/refresh`:** determine whether an explicit response is required by the negotiated protocol, given the client did not advertise `refreshSupport` | Observation 2 above | **Investigated: Verified.** A reply is mandatory; `null` is the spec's success value. rust-analyzer treats `null` and the current error identically. Recommendation: reply `null`. See [F2](#f2--workspacediagnosticrefresh). |
 | F3 | **V13:** no `window/showMessageRequest` arrived from the real server. Await a reproducible real-server request, or construct a targeted protocol test | Observation 3 above | **Investigated: V13 Unverified (not reproducible).** `workspace/configuration` measured; `registerCapability` never arrived. New finding: startup failures are silent on the protocol. See [F3](#f3--showmessagerequest-configuration-and-registration-v13). |
 
