@@ -158,7 +158,7 @@ A1, A3 and A5 are approved and applied to the philosophy. The rest are for your 
 | # | Proposed addition |
 |---|---|
 | A1 | "Which server analyses which project is an implementation detail; which project owns which file is not." |
-| A2 | "A failure to start (missing tool, bad version, handshake timeout) is visible to the user and never gates the editor." |
+| A2 | "A failure to start (missing tool, bad version, handshake timeout) or to load the workspace is visible to the user, through the server's own status where it reports one and through bounded server output otherwise, and never gates the editor." *(Revised after F3 and decision 17; still a proposal.)* |
 | A3 | "The frontend cannot cause a server request to go unanswered. The backend answers every server request from a static table without waiting on the frontend." |
 | A5 | "The DAP test suite must pass unchanged after extraction. A behaviour change is a regression." |
 | A6 | "Automatic restart is revisitable only with recorded crash-frequency evidence, and not before Stage 1 is accepted." |
