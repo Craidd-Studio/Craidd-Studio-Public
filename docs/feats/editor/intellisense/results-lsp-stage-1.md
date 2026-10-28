@@ -345,6 +345,12 @@ Recorded from the architect's decision after the V1, V5, V6 and V7 evidence abov
 - **Adapter merge:** integrating `8f7801f` into `feat/intellisense-ws` is **conditionally approved**, subject to clean integration, the relevant regression tests passing, and no outstanding mandatory adapter gates.
 - **Scope:** no expansion into Stage 1b or 1c, no push, and no merge to `master` without further approval.
 
+### Adapter integration
+
+- **Integrated:** the Rust adapter (`8f7801f` on `claude/blissful-hopper-bc6a74`) landed on `feat/intellisense-ws` as **`99863a4`**, on top of `6f3b1bf`. Only the adapter commit was taken; the branch's copy of this record (`ff60aa9`) was not.
+- **Tests, Implementation-reported:** 195 library, 7 process-cleanup and 26 DAP tests passing after integration. These counts are as reported by the Implementation lane and have **not been independently re-run**.
+- The rustup-shim case of V7 remains Unverified and a release qualification requirement, as decided above.
+
 ### Follow-up investigations
 
 The three early warnings from the V1–V7 runs are kept as separate investigations. None is a 1a failure, and none is resolved by this record.
@@ -357,5 +363,5 @@ The three early warnings from the V1–V7 runs are kept as separate investigatio
 
 ---
 
-*Last updated: Phase 3 (Stage 1a, V7 decision and adapter merge approval). Author: ShinkuKira21.*
+*Last updated: Phase 3 (Stage 1a, adapter integrated as 99863a4). Author: ShinkuKira21.*
 *This document is a record.*
