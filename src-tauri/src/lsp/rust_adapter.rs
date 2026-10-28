@@ -154,6 +154,7 @@ fn run_metadata(cargo: &Path, folder: &Path, timeout: Duration) -> Root {
 impl LanguageAdapter for RustAdapter {
     fn language(&self) -> &'static str { "rust" }
     fn document_extensions(&self) -> &'static [&'static str] { &["rs"] }
+    fn configuration_section(&self) -> &'static str { "rust-analyzer" }
 
     fn resolve(&self, project: &ProjectRef) -> Result<ServerContext, ResolveNote> {
         let implementation = (self.tool)().map_err(ResolveNote)?;
@@ -162,7 +163,9 @@ impl LanguageAdapter for RustAdapter {
             Err(error) => (project.folder.clone(), vec![format!("Cargo workspace discovery failed; using the project folder ({error})")]),
         };
         Ok(ServerContext { implementation, args: vec![], root, projects: vec![project.clone()],
-            init_options: default_init_options(), env: vec![], lsp_language_id: "rust", notes })
+            init_options: default_init_options(), env: vec![], lsp_language_id: "rust",
+            // Decision 17: silent workspace-load and proc-macro failures are reported this way.
+            experimental: serde_json::json!({ "serverStatusNotification": true }), notes })
     }
 }
 

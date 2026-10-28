@@ -19,6 +19,7 @@ use serde_json::{json, Value};
 use crate::commands::containment::{guard, signal_name};
 use super::caps::{self, NegotiatedCaps};
 use super::delivery::{Coalescer, Delivered, LogRing, Phase, StatusRecord};
+use super::documents::{DocError, DocTable, DocView, Refused, Sink};
 use super::framing::{encode, read_frame, FrameLimits, FrameWriter, QueueError};
 use super::pending::PendingTable;
 use super::protocol::{self, Inbound, LogLine, LogSource, Outcome, METHOD_NOT_FOUND, REQUEST_FAILED};
@@ -39,6 +40,10 @@ pub(crate) struct Limits {
     pub max_header_line: usize,
     pub stderr_lines: usize,
     pub stderr_line_bytes: usize,
+    /// A resync not admitted within this bound reports the session Unresponsive.
+    pub resync_bound: Duration,
+    /// The writer signals room again once its depth falls to this.
+    pub writer_low_water: usize,
 }
 
 impl Default for Limits {
@@ -56,6 +61,8 @@ impl Default for Limits {
             max_header_line: 8 * 1024,
             stderr_lines: 1_000,
             stderr_line_bytes: 16 * 1024,
+            resync_bound: Duration::from_secs(10),
+            writer_low_water: 64,
         }
     }
 }
@@ -72,6 +79,8 @@ pub(crate) struct LaunchSpec {
     /// Answers `workspace/configuration`, by dotted section.
     pub configuration: Value,
     pub lazy_additional_edits: bool,
+    /// Client `experimental` capabilities, declared by the adapter.
+    pub experimental: Value,
 }
 
 /// ◇ How often a running server's process tree is re-read.
@@ -83,6 +92,29 @@ pub(crate) enum RequestError { NotReady, Busy, Closed }
 #[derive(Debug, PartialEq, Eq)]
 pub(crate) enum SendError { NotReady, Full, Closed }
 
+#[derive(Debug, PartialEq, Eq)]
+pub(crate) enum PullError {
+    /// The server offers no pull; push is the only route.
+    Disabled,
+    /// The document is not open, or is desynced and cannot be flushed.
+    NotSynced,
+    Request(RequestError),
+}
+
+/// One delivery to the frontend. Sent only after the previous one was
+/// acknowledged; the status is included only when it changed.
+#[derive(Clone, Debug, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+pub(crate) struct Batch {
+    pub status: Option<StatusRecord>,
+    pub events: Vec<Delivered>,
+    pub logs: Vec<LogLine>,
+    pub dropped_logs: u64,
+}
+
+#[derive(Default)]
+struct Cursor { revision: Option<u64>, log_seq: u64, dropped_logs: u64 }
+
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub(crate) struct Counters {
     pub ignored_notifications: u64,
@@ -91,6 +123,9 @@ pub(crate) struct Counters {
     pub capability_gaps: u64,
     pub bad_bodies: u64,
     pub later_terminal_causes: u64,
+    pub refreshes: u64,
+    pub stale_pushes: u64,
+    pub malformed_health: u64,
 }
 
 struct Process { child: Child, pid: i32 }
@@ -103,6 +138,8 @@ struct Inner {
     pending: Mutex<PendingTable>,
     snapshots: Mutex<Coalescer>,
     logs: Mutex<LogRing>,
+    documents: Mutex<DocTable>,
+    cursor: Mutex<Cursor>,
     writer: Mutex<Option<FrameWriter>>,
     process: Mutex<Option<Process>>,
     /// The server's process tree, refreshed while it runs so descendants
@@ -117,6 +154,13 @@ struct Inner {
 
 /// A request already on the wire; wait for it or cancel it by `id`.
 pub(crate) struct PendingRequest { pub id: i64, receiver: Receiver<Outcome> }
+
+impl PendingRequest {
+    /// Bounded wait; a timeout or a dead session is no result, never a hang.
+    pub(crate) fn wait(self, timeout: Duration) -> Outcome {
+        self.receiver.recv_timeout(timeout).unwrap_or(Outcome::NoResult)
+    }
+}
 
 #[derive(Clone)]
 pub(crate) struct Session(Arc<Inner>);
@@ -146,6 +190,8 @@ impl Session {
             status: Mutex::new(StatusRecord::new(generation)),
             changed: Condvar::new(),
             snapshots: Mutex::new(Coalescer::default()),
+            documents: Mutex::new(DocTable::default()),
+            cursor: Mutex::new(Cursor::default()),
             writer: Mutex::new(None),
             process: Mutex::new(None),
             tree: Mutex::new(None),
@@ -201,7 +247,9 @@ impl Session {
             return;
         };
         let weak = Arc::downgrade(&self.0);
-        let writer = FrameWriter::spawn(stdin, self.0.limits.writer_capacity, move |error| Session::transport_error(&weak, error));
+        let drained = Arc::downgrade(&self.0);
+        let writer = FrameWriter::spawn_with_drain(stdin, self.0.limits.writer_capacity, self.0.limits.writer_low_water,
+            move || Session::writer_drained(&drained), move |error| Session::transport_error(&weak, error));
         *lock(&self.0.writer) = Some(writer);
         self.own_process(child, pid);
         let reader = self.clone();
@@ -234,8 +282,37 @@ impl Session {
 
     /// Descendants such as `cargo check` or a proc-macro server can start at
     /// any time; refresh so they are known before a crash orphans them.
+    /// The same tick checks the resync bound; no other timer is added.
     fn watch_tree(&self) {
-        while !self.wait_until(TREE_REFRESH, |status| status.phase.is_terminal()) { self.refresh_tree(); }
+        while !self.wait_until(TREE_REFRESH, |status| status.phase.is_terminal()) {
+            self.refresh_tree();
+            self.check_resync_bound();
+        }
+    }
+
+    fn check_resync_bound(&self) {
+        let overdue = lock(&self.0.documents).overdue(Instant::now(), self.0.limits.resync_bound);
+        let changed = {
+            let mut status = lock(&self.0.status);
+            let changed = status.unresponsive != overdue && !status.phase.is_terminal();
+            if changed { status.touch(|s| s.unresponsive = overdue); }
+            changed
+        };
+        if changed {
+            if overdue {
+                lock(&self.0.logs).push(LogLine { source: LogSource::Log, severity: 2,
+                    text: format!("[lsp] unresponsive: a resync was not admitted within {} s", self.0.limits.resync_bound.as_secs()) });
+            }
+            self.0.changed.notify_all();
+        }
+    }
+
+    /// Event-driven retry: the frontend sees `writerRoom` move and re-issues
+    /// resyncs and pulls that were not admitted.
+    fn writer_drained(weak: &Weak<Inner>) {
+        let Some(inner) = weak.upgrade() else { return; };
+        lock(&inner.status).touch(|s| s.writer_room += 1);
+        inner.changed.notify_all();
     }
 
     fn handshake(&self) {
@@ -246,7 +323,7 @@ impl Session {
             "clientInfo": { "name": "Craidd Studio", "version": env!("CARGO_PKG_VERSION") },
             "rootUri": spec.root_uri,
             "workspaceFolders": folders,
-            "capabilities": caps::client_capabilities(spec.lazy_additional_edits),
+            "capabilities": caps::client_capabilities(spec.lazy_additional_edits, &spec.experimental),
             "initializationOptions": spec.init_options,
             "trace": "off",
         });
@@ -283,7 +360,7 @@ impl Session {
             },
             Ok(Outcome::Error { code, message }) => { self.terminate(Phase::Failed, &format!("initialize failed ({code}): {message}")); }
             // The session ended while waiting; terminate() already recorded why.
-            Ok(Outcome::NoResult) => {}
+            Ok(Outcome::NoResult | Outcome::Retrigger) => {}
             Err(id) => {
                 lock(&self.0.pending).cancel(id, Instant::now());
                 self.terminate(Phase::Failed, &format!("initialize timed out after {} s", self.0.limits.initialize_timeout.as_secs_f32()));
@@ -364,7 +441,19 @@ impl Session {
                 }
             }
             Ok(Inbound::Snapshot(snapshot)) => { lock(&self.0.snapshots).push(snapshot); self.0.changed.notify_all(); }
-            Ok(Inbound::Log(line)) => { lock(&self.0.logs).push(line); }
+            Ok(Inbound::Log(line)) => { lock(&self.0.logs).push(line); self.0.changed.notify_all(); }
+            Ok(Inbound::Health(Ok(health))) => {
+                if health.health != "ok" {
+                    lock(&self.0.logs).push(LogLine { source: LogSource::Log, severity: if health.health == "error" { 1 } else { 2 },
+                        text: format!("[lsp] server status {}: {}", health.health, health.message.as_deref().unwrap_or("")) });
+                }
+                lock(&self.0.status).touch(|s| s.health = Some(health));
+                self.0.changed.notify_all();
+            }
+            Ok(Inbound::Health(Err(note))) => {
+                lock(&self.0.counters).malformed_health += 1;
+                lock(&self.0.logs).push(LogLine { source: LogSource::Log, severity: 4, text: format!("[lsp] ignored server status: {note}") });
+            }
             Ok(Inbound::Ignored { .. }) => { lock(&self.0.counters).ignored_notifications += 1; }
         }
     }
@@ -381,6 +470,18 @@ impl Session {
                 }
             }).collect()).unwrap_or_default())),
             "workspace/workspaceFolders" => Ok(json!([{ "uri": spec.root_uri, "name": spec.workspace_name }])),
+            // Decision 16: always answered with null. With pull enabled the
+            // counter moves; the frontend turns any number of moves into one wave.
+            "workspace/diagnostic/refresh" => {
+                let pulled = {
+                    let mut status = lock(&self.0.status);
+                    let pulled = status.caps.as_ref().is_some_and(|caps| caps.pull.is_some());
+                    if pulled { status.touch(|s| s.refresh += 1); }
+                    pulled
+                };
+                if pulled { lock(&self.0.counters).refreshes += 1; self.0.changed.notify_all(); }
+                Ok(Value::Null)
+            }
             "client/registerCapability" | "client/unregisterCapability" => {
                 lock(&self.0.counters).capability_gaps += 1;
                 lock(&self.0.logs).push(LogLine { source: LogSource::Log, severity: 2,
@@ -407,6 +508,7 @@ impl Session {
                 Ok(_) => {
                     let text = String::from_utf8_lossy(&line).trim_end().to_string();
                     lock(&self.0.logs).push(LogLine { source: LogSource::Stderr, severity: 4, text });
+                    self.0.changed.notify_all();
                 }
             }
         }
@@ -482,7 +584,8 @@ impl Session {
         lock(&self.0.pending).resolve_all();
         // 3. Snapshots from a dead session are discarded; the log ring is kept.
         lock(&self.0.snapshots).discard_all();
-        // 4. Documents return to Pending: the document table arrives in Stage 1b.
+        // 4. Documents return to Pending: the table empties, nothing is sent.
+        lock(&self.0.documents).clear();
         // 5. Process teardown, never awaited by the bookkeeping above.
         self.start_teardown();
         true
@@ -551,6 +654,144 @@ impl Session {
         });
     }
 
+    fn documents_ready(&self) -> Result<(), DocError> {
+        let status = lock(&self.0.status);
+        match (&status.phase, status.caps.as_ref()) {
+            (Phase::Ready, Some(caps)) => match &caps.sync_unusable {
+                Some(reason) => Err(DocError::Unsupported { reason: reason.clone() }),
+                None => Ok(()),
+            },
+            _ => Err(DocError::Closed),
+        }
+    }
+
+    /// Runs `work` with the document table and a sink that writes through
+    /// the writer, holding the writer lock so a resync pair stays contiguous.
+    /// Sync traffic may use the reserve.
+    fn with_documents<T>(&self, work: impl FnOnce(&mut DocTable, &mut dyn Sink) -> T) -> T {
+        struct WriterSink<'a>(MutexGuard<'a, Option<FrameWriter>>, usize);
+        impl Sink for WriterSink<'_> {
+            fn admit(&mut self, packets: Vec<Vec<u8>>) -> Result<(), Refused> {
+                let Some(writer) = self.0.as_ref() else { return Err(Refused::Closed); };
+                writer.try_send_all(packets, self.1).map_err(|e| match e { QueueError::Full => Refused::Full, QueueError::Closed => Refused::Closed })
+            }
+        }
+        let mut documents = lock(&self.0.documents);
+        let mut sink = WriterSink(lock(&self.0.writer), self.0.limits.writer_capacity);
+        work(&mut documents, &mut sink)
+    }
+
+    /// After any document operation: the resync set in the status record
+    /// mirrors the table, bounded by the open documents.
+    fn publish_resync(&self) {
+        let desynced: std::collections::BTreeSet<String> = lock(&self.0.documents).desynced().into_iter().collect();
+        let mut status = lock(&self.0.status);
+        if status.resync != desynced { status.touch(|s| s.resync = desynced); drop(status); self.0.changed.notify_all(); }
+    }
+
+    pub(crate) fn open_document(&self, uri: &str, language_id: &str, text: &str) -> Result<DocView, DocError> {
+        self.documents_ready()?;
+        self.with_documents(|docs, sink| docs.open(sink, uri, language_id, text))
+    }
+
+    pub(crate) fn change_document(&self, uri: &str, epoch: u64, changes: Vec<Value>) -> Result<DocView, DocError> {
+        self.documents_ready()?;
+        let view = self.with_documents(|docs, sink| docs.change(sink, uri, epoch, changes, Instant::now()));
+        self.publish_resync();
+        view
+    }
+
+    pub(crate) fn mark_desynced(&self, uri: &str, reason: &str) -> Result<DocView, DocError> {
+        let view = lock(&self.0.documents).mark_desynced(uri, reason, Instant::now());
+        self.publish_resync();
+        view
+    }
+
+    pub(crate) fn resync_document(&self, uri: &str, text: &str) -> Result<DocView, DocError> {
+        self.documents_ready()?;
+        let view = self.with_documents(|docs, sink| docs.resync(sink, uri, text));
+        self.publish_resync();
+        self.check_resync_bound();
+        view
+    }
+
+    /// `didSave` per the validated save mode: none, plain, or with text.
+    pub(crate) fn save_document(&self, uri: &str, text: &str) -> Result<DocView, DocError> {
+        self.documents_ready()?;
+        let mode = self.caps().map(|caps| caps.save).unwrap_or(caps::SaveMode::None);
+        match mode {
+            caps::SaveMode::None => lock(&self.0.documents).view(uri).ok_or(DocError::NotOpen),
+            caps::SaveMode::Plain => self.with_documents(|docs, sink| docs.save(sink, uri, None)),
+            caps::SaveMode::IncludeText => self.with_documents(|docs, sink| docs.save(sink, uri, Some(text))),
+        }
+    }
+
+    /// `didClose` while the session is alive; after it ends nothing is sent.
+    pub(crate) fn close_document(&self, uri: &str) -> Result<(), DocError> {
+        if lock(&self.0.status).phase != Phase::Ready { return Err(DocError::Closed); }
+        let result = self.with_documents(|docs, sink| docs.close(sink, uri));
+        self.publish_resync();
+        result
+    }
+
+    pub(crate) fn document(&self, uri: &str) -> Option<DocView> { lock(&self.0.documents).view(uri) }
+    pub(crate) fn document_stats(&self) -> super::documents::DocStats { lock(&self.0.documents).stats }
+
+    /// `textDocument/diagnostic` for one open, synced document. Admitted
+    /// below `capacity − reserve` like any request.
+    pub(crate) fn begin_pull(&self, uri: &str, previous_result_id: Option<&str>) -> Result<PendingRequest, PullError> {
+        let pull = self.caps().and_then(|caps| caps.pull).ok_or(PullError::Disabled)?;
+        if !lock(&self.0.documents).view(uri).is_some_and(|doc| doc.sync == super::documents::DocState::Synced) {
+            return Err(PullError::NotSynced);
+        }
+        let mut params = json!({ "textDocument": { "uri": uri } });
+        if let Some(identifier) = pull.identifier { params["identifier"] = Value::String(identifier); }
+        if let Some(previous) = previous_result_id { params["previousResultId"] = Value::String(previous.into()); }
+        self.begin_request("textDocument/diagnostic", params).map_err(PullError::Request)
+    }
+
+    /// The next delivery, or `None` while the previous one is unacknowledged
+    /// or nothing changed. Pushed diagnostics older than the document's
+    /// current version are dropped here (stale rejection).
+    pub(crate) fn next_batch(&self, max_count: usize, max_bytes: usize, max_logs: usize) -> Option<Batch> {
+        let mut cursor = lock(&self.0.cursor);
+        let mut snapshots = lock(&self.0.snapshots);
+        if snapshots.awaiting_ack() { return None; }
+        let status = lock(&self.0.status).clone();
+        let status = (cursor.revision != Some(status.revision)).then_some(status);
+        let mut events = snapshots.take_batch(max_count, max_bytes).unwrap_or_default();
+        let before = events.len();
+        {
+            let documents = lock(&self.0.documents);
+            events.retain(|event| match event {
+                Delivered::Diagnostics { uri, version: Some(version), .. } => documents.version(uri).map_or(true, |current| *version >= current),
+                _ => true,
+            });
+        }
+        if events.len() < before { lock(&self.0.counters).stale_pushes += (before - events.len()) as u64; }
+        let (logs, dropped_logs) = {
+            let ring = lock(&self.0.logs);
+            let (lines, last) = ring.since(cursor.log_seq, max_logs);
+            cursor.log_seq = last;
+            (lines, ring.dropped)
+        };
+        let dropped_changed = dropped_logs != cursor.dropped_logs;
+        if status.is_none() && events.is_empty() && logs.is_empty() && !dropped_changed {
+            snapshots.ack();
+            return None;
+        }
+        snapshots.hold_until_ack();
+        if let Some(status) = &status { cursor.revision = Some(status.revision); }
+        cursor.dropped_logs = dropped_logs;
+        Some(Batch { status, events, logs, dropped_logs })
+    }
+
+    /// Wait (bounded) until there may be something to deliver.
+    pub(crate) fn wait_for_delivery(&self, timeout: Duration) {
+        let status = lock(&self.0.status);
+        let _ = self.0.changed.wait_timeout(status, timeout);
+    }
+
     pub(crate) fn status(&self) -> StatusRecord { lock(&self.0.status).clone() }
     pub(crate) fn caps(&self) -> Option<NegotiatedCaps> { lock(&self.0.status).caps.clone() }
 
@@ -570,7 +811,7 @@ impl Session {
     pub(crate) fn take_batch(&self, max_count: usize, max_bytes: usize) -> Option<Vec<Delivered>> {
         lock(&self.0.snapshots).take_batch(max_count, max_bytes)
     }
-    pub(crate) fn ack_batch(&self) { lock(&self.0.snapshots).ack(); }
+    pub(crate) fn ack_batch(&self) { lock(&self.0.snapshots).ack(); self.0.changed.notify_all(); }
     pub(crate) fn snapshot_keys(&self) -> usize { lock(&self.0.snapshots).keys() }
     pub(crate) fn logs(&self) -> (Vec<LogLine>, u64) { let logs = lock(&self.0.logs); (logs.lines(), logs.dropped) }
     pub(crate) fn counters(&self) -> Counters { *lock(&self.0.counters) }

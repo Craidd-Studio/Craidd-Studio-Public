@@ -6,6 +6,7 @@
 //! talks to a real process through the production spawn path.
 //!
 //! The script is a comma-separated list of flags in `CRAIDD_FAKE_LSP`.
+use std::collections::HashMap;
 use std::fs::File;
 use std::io::{BufReader, Write};
 use std::os::fd::FromRawFd;
@@ -25,7 +26,26 @@ pub(crate) fn command(script: &str) -> (PathBuf, Vec<String>, Vec<(String, Strin
     ], vec![("CRAIDD_FAKE_LSP".into(), script.into())])
 }
 
-struct Fake { out: File, flags: Vec<String> }
+struct Fake { out: File, flags: Vec<String>, docs: HashMap<String, String>, pulls: u64, saves: u64, stalled: bool }
+
+/// Apply one LSP content change with UTF-16 positions, as a real server would.
+fn apply(text: &mut String, change: &Value) {
+    let Some(range) = change.get("range") else { *text = change["text"].as_str().unwrap().into(); return; };
+    let offset = |position: &Value| {
+        let (line, character) = (position["line"].as_u64().unwrap() as usize, position["character"].as_u64().unwrap() as usize);
+        let start = text.split_inclusive('\n').take(line).map(str::len).sum::<usize>();
+        let mut units = 0;
+        let mut at = start;
+        for c in text[start..].chars() {
+            if units >= character || c == '\n' { break; }
+            units += c.len_utf16();
+            at += c.len_utf8();
+        }
+        at
+    };
+    let (from, to) = (offset(&range["start"]), offset(&range["end"]));
+    text.replace_range(from..to, change["text"].as_str().unwrap());
+}
 
 impl Fake {
     fn has(&self, flag: &str) -> bool { self.flags.iter().any(|f| f == flag) }
@@ -42,6 +62,7 @@ impl Fake {
             "hoverProvider": true, "definitionProvider": true, "referencesProvider": true, "documentSymbolProvider": true,
         });
         if self.value("encoding").is_some() { caps["positionEncoding"] = json!(self.value("encoding")); }
+        if self.has("pull") { caps["diagnosticProvider"] = json!({"identifier": "fake", "interFileDependencies": true, "workspaceDiagnostics": false}); }
         json!({"capabilities": caps, "serverInfo": {"name": "fake-lsp", "version": "0.0"}})
     }
 
@@ -76,6 +97,15 @@ impl Fake {
             self.send(json!({"jsonrpc":"2.0","method":"textDocument/publishDiagnostics","params":{"uri":"file:///f0.rs","diagnostics":[]}}));
             self.log("flood done".into());
         }
+        if let Some(count) = self.value("refresh").and_then(|n| n.parse::<usize>().ok()) {
+            for n in 0..count { self.send(json!({"jsonrpc":"2.0","id":format!("r{n}"),"method":"workspace/diagnostic/refresh"})); }
+        }
+        if self.has("serverstatus") {
+            self.send(json!({"jsonrpc":"2.0","method":"experimental/serverStatus","params":{"health":"warning","quiescent":false,"message":"Failed spawning proc-macro server"}}));
+            self.send(json!({"jsonrpc":"2.0","method":"experimental/serverStatus","params":{"health":"panic"}}));
+            self.send(json!({"jsonrpc":"2.0","method":"experimental/serverStatus","params":{"health":"error","quiescent":true,"message":"x".repeat(5000)}}));
+            self.log("status sent".into());
+        }
         if self.has("stall_reads") { loop { std::thread::sleep(Duration::from_secs(60)); } }
     }
 }
@@ -86,7 +116,7 @@ fn fake_lsp_server_entry() {
     let Ok(script) = std::env::var("CRAIDD_FAKE_LSP") else { return; };
     let flags: Vec<String> = script.split(',').filter(|f| !f.is_empty()).map(String::from).collect();
     if flags.iter().any(|f| f == "ignore_term") { unsafe { libc::signal(libc::SIGTERM, libc::SIG_IGN); } }
-    let mut fake = Fake { out: unsafe { File::from_raw_fd(3) }, flags };
+    let mut fake = Fake { out: unsafe { File::from_raw_fd(3) }, flags, docs: HashMap::new(), pulls: 0, saves: 0, stalled: false };
     let mut input = BufReader::new(std::io::stdin());
     let mut replies = vec![];
     let limits = FrameLimits { max_body: 1 << 26, max_header_line: Some(8192) };
@@ -97,6 +127,10 @@ fn fake_lsp_server_entry() {
         match (method.as_deref(), id) {
             (Some("initialize"), Some(id)) => {
                 if fake.has("silent_init") { continue; }
+                if fake.has("early_ask") {
+                    // Before the initialize reply, with no type and no actions, and a string id.
+                    fake.send(json!({"jsonrpc":"2.0","id":"early","method":"window/showMessageRequest","params":{"message":"early"}}));
+                }
                 if fake.has("init_error") { fake.send(json!({"jsonrpc":"2.0","id":id,"error":{"code":-32603,"message":"nope"}})); continue; }
                 let caps = fake.capabilities();
                 fake.reply(&id, caps);
@@ -105,6 +139,48 @@ fn fake_lsp_server_entry() {
             (Some("shutdown"), Some(id)) => if !fake.has("ignore_shutdown") { fake.reply(&id, Value::Null); },
             (Some("exit"), None) => if !fake.has("ignore_exit") { std::process::exit(0); },
             (Some("test/echo"), Some(id)) => { let params = message["params"].clone(); fake.reply(&id, params); }
+            (Some("textDocument/didOpen"), None) => {
+                let doc = &message["params"]["textDocument"];
+                fake.docs.insert(doc["uri"].as_str().unwrap().into(), doc["text"].as_str().unwrap().into());
+                if let Some(ms) = fake.value("stall_after_open").and_then(|n| n.parse::<u64>().ok()).filter(|_| !fake.stalled) {
+                    fake.stalled = true;
+                    std::thread::sleep(Duration::from_millis(ms));
+                }
+            }
+            (Some("textDocument/didChange"), None) => {
+                let uri = message["params"]["textDocument"]["uri"].as_str().unwrap().to_string();
+                let text = fake.docs.get_mut(&uri).expect("didChange for an unopened document");
+                for change in message["params"]["contentChanges"].as_array().unwrap() { apply(text, change); }
+                if fake.has("push_stale") {
+                    let version = message["params"]["textDocument"]["version"].as_i64().unwrap() - 1;
+                    fake.send(json!({"jsonrpc":"2.0","method":"textDocument/publishDiagnostics","params":{"uri":uri,"version":version,"diagnostics":[{"message":"stale"}]}}));
+                    fake.log("pushed stale".into());
+                }
+            }
+            (Some("textDocument/didClose"), None) => { fake.docs.remove(message["params"]["textDocument"]["uri"].as_str().unwrap()); }
+            (Some("textDocument/didSave"), None) => fake.saves += 1,
+            (Some("test/text"), Some(id)) => {
+                let text = fake.docs.get(message["params"]["uri"].as_str().unwrap()).cloned();
+                let (saves, pulls) = (fake.saves, fake.pulls);
+                fake.reply(&id, json!({"text": text, "saves": saves, "pulls": pulls}));
+            }
+            (Some("textDocument/diagnostic"), Some(id)) => {
+                fake.pulls += 1;
+                if fake.has("retrigger") {
+                    fake.send(json!({"jsonrpc":"2.0","id":id,"error":{"code":-32802,"message":"not ready","data":{"retriggerRequest":true}}}));
+                    continue;
+                }
+                let params = &message["params"];
+                assert_eq!(params["identifier"], "fake", "the identifier is echoed");
+                let text = fake.docs.get(params["textDocument"]["uri"].as_str().unwrap()).cloned().unwrap_or_default();
+                let result_id = format!("len{}", text.len());
+                if params.get("previousResultId").and_then(Value::as_str) == Some(result_id.as_str()) {
+                    fake.reply(&id, json!({"kind": "unchanged", "resultId": result_id}));
+                } else {
+                    let items: Vec<Value> = text.lines().filter(|l| l.contains("bad")).map(|l| json!({"message": l, "range": {"start": {"line": 0, "character": 0}, "end": {"line": 0, "character": 1}}})).collect();
+                    fake.reply(&id, json!({"kind": "full", "resultId": result_id, "items": items}));
+                }
+            }
             (Some("test/late"), Some(id)) => { std::thread::sleep(Duration::from_millis(300)); fake.reply(&id, json!("late")); }
             (Some("test/never"), Some(_)) => {}
             (Some("test/crash"), _) => std::process::exit(3),
@@ -119,6 +195,7 @@ fn fake_lsp_server_entry() {
             (Some("test/bad_body"), _) => fake.raw(&encode("not json")),
             (Some("test/panic_body"), _) => fake.raw(&encode(r#"{"jsonrpc":"2.0","id":"x","result":1}"#)),
             (None, Some(_)) => {
+                fake.log(format!("reply {message}"));
                 replies.push(message.clone());
                 if replies.len() == 6 { fake.log(format!("replies {}", Value::Array(replies.clone()))); }
             }

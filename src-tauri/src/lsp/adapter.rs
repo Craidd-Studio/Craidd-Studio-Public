@@ -23,6 +23,8 @@ pub(crate) struct ServerContext {
     pub init_options: Value,
     pub env: Vec<(String, String)>,
     pub lsp_language_id: &'static str,
+    /// Client `experimental` capabilities this adapter's server understands.
+    pub experimental: Value,
     /// Non-fatal notes, for example a fallback root.
     pub notes: Vec<String>,
 }
@@ -39,6 +41,8 @@ pub(crate) trait LanguageAdapter: Send + Sync {
     /// as `Cargo.toml` and explicitly included non-source files out.
     fn document_extensions(&self) -> &'static [&'static str];
     fn resolve(&self, project: &ProjectRef) -> Result<ServerContext, ResolveNote>;
+    /// The `workspace/configuration` section the server asks for.
+    fn configuration_section(&self) -> &'static str;
 }
 
 /// `( implementation id, resolved root, configuration identity )`.
@@ -92,6 +96,7 @@ impl ServerContext {
             configuration: serde_json::json!({ section: self.init_options }),
             init_options: self.init_options.clone(),
             lazy_additional_edits: false,
+            experimental: self.experimental.clone(),
         }
     }
 }
@@ -103,7 +108,7 @@ mod tests {
 
     fn context(path: &str, version: &str, root: &str, options: Value) -> ServerContext {
         ServerContext { implementation: ToolRef { path: path.into(), version: version.into() }, args: vec![], root: root.into(),
-            projects: vec![], init_options: options, env: vec![], lsp_language_id: "rust", notes: vec![] }
+            projects: vec![], init_options: options, env: vec![], lsp_language_id: "rust", experimental: Value::Null, notes: vec![] }
     }
 
     #[test]

@@ -9,6 +9,7 @@ pub(crate) mod protocol;
 pub(crate) mod pending;
 pub(crate) mod caps;
 pub(crate) mod delivery;
+pub(crate) mod documents;
 pub(crate) mod session;
 pub(crate) mod adapter;
 pub(crate) mod router;

@@ -7,7 +7,7 @@ use serde::Serialize;
 use serde_json::Value;
 
 use super::caps::NegotiatedCaps;
-use super::protocol::{LogLine, ProgressKind, Snapshot};
+use super::protocol::{Health, LogLine, ProgressKind, Snapshot};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -27,15 +27,33 @@ pub(crate) struct StatusRecord {
     pub terminal_reason: Option<String>,
     /// Set once, when the session becomes Ready.
     pub caps: Option<NegotiatedCaps>,
-    /// Documents needing resynchronisation (filled from Stage 1b).
+    /// Documents needing resynchronisation, bounded by the open documents.
     pub resync: BTreeSet<String>,
+    /// Incremented when the backend answers `workspace/diagnostic/refresh`
+    /// with pull enabled. One re-pull covers any number of increments.
+    pub refresh: u64,
+    /// Incremented when the writer drains below its low-water mark, so the
+    /// frontend retries resyncs and pulls that were not admitted. Event-driven.
+    pub writer_room: u64,
+    /// A resync could not be admitted within the bound: the server is not reading.
+    pub unresponsive: bool,
+    /// The server's latest health report; separate from the phase.
+    pub health: Option<Health>,
     /// Bumped on every change, so a delivery task sends only changed records.
     pub revision: u64,
 }
 
 impl StatusRecord {
     pub(crate) fn new(generation: u64) -> Self {
-        Self { generation, phase: Phase::Spawning, terminal_reason: None, caps: None, resync: BTreeSet::new(), revision: 0 }
+        Self { generation, phase: Phase::Spawning, terminal_reason: None, caps: None, resync: BTreeSet::new(),
+            refresh: 0, writer_room: 0, unresponsive: false, health: None, revision: 0 }
+    }
+
+    /// Any non-phase field change goes through here so the revision moves.
+    pub(crate) fn touch(&mut self, change: impl FnOnce(&mut Self)) {
+        if self.phase.is_terminal() { return; }
+        change(self);
+        self.revision += 1;
     }
 
     /// A non-terminal transition. Refused once terminal.
@@ -53,6 +71,7 @@ impl StatusRecord {
         self.phase = phase;
         self.terminal_reason = Some(reason.into());
         self.resync.clear();
+        self.unresponsive = false;
         self.revision += 1;
         true
     }
@@ -176,6 +195,9 @@ impl Coalescer {
     }
 
     pub(crate) fn ack(&mut self) { self.awaiting_ack = false; }
+    /// A batch that carried only status or log lines is acknowledged the same way.
+    pub(crate) fn hold_until_ack(&mut self) { self.awaiting_ack = true; }
+    pub(crate) fn awaiting_ack(&self) -> bool { self.awaiting_ack }
 
     /// Terminal session: pending S entries are discarded, like diagnostics
     /// from a dead session.
@@ -188,25 +210,36 @@ impl Coalescer {
 }
 
 /// Class L: lossy by declaration, oldest first, errors kept in preference.
-pub(crate) struct LogRing { cap: usize, lines: VecDeque<LogLine>, pub dropped: u64 }
+/// Lines carry a sequence number so delivery can send only what is new.
+pub(crate) struct LogRing { cap: usize, lines: VecDeque<(u64, LogLine)>, next: u64, pub dropped: u64 }
 
 impl LogRing {
-    pub(crate) fn new(cap: usize) -> Self { Self { cap, lines: VecDeque::new(), dropped: 0 } }
+    pub(crate) fn new(cap: usize) -> Self { Self { cap, lines: VecDeque::new(), next: 0, dropped: 0 } }
 
     pub(crate) fn push(&mut self, line: LogLine) {
+        self.next += 1;
         if self.cap == 0 { self.dropped += 1; return; }
         if self.lines.len() >= self.cap {
-            let victim = self.lines.iter().position(|l| l.severity > 1).unwrap_or(0);
+            let victim = self.lines.iter().position(|(_, l)| l.severity > 1).unwrap_or(0);
             self.lines.remove(victim);
             self.dropped += 1;
         }
-        self.lines.push_back(line);
+        self.lines.push_back((self.next, line));
     }
 
-    pub(crate) fn lines(&self) -> Vec<LogLine> { self.lines.iter().cloned().collect() }
+    pub(crate) fn lines(&self) -> Vec<LogLine> { self.lines.iter().map(|(_, l)| l.clone()).collect() }
+
+    /// Up to `max` lines after sequence `after`, and the last sequence
+    /// number covered (lines dropped before delivery are skipped silently
+    /// here; the `dropped` counter reports them).
+    pub(crate) fn since(&self, after: u64, max: usize) -> (Vec<LogLine>, u64) {
+        let lines: Vec<&(u64, LogLine)> = self.lines.iter().filter(|(seq, _)| *seq > after).take(max).collect();
+        let last = lines.last().map(|(seq, _)| *seq).unwrap_or(if self.lines.is_empty() { self.next } else { after });
+        (lines.into_iter().map(|(_, l)| l.clone()).collect(), last.max(after))
+    }
 
     pub(crate) fn tail(&self, count: usize) -> Vec<String> {
-        self.lines.iter().skip(self.lines.len().saturating_sub(count)).map(|l| l.text.clone()).collect()
+        self.lines.iter().skip(self.lines.len().saturating_sub(count)).map(|(_, l)| l.text.clone()).collect()
     }
 }
 
@@ -299,5 +332,10 @@ mod tests {
         for n in 0..5 { ring.push(line(4, &format!("log {n}"))); }
         assert_eq!(ring.dropped, 3);
         assert_eq!(ring.tail(3), vec!["error", "log 3", "log 4"]);
+        let (lines, last) = ring.since(0, 2);
+        assert_eq!((lines.len(), last), (2, 5));
+        let (lines, last) = ring.since(last, 10);
+        assert_eq!((lines.iter().map(|l| l.text.as_str()).collect::<Vec<_>>(), last), (vec!["log 4"], 6));
+        assert_eq!(ring.since(6, 10), (vec![], 6));
     }
 }
