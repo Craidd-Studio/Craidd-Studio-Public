@@ -86,6 +86,9 @@ pub(crate) struct LaunchSpec {
     pub reload_method: Option<String>,
 }
 
+/// ◇ A workspace reload that is never answered is logged, never fatal.
+const RELOAD_TIMEOUT: Duration = Duration::from_secs(60);
+
 /// ◇ How often a running server's process tree is re-read.
 const TREE_REFRESH: Duration = Duration::from_millis(500);
 
@@ -463,7 +466,7 @@ impl Session {
                         text: format!("[lsp] server status {}: {}", health.health, health.message.as_deref().unwrap_or("")) });
                 }
                 lock(&self.0.status).touch(|s| {
-                    if health.quiescent == Some(true) && s.workspace_ready == Some(false) { s.workspace_ready = Some(true); }
+                    if health.quiescent == Some(true) && health.health != "error" && s.workspace_ready == Some(false) { s.workspace_ready = Some(true); }
                     s.health = Some(health);
                 });
                 self.0.changed.notify_all();
@@ -797,9 +800,15 @@ impl Session {
         self.note(&format!("[lsp] reloading workspace: {why}"));
         let session = self.clone();
         self.spawn_tracked("lsp reload", move || loop {
-            lock(&session.0.status).touch(|s| s.reloads += 1);
+            // The readiness gate re-arms; the frontend's wave follows the next ready report.
+            lock(&session.0.status).touch(|s| {
+                s.reloads += 1;
+                if s.workspace_ready.is_some() { s.workspace_ready = Some(false); }
+            });
             session.0.changed.notify_all();
-            let _ = session.request(&method, Value::Null, Duration::from_secs(60));
+            if session.request(&method, Value::Null, RELOAD_TIMEOUT) != Ok(Outcome::Result(Value::Null)) {
+                session.note(&format!("[lsp] workspace reload got no reply within {} s", RELOAD_TIMEOUT.as_secs()));
+            }
             let mut reload = lock(&session.0.reload);
             if reload.1 && lock(&session.0.status).phase == Phase::Ready { reload.1 = false; continue; }
             *reload = (false, false);

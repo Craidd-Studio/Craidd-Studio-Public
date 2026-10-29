@@ -36,12 +36,14 @@ interface LspState {
   problems: LspProblem[];
   evictedFiles: number;
   notRetained: number;
+  /** Open documents whose pull result is still unknown (not yet ready, or not yet pulled). */
+  pullUnknown: number;
   output: LspOutputLine[];
   droppedLogs: number;
 }
 
 export const useLsp = create<LspState>(() => ({
-  enabled: false, sessions: {}, docs: {}, problems: [], evictedFiles: 0, notRetained: 0, output: [], droppedLogs: 0,
+  enabled: false, sessions: {}, docs: {}, problems: [], evictedFiles: 0, notRetained: 0, pullUnknown: 0, output: [], droppedLogs: 0,
 }));
 
 export function appendLspOutput(lines: LspOutputLine[], droppedLogs?: number): void {

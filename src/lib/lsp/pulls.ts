@@ -62,7 +62,7 @@ export interface PullHost {
 export interface Timers { now(): number; set(run: () => void, ms: number): unknown; clear(handle: unknown): void }
 export const realTimers: Timers = { now: () => performance.now(), set: (run, ms) => setTimeout(run, ms), clear: (h) => clearTimeout(h as number) };
 
-export type Trigger = "open" | "change" | "save" | "refresh" | "focus" | "cross" | "activate" | "capacity" | "retrigger" | "resync";
+export type Trigger = "open" | "change" | "save" | "refresh" | "focus" | "cross" | "activate" | "capacity" | "retrigger" | "resync" | "ready";
 
 export interface PullStats {
   waves: number; pulls: number; full: number; unchanged: number; stale: number; busy: number; retriggers: number;
@@ -89,7 +89,7 @@ export class PullScheduler {
   private token = 0;
   private stopped = false;
   readonly stats: PullStats = { waves: 0, pulls: 0, full: 0, unchanged: 0, stale: 0, busy: 0, retriggers: 0, errors: 0, flagged: 0, noResult: 0,
-    seeds: { open: 0, change: 0, save: 0, refresh: 0, focus: 0, cross: 0, activate: 0, capacity: 0, retrigger: 0, resync: 0 } };
+    seeds: { open: 0, change: 0, save: 0, refresh: 0, focus: 0, cross: 0, activate: 0, capacity: 0, retrigger: 0, resync: 0, ready: 0 } };
 
   private session: number;
   private interFile: boolean;
@@ -132,6 +132,12 @@ export class PullScheduler {
   }
 
   opened(fileId: string): void { this.seed([fileId], "open"); }
+
+  /**
+   * Decision 20: the workspace became ready (again). Reports of pulls sent
+   * before now are dropped; every Open document joins a wave, visible first.
+   */
+  ready(): void { this.latest.clear(); this.seed(this.host.openDocs(), "ready"); }
   resynced(fileId: string): void { this.resultIds.delete(fileId); this.seed([fileId], "resync"); }
 
   /** A change restarts the debounce and cancels the document's in-flight pull. */

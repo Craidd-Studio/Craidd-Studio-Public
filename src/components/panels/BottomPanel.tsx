@@ -32,6 +32,7 @@ export default function BottomPanel() {
   const lspProblems = useLsp((state) => state.problems);
   const evictedFiles = useLsp((state) => state.evictedFiles);
   const notRetained = useLsp((state) => state.notRetained);
+  const pullUnknown = useLsp((state) => state.pullUnknown);
   useEffect(() => {
     const show = (event: Event) => { setTab("output"); setOutputView((event as CustomEvent<string>).detail === "lsp" ? "lsp" : "main"); };
     window.addEventListener("craidd:show-output", show);
@@ -153,7 +154,8 @@ export default function BottomPanel() {
           </pre>
         )}
         {tab === "problems" && (rows.length === 0 ? (
-          <div className="text-zinc-500">{lspEnabled ? "No problems from the last build or the language server." : "No build problems for this run."}</div>
+          <div className="text-zinc-500">{pullUnknown > 0 ? `No build problems. Language-server results are not available yet for ${pullUnknown} open file${pullUnknown === 1 ? "" : "s"} (the workspace is still loading or has not been checked).`
+            : lspEnabled ? "No problems from the last build or the language server." : "No build problems for this run."}</div>
         ) : (
           <div className="space-y-0.5">
             {linked.linked && <div className="text-[10px] uppercase tracking-wider text-amber-500/80 px-2 pb-1">Linked solution · {linked.members.length} windows</div>}
@@ -161,6 +163,7 @@ export default function BottomPanel() {
               Build (last build): {count(shownProblems, "error")} errors, {count(shownProblems, "warning")} warnings
               {!remote && <> · Language server (live): {count(liveRows, "error")} errors, {count(liveRows, "warning")} warnings</>}
               {" · "}the same error can appear once per source
+              {pullUnknown > 0 && <span className="text-zinc-400"> · results pending for {pullUnknown} open file{pullUnknown === 1 ? "" : "s"}</span>}
               {(evictedFiles > 0 || notRetained > 0) && <span className="text-amber-400"> · counts are at least: diagnostics for {evictedFiles} files
                 {notRetained > 0 ? ` and ${notRetained} more diagnostics` : ""} not retained</span>}
               {rows.length > PROBLEM_ROWS && <span> · showing {PROBLEM_ROWS} of {rows.length}</span>}

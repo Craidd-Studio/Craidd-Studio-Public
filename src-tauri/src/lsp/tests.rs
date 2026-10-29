@@ -255,7 +255,7 @@ fn every_terminal_cause_leaves_the_same_invariants() {
 fn context(script: &str, root: &str) -> ServerContext {
     let (program, args, env) = fake_server::command(script);
     ServerContext { implementation: ToolRef { path: program, version: "fake".into() }, args, root: root.into(),
-        projects: vec![], init_options: json!({}), env, lsp_language_id: "rust", experimental: json!({}), reload_method: None, manifests: vec![], notes: vec![] }
+        projects: vec![], init_options: json!({}), env, lsp_language_id: "rust", experimental: json!({}), reload_method: None, notes: vec![] }
 }
 
 #[test]
@@ -503,10 +503,20 @@ fn v24_pulls_wait_for_the_workspace_to_report_ready() {
     session.open_document(DOC, "rust", "bad()").unwrap();
     assert!(matches!(session.begin_pull(DOC, None), Err(super::session::PullError::NotReady)),
         "an empty report before readiness proves nothing, so none is requested");
+    // Quiescent with health error: the workspace did not load; still not ready.
+    session.notify("test/quiesce_error", json!({})).unwrap();
+    assert!(session.wait_until(WAIT, |s| s.health.as_ref().is_some_and(|h| h.health == "error")));
+    assert_eq!(session.status().workspace_ready, Some(false));
     session.notify("test/quiesce", json!({})).unwrap();
     assert!(session.wait_until(WAIT, |s| s.workspace_ready == Some(true)));
     let Outcome::Result(report) = pull(&session, None) else { panic!() };
     assert_eq!(report["items"].as_array().unwrap().len(), 1);
+    // A workspace reload re-arms the gate until the next ready report.
+    assert!(session.reload_workspace("Cargo.toml changed"));
+    assert!(session.wait_until(WAIT, |s| s.workspace_ready == Some(false)));
+    assert!(matches!(session.begin_pull(DOC, None), Err(super::session::PullError::NotReady)));
+    session.notify("test/quiesce", json!({})).unwrap();
+    assert!(session.wait_until(WAIT, |s| s.workspace_ready == Some(true)));
     session.stop();
     // A server that reports no status is never gated.
     let plain = ready("pull");

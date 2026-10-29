@@ -27,8 +27,6 @@ pub(crate) struct ServerContext {
     pub experimental: Value,
     /// A request asking the server to reload its workspace, if it has one.
     pub reload_method: Option<&'static str>,
-    /// Manifests whose change should trigger that reload.
-    pub manifests: Vec<PathBuf>,
     /// Non-fatal notes, for example a fallback root.
     pub notes: Vec<String>,
 }
@@ -113,7 +111,7 @@ mod tests {
 
     fn context(path: &str, version: &str, root: &str, options: Value) -> ServerContext {
         ServerContext { implementation: ToolRef { path: path.into(), version: version.into() }, args: vec![], root: root.into(),
-            projects: vec![], init_options: options, env: vec![], lsp_language_id: "rust", experimental: Value::Null, reload_method: None, manifests: vec![], notes: vec![] }
+            projects: vec![], init_options: options, env: vec![], lsp_language_id: "rust", experimental: Value::Null, reload_method: None, notes: vec![] }
     }
 
     #[test]

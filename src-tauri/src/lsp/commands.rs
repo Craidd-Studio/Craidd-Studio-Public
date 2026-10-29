@@ -40,12 +40,10 @@ fn enabled() -> bool { std::env::var("CRAIDD_LSP").map_or(true, |v| v != "0") }
 
 struct Tracked {
     session: Session, identity: ServerIdentity, project_folder: PathBuf,
-    /// Affected manifests and their last seen stamps (V27 reload trigger).
-    manifests: Vec<(PathBuf, Option<(std::time::SystemTime, u64)>)>,
-}
-
-fn stamp(path: &std::path::Path) -> Option<(std::time::SystemTime, u64)> {
-    std::fs::metadata(path).ok().and_then(|m| Some((m.modified().ok()?, m.len())))
+    /// The session root: manifests under it are affected (decision 21).
+    root: PathBuf,
+    /// Content hash of each manifest when its last reload was sent.
+    reloaded_against: HashMap<PathBuf, u64>,
 }
 
 struct WindowLsp {
@@ -194,7 +192,7 @@ pub(crate) async fn lsp_attach(window: WebviewWindow, state: State<'_, LspManage
             Err(note) => return Ok((AttachReply::Unavailable { reason: note.0.clone() }, None)),
         };
         let identity = context.as_ref().ok().map(|c| c.identity());
-        let manifests: Vec<_> = context.as_ref().map(|c| c.manifests.iter().map(|p| (p.clone(), stamp(p))).collect()).unwrap_or_default();
+        let session_root = context.as_ref().map(|c| c.root.clone()).unwrap_or_default();
         let (session, launched) = match worker.registry.revalidate_and_ensure(context) {
             LaunchDecision::Skip(reason) => return Ok((AttachReply::Skipped { reason: reason.into() }, None)),
             LaunchDecision::Attach(session) => (session, false),
@@ -202,7 +200,7 @@ pub(crate) async fn lsp_attach(window: WebviewWindow, state: State<'_, LspManage
         };
         let generation = session.status().generation;
         lock(&worker.sessions).entry(generation).or_insert_with(|| Tracked {
-            session: session.clone(), identity: identity.expect("resolved"), project_folder: reference.folder.clone(), manifests });
+            session: session.clone(), identity: identity.expect("resolved"), project_folder: reference.folder.clone(), root: session_root, reloaded_against: HashMap::new() });
         let canonical = std::fs::canonicalize(&path).unwrap_or_else(|_| path.clone()).display().to_string();
         Ok((AttachReply::Routed {
             session: generation, uri: file_uri(&path), canonical, language_id,
@@ -313,25 +311,26 @@ pub(crate) fn lsp_cancel_pull(window: WebviewWindow, state: State<'_, LspManager
     Ok(())
 }
 
-/// Window focus and Craidd saves of a manifest: if an affected Cargo.toml
-/// changed since last seen and the server is not healthy, ask that session
-/// to reload its workspace (decision on V27). Measured on rust-analyzer
-/// 2026-09-06: a workspace that never loaded stays `error` after the fix
-/// until reloaded; one that broke mid-session recovers by itself.
+/// Decision 21: Craidd saved, or reloaded from disk, the manifest at
+/// `path`. Each live session whose root contains it reloads its workspace,
+/// unless it is not Ready, its health is `ok` (a healthy server reloads by
+/// itself, measured), or the content equals the one it last reloaded
+/// against. A manifest changed by another program is not detected here
+/// (the accepted external-change limitation); the manual restart stays.
 #[tauri::command]
-pub(crate) fn lsp_check_manifests(window: WebviewWindow, state: State<'_, LspManager>) -> Vec<u64> {
+pub(crate) fn lsp_manifest_changed(window: WebviewWindow, state: State<'_, LspManager>, path: String) -> Vec<u64> {
     let Some(lsp) = lock(&state.windows).get(window.label()).cloned() else { return vec![]; };
+    let path = PathBuf::from(path);
+    if path.file_name().and_then(|n| n.to_str()) != Some("Cargo.toml") { return vec![]; }
+    let content = std::fs::read(&path).ok().map(|bytes| super::adapter::configuration_identity(&Value::String(String::from_utf8_lossy(&bytes).into()), &[]));
     let mut reloaded = vec![];
     for (generation, tracked) in lock(&lsp.sessions).iter_mut() {
-        let mut changed = vec![];
-        for (path, seen) in tracked.manifests.iter_mut() {
-            let now = stamp(path);
-            if now != *seen { *seen = now; changed.push(path.display().to_string()); }
-        }
-        // A healthy server reloads changed manifests itself (measured); only an unhealthy
-        // one needs the request, so routine edits never cause a redundant reload.
-        let healthy = tracked.session.status().health.is_some_and(|h| h.health == "ok");
-        if !changed.is_empty() && !healthy && tracked.session.reload_workspace(&format!("{} changed", changed.join(", "))) {
+        if !path.starts_with(&tracked.root) { continue; }
+        let status = tracked.session.status();
+        if status.phase != super::delivery::Phase::Ready || status.health.is_some_and(|h| h.health == "ok") { continue; }
+        if content.is_some() && tracked.reloaded_against.get(&path) == content.as_ref() { continue; }
+        if tracked.session.reload_workspace(&format!("{} changed", path.display())) {
+            if let Some(hash) = content { tracked.reloaded_against.insert(path.clone(), hash); }
             reloaded.push(*generation);
         }
     }

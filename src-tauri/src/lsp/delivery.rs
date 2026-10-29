@@ -40,7 +40,8 @@ pub(crate) struct StatusRecord {
     /// The server's latest health report; separate from the phase.
     pub health: Option<Health>,
     /// Decision 20 (V24): `None` when the server reports no workspace
-    /// status; otherwise false until it first reports `quiescent: true`.
+    /// status; otherwise false until it reports `quiescent: true` with
+    /// health other than `error`, and false again after a workspace reload.
     /// Pulls wait for it, because an earlier empty report proves nothing.
     pub workspace_ready: Option<bool>,
     /// `rust-analyzer/reloadWorkspace` requests sent (decision on V27).

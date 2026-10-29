@@ -63,7 +63,7 @@ function fileIdOf(model: editor.ITextModel): string | null {
 }
 
 const tracker = new DocumentTracker(transport, modelFor, {
-  opened: (fileId, binding) => { refreshDocInfo(fileId); pullFor(binding.session, fileId, "open"); },
+  opened: (fileId, binding) => { refreshDocInfo(fileId); pullFor(binding.session, fileId, "open"); publishUnknown(); },
   edited: (fileId, binding) => schedulers.get(binding.session)?.edited(fileId),
   resynced: (fileId, binding) => { refreshDocInfo(fileId); schedulers.get(binding.session)?.resynced(fileId); },
   saved: (fileId, binding) => schedulers.get(binding.session)?.saved(fileId),
@@ -121,10 +121,13 @@ function flushDiagnostics(): void {
   frameQueued = false;
   const changed: Pending[] = [];
   for (const update of pendingDiagnostics.values()) {
+    const knownBefore = diagnostics.isKnown(update.session, update.uri);
     const wrote = update.items === null
       ? diagnostics.clearPull(update.session, update.uri)
       : diagnostics.apply(update.session, update.uri, update.route, update.items, attribution(update.uri), isOpenUri);
+    if (update.route === "pull" && update.items !== null) diagnostics.markKnown(update.session, update.uri);
     if (wrote) { changed.push(update); metrics.storeWrite(update.route); }
+    else if (knownBefore !== diagnostics.isKnown(update.session, update.uri)) publishUnknown();
   }
   pendingDiagnostics.clear();
   if (changed.length === 0) return;
@@ -132,9 +135,24 @@ function flushDiagnostics(): void {
   for (const update of changed) setMarkers(update.session, update.uri, update.route);
 }
 
+/** Open, registered documents of pull-enabled sessions without an accepted pull report yet. */
+function unknownCount(): number {
+  let unknown = 0;
+  for (const session of schedulers.keys()) {
+    for (const fileId of tracker.openDocs(session)) if (!diagnostics.isKnown(session, tracker.binding(fileId)!.uri)) unknown++;
+  }
+  return unknown;
+}
+
+function publishUnknown(): void {
+  const pullUnknown = unknownCount();
+  if (useLsp.getState().pullUnknown !== pullUnknown) useLsp.setState({ pullUnknown });
+}
+
 function publishProblems(): void {
   metrics.frameWrite();
-  useLsp.setState({ problems: diagnostics.problems(), evictedFiles: diagnostics.evictedFiles(), notRetained: diagnostics.notRetained() });
+  useLsp.setState({ problems: diagnostics.problems(), evictedFiles: diagnostics.evictedFiles(), notRetained: diagnostics.notRetained(),
+    pullUnknown: unknownCount() });
   metrics.stored(diagnostics.storedCount("push"), diagnostics.storedCount("pull"));
 }
 
@@ -215,10 +233,10 @@ function onStatus(generation: number, status: StatusRecord): void {
     scheduler?.writerRoom();
     for (const fileId of tracker.pendingBound(generation)) if (activeFiles().includes(fileId)) void activateBound(fileId);
   }
+  // Decision 20: not ready → ready (first load, or after a reload) seeds every Open document.
   if (status.workspaceReady === true && previous?.workspaceReady === false) {
-    const waiting = awaitingReady.get(generation) ?? new Set();
     awaitingReady.delete(generation);
-    for (const fileId of waiting) scheduler?.opened(fileId);
+    scheduler?.ready();
   }
 }
 
@@ -421,14 +439,15 @@ export async function startupComplete(): Promise<void> {
     if (state.activeFileId !== previous.activeFileId) onActive();
   });
   useSplit.subscribe((state, previous) => { if (state.sideFileId !== previous.sideFileId && state.sideFileId) void activateBound(state.sideFileId); });
-  window.addEventListener("craidd:file-saved", (event) => {
-    const fileId = (event as CustomEvent<string>).detail;
-    void tracker.saved(fileId);
-    if (fileId.endsWith("/Cargo.toml")) void invoke("lsp_check_manifests").catch(() => {});
-  });
-  window.addEventListener("focus", () => {
-    for (const scheduler of schedulers.values()) scheduler.focused();
-    void invoke("lsp_check_manifests").catch(() => {});
+  window.addEventListener("craidd:file-saved", (event) => { void tracker.saved((event as CustomEvent<string>).detail); });
+  window.addEventListener("focus", () => { for (const scheduler of schedulers.values()) scheduler.focused(); });
+  // Decision 21: a manifest Craidd saved or reloaded from disk (its saved content changed).
+  useSolution.subscribe((state, previous) => {
+    for (const tab of state.tabs) {
+      if (!tab.fileId.endsWith("/Cargo.toml")) continue;
+      const before = previous.tabs.find((t) => t.fileId === tab.fileId);
+      if (before && before.originalContent !== tab.originalContent) void invoke("lsp_manifest_changed", { path: tab.fileId }).catch(() => {});
+    }
   });
   onActive();
 }

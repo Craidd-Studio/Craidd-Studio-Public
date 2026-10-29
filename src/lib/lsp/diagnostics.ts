@@ -44,6 +44,8 @@ const keyOf = (session: number, uri: string, route: Route) => `${session}\u0000$
 export class DiagnosticsModel {
   private sets = new Map<string, StoredSet>();
   private evicted = new Set<string>();
+  /** Pull keys with an accepted report: absent means unknown, never "no problems" (decision 20). */
+  private known = new Set<string>();
   private clock = 0;
   readonly stats = { writes: 0, skippedEqual: 0, evictions: 0 };
 
@@ -74,14 +76,22 @@ export class DiagnosticsModel {
 
   get(session: number, uri: string, route: Route): LspDiagnostic[] { return this.sets.get(keyOf(session, uri, route))?.items ?? []; }
 
+  /** An accepted pull report (including an authoritative empty one) makes the pull route known. */
+  markKnown(session: number, uri: string): void { this.known.add(keyOf(session, uri, "pull")); }
+  isKnown(session: number, uri: string): boolean { return this.known.has(keyOf(session, uri, "pull")); }
+
   /** Closing a document clears its pull set (decision 18); its push set stays. */
-  clearPull(session: number, uri: string): boolean { return this.sets.delete(keyOf(session, uri, "pull")); }
+  clearPull(session: number, uri: string): boolean {
+    this.known.delete(keyOf(session, uri, "pull"));
+    return this.sets.delete(keyOf(session, uri, "pull"));
+  }
 
   /** Session end: both routes' sets for that session, and nothing else. Returns the affected uris. */
   clearSession(session: number): string[] {
     const uris = new Set<string>();
     for (const [key, set] of this.sets) if (set.session === session) { uris.add(set.uri); this.sets.delete(key); }
     for (const key of this.evicted) if (key.startsWith(`${session}\u0000`)) this.evicted.delete(key);
+    for (const key of this.known) if (key.startsWith(`${session}\u0000`)) this.known.delete(key);
     return [...uris];
   }
 

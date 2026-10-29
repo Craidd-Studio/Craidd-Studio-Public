@@ -221,3 +221,30 @@ test("retention caps per file and evicts least recent closed sets visibly; open 
   model.apply(1, "file:///x.rs", "push", [diag("x again")], who, isOpen);
   assert.ok(model.problems().some((p) => p.message === "x again" && p.external), "returns when republished; external attribution");
 });
+
+test("decision 20: becoming ready drops reports of earlier pulls and seeds every open document", async () => {
+  let release;
+  const h = harness({ open: ["a", "b", "c"], visible: ["b"], reply: (f) => (f === "a" && !release
+    ? new Promise((resolve) => { release = () => resolve({ kind: "report", report: { kind: "full", items: [] } }); })
+    : Promise.resolve({ kind: "report", report: { kind: "full", items: [] } })) });
+  h.scheduler.opened("a");
+  await settle();
+  h.scheduler.ready();
+  release();
+  await settle();
+  assert.equal(h.scheduler.stats.stale, 1, "a report from before readiness is dropped, never stored");
+  await h.c.advance(250);
+  assert.deepEqual(h.sent.slice(1).map(([f]) => f), ["b", "c", "a"], "every open document is pulled, visible first, then by recency");
+});
+
+test("decision 20: the pull route is unknown until a report is accepted; an accepted empty report is authoritative", () => {
+  const model = new DiagnosticsModel();
+  assert.equal(model.isKnown(1, "file:///a.rs"), false);
+  model.markKnown(1, "file:///a.rs");
+  assert.equal(model.isKnown(1, "file:///a.rs"), true);
+  model.clearPull(1, "file:///a.rs");
+  assert.equal(model.isKnown(1, "file:///a.rs"), false, "closing makes it unknown again");
+  model.markKnown(1, "file:///a.rs");
+  model.clearSession(1);
+  assert.equal(model.isKnown(1, "file:///a.rs"), false);
+});

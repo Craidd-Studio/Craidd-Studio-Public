@@ -143,6 +143,7 @@ fn fake_lsp_server_entry() {
             (Some("shutdown"), Some(id)) => if !fake.has("ignore_shutdown") { fake.reply(&id, Value::Null); },
             (Some("exit"), None) => if !fake.has("ignore_exit") { std::process::exit(0); },
             (Some("test/echo"), Some(id)) => { let params = message["params"].clone(); fake.reply(&id, params); }
+            (Some("test/quiesce_error"), _) => fake.send(json!({"jsonrpc":"2.0","method":"experimental/serverStatus","params":{"health":"error","quiescent":true,"message":"Failed to load workspaces."}})),
             (Some("test/quiesce"), _) => fake.send(json!({"jsonrpc":"2.0","method":"experimental/serverStatus","params":{"health":"ok","quiescent":true}})),
             (Some("rust-analyzer/reloadWorkspace"), Some(id)) => {
                 fake.reloads += 1;

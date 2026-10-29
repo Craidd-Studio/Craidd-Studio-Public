@@ -206,7 +206,7 @@ pub fn run() {
             lsp::commands::lsp_close,
             lsp::commands::lsp_pull,
             lsp::commands::lsp_cancel_pull,
-            lsp::commands::lsp_check_manifests,
+            lsp::commands::lsp_manifest_changed,
             lsp::commands::lsp_ack,
             lsp::commands::lsp_status,
             lsp::commands::lsp_logs,
