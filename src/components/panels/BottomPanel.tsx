@@ -6,6 +6,13 @@ import { useSolution } from "../../store/solutionStore";
 import { useLinkedWindows, revealLinkedProblem } from "../../store/linkedWindowsStore";
 import { cleanOutput, isAtOutputBottom } from "../../lib/outputPresentation";
 import { formatBuildOutput } from "../../lib/buildDiagnostics";
+import { useLsp } from "../../store/lspStore";
+
+/** ◇ Rows rendered at once; stored and counted totals stay exact. */
+const PROBLEM_ROWS = 500;
+
+type Row = { key: string; file: string; line: number; column: number; severity: string; message: string; code?: string;
+  windowLabel: string; projectName: string | null; origin: "build" | "push" | "pull"; source?: string; external?: boolean };
 
 const tabs = [
   { id: "output", label: "Output" },
@@ -17,6 +24,19 @@ type Tab = typeof tabs[number]["id"];
 
 export default function BottomPanel() {
   const [tab, setTab] = useState<Tab>("output");
+  // The Output tab shows one source at a time: build/debug output, or the language servers' logs.
+  const [outputView, setOutputView] = useState<"main" | "lsp">("main");
+  const lspEnabled = useLsp((state) => state.enabled);
+  const lspOutput = useLsp((state) => state.output);
+  const droppedLogs = useLsp((state) => state.droppedLogs);
+  const lspProblems = useLsp((state) => state.problems);
+  const evictedFiles = useLsp((state) => state.evictedFiles);
+  const notRetained = useLsp((state) => state.notRetained);
+  useEffect(() => {
+    const show = (event: Event) => { setTab("output"); setOutputView((event as CustomEvent<string>).detail === "lsp" ? "lsp" : "main"); };
+    window.addEventListener("craidd:show-output", show);
+    return () => window.removeEventListener("craidd:show-output", show);
+  }, []);
   const scrollRef = useRef<HTMLDivElement>(null);
   const followRef = useRef(true);
   const [following, setFollowing] = useState(true);
@@ -33,7 +53,14 @@ export default function BottomPanel() {
   const shownProblems = linked.linked ? linked.problems.filter((problem) => !remote || problem.windowLabel === remote.windowLabel)
     : problems.map((problem) => ({ ...problem, windowLabel: "", projectName: "" }));
   const revealFile = useSolution((state) => state.revealFile);
-  const errors = shownProblems.filter((problem) => problem.severity === "error").length;
+  // Build problems and live language-server diagnostics stay separate sources, merged only here.
+  const liveRows: Row[] = remote ? [] : lspProblems.map((p) => ({ key: p.key, file: p.file, line: p.line, column: p.column,
+    severity: p.severity, message: p.message, code: p.code, windowLabel: "", projectName: p.projectName, origin: p.route,
+    source: p.source, external: p.external }));
+  const rows: Row[] = [...shownProblems.map((p, index) => ({ ...p, key: `b:${p.windowLabel}:${p.file}:${p.line}:${p.column}:${index}`,
+    origin: "build" as const })), ...liveRows];
+  const count = (list: { severity: string }[], severity: string) => list.filter((p) => p.severity === severity).length;
+  const errors = count(rows, "error");
   const errorKeys = JSON.stringify(shownProblems.filter((problem) => problem.severity === "error")
     .map((problem) => `${problem.windowLabel}:${problem.file}:${problem.line}:${problem.column}:${problem.message}`));
   const shownOutput = remote ? formatBuildOutput(remote.output || "No output yet.")
@@ -94,10 +121,16 @@ export default function BottomPanel() {
             {t.label}{t.id === "output" && remote ? ` · ${remote.projectName}` : ""}{t.id === "problems" && shownProblems.length > 0 ? ` (${errors || shownProblems.length})` : ""}
           </button>
         ))}
+        {tab === "output" && (lspEnabled || lspOutput.length > 0) && <span className="ml-auto flex items-center gap-1 text-[11px]">
+          {(["main", "lsp"] as const).map((source) => <button key={source} type="button" aria-pressed={outputView === source}
+            onClick={() => setOutputView(source)}
+            className={outputView === source ? "text-zinc-200" : "text-zinc-500 hover:text-zinc-300"}>
+            {source === "main" ? "Build / Debug" : "Language Server"}</button>)}
+        </span>}
         {tab === "output" && <button type="button" aria-pressed={following}
           title={following ? "Following new output. Scroll up to pause." : "Resume following the latest output"}
           onClick={() => changeFollow(!following)}
-          className={"ml-auto text-[11px] whitespace-nowrap " + (following ? "text-blue-400" : "text-zinc-400 hover:text-zinc-200")}>
+          className={((lspEnabled || lspOutput.length > 0) ? "" : "ml-auto ") + "text-[11px] whitespace-nowrap " + (following ? "text-blue-400" : "text-zinc-400 hover:text-zinc-200")}>
           {following ? "↓ Following" : "↓ Follow output"}
         </button>}
         <span role="status" className="sr-only">{errorAttention ? `${errors} build errors. Open Problems for details.` : ""}</span>
@@ -107,24 +140,38 @@ export default function BottomPanel() {
         const node = event.currentTarget;
         changeFollow(isAtOutputBottom(node.scrollTop, node.scrollHeight, node.clientHeight));
       }} className="flex-1 min-h-0 overflow-y-auto scroll-thin p-3 mono text-[11.5px] leading-5 text-zinc-400">
-        {tab === "output" && (
+        {tab === "output" && outputView === "lsp" && (
+          <pre className="whitespace-pre-wrap break-words">
+            {droppedLogs > 0 && <span className="text-amber-400">{droppedLogs} older language-server lines dropped (bounded log).{"\n"}</span>}
+            {lspOutput.length === 0 ? "No language-server output yet." : lspOutput.map((line) => line.text).join("\n")}
+          </pre>
+        )}
+        {tab === "output" && outputView === "main" && (
           <pre className="whitespace-pre-wrap break-words">
             {renderOutput(shownOutput)}
             {!remote && artifact && debugStatus === "idle" && !output.includes(artifact) ? `\nArtifact: ${artifact}` : ""}
           </pre>
         )}
-        {tab === "problems" && (shownProblems.length === 0 ? (
-          <div className="text-zinc-500">No build problems for this run.</div>
+        {tab === "problems" && (rows.length === 0 ? (
+          <div className="text-zinc-500">{lspEnabled ? "No problems from the last build or the language server." : "No build problems for this run."}</div>
         ) : (
           <div className="space-y-0.5">
             {linked.linked && <div className="text-[10px] uppercase tracking-wider text-amber-500/80 px-2 pb-1">Linked solution · {linked.members.length} windows</div>}
-            {shownProblems.map((problem, index) => (
+            <div className="text-[10px] text-zinc-500 px-2 pb-1">
+              Build (last build): {count(shownProblems, "error")} errors, {count(shownProblems, "warning")} warnings
+              {!remote && <> · Language server (live): {count(liveRows, "error")} errors, {count(liveRows, "warning")} warnings</>}
+              {" · "}the same error can appear once per source
+              {(evictedFiles > 0 || notRetained > 0) && <span className="text-amber-400"> · counts are at least: diagnostics for {evictedFiles} files
+                {notRetained > 0 ? ` and ${notRetained} more diagnostics` : ""} not retained</span>}
+              {rows.length > PROBLEM_ROWS && <span> · showing {PROBLEM_ROWS} of {rows.length}</span>}
+            </div>
+            {rows.slice(0, PROBLEM_ROWS).map((problem) => (
               <button
-                key={`${problem.windowLabel}:${problem.file}:${problem.line}:${problem.column}:${index}`}
+                key={problem.key}
                 type="button"
                 onClick={() => void (async () => {
-                  if (!linked.linked) { await revealFile(problem.file, problem.line, problem.column); return; }
-                  await revealLinkedProblem(problem.windowLabel, problem);
+                  if (!linked.linked || problem.origin !== "build") { await revealFile(problem.file, problem.line, problem.column); return; }
+                  await revealLinkedProblem(problem.windowLabel, { ...problem, severity: problem.severity === "error" ? "error" : "warning" });
                   if (remote?.windowLabel === problem.windowLabel && !remote.visible) {
                     await revealFile(problem.file, problem.line, problem.column);
                     if (useSolution.getState().tabs.some((item) => item.fileId === problem.file)) {
@@ -135,11 +182,15 @@ export default function BottomPanel() {
                 className="w-full flex items-start gap-2 rounded px-2 py-1.5 text-left hover:bg-zinc-800 focus-visible:outline focus-visible:outline-blue-500"
                 title={`${problem.file}:${problem.line}:${problem.column}`}
               >
-                <span className={problem.severity === "error" ? "text-red-400" : "text-amber-400"}>●</span>
+                <span className={problem.severity === "error" ? "text-red-400" : problem.severity === "warning" ? "text-amber-400" : "text-blue-400"}>●</span>
+                <span title={problem.origin === "build" ? "From the last build" : `Live language-server result (${problem.origin === "pull" ? "pulled" : "pushed"})`}
+                  className={"shrink-0 rounded px-1 text-[9px] uppercase tracking-wide " + (problem.origin === "build" ? "bg-zinc-800 text-zinc-400" : "bg-blue-950 text-blue-300")}>
+                  {problem.origin === "build" ? "Build" : `Live · ${problem.source}`}</span>
                 <span className="min-w-0 flex-1">
                   <span className="block text-zinc-200 break-words">{problem.message}</span>
                   <span className="block text-[10px] text-zinc-500 truncate">
-                    {linked.linked && <span className="text-amber-500/80">{problem.projectName} · </span>}
+                    {linked.linked && problem.origin === "build" && <span className="text-amber-500/80">{problem.projectName} · </span>}
+                    {problem.origin !== "build" && <span className="text-zinc-400">{problem.external ? "external" : problem.projectName} · </span>}
                     {problem.file.split("/").pop()}:{problem.line}:{problem.column}
                     {problem.code ? ` · ${problem.code}` : ""}
                   </span>

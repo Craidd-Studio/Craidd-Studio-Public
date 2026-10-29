@@ -32,6 +32,9 @@ export interface StatusRecord {
   writerRoom: number;
   unresponsive: boolean;
   health: Health | null;
+  /** null: the server reports no workspace status; false until it first reports quiescent. */
+  workspaceReady: boolean | null;
+  reloads: number;
   revision: number;
 }
 

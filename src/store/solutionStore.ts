@@ -208,7 +208,7 @@ async function readTreeFor(
   }
 }
 
-function projectFolderAbs(solutionRoot: string, project: CraiddProject): string {
+export function projectFolderAbs(solutionRoot: string, project: CraiddProject): string {
   const craiddAbs = resolveRelPath(solutionRoot, project.path);
   const folderAbs = craiddAbs.slice(0, craiddAbs.lastIndexOf("/")) || "/";
   const relRoot = project.root === "." ? "" : project.root.replace(/^\/+/, "").replace(/\/+$/, "");

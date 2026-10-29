@@ -1,0 +1,76 @@
+import { create } from "zustand";
+import type { LspProblem } from "../lib/lsp/diagnostics";
+import type { StatusRecord } from "../lib/lsp/protocol";
+
+/** What the language server is doing for one session, as the status chip shows it. */
+export interface LspSessionView {
+  generation: number;
+  status: StatusRecord;
+  server: string;
+  version: string;
+  root: string;
+  notes: string[];
+  /** Live work-done progress titles (indexing, cargo check, …). */
+  progress: Record<string, string>;
+  /** Set when consecutive pulls fail; cleared by the next accepted report. */
+  pullDegraded: string | null;
+}
+
+/** Why the active document has, or does not have, a language server. */
+export type LspDocInfo =
+  | { kind: "none" }
+  | { kind: "waiting" }
+  | { kind: "notRouted"; reason: string }
+  | { kind: "unavailable"; reason: string }
+  | { kind: "bound"; session: number; alias: string | null; state: string };
+
+export interface LspOutputLine { session: number; text: string; severity: number }
+
+/** ◇ Lines kept for the Output source; the backend ring stays authoritative. */
+export const OUTPUT_LINES = 2000;
+
+interface LspState {
+  enabled: boolean;
+  sessions: Record<number, LspSessionView>;
+  docs: Record<string, LspDocInfo>;
+  problems: LspProblem[];
+  evictedFiles: number;
+  notRetained: number;
+  output: LspOutputLine[];
+  droppedLogs: number;
+}
+
+export const useLsp = create<LspState>(() => ({
+  enabled: false, sessions: {}, docs: {}, problems: [], evictedFiles: 0, notRetained: 0, output: [], droppedLogs: 0,
+}));
+
+export function appendLspOutput(lines: LspOutputLine[], droppedLogs?: number): void {
+  if (lines.length === 0 && droppedLogs === undefined) return;
+  useLsp.setState((state) => ({
+    output: [...state.output, ...lines].slice(-OUTPUT_LINES),
+    droppedLogs: droppedLogs ?? state.droppedLogs,
+  }));
+}
+
+/** The status chip's states, in the words the UI uses. */
+export type ChipState = "notFound" | "starting" | "indexing" | "ready" | "unresponsive" | "crashed" | "failed" | "stopped";
+
+export function chipState(view: LspSessionView): ChipState {
+  const { phase, unresponsive } = view.status;
+  if (phase === "crashed") return "crashed";
+  if (phase === "failed") return "failed";
+  if (phase === "exited" || phase === "shuttingDown") return "stopped";
+  if (phase === "spawning" || phase === "initializing") return "starting";
+  if (unresponsive) return "unresponsive";
+  if (Object.keys(view.progress).length > 0 || view.status.workspaceReady === false) return "indexing";
+  return "ready";
+}
+
+/** The server's own name (from `serverInfo`), else the binary's file name; never hardcoded. */
+export function serverName(view: LspSessionView): string {
+  return view.status.caps?.serverName ?? view.server.split("/").pop() ?? "language server";
+}
+
+export function chipLabel(state: ChipState, name: string): string {
+  return state === "ready" ? name : state === "notFound" ? `${name} not found` : `${name}: ${state}`;
+}

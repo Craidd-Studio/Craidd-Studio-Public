@@ -16,6 +16,7 @@ import { listLdiCallSites, removeLdiBlue, setLdiBlue, setupLdiBlue, useLdi } fro
 import type { LdiBlue, LdiCallSite } from "../../store/ldiStore";
 import type { CraiddSolution } from "../../types/project";
 import { useNativeDebug } from "../../store/nativeDebugStore";
+import { attachMonaco } from "../../lib/lsp/bridge";
 
 interface CallSiteCacheEntry {
   savedContent: string;
@@ -269,6 +270,7 @@ function CodeView({ onReady }: { onReady?: (instance: editor.IStandaloneCodeEdit
         onChange={onChange}
         onMount={(instance: editor.IStandaloneCodeEditor, monaco: Monaco) => {
           editorRef.current = instance;
+          attachMonaco(monaco);
           onReady?.(instance);
           const mainFile = () => useSolution.getState().activeFileId;
           setActiveEditor(instance, mainFile);
