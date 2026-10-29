@@ -216,6 +216,30 @@ pub(crate) async fn lsp_attach(window: WebviewWindow, state: State<'_, LspManage
     Ok(reply.0)
 }
 
+#[derive(Serialize, PartialEq, Debug)]
+#[serde(rename_all = "camelCase")]
+pub(crate) struct Attribution { path: String, project_id: Option<String>, project_name: Option<String>, ambiguous: Vec<String> }
+
+/// Project attribution through the single ownership resolver (the one the
+/// Explorer uses): explicit includes, config-facet files and ambiguity
+/// included. Not owned means external.
+pub(crate) fn attribute(paths: &[String], solution: &CraiddSolution, languages: &HashMap<String, LanguageFiles>,
+    probe: &dyn crate::ownership::TreeProbe) -> Vec<Attribution> {
+    let lookup = |language: &str| languages.get(language).cloned();
+    paths.iter().map(|path| match crate::ownership::owning_project(solution, std::path::Path::new(path), &lookup, probe) {
+        crate::ownership::Ownership::Owned { project, .. } =>
+            Attribution { path: path.clone(), project_id: Some(project.id.clone()), project_name: Some(project.name.clone()), ambiguous: vec![] },
+        crate::ownership::Ownership::NotOwned => Attribution { path: path.clone(), project_id: None, project_name: None, ambiguous: vec![] },
+        crate::ownership::Ownership::Ambiguous(found) =>
+            Attribution { path: path.clone(), project_id: None, project_name: None, ambiguous: found.iter().map(|p| p.name.clone()).collect() },
+    }).collect()
+}
+
+#[tauri::command]
+pub(crate) async fn lsp_attribute(paths: Vec<String>, solution: CraiddSolution, languages: HashMap<String, LanguageFiles>) -> Result<Vec<Attribution>, String> {
+    tauri::async_runtime::spawn_blocking(move || attribute(&paths, &solution, &languages, &DiskProbe)).await.map_err(|e| e.to_string())
+}
+
 #[tauri::command]
 pub(crate) fn lsp_open(window: WebviewWindow, state: State<'_, LspManager>, session: u64, uri: String,
     language_id: String, text: String) -> Result<DocView, DocError> {
@@ -384,4 +408,28 @@ pub(crate) fn close_window(app: &tauri::AppHandle, label: &str) {
     let state = app.state::<LspManager>();
     state.close_window_solution(label);
     lock(&state.channels).remove(label);
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::ownership::tests::{languages, project, solution, Scripted};
+
+    #[test]
+    fn tabless_diagnostics_are_attributed_by_the_ownership_resolver_not_by_folder() {
+        let mut app = project("app", "app/app.craidd", "rust");
+        app.config_enabled = true;
+        // A nested project inside app's folder is a boundary: its files are not app's.
+        let nested = project("inner", "app/inner/inner.craidd", "rust");
+        let s = solution(vec![app, nested]);
+        let table: HashMap<String, LanguageFiles> = ["rust", "config"].iter().filter_map(|l| languages(l).map(|f| (l.to_string(), f))).collect();
+        let mut probe = Scripted::default();
+        probe.markers.insert("/ws/app/inner".into());
+        let got = attribute(&["/ws/app/src/main.rs".into(), "/ws/app/inner/src/lib.rs".into(), "/ws/app/settings.json".into(), "/ws/elsewhere/x.rs".into()],
+            &s, &table, &probe);
+        assert_eq!(got[0].project_name.as_deref(), Some("app"));
+        assert_eq!(got[1].project_name.as_deref(), Some("inner"), "the deepest folder is not guessed; the boundary rule decides");
+        assert_eq!(got[2].project_name.as_deref(), Some("app"), "config-facet files are the project's");
+        assert_eq!((got[3].project_id.clone(), got[3].ambiguous.len()), (None, 0), "not owned is external");
+    }
 }

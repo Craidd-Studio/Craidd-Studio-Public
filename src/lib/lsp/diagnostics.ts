@@ -17,9 +17,10 @@ export type Route = "push" | "pull";
 export const RETENTION = { perFile: 500, closedFiles: 2000, closedTotal: 20000 };
 export type Retention = typeof RETENTION;
 
-export interface Attribution { projectId: string | null; projectName: string | null }
+/** From the backend's ownership resolver; `null` while it is being resolved. */
+export interface Attribution { projectId: string | null; projectName: string | null; ambiguous?: string[] }
 
-interface StoredSet { session: number; uri: string; route: Route; items: LspDiagnostic[]; hash: string; notRetained: number; at: number; attribution: Attribution }
+interface StoredSet { session: number; uri: string; route: Route; items: LspDiagnostic[]; hash: string; notRetained: number; at: number }
 
 export interface LspProblem {
   key: string;
@@ -54,7 +55,7 @@ export class DiagnosticsModel {
   constructor(retention: Retention = RETENTION) { this.retention = retention; }
 
   /** Replace a set. Returns false (no write, no marker call) when it equals the stored one. */
-  apply(session: number, uri: string, route: Route, items: LspDiagnostic[], attribution: Attribution, isOpen: (uri: string) => boolean): boolean {
+  apply(session: number, uri: string, route: Route, items: LspDiagnostic[], isOpen: (uri: string) => boolean): boolean {
     const key = keyOf(session, uri, route);
     const hash = setHash(items);
     const current = this.sets.get(key);
@@ -68,7 +69,7 @@ export class DiagnosticsModel {
       return true;
     }
     const kept = items.slice(0, this.retention.perFile);
-    this.sets.set(key, { session, uri, route, items: kept, hash, notRetained: items.length - kept.length, at: ++this.clock, attribution });
+    this.sets.set(key, { session, uri, route, items: kept, hash, notRetained: items.length - kept.length, at: ++this.clock });
     this.stats.writes++;
     this.enforce(isOpen);
     return true;
@@ -117,17 +118,23 @@ export class DiagnosticsModel {
     return [...this.sets.values()].filter((set) => !route || set.route === route).reduce((sum, set) => sum + set.items.length, 0);
   }
 
-  problems(): LspProblem[] {
+  /** Distinct uris that have a stored set (for attribution lookups). */
+  uris(): string[] { return [...new Set([...this.sets.values()].map((set) => set.uri))]; }
+
+  /** Rows for display. Attribution is looked up per uri, so it can arrive after the set. */
+  problems(attribute: (uri: string) => Attribution | null): LspProblem[] {
     const rows: LspProblem[] = [];
     for (const [key, set] of this.sets) {
       const file = uriToPath(set.uri);
+      const who = attribute(set.uri);
       set.items.forEach((item, index) => rows.push({
         key: `${key}\u0000${index}`, session: set.session, route: set.route, file,
         line: item.range.start.line + 1, column: item.range.start.character + 1,
         endLine: item.range.end.line + 1, endColumn: item.range.end.character + 1,
         severity: severityName(item.severity), message: item.message, code: codeText(item.code),
         source: item.source ?? (set.route === "pull" ? "language server" : "language server (push)"),
-        projectName: set.attribution.projectName, external: set.attribution.projectId === null,
+        projectName: who === null ? null : who.ambiguous?.length ? `ambiguous: ${who.ambiguous.join(", ")}` : who.projectName,
+        external: who !== null && who.projectId === null && !who.ambiguous?.length,
       }));
     }
     return rows;

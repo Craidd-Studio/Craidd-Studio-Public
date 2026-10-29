@@ -198,6 +198,7 @@ pub fn run() {
             lsp::commands::lsp_enabled,
             lsp::commands::lsp_subscribe,
             lsp::commands::lsp_attach,
+            lsp::commands::lsp_attribute,
             lsp::commands::lsp_open,
             lsp::commands::lsp_change,
             lsp::commands::lsp_mark_desynced,

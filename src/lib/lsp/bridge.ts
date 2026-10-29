@@ -1,12 +1,12 @@
 import type { Monaco } from "@monaco-editor/react";
 import type { editor } from "monaco-editor";
 import { Channel, invoke } from "@tauri-apps/api/core";
-import { projectFolderAbs, useSolution } from "../../store/solutionStore";
+import { useSolution } from "../../store/solutionStore";
 import { useSplit } from "../../store/splitStore";
 import { appendLspOutput, serverName, useLsp, type LspSessionView } from "../../store/lspStore";
 import { LANGUAGES } from "../languages";
 import { DocumentTracker, type Binding, type DocTransport } from "./documents";
-import { DiagnosticsModel, type Route } from "./diagnostics";
+import { DiagnosticsModel, type Attribution, type Route } from "./diagnostics";
 import { PullScheduler, type PullReply, type PullReport } from "./pulls";
 import { fileUri, isTerminal, uriToPath, toMonacoRange, type Batch, type ContentChange, type DocView, type LspDiagnostic, type StatusRecord } from "./protocol";
 import { metrics } from "./metrics";
@@ -101,16 +101,42 @@ function queueDiagnostics(session: number, uri: string, route: Route, items: Lsp
   requestAnimationFrame(flushDiagnostics);
 }
 
-function attribution(uri: string): { projectId: string | null; projectName: string | null } {
+const languageTable = () => Object.fromEntries(LANGUAGES.map((l) => [l.id, { extensions: [...l.extensions, ...l.interopExtensions], wellKnown: l.wellKnownFiles }]));
+
+/** Attributions resolved by the backend's ownership resolver, per uri, for the current solution. */
+const attributions = new Map<string, Attribution>();
+const resolving = new Set<string>();
+let attributedFor: unknown = null;
+
+function tabBinding(uri: string): Binding | null {
   const fileId = useSolution.getState().tabs.find((tab) => fileUri(tab.fileId) === uri)?.fileId;
-  const binding = fileId ? tracker.binding(fileId) : null;
-  if (binding) return { projectId: binding.projectId, projectName: binding.projectName };
-  // Unopened files: the deepest project folder containing the path, else external.
+  return fileId ? tracker.binding(fileId) : null;
+}
+
+/** Open documents carry their routed project; every other file asks the single resolver. Never guessed from folders. */
+function attributionOf(uri: string): Attribution | null {
   const solution = useSolution.getState().solution;
-  const path = uriToPath(uri);
-  const project = solution?.projects.map((p) => ({ p, folder: projectFolderAbs(solution.root, p) }))
-    .filter(({ folder }) => path.startsWith(`${folder}/`)).sort((a, b) => b.folder.length - a.folder.length)[0]?.p;
-  return project ? { projectId: project.id, projectName: project.name } : { projectId: null, projectName: null };
+  if (solution !== attributedFor) { attributions.clear(); attributedFor = solution; }
+  const binding = tabBinding(uri);
+  if (binding) return { projectId: binding.projectId, projectName: binding.projectName };
+  return attributions.get(uri) ?? null;
+}
+
+function resolveAttributions(): void {
+  const solution = useSolution.getState().solution;
+  if (!solution) return;
+  const missing = diagnostics.uris().filter((uri) => !tabBinding(uri) && !attributions.has(uri) && !resolving.has(uri));
+  if (missing.length === 0) return;
+  for (const uri of missing) resolving.add(uri);
+  void invoke<{ projectId: string | null; projectName: string | null; ambiguous: string[] }[]>("lsp_attribute",
+    { paths: missing.map(uriToPath), solution, languages: languageTable() })
+    .then((list) => {
+      if (useSolution.getState().solution !== solution) return;
+      list.forEach((who, index) => attributions.set(missing[index], who));
+      publishProblems();
+    })
+    .catch((error) => console.warn("[lsp] attribution failed:", error))
+    .finally(() => { for (const uri of missing) resolving.delete(uri); });
 }
 
 function isOpenUri(uri: string): boolean {
@@ -124,7 +150,7 @@ function flushDiagnostics(): void {
     const knownBefore = diagnostics.isKnown(update.session, update.uri);
     const wrote = update.items === null
       ? diagnostics.clearPull(update.session, update.uri)
-      : diagnostics.apply(update.session, update.uri, update.route, update.items, attribution(update.uri), isOpenUri);
+      : diagnostics.apply(update.session, update.uri, update.route, update.items, isOpenUri);
     if (update.route === "pull" && update.items !== null) diagnostics.markKnown(update.session, update.uri);
     if (wrote) { changed.push(update); metrics.storeWrite(update.route); }
     else if (knownBefore !== diagnostics.isKnown(update.session, update.uri)) publishUnknown();
@@ -151,9 +177,10 @@ function publishUnknown(): void {
 
 function publishProblems(): void {
   metrics.frameWrite();
-  useLsp.setState({ problems: diagnostics.problems(), evictedFiles: diagnostics.evictedFiles(), notRetained: diagnostics.notRetained(),
+  useLsp.setState({ problems: diagnostics.problems(attributionOf), evictedFiles: diagnostics.evictedFiles(), notRetained: diagnostics.notRetained(),
     pullUnknown: unknownCount() });
   metrics.stored(diagnostics.storedCount("push"), diagnostics.storedCount("pull"));
+  resolveAttributions();
 }
 
 const MARKER_SEVERITY = [8, 8, 4, 2, 1];
@@ -349,7 +376,7 @@ async function attachActive(reason: "idle" | "timeout"): Promise<void> {
   if (!startupDone || !fileId || !solution || !tabs.some((t) => t.fileId === fileId)) return;
   const key = solutionKey;
   useLsp.setState((state) => ({ docs: { ...state.docs, [fileId]: { kind: "waiting" } } }));
-  const languages = Object.fromEntries(LANGUAGES.map((l) => [l.id, { extensions: [...l.extensions, ...l.interopExtensions], wellKnown: l.wellKnownFiles }]));
+  const languages = languageTable();
   let reply: AttachReply;
   try { reply = await invoke<AttachReply>("lsp_attach", { file: fileId, solution, languages, reason }); }
   catch (error) { console.warn("[lsp] attach failed:", error); return; }

@@ -185,26 +185,26 @@ test("push and pull sets are stored apart; empty sets clear; equal sets cause no
   const model = new DiagnosticsModel();
   const open = () => true;
   const who = { projectId: "p", projectName: "app" };
-  assert.equal(model.apply(1, "file:///a.rs", "pull", [diag("E0061")], who, open), true);
-  assert.equal(model.apply(1, "file:///a.rs", "push", [diag("rustc")], who, open), true);
-  assert.equal(model.apply(1, "file:///a.rs", "push", [diag("rustc")], who, open), false, "identical republish: no write");
+  assert.equal(model.apply(1, "file:///a.rs", "pull", [diag("E0061")], open), true);
+  assert.equal(model.apply(1, "file:///a.rs", "push", [diag("rustc")], open), true);
+  assert.equal(model.apply(1, "file:///a.rs", "push", [diag("rustc")], open), false, "identical republish: no write");
   assert.deepEqual(model.get(1, "file:///a.rs", "pull").map((d) => d.message), ["E0061"]);
-  assert.equal(model.apply(1, "file:///a.rs", "push", [], who, open), true, "an empty set is a real update");
+  assert.equal(model.apply(1, "file:///a.rs", "push", [], open), true, "an empty set is a real update");
   assert.deepEqual(model.get(1, "file:///a.rs", "push"), []);
   assert.deepEqual(model.get(1, "file:///a.rs", "pull").map((d) => d.message), ["E0061"], "a push never alters the pull set");
-  assert.equal(model.apply(1, "file:///a.rs", "push", [], who, open), false);
+  assert.equal(model.apply(1, "file:///a.rs", "push", [], open), false);
 });
 
 test("closing clears the pull set and keeps the push set; session end clears only that session", () => {
   const model = new DiagnosticsModel();
   const who = { projectId: "p", projectName: "app" };
-  model.apply(1, "file:///a.rs", "pull", [diag("pulled")], who, () => true);
-  model.apply(1, "file:///a.rs", "push", [diag("pushed")], who, () => true);
-  model.apply(2, "file:///b.rs", "push", [diag("other session")], who, () => true);
+  model.apply(1, "file:///a.rs", "pull", [diag("pulled")], () => true);
+  model.apply(1, "file:///a.rs", "push", [diag("pushed")], () => true);
+  model.apply(2, "file:///b.rs", "push", [diag("other session")], () => true);
   model.clearPull(1, "file:///a.rs");
-  assert.deepEqual(model.problems().map((p) => p.message).sort(), ["other session", "pushed"]);
+  assert.deepEqual(model.problems(() => who).map((p) => p.message).sort(), ["other session", "pushed"]);
   assert.deepEqual(model.clearSession(1), ["file:///a.rs"]);
-  assert.deepEqual(model.problems().map((p) => p.message), ["other session"]);
+  assert.deepEqual(model.problems(() => who).map((p) => p.message), ["other session"]);
 });
 
 test("retention caps per file and evicts least recent closed sets visibly; open sets are never evicted", () => {
@@ -212,14 +212,14 @@ test("retention caps per file and evicts least recent closed sets visibly; open 
   const who = { projectId: null, projectName: null };
   const openUris = new Set(["file:///open.rs"]);
   const isOpen = (uri) => openUris.has(uri);
-  model.apply(1, "file:///open.rs", "push", [diag("a"), diag("b"), diag("c")], who, isOpen);
+  model.apply(1, "file:///open.rs", "push", [diag("a"), diag("b"), diag("c")], isOpen);
   assert.equal(model.notRetained(), 1, "+N not retained is visible");
-  for (const name of ["x", "y", "z"]) model.apply(1, `file:///${name}.rs`, "push", [diag(name)], who, isOpen);
+  for (const name of ["x", "y", "z"]) model.apply(1, `file:///${name}.rs`, "push", [diag(name)], isOpen);
   assert.equal(model.evictedFiles(), 1);
   assert.deepEqual(model.get(1, "file:///x.rs", "push"), [], "the least recently published closed set went first");
   assert.equal(model.get(1, "file:///open.rs", "push").length, 2, "open sets are never evicted");
-  model.apply(1, "file:///x.rs", "push", [diag("x again")], who, isOpen);
-  assert.ok(model.problems().some((p) => p.message === "x again" && p.external), "returns when republished; external attribution");
+  model.apply(1, "file:///x.rs", "push", [diag("x again")], isOpen);
+  assert.ok(model.problems(() => who).some((p) => p.message === "x again" && p.external), "returns when republished; external attribution");
 });
 
 test("decision 20: becoming ready drops reports of earlier pulls and seeds every open document", async () => {
@@ -247,4 +247,17 @@ test("decision 20: the pull route is unknown until a report is accepted; an acce
   model.markKnown(1, "file:///a.rs");
   model.clearSession(1);
   assert.equal(model.isKnown(1, "file:///a.rs"), false);
+});
+
+test("attribution is looked up at display time: pending, owned, ambiguous and external", () => {
+  const model = new DiagnosticsModel();
+  for (const name of ["pending", "owned", "both", "outside"]) model.apply(1, `file:///${name}.rs`, "push", [diag(name)], () => false);
+  const who = { "file:///owned.rs": { projectId: "p", projectName: "app" },
+    "file:///both.rs": { projectId: null, projectName: null, ambiguous: ["a", "b"] },
+    "file:///outside.rs": { projectId: null, projectName: null } };
+  const rows = Object.fromEntries(model.problems((uri) => who[uri] ?? null).map((p) => [p.message, p]));
+  assert.deepEqual([rows.pending.projectName, rows.pending.external], [null, false], "unresolved yet: neither a project nor external");
+  assert.equal(rows.owned.projectName, "app");
+  assert.deepEqual([rows.both.projectName, rows.both.external], ["ambiguous: a, b", false]);
+  assert.equal(rows.outside.external, true);
 });
