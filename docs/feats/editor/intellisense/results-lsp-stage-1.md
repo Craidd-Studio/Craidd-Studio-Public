@@ -494,5 +494,74 @@ The config schema has no push/pull switch. `diagnostics.enable` (default true) o
 
 ---
 
-*Last updated: Phase 3 (Stage 1a, adapter integrated as 99863a4; F1–F3 investigated; decisions 16–27 approved). Author: ShinkuKira21.*
+## Stage 1b implementation record
+
+Implementation lane, branch `feat/lsp-stage-1b` on `242c3fd`. This section records what was built and the implementation's own test evidence. It does not record any gate as Pass: G1, G3, G5, G6 (real tree) and G7 stay **Unmeasured** until the Verification lane records them.
+
+### What was built
+
+| Piece | Where |
+|---|---|
+| Document table: versions, epochs, desync without replay, atomic `didClose` + `didOpen` resync, event-driven retry on writer drain, Unresponsive bound | `lsp/documents.rs`, `lsp/session.rs`, `FrameWriter::try_send_all` / `spawn_with_drain` |
+| Pull diagnostics capability and `diagnosticProvider` validation; `workspace/diagnostic/refresh` answered `null` (decision 16) | `lsp/caps.rs`, `lsp/session.rs` |
+| `experimental/serverStatus` in the status record (decision 17); readiness gate (decision 20); coalesced workspace reload (decision 21) | `lsp/protocol.rs`, `lsp/delivery.rs`, `lsp/session.rs`, `lsp/rust_adapter.rs` |
+| Tauri surface, per-window manager, acknowledged Channel delivery, `CRAIDD_LSP=0` | `lsp/commands.rs` |
+| Tab-owned document tracker, wave scheduler, route-separated diagnostic store | `src/lib/lsp/documents.ts`, `pulls.ts`, `diagnostics.ts` |
+| Monaco bridge, deferred launch, per-frame store writes and markers | `src/lib/lsp/bridge.ts`, `src/store/lspStore.ts` |
+| Status chip, Output source, Problems badges and per-source counts | `StatusBar.tsx`, `BottomPanel.tsx` |
+| Development-only measurement hooks (decisions 23, 24) | `src/lib/lsp/metrics.ts` |
+
+### Test evidence
+
+| Suite | Result |
+|---|---|
+| `cargo test --lib` | 215 passed, 0 failed, 7 ignored (62 in `lsp::`) |
+| `cargo test --test process_cleanup` | 7 passed, 0 failed, 1 ignored |
+| DAP suite (`commands::debug`) | 26 passed, unchanged |
+| `node --test tests/*.test.mjs` | 107 passed (23 new in `lspDocuments` and `lspDiagnostics`) |
+| `tsc --noEmit`, `vite build` | clean |
+
+Fake-server regression tests added: F2 `null` reply with pull on and off, string ids and a stalled consumer; F3 `showMessageRequest` before the `initialize` reply; server health by shape, bounded message, phase unchanged; incremental UTF-16 sync and `resultId` handling; `retriggerRequest`; session death; a forced writer overflow resynchronised to the model text exactly once; stale pushes dropped; the readiness gate including health `error` and re-arming after a reload; one pull in flight per document; coalesced reloads.
+
+### Real-server smoke runs (opt-in tests)
+
+`cargo test --lib real_rust_analyzer -- --ignored --nocapture`, against `rust-analyzer 1 (9074e9b4c6 2026-09-06)`, two runs each, one fixture crate. Measured:
+
+- Ready 25 ms after start; workspace quiescent at about 1.9 s; a pull before that was refused by the gate.
+- The first pull returned `full`, `resultId` `"rust-analyzer"`, with `rust-analyzer` E0061. A second pull with that `previousResultId` returned `full` again, not `unchanged` (agrees with the Verification lane's V22 dry run).
+- After `didSave`, push carried three `rustc` diagnostics 87 ms later.
+- **V27, two cases.** A manifest broken mid-session and then fixed: health went `error` ("Failed to load workspaces.") and returned to `ok` within 10 s with no reload. A manifest broken from the start and then fixed: health stayed `error` for 15 s; after one `rust-analyzer/reloadWorkspace` it returned to `ok` in about 100 ms. The reload trigger therefore applies only while health is not `ok` (decision 21 allows this narrowing).
+
+### Provisional values (◇) and where they came from
+
+None is set from measured evidence yet; V26, G3 and G5 are unmeasured.
+
+| Value | Set to | Source |
+|---|---|---|
+| Pull debounce | 300 ms | Initial proposal |
+| Pulls in flight per session | 4 | Initial proposal |
+| Documents per wave | 12 | Initial proposal |
+| Wave spacing | 250 ms | Initial proposal |
+| Focus interval | 2 s | Initial proposal |
+| Retrigger re-arms | 3 | Initial proposal; V22 says retrigger fires during normal typing |
+| Consecutive pull failures before "degraded" | 5 | Initial proposal |
+| Deferred-launch maximum wait | 1.5 s | Initial proposal |
+| Writer low-water mark | 64 of 128 | Initial proposal |
+| Resync Unresponsive bound | 10 s | Design ◇ |
+| Delivery batch | 256 events, 1 MiB, 500 log lines | Initial proposal (design: from G3) |
+| Pull timeout, reload timeout | 30 s, 60 s | Initial proposal |
+| Health message cap | 2,048 bytes | Initial proposal |
+| Retention: per file, closed files, closed total | 500, 2,000, 20,000 | Initial proposal (design: from G5 / V20) |
+| Problems rows rendered | 500 | Initial proposal |
+
+### Findings from implementation (for review)
+
+1. **Wave tests live in the frontend.** The scheduler needs visibility, recency and Monaco's `versionId`, which only the frontend has, so it is a frontend module. Its wave tests run under `node --test` with a scripted transport. The backend parts (refresh counter, pull requests, gate) are covered by fake-server tests.
+2. **Versions are assigned in the backend's document table**, where the enqueue happens, not in the bridge. The stale key `(epoch, versionId)` is unchanged.
+3. **Lock glyph not built.** Nothing in Stage 1b opens an unowned file: that comes only from go-to-definition (1c). The read-only rule and glyph land with navigation.
+4. **Attribution of unopened files** (push sets for files with no tab) uses the deepest project folder that contains the path, not the full membership resolver. Open documents use the backend resolver.
+5. **V15 / decision 22 not measured.** Retention stays bounded with visible eviction and "+N not retained". Whether complete sets fit a measured budget needs a large cargo check (G5, V20), so it is not claimed.
+6. **No-status servers.** Decision 20's bounded wait for servers without a status notification is not built; only Rust ships, and its adapter always declares the notification.
+
+*Last updated: Phase 3 (Stage 1a, adapter integrated as 99863a4; F1–F3 investigated; decisions 16–27 approved; Stage 1b implementation recorded). Author: ShinkuKira21.*
 *This document is a record.*
