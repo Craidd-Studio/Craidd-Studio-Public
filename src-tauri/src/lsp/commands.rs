@@ -38,7 +38,15 @@ fn lock<T>(mutex: &Mutex<T>) -> MutexGuard<'_, T> { mutex.lock().unwrap_or_else(
 /// `CRAIDD_LSP=0` disables the subsystem so G1 has a baseline on the same build.
 fn enabled() -> bool { std::env::var("CRAIDD_LSP").map_or(true, |v| v != "0") }
 
-struct Tracked { session: Session, identity: ServerIdentity, project_folder: PathBuf }
+struct Tracked {
+    session: Session, identity: ServerIdentity, project_folder: PathBuf,
+    /// Affected manifests and their last seen stamps (V27 reload trigger).
+    manifests: Vec<(PathBuf, Option<(std::time::SystemTime, u64)>)>,
+}
+
+fn stamp(path: &std::path::Path) -> Option<(std::time::SystemTime, u64)> {
+    std::fs::metadata(path).ok().and_then(|m| Some((m.modified().ok()?, m.len())))
+}
 
 struct WindowLsp {
     registry: LspRegistry,
@@ -186,6 +194,7 @@ pub(crate) async fn lsp_attach(window: WebviewWindow, state: State<'_, LspManage
             Err(note) => return Ok((AttachReply::Unavailable { reason: note.0.clone() }, None)),
         };
         let identity = context.as_ref().ok().map(|c| c.identity());
+        let manifests: Vec<_> = context.as_ref().map(|c| c.manifests.iter().map(|p| (p.clone(), stamp(p))).collect()).unwrap_or_default();
         let (session, launched) = match worker.registry.revalidate_and_ensure(context) {
             LaunchDecision::Skip(reason) => return Ok((AttachReply::Skipped { reason: reason.into() }, None)),
             LaunchDecision::Attach(session) => (session, false),
@@ -193,7 +202,7 @@ pub(crate) async fn lsp_attach(window: WebviewWindow, state: State<'_, LspManage
         };
         let generation = session.status().generation;
         lock(&worker.sessions).entry(generation).or_insert_with(|| Tracked {
-            session: session.clone(), identity: identity.expect("resolved"), project_folder: reference.folder.clone() });
+            session: session.clone(), identity: identity.expect("resolved"), project_folder: reference.folder.clone(), manifests });
         let canonical = std::fs::canonicalize(&path).unwrap_or_else(|_| path.clone()).display().to_string();
         Ok((AttachReply::Routed {
             session: generation, uri: file_uri(&path), canonical, language_id,
@@ -263,6 +272,8 @@ pub(crate) enum PullReply {
     Busy,
     /// Not open or desynced: nothing to pull until it is synced.
     NotSynced,
+    /// The workspace has not reported ready; the first pull waits (decision 20).
+    NotReady,
     Disabled,
     Error { code: i64, message: String },
 }
@@ -274,6 +285,7 @@ pub(crate) async fn lsp_pull(window: WebviewWindow, state: State<'_, LspManager>
     let request = match session.begin_pull(&uri, previous_result_id.as_deref()) {
         Ok(request) => request,
         Err(PullError::Disabled) => return Ok(PullReply::Disabled),
+        Err(PullError::NotReady) => return Ok(PullReply::NotReady),
         Err(PullError::NotSynced) => return Ok(PullReply::NotSynced),
         Err(PullError::Request(RequestError::Busy)) => return Ok(PullReply::Busy),
         Err(PullError::Request(_)) => return Ok(PullReply::NoResult),
@@ -283,6 +295,7 @@ pub(crate) async fn lsp_pull(window: WebviewWindow, state: State<'_, LspManager>
     let outcome = tauri::async_runtime::spawn_blocking(move || {
         let outcome = request.wait(PULL_TIMEOUT);
         if outcome == Outcome::NoResult { canceller.cancel(id); }
+        canceller.finish_pull(&uri, id);
         outcome
     }).await.map_err(|e| e.to_string())?;
     Ok(match outcome {
@@ -293,11 +306,29 @@ pub(crate) async fn lsp_pull(window: WebviewWindow, state: State<'_, LspManager>
     })
 }
 
-/// A superseded pull: the newer one replaces it; `$/cancelRequest` is sent.
+/// A change restarted the document's debounce: its in-flight pull is cancelled.
 #[tauri::command]
-pub(crate) fn lsp_cancel(window: WebviewWindow, state: State<'_, LspManager>, session: u64, id: i64) -> Result<(), String> {
-    state.session(window.label(), session)?.cancel(id);
+pub(crate) fn lsp_cancel_pull(window: WebviewWindow, state: State<'_, LspManager>, session: u64, uri: String) -> Result<(), String> {
+    state.session(window.label(), session)?.cancel_pull(&uri);
     Ok(())
+}
+
+/// Window focus and Craidd saves of a manifest: if an affected Cargo.toml
+/// changed since last seen, ask that session to reload its workspace
+/// (decision on V27). Unchanged stamps send nothing, so reloads are not redundant.
+#[tauri::command]
+pub(crate) fn lsp_check_manifests(window: WebviewWindow, state: State<'_, LspManager>) -> Vec<u64> {
+    let Some(lsp) = lock(&state.windows).get(window.label()).cloned() else { return vec![]; };
+    let mut reloaded = vec![];
+    for (generation, tracked) in lock(&lsp.sessions).iter_mut() {
+        let mut changed = vec![];
+        for (path, seen) in tracked.manifests.iter_mut() {
+            let now = stamp(path);
+            if now != *seen { *seen = now; changed.push(path.display().to_string()); }
+        }
+        if !changed.is_empty() && tracked.session.reload_workspace(&format!("{} changed", changed.join(", "))) { reloaded.push(*generation); }
+    }
+    reloaded
 }
 
 #[tauri::command]

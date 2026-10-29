@@ -4,6 +4,7 @@
 //! Every entry into a terminal phase goes through `Session::terminate`.
 //! Bookkeeping (status, pending, snapshots) never waits on process teardown,
 //! which runs on its own thread.
+use std::collections::HashMap;
 use std::io::{BufRead, BufReader, Read};
 use std::os::unix::process::CommandExt;
 use std::path::PathBuf;
@@ -81,6 +82,8 @@ pub(crate) struct LaunchSpec {
     pub lazy_additional_edits: bool,
     /// Client `experimental` capabilities, declared by the adapter.
     pub experimental: Value,
+    /// The adapter's workspace-reload request, if its server has one.
+    pub reload_method: Option<String>,
 }
 
 /// ◇ How often a running server's process tree is re-read.
@@ -96,6 +99,8 @@ pub(crate) enum SendError { NotReady, Full, Closed }
 pub(crate) enum PullError {
     /// The server offers no pull; push is the only route.
     Disabled,
+    /// The workspace has not reported ready yet (decision 20).
+    NotReady,
     /// The document is not open, or is desynced and cannot be flushed.
     NotSynced,
     Request(RequestError),
@@ -139,6 +144,10 @@ struct Inner {
     snapshots: Mutex<Coalescer>,
     logs: Mutex<LogRing>,
     documents: Mutex<DocTable>,
+    /// The one in-flight pull per document; a newer pull cancels it.
+    pulls: Mutex<HashMap<String, i64>>,
+    /// Workspace reload: (in flight, another requested meanwhile).
+    reload: Mutex<(bool, bool)>,
     cursor: Mutex<Cursor>,
     writer: Mutex<Option<FrameWriter>>,
     process: Mutex<Option<Process>>,
@@ -187,10 +196,16 @@ impl Session {
         let inner = Arc::new(Inner {
             pending: Mutex::new(PendingTable::new(limits.pending_cap, limits.cancelled_expiry)),
             logs: Mutex::new(LogRing::new(limits.stderr_lines)),
-            status: Mutex::new(StatusRecord::new(generation)),
+            status: Mutex::new({
+                let mut status = StatusRecord::new(generation);
+                if spec.experimental.get("serverStatusNotification") == Some(&Value::Bool(true)) { status.workspace_ready = Some(false); }
+                status
+            }),
             changed: Condvar::new(),
             snapshots: Mutex::new(Coalescer::default()),
             documents: Mutex::new(DocTable::default()),
+            pulls: Mutex::default(),
+            reload: Mutex::new((false, false)),
             cursor: Mutex::new(Cursor::default()),
             writer: Mutex::new(None),
             process: Mutex::new(None),
@@ -447,7 +462,10 @@ impl Session {
                     lock(&self.0.logs).push(LogLine { source: LogSource::Log, severity: if health.health == "error" { 1 } else { 2 },
                         text: format!("[lsp] server status {}: {}", health.health, health.message.as_deref().unwrap_or("")) });
                 }
-                lock(&self.0.status).touch(|s| s.health = Some(health));
+                lock(&self.0.status).touch(|s| {
+                    if health.quiescent == Some(true) && s.workspace_ready == Some(false) { s.workspace_ready = Some(true); }
+                    s.health = Some(health);
+                });
                 self.0.changed.notify_all();
             }
             Ok(Inbound::Health(Err(note))) => {
@@ -745,9 +763,49 @@ impl Session {
             return Err(PullError::NotSynced);
         }
         let mut params = json!({ "textDocument": { "uri": uri } });
+        if lock(&self.0.status).workspace_ready == Some(false) { return Err(PullError::NotReady); }
         if let Some(identifier) = pull.identifier { params["identifier"] = Value::String(identifier); }
         if let Some(previous) = previous_result_id { params["previousResultId"] = Value::String(previous.into()); }
-        self.begin_request("textDocument/diagnostic", params).map_err(PullError::Request)
+        self.cancel_pull(uri);
+        let request = self.begin_request("textDocument/diagnostic", params).map_err(PullError::Request)?;
+        lock(&self.0.pulls).insert(uri.into(), request.id);
+        Ok(request)
+    }
+
+    /// Cancel the document's in-flight pull (a change restarted its debounce).
+    pub(crate) fn cancel_pull(&self, uri: &str) {
+        let previous = lock(&self.0.pulls).remove(uri);
+        if let Some(id) = previous { self.cancel(id); }
+    }
+
+    /// The pull for `uri` finished; forget it unless a newer one replaced it.
+    pub(crate) fn finish_pull(&self, uri: &str, id: i64) {
+        let mut pulls = lock(&self.0.pulls);
+        if pulls.get(uri) == Some(&id) { pulls.remove(uri); }
+    }
+
+    /// Ask the server to reload its workspace after an affected manifest
+    /// changed. Coalesced: one in flight, at most one more queued behind it.
+    pub(crate) fn reload_workspace(&self, why: &str) -> bool {
+        let Some(method) = self.0.spec.reload_method.clone() else { return false; };
+        if lock(&self.0.status).phase != Phase::Ready { return false; }
+        {
+            let mut reload = lock(&self.0.reload);
+            if reload.0 { reload.1 = true; return true; }
+            *reload = (true, false);
+        }
+        self.note(&format!("[lsp] reloading workspace: {why}"));
+        let session = self.clone();
+        self.spawn_tracked("lsp reload", move || loop {
+            lock(&session.0.status).touch(|s| s.reloads += 1);
+            session.0.changed.notify_all();
+            let _ = session.request(&method, Value::Null, Duration::from_secs(60));
+            let mut reload = lock(&session.0.reload);
+            if reload.1 && lock(&session.0.status).phase == Phase::Ready { reload.1 = false; continue; }
+            *reload = (false, false);
+            return;
+        });
+        true
     }
 
     /// The next delivery, or `None` while the previous one is unacknowledged

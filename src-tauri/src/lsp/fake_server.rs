@@ -26,7 +26,7 @@ pub(crate) fn command(script: &str) -> (PathBuf, Vec<String>, Vec<(String, Strin
     ], vec![("CRAIDD_FAKE_LSP".into(), script.into())])
 }
 
-struct Fake { out: File, flags: Vec<String>, docs: HashMap<String, String>, pulls: u64, saves: u64, stalled: bool }
+struct Fake { out: File, flags: Vec<String>, docs: HashMap<String, String>, pulls: u64, saves: u64, stalled: bool, reloads: u64 }
 
 /// Apply one LSP content change with UTF-16 positions, as a real server would.
 fn apply(text: &mut String, change: &Value) {
@@ -100,6 +100,10 @@ impl Fake {
         if let Some(count) = self.value("refresh").and_then(|n| n.parse::<usize>().ok()) {
             for n in 0..count { self.send(json!({"jsonrpc":"2.0","id":format!("r{n}"),"method":"workspace/diagnostic/refresh"})); }
         }
+        if self.has("loading") {
+            // V24: the workspace is still loading; an early pull answers an empty full report.
+            self.send(json!({"jsonrpc":"2.0","method":"experimental/serverStatus","params":{"health":"ok","quiescent":false}}));
+        }
         if self.has("serverstatus") {
             self.send(json!({"jsonrpc":"2.0","method":"experimental/serverStatus","params":{"health":"warning","quiescent":false,"message":"Failed spawning proc-macro server"}}));
             self.send(json!({"jsonrpc":"2.0","method":"experimental/serverStatus","params":{"health":"panic"}}));
@@ -116,7 +120,7 @@ fn fake_lsp_server_entry() {
     let Ok(script) = std::env::var("CRAIDD_FAKE_LSP") else { return; };
     let flags: Vec<String> = script.split(',').filter(|f| !f.is_empty()).map(String::from).collect();
     if flags.iter().any(|f| f == "ignore_term") { unsafe { libc::signal(libc::SIGTERM, libc::SIG_IGN); } }
-    let mut fake = Fake { out: unsafe { File::from_raw_fd(3) }, flags, docs: HashMap::new(), pulls: 0, saves: 0, stalled: false };
+    let mut fake = Fake { out: unsafe { File::from_raw_fd(3) }, flags, docs: HashMap::new(), pulls: 0, saves: 0, stalled: false, reloads: 0 };
     let mut input = BufReader::new(std::io::stdin());
     let mut replies = vec![];
     let limits = FrameLimits { max_body: 1 << 26, max_header_line: Some(8192) };
@@ -139,6 +143,14 @@ fn fake_lsp_server_entry() {
             (Some("shutdown"), Some(id)) => if !fake.has("ignore_shutdown") { fake.reply(&id, Value::Null); },
             (Some("exit"), None) => if !fake.has("ignore_exit") { std::process::exit(0); },
             (Some("test/echo"), Some(id)) => { let params = message["params"].clone(); fake.reply(&id, params); }
+            (Some("test/quiesce"), _) => fake.send(json!({"jsonrpc":"2.0","method":"experimental/serverStatus","params":{"health":"ok","quiescent":true}})),
+            (Some("rust-analyzer/reloadWorkspace"), Some(id)) => {
+                fake.reloads += 1;
+                let n = fake.reloads;
+                fake.log(format!("reload {n}"));
+                std::thread::sleep(Duration::from_millis(300));
+                fake.reply(&id, Value::Null);
+            }
             (Some("textDocument/didOpen"), None) => {
                 let doc = &message["params"]["textDocument"];
                 fake.docs.insert(doc["uri"].as_str().unwrap().into(), doc["text"].as_str().unwrap().into());

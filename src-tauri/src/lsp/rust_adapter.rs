@@ -162,10 +162,16 @@ impl LanguageAdapter for RustAdapter {
             Ok(root) => (root, vec![]),
             Err(error) => (project.folder.clone(), vec![format!("Cargo workspace discovery failed; using the project folder ({error})")]),
         };
+        let mut manifests = vec![root.join("Cargo.toml"), project.folder.join("Cargo.toml")];
+        manifests.dedup();
         Ok(ServerContext { implementation, args: vec![], root, projects: vec![project.clone()],
             init_options: default_init_options(), env: vec![], lsp_language_id: "rust",
             // Decision 17: silent workspace-load and proc-macro failures are reported this way.
-            experimental: serde_json::json!({ "serverStatusNotification": true }), notes })
+            experimental: serde_json::json!({ "serverStatusNotification": true }),
+            // V27: health stays `error` after a fixed manifest until the workspace reloads.
+            reload_method: Some("rust-analyzer/reloadWorkspace"),
+            manifests,
+            notes })
     }
 }
 

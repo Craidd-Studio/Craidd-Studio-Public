@@ -39,6 +39,12 @@ pub(crate) struct StatusRecord {
     pub unresponsive: bool,
     /// The server's latest health report; separate from the phase.
     pub health: Option<Health>,
+    /// Decision 20 (V24): `None` when the server reports no workspace
+    /// status; otherwise false until it first reports `quiescent: true`.
+    /// Pulls wait for it, because an earlier empty report proves nothing.
+    pub workspace_ready: Option<bool>,
+    /// `rust-analyzer/reloadWorkspace` requests sent (decision on V27).
+    pub reloads: u64,
     /// Bumped on every change, so a delivery task sends only changed records.
     pub revision: u64,
 }
@@ -46,7 +52,7 @@ pub(crate) struct StatusRecord {
 impl StatusRecord {
     pub(crate) fn new(generation: u64) -> Self {
         Self { generation, phase: Phase::Spawning, terminal_reason: None, caps: None, resync: BTreeSet::new(),
-            refresh: 0, writer_room: 0, unresponsive: false, health: None, revision: 0 }
+            refresh: 0, writer_room: 0, unresponsive: false, health: None, workspace_ready: None, reloads: 0, revision: 0 }
     }
 
     /// Any non-phase field change goes through here so the revision moves.

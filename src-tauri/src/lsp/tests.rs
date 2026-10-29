@@ -22,7 +22,7 @@ fn spec(script: &str) -> LaunchSpec {
     let (program, args, env) = fake_server::command(script);
     LaunchSpec { program, args, env, cwd: std::env::temp_dir(), root_uri: "file:///ws".into(), workspace_name: "ws".into(),
         init_options: json!({"cargo": {"targetDir": true}}), configuration: json!({"rust-analyzer": {"cargo": {"targetDir": true}}}),
-        lazy_additional_edits: false, experimental: json!({}) }
+        lazy_additional_edits: false, experimental: json!({}), reload_method: Some("rust-analyzer/reloadWorkspace".into()) }
 }
 
 fn start(script: &str) -> Session { Session::start(spec(script), limits(), 1) }
@@ -255,7 +255,7 @@ fn every_terminal_cause_leaves_the_same_invariants() {
 fn context(script: &str, root: &str) -> ServerContext {
     let (program, args, env) = fake_server::command(script);
     ServerContext { implementation: ToolRef { path: program, version: "fake".into() }, args, root: root.into(),
-        projects: vec![], init_options: json!({}), env, lsp_language_id: "rust", experimental: json!({}), notes: vec![] }
+        projects: vec![], init_options: json!({}), env, lsp_language_id: "rust", experimental: json!({}), reload_method: None, manifests: vec![], notes: vec![] }
 }
 
 #[test]
@@ -487,4 +487,57 @@ fn a_push_older_than_the_documents_version_is_dropped() {
     assert!(!events.iter().any(|e| matches!(e, Delivered::Diagnostics { uri, .. } if uri == DOC)), "{events:?}");
     assert_eq!(session.counters().stale_pushes, 1);
     session.stop();
+}
+
+fn status_spec(script: &str) -> LaunchSpec {
+    let mut spec = spec(script);
+    spec.experimental = json!({"serverStatusNotification": true});
+    spec
+}
+
+#[test]
+fn v24_pulls_wait_for_the_workspace_to_report_ready() {
+    let session = Session::start(status_spec("pull,loading"), limits(), 1);
+    assert!(session.wait_until(WAIT, |s| s.phase == Phase::Ready));
+    assert_eq!(session.status().workspace_ready, Some(false));
+    session.open_document(DOC, "rust", "bad()").unwrap();
+    assert!(matches!(session.begin_pull(DOC, None), Err(super::session::PullError::NotReady)),
+        "an empty report before readiness proves nothing, so none is requested");
+    session.notify("test/quiesce", json!({})).unwrap();
+    assert!(session.wait_until(WAIT, |s| s.workspace_ready == Some(true)));
+    let Outcome::Result(report) = pull(&session, None) else { panic!() };
+    assert_eq!(report["items"].as_array().unwrap().len(), 1);
+    session.stop();
+    // A server that reports no status is never gated.
+    let plain = ready("pull");
+    assert_eq!(plain.status().workspace_ready, None);
+    plain.open_document(DOC, "rust", "x").unwrap();
+    assert!(plain.begin_pull(DOC, None).is_ok());
+    plain.stop();
+}
+
+#[test]
+fn a_newer_pull_cancels_the_documents_in_flight_pull() {
+    let session = ready("pull");
+    session.open_document(DOC, "rust", "x").unwrap();
+    let first = session.begin_pull(DOC, None).unwrap();
+    let second = session.begin_pull(DOC, None).unwrap();
+    assert_eq!(first.wait(WAIT), Outcome::NoResult, "the older pull is cancelled");
+    assert!(matches!(second.wait(WAIT), Outcome::Result(_)));
+    session.stop();
+}
+
+#[test]
+fn v27_workspace_reloads_are_coalesced() {
+    let session = ready("");
+    assert!(session.reload_workspace("Cargo.toml changed"));
+    for _ in 0..5 { assert!(session.reload_workspace("Cargo.toml changed again")); }
+    assert!(eventually(|| log_text(&session, "reload 2").is_some()));
+    std::thread::sleep(Duration::from_millis(800));
+    assert!(log_text(&session, "reload 3").is_none(), "six requests in a burst send two reloads, never more");
+    assert_eq!(session.status().reloads, 2);
+    assert!(eventually(|| { let ok = session.reload_workspace("later"); ok }) && eventually(|| log_text(&session, "reload 3").is_some()),
+        "after the burst settles, a new change reloads again");
+    session.stop();
+    assert_clean_end(&session, Phase::Exited, "stopped");
 }
