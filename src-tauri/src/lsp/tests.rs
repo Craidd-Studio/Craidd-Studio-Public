@@ -713,3 +713,48 @@ fn f3_show_message_request_with_no_type_or_actions_is_answered_while_the_consume
     session.stop();
     assert_clean_end(&session, Phase::Exited, "stopped");
 }
+
+/// V2 against the real server, opt-in: `CRAIDD_INOTIFY_HOG=<path to the
+/// Verification lane's inotify_hog.py> cargo test --lib real_rust_analyzer_v2 -- --ignored --nocapture`.
+/// The helper holds this user's watches (no sudo, bounded hold, freed on exit).
+#[test]
+#[ignore]
+fn real_rust_analyzer_v2_watch_limit_warns() {
+    use std::io::BufRead as _;
+    use super::adapter::{LanguageAdapter, ProjectRef};
+    use super::rust_adapter::RustAdapter;
+    let Ok(hog) = std::env::var("CRAIDD_INOTIFY_HOG") else { eprintln!("CRAIDD_INOTIFY_HOG unset: skipped"); return; };
+    let which = |name: &str| std::process::Command::new("which").arg(name).output().ok()
+        .filter(|o| o.status.success()).map(|o| PathBuf::from(String::from_utf8_lossy(&o.stdout).trim()));
+    let (Some(server), Some(cargo)) = (which("rust-analyzer"), which("cargo")) else { eprintln!("absent: skipped"); return; };
+    let dir = std::env::temp_dir().join(format!("craidd-ra-v2-{}", std::process::id()));
+    let _ = std::fs::remove_dir_all(&dir);
+    std::fs::create_dir_all(dir.join("src")).unwrap();
+    std::fs::write(dir.join("Cargo.toml"), "[package]\nname = \"v2\"\nversion = \"0.1.0\"\nedition = \"2021\"\n").unwrap();
+    std::fs::write(dir.join("src/main.rs"), "fn main() {}\n").unwrap();
+    struct Hog(std::process::Child);
+    impl Drop for Hog { fn drop(&mut self) { unsafe { libc::kill(self.0.id() as i32, libc::SIGTERM); } let _ = self.0.wait(); } }
+    let mut child = std::process::Command::new("python3").args(["-I", &hog, "--hold", "60"])
+        .stdout(std::process::Stdio::piped()).spawn().unwrap();
+    let mut lines = std::io::BufReader::new(child.stdout.take().unwrap()).lines();
+    let hog = Hog(child);
+    let holding = lines.by_ref().map_while(Result::ok).find(|l| l.contains("\"holding\"")).expect("helper never held watches");
+    eprintln!("[v2] {holding}");
+    let started = Instant::now();
+    let adapter = RustAdapter::with(move || Ok(ToolRef { path: server.clone(), version: "installed".into() }), move || Ok(cargo.clone()), Duration::from_secs(10));
+    let project = ProjectRef { id: "v2".into(), name: "v2".into(), language: "rust".into(), folder: dir.clone() };
+    let mut spec = adapter.resolve(&project).unwrap().launch_spec("rust-analyzer");
+    spec.env.retain(|(k, _)| k != "RA_LOG");
+    let session = Session::start(spec, Limits::default(), 1);
+    let warned = session.wait_until(Duration::from_secs(40), |s| s.watcher_warning.is_some());
+    let status = session.status();
+    eprintln!("[v2] RA_LOG unset; warned: {warned} after {} ms; warning: {:?}; health: {:?}; phase: {:?}",
+        started.elapsed().as_millis(), status.watcher_warning, status.health, status.phase);
+    let raw = session.logs().0.into_iter().filter(|l| l.text.contains("watch limit")).map(|l| format!("{:?}: {}", l.source, l.text)).collect::<Vec<_>>();
+    eprintln!("[v2] raw lines kept for Output: {raw:?}");
+    session.stop();
+    drop(hog);
+    eprintln!("[v2] released: {:?}", lines.map_while(Result::ok).find(|l| l.contains("released")));
+    let _ = std::fs::remove_dir_all(&dir);
+    assert!(warned, "the watch-limit line must reach the status record");
+}
