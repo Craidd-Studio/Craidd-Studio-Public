@@ -563,6 +563,27 @@ None is set from measured evidence yet; V26, G3 and G5 are unmeasured.
 5. **V15 / decision 22 not measured.** Retention stays bounded with visible eviction and "+N not retained". Whether complete sets fit a measured budget needs a large cargo check (G5, V20), so it is not claimed.
 6. **No-status servers.** Decision 20's bounded wait for servers without a status notification is not built; only Rust ships, and its adapter always declares the notification.
 
+### Repair pass (architect-approved)
+
+Commits `a054599`–`89c1acd` on `feat/lsp-stage-1b`, on top of `ea33c1e`. Implementation evidence only; nothing here marks Stage 1b or a gate Pass.
+
+| Item | Change | Coverage |
+|---|---|---|
+| V2 watcher-limit warning | The server line `WARN notify error: OS file watch limit reached.` (stderr, or the same text in a log or show message) sets `watcherWarning` in the status record; the chip shows ⚠ with the raw line on hover; the line stays in Output. `notify error: No path was found.` does not match. | Unit and fake-server tests; opt-in real-server test below |
+| Attribution | Diagnostics for files with no tab are attributed by `crate::ownership::owning_project` through `lsp_attribute` (includes, nested-project boundaries, config-facet files, ambiguity), cached per solution and applied at display time. No folder inference. | Resolver test; display test (pending, owned, ambiguous, external) |
+| Readiness fallback | If no ready report arrives within 30 s (◇) of Ready or of a reload, `readyFallback` lets pulls proceed. **Early-empty handling:** until a real ready report, an empty pull report clears the pull set but leaves the route unknown, so Problems shows results pending, never "no problems"; a non-empty report is stored as real. | Fake-server fallback test; `isAuthoritative` test |
+| Reload membership | Affected manifests are the workspace root's and members' from `cargo metadata`, judged before and after the change; any `Cargo.toml` under the root counts only while membership is unknown on both sides. | Negative tests: non-member manifest, nested separate crate (also with real cargo), healthy-state save, unchanged content, not Ready |
+| F3 | `showMessageRequest` with no type and no actions, a string id, sent while no delivery is consumed: answered once with `null`, id verbatim, severity-3 notice. | Fake-server test |
+| Metrics on/off | `createMetrics(dev, host)`; the same scripted session gives identical wire traffic, stored diagnostics and scheduler statistics with dev on and off; with dev off nothing is installed, exposed or emitted. | Node tests |
+| `inputToPaint` | Key press to the **second** animation frame after it (after the frame showing the edit is painted); an upper bound on the visible update by at most one frame. | Node test |
+
+**Real-server runs** (`rust-analyzer 1 (9074e9b4c6 2026-09-06)`):
+
+- **V2** (`real_rust_analyzer_v2_watch_limit_warns`, `RA_LOG` unset, the Verification lane's `inotify_hog.py` with a 60 s hold): the helper held 416,337 watches (ENOSPC, 65 free of 524,288). The warning reached the status record 125 ms after start, with health `ok` and phase Ready; two raw stderr lines were kept for Output. The helper released all its watches on termination.
+- **Smoke rerun:** ready in 11 ms, quiescent in 1.3 s, a pull before readiness refused; first pull `full`, E0061; push after `didSave` in 79 ms (three `rustc`). V27: broken mid-session recovers by itself; broken from the start recovers 84 ms after one reload.
+
+**Test counts after the repair pass:** `cargo test --lib` 223 passed, 8 ignored (70 in `lsp::`); `process_cleanup` 7 passed, 1 ignored; DAP suite 26 passed, unchanged; `node --test` 112 passed; `tsc` and `vite build` clean.
+
 ## Stage 1b verification record
 
 Verification lane, independent of the Implementation lane. Run on 2026-10-29 against `feat/lsp-stage-1b` at `8620328`, in a separate detached checkout. Tooling is on `verify/lsp-stage-1b` (`verification/lsp-1b/`, decision 27: not merged here). No implementation code was changed.
