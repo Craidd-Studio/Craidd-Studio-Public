@@ -786,6 +786,19 @@ impl Session {
         Some(Batch { status, events, logs, dropped_logs })
     }
 
+    /// A window reload subscribed again: re-send the status and open the gate.
+    pub(crate) fn reset_delivery(&self) {
+        lock(&self.0.cursor).revision = None;
+        lock(&self.0.snapshots).ack();
+        self.0.changed.notify_all();
+    }
+
+    /// A client-side line in this session's log (shown in Output).
+    pub(crate) fn note(&self, text: &str) {
+        lock(&self.0.logs).push(LogLine { source: LogSource::Log, severity: 4, text: text.into() });
+        self.0.changed.notify_all();
+    }
+
     /// Wait (bounded) until there may be something to deliver.
     pub(crate) fn wait_for_delivery(&self, timeout: Duration) {
         let status = lock(&self.0.status);

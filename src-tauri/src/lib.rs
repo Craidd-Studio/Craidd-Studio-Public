@@ -68,6 +68,7 @@ pub fn run() {
         .manage(commands::native_debug::NativeDebugManager::default())
         .manage(commands::build_order::OrderManager::default())
         .manage(LinkedWindowRegistry::default())
+        .manage(lsp::commands::LspManager::default())
         .on_window_event(|window, event| {
             if let tauri::WindowEvent::CloseRequested { api, .. } = event {
                 if !prepare_native_close(window) {
@@ -82,6 +83,7 @@ pub fn run() {
                     commands::runner::cancel_window_run(&closing_window);
                     commands::debug::cancel_window_debug(&closing_window);
                 });
+                lsp::commands::close_window(window.app_handle(), window.label());
                 remove_linked_window(window);
             }
         })
@@ -193,6 +195,22 @@ pub fn run() {
             reveal_linked_problem,
             clear_native_close_guard,
             reset_linked_action,
+            lsp::commands::lsp_enabled,
+            lsp::commands::lsp_subscribe,
+            lsp::commands::lsp_attach,
+            lsp::commands::lsp_open,
+            lsp::commands::lsp_change,
+            lsp::commands::lsp_mark_desynced,
+            lsp::commands::lsp_resync,
+            lsp::commands::lsp_save,
+            lsp::commands::lsp_close,
+            lsp::commands::lsp_pull,
+            lsp::commands::lsp_cancel,
+            lsp::commands::lsp_ack,
+            lsp::commands::lsp_status,
+            lsp::commands::lsp_logs,
+            lsp::commands::lsp_restart,
+            lsp::commands::lsp_close_solution,
         ])
         .build(tauri::generate_context!())
         .expect("error while building tauri application")

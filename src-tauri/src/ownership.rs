@@ -15,7 +15,8 @@ use crate::commands::fs::{file_matches, membership_override};
 use crate::commands::IGNORE_DIRS;
 use crate::types::{CraiddProject, CraiddSolution};
 
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug, Default, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub(crate) struct LanguageFiles {
     /// Primary plus interop extensions, as `projectExtensions` returns them.
     pub extensions: Vec<String>,
@@ -28,8 +29,6 @@ pub(crate) trait TreeProbe {
     fn is_symlink(&self, path: &Path) -> bool;
 }
 
-// Constructed by the Stage 1b router command; tests use it already.
-#[allow(dead_code)]
 pub(crate) struct DiskProbe;
 impl TreeProbe for DiskProbe {
     fn has_craidd_marker(&self, dir: &Path) -> bool {
