@@ -31,13 +31,13 @@ Rules:
 
 | Gate | Subject | Status | Evidence |
 |---|---|---|---|
-| G1 | No server during startup or restore; bounded deferral; startup measured apart from server cost | Unmeasured | — |
-| G2 | One `rust-analyzer` per shared Cargo workspace | Unmeasured | — |
-| G3 | Indexing never blocks interaction; separate target directory cost; Channel message rate and size | Unmeasured | — |
-| G4 | Rapid typing, file switching and a stalled consumer are bounded | Unmeasured | — |
-| G5 | Diagnostics do not flood Monaco; diagnostic store size | Unmeasured | — |
-| G6 | Closing a solution terminates its servers and their descendants | Unmeasured | — |
-| G7 | Synchronisation correctness, document lifetimes and forced overflow | Unmeasured | — |
+| G1 | No server during startup or restore; bounded deferral; startup measured apart from server cost | Unmeasured | Needs U1 (scripted, manual) |
+| G2 | One `rust-analyzer` per shared Cargo workspace | Unmeasured | Fake-server registry test reproduced; the real count needs U2 |
+| G3 | Indexing never blocks interaction; separate target directory cost; Channel message rate and size | Unmeasured | Needs U12; completes in 1c |
+| G4 | Rapid typing, file switching and a stalled consumer are bounded | Unmeasured | 1b fake and node evidence reproduced; completes in 1c |
+| G5 | Diagnostics do not flood Monaco; diagnostic store size | Unmeasured | Needs U7 (hooks) |
+| G6 | Closing a solution terminates its servers and their descendants | Unmeasured | The real tree is known (V14); Craidd-managed close and kill need U8 |
+| G7 | Synchronisation correctness, document lifetimes and forced overflow | Unmeasured | Forced overflow and resync tests reproduced; UI cases need U9 |
 
 ---
 
@@ -47,20 +47,20 @@ The three-stage plan is approved, so evidence is also recorded per stage. A stag
 
 | Gate | 1a evidence | 1b evidence | 1c evidence | Accepted |
 |---|---|---|---|---|
-| G1 | Partial: backend revalidation tests only (see Stage 1a record) | Unmeasured | n/a | Unmeasured |
-| G2 | Recorded: identity tests against real `cargo` workspaces | Unmeasured | n/a | Unmeasured |
+| G1 | Partial: backend revalidation tests only (see Stage 1a record) | Unmeasured (U1 pending) | n/a | Unmeasured |
+| G2 | Recorded: identity tests against real `cargo` workspaces | Partial: `registry_shares_one_server_per_identity_and_solution_close_stops_all` reproduced; real count Unmeasured (U2) | n/a | Unmeasured |
 | G3 (including G3b) | n/a | Unmeasured | Unmeasured | Unmeasured |
 | G4 | Recorded: stalled consumer against the fake server | n/a | Unmeasured | Unmeasured |
-| G5 | n/a | Unmeasured | n/a | Unmeasured |
-| G6 | Recorded: fake-server process tree, including a detached descendant | Unmeasured | n/a | Unmeasured |
-| G7 | n/a | Unmeasured | n/a | Unmeasured |
+| G5 | n/a | Unmeasured (U7 pending) | n/a | Unmeasured |
+| G6 | Recorded: fake-server process tree, including a detached descendant | Partial: real descendants identified (V14) and none left after a protocol shutdown; Craidd close/kill Unmeasured (U8) | n/a | Unmeasured |
+| G7 | n/a | Partial: `a_forced_writer_overflow_desyncs_then_resyncs_to_the_model_text_exactly_once` and the node sync tests reproduced; UI cases Unmeasured (U9) | n/a | Unmeasured |
 
 Stage exit evidence (not gates):
 
 | Stage | Exit evidence required | Status |
 |---|---|---|
 | 1a | Fake-server tests (framing, transport, delivery classes, overflow, pending table, capability validation, terminate table, process tree); DAP suite unchanged; verifications V1, V5, V6, V7, V8 recorded before the Rust adapter merges | **Partial.** Tests recorded and DAP suite unchanged; V1, V5, V6 and V8 verified. V7 is verified for the installed binary, but the rustup-shim case is Unverified (no rustup on this machine); whether that blocks the adapter merge is the architect's decision. |
-| 1b | Real-server diagnostics through push and pull, document lifetimes and file identity; G1, G2, G5, G6, G7 evidence; first G3 and G3b measurements; verifications V2–V4 (V3 revised), V9, V13–V16, V22–V27 | Unmeasured |
+| 1b | Real-server diagnostics through push and pull, document lifetimes and file identity; G1, G2, G5, G6, G7 evidence; first G3 and G3b measurements; verifications V2–V4 (V3 revised), V9, V13–V16, V22–V27 | **Partial.** The implementation's test claims are reproduced. Real-server checks V14, V15, V22, V23, V24, V25 and V27 are verified. One 1b scope item is Failed (watcher-failure surfacing), and four design conflicts await the architect. The UI-dependent gates and checks wait for the scripted manual runs U1–U12. See [Stage 1b verification record](#stage-1b-verification-record). |
 | 1c | Completion and atomic-acceptance tests; G3 and G4 under provider load; verifications V10–V12 and V18; acceptance criterion 1 | Unmeasured |
 
 ---
@@ -204,32 +204,32 @@ Facts the design depends on but has not confirmed. They are not gates, but none 
 | ID | Item | Blocks | Flip condition if it fails | Status |
 |---|---|---|---|---|
 | V1 | `rust-analyzer.files.watcher`: accepted values, and self-watching when the client registers no watchers; pinned version recorded | Rust adapter merge (1a) | The server cannot self-watch: watcher ownership must be redesigned and a Craidd watcher with `didChangeWatchedFiles` moves into Stage 1 | **Verified.** Accepted values are `client` (default) and `server`. With `server` and no registered watchers, the server picked up edits to an unopened file by itself. Stop condition not triggered. See [evidence](#v1-v5-v6-and-v7-evidence). |
-| V2 | Watcher failure (for example the inotify limit): whether and how the server reports it | "Watcher failure surfaced" claim (1b) | The claim must be reworded | Unverified |
-| V3 | A change to an unopened file updates the server's diagnostics | Real-server smoke test (1b) | As V1 | **Failed for push-only diagnostics** (measured, F1). The server's model updates (V1), but it never pushes its own diagnostics. They are available only through pull (`textDocument/diagnostic`). Push carries only cargo-check results, after `didSave`. The flip condition "As V1" does not fit: watching works, and the gap is the diagnostic delivery model. See [F1–F3 evidence](#f1f3-evidence). **Revised** (pull diagnostics are in Stage 1b; decision 19 is approved, with the external-change limitation accepted): the item is now the measured interval from an external edit, a cross-document edit, a save and a server refresh to the updated diagnostics reaching the store. Status after the revision: **Unverified**. See the design's [verifications](design-lsp-stage-1-rust.md#verifications-for-pull-diagnostics). |
-| V4 | `cargo.targetDir` set to use a subdirectory of `target/` behaves as documented | Adapter options (1b) | Revert to the shared directory or find another isolation | Unverified |
+| V2 | Watcher failure (for example the inotify limit): whether and how the server reports it | "Watcher failure surfaced" claim (1b) | The claim must be reworded | **Verified (server); the surfacing claim is Failed in the build.** With the user's watches exhausted (ENOSPC), the server no longer sees edits to unopened files. Health stays `ok`, and nothing appears on the protocol: no `showMessage`, no `logMessage`. The only signal is a stderr line, `WARN notify error: OS file watch limit reached.`, which the server's default log level keeps. The 1b build passes stderr to Output, but it has no watcher-failure matching, so the chip shows nothing (see [Stage 1b verification record](#stage-1b-verification-record)) |
+| V3 | A change to an unopened file updates the server's diagnostics | Real-server smoke test (1b) | As V1 | **Partly measured.** The server-side intervals are measured; the interval to the store needs the scripted UI run U3. The server sends `workspace/diagnostic/refresh` about 40 ms after an external edit to an unopened file, within 1 ms of a `didChange`, and about 90 ms after a `didSave` (5 runs each). The store-side interval and whether the save seed adds anything are **Unmeasured** (see [Stage 1b verification record](#stage-1b-verification-record)) |
+| V4 | `cargo.targetDir` set to use a subdirectory of `target/` behaves as documented | Adapter options (1b) | Revert to the shared directory or find another isolation | **Partly verified.** `cargo.targetDir = true` makes the server use `target/rust-analyzer` (208 KiB on `fx-small`). Whether a user Build waits on the lock during a check is **Unmeasured**: a tiny crate cannot show it, so it moves to G3b on `src-tauri` (U12) (see [Stage 1b verification record](#stage-1b-verification-record)) |
 | V5 | The real `initialize` result (sync kind, save, `resolveProvider`, trigger characters) against the validation table | Rust adapter merge (1a) | Adjust the validation table | **Verified.** The real result passes the adapter's unchanged `caps::validate`: sync incremental, save plain, completion with resolve and 4 trigger characters, all four providers on. No table change needed. |
 | V6 | The server accepts `utf-16` as the only offered position encoding | Rust adapter merge (1a) | Offer more encodings and re-encode | **Verified.** The server answers `positionEncoding: "utf-16"`, and a hover after a non-BMP character resolves at the UTF-16 column but not at the code-point column. |
 | V7 | The rustup shim when the component is missing; the usable check treats a non-zero exit as failure | Toolchain role (1a) | Probe by another method | **Partly verified.** The real pacman binary exits 0 from `--version` with a usable first line, so the usable check offers it. The rustup-shim case is **Unverified**: this machine has no rustup, and a pacman install has no shim. The shim shape is covered only by the scripted stand-in test. Existing roles still ignore the exit status. **Architect decision:** the installed-binary case is accepted as passed for the current environment; the shim case stays Unverified and is a release qualification requirement (see [Architect decision on V7](#architect-decision-on-v7)). |
 | V8 | `cargo metadata --no-deps` never creates or rewrites `Cargo.lock`; its failure modes and typical duration | Rust adapter merge (1a) | Workspace root discovery must change (breaches the no-silent-mutation rule) | **Verified** for cargo 1.99.1. Stop condition not triggered. See [V8 evidence](#v8-evidence). |
-| V9 | The model URI from `@monaco-editor/react` for `path={fileId}`; what happens to a model when a view unmounts or `path` changes; which model events fire | Document lifetimes (1b) | Adjust the bridge's model observation | Unverified. `SideEditor` is confirmed to use `keepCurrentModel`. |
+| V9 | The model URI from `@monaco-editor/react` for `path={fileId}`; what happens to a model when a view unmounts or `path` changes; which model events fire | Document lifetimes (1b) | Adjust the bridge's model observation | **Unverified.** Needs the scripted UI run U11. The node tests on document lifetimes pass (23 new), but they do not show Monaco's real model URI or its events |
 | V10 | Monaco: whether accept waits for a pending resolve; behaviour when resolve fails; whether a post-accept command can revert | Atomic acceptance (1c) | Use eager mode (F2); if V18 also fails, completion cannot ship | Unverified |
 | V11 | Monaco's incomplete-list flag name and re-request behaviour on 0.56.x; the completion context fields available | Completion requests (1c) | Document the limitation; no `isIncomplete` benefit | Unverified |
 | V12 | Primary and additional edits undo as one step | Atomic acceptance (1c) | Apply them as one grouped edit | Unverified |
-| V13 | `window/showMessageRequest` answered with no selection | Server-to-client requests (1b) | Different handling for that request | **Unverified against the real server.** No real request could be provoked in 9 scenarios (F3). The no-selection reply is covered by the fake-server test `server_requests_are_answered_by_the_backend_alone`; edge cases are proposed in F3. |
-| V14 | Names and number of child processes the server starts (for the G6 process-tree check) | G6 | Adjust the tree assertion | Unverified; inferred from the server's design, not checked |
-| V15 | Whether the server republishes diagnostics on open, after a retention eviction | Retention policy (1b) | Evicted diagnostics cannot be recovered; tighten the policy | **Dry-run observation, formal run pending.** `didOpen` does not republish push diagnostics (cargo-check only). **Architect decision 22 (modified approval):** keep bounded retention with visible eviction, say that an evicted push set returns with the next check, and investigate under G5/V20 whether complete sets fit a measured budget; report the limitation if not. |
-| V16 | How the server reports locations for symlinked paths; the four symlinked-vendor navigation cases | File identity (1b) | Revisit the holder and navigation rules | Unverified |
+| V13 | `window/showMessageRequest` answered with no selection | Server-to-client requests (1b) | Different handling for that request | **Unverified against the real server** (still not provocable). The fake-server test `f3_show_message_request_before_initialize_reply_is_answered_once` passes. Of the four F3 edge cases proposed, one is built: before the `initialize` reply. Still missing: no `type` and no actions, a stalled consumer, and a string id |
+| V14 | Names and number of child processes the server starts (for the G6 process-tree check) | G6 | Adjust the tree assertion | **Verified.** Descendants seen across runs: `cargo`, `rustc`, `collect2`, `ld.lld`, `x86_64-linux-gnu-gcc` and `/usr/lib/rust-analyzer-proc-macro-srv`, at most 7 at once. None remained after `shutdown`/`exit`. The G6 tree assertion must allow for linkers and the proc-macro server (see [Stage 1b verification record](#stage-1b-verification-record)) |
+| V15 | Whether the server republishes diagnostics on open, after a retention eviction | Retention policy (1b) | Evicted diagnostics cannot be recovered; tighten the policy | **Verified: no republish on open.** `didOpen` and a re-open after `didClose` publish nothing. Push is cargo-check only, at startup and after `didSave`. An evicted push set returns only with the next check. Whether complete sets fit a measured budget (decision 22) is **Unmeasured** (G5, U7) (see [Stage 1b verification record](#stage-1b-verification-record)) |
+| V16 | How the server reports locations for symlinked paths; the four symlinked-vendor navigation cases | File identity (1b) | Revisit the holder and navigation rules | **Partly verified (server).** Go-to-definition returns locations in the path form the server was given (`src/linked/deep.rs`, `vendor/vend/src/lib.rs`), not canonicalised. A hover in the same file opened through its canonical path (`real_mods/deep.rs`) returned nothing. The build sends the opened path as the URI and uses the canonical path only to choose the holder, so a canonical-path holder may get no server features (inferred; U10). The navigation cases (a)–(d) move to 1c with go-to-definition (see [Stage 1b verification record](#stage-1b-verification-record)) |
 | V17 | A single file-to-owning-project resolver exists or is introduced | Router (1a) | Introduce it as the first 1a task | **Introduced:** `crate::ownership::owning_project`. Frontend callers are not migrated yet (see the Stage 1a record). |
 | V18 | When the client does not declare lazy `additionalTextEdits`, the server sends them in the completion list | Eager mode fallback (1c) | Fallback F2 is unavailable | Unverified |
 | V19 | Whether Preferences renders a new catalog role automatically | Toolchain role (1a) | Add the row | **Verified: it does not.** `PreferencesDialog.tsx` has a hardcoded role list; `language_server` was added to Rust's. |
 | V20 | Diagnostic store size and memory under a large check (this is a G5 measurement) | Retention limits (1b) | n/a | Unmeasured |
 | V21 | Save-triggered check responsiveness and CPU contention with a concurrent Build (this is G3b) | None | Consider CPU priority or withholding `didSave` | Unmeasured |
-| V22 | Whether the server returns a `resultId` and answers `unchanged`; its `retriggerRequest` data on cancellation; its answer to `$/cancelRequest` on a pull | Pull request handling (1b) | Send no `previousResultId`; every pull is full | Unverified |
-| V23 | With `refreshSupport` advertised: when the server sends `workspace/diagnostic/refresh` | Refresh trigger (1b) | Refresh is not a sufficient trigger; rely on the others | **Preliminary observation, not a verdict** (dry run): with `refreshSupport`, refresh also arrives after edits to unopened files. It bears on the accepted external-change limitation of decision 19; the limitation stands until the formal V23 and V3 runs. |
-| V24 | What a pull returns before the workspace has loaded | Pull on open (1b) | Gate the first pull on readiness | **Dry-run observation, formal run pending:** a pull before load returns an empty `full` report. **Architect decision 20 (approved):** gate the first pull on workspace readiness; an empty result before readiness is not proof of zero. Regression coverage listed below. |
-| V25 | How often pull and cargo-check report the same error | None (informs a later dedup) | n/a | Unverified |
-| V26 | Wave request volume and performance effect (a G3/G3b and G5 measurement) | G3, G5 (1b) | Tighten the wave bounds | Unmeasured |
-| V27 | `experimental/serverStatus` lifecycle with Craidd's advertisement: values, return to `ok`, `quiescent`, message length; recovery from a broken manifest | Server health surfacing and workspace reload (1b) | Rely on bounded log reporting alone; narrow or drop the reload | **Dry-run observation, formal run pending:** after a manifest fix, health stays `error` until `rust-analyzer/reloadWorkspace` is sent. **Architect decision 21 (approved conditionally):** bounded, coalesced reload after a successful affected `Cargo.toml` change; verify recovery from a broken manifest with the real server; also decide whether a reload is needed when health is `ok`. |
+| V22 | Whether the server returns a `resultId` and answers `unchanged`; its `retriggerRequest` data on cancellation; its answer to `$/cancelRequest` on a pull | Pull request handling (1b) | Send no `previousResultId`; every pull is full | **Verified.** `resultId` is always `"rust-analyzer"`, and the server never answers `unchanged`, even with a matching `previousResultId`. `$/cancelRequest` on a pull gets `-32800 "canceled by client"`. A pull overtaken by a `didChange` gets `-32802` with `{"retriggerRequest": true}`. The opt-in tests reproduce the `full`-again behaviour (see [Stage 1b verification record](#stage-1b-verification-record)) |
+| V23 | With `refreshSupport` advertised: when the server sends `workspace/diagnostic/refresh` | Refresh trigger (1b) | Refresh is not a sufficient trigger; rely on the others | **Verified (server).** 5 runs, identical pattern. Refresh arrives: twice at about 0.5 s, before the workspace is ready, and once about 90 ms after `quiescent: true`; about 40 ms after an external edit to an unopened file; within 1 ms of `didChange`; about 90 ms after `didSave`; twice around a `Cargo.toml` change. Refresh is therefore a sufficient trigger for the "edited while Craidd stays focused" case at the server. Whether Craidd's wave reacts is U3 step 5 (see [Stage 1b verification record](#stage-1b-verification-record)) |
+| V24 | What a pull returns before the workspace has loaded | Pull on open (1b) | Gate the first pull on readiness | **Verified, and decision 20 holds against the real server.** A pull 2 ms after `didOpen` returned `{"kind":"full","items":[]}` while status said `quiescent:false`. After readiness (2.6 s) the same file reported 2 × E0061. In 3 opt-in runs of the build, the gate refused the early pull and the first pull after readiness carried E0061 (see [Stage 1b verification record](#stage-1b-verification-record)) |
+| V25 | How often pull and cargo-check report the same error | None (informs a later dedup) | n/a | **Verified** on `fx-many` (10 files): each file had 20 pull diagnostics (`rust-analyzer` E0061) and 61 push diagnostics (`rustc`). Every pulled error is also reported by cargo check. The 61 include rustc's sub-diagnostics, so `fx-many` pushes about 7320 in total, not about 2400 (see [Stage 1b verification record](#stage-1b-verification-record)) |
+| V26 | Wave request volume and performance effect (a G3/G3b and G5 measurement) | G3, G5 (1b) | Tighten the wave bounds | **Unmeasured.** It needs the wire tap plus hooks during scripted editing (U3, U7, U12) |
+| V27 | `experimental/serverStatus` lifecycle with Craidd's advertisement: values, return to `ok`, `quiescent`, message length; recovery from a broken manifest | Server health surfacing and workspace reload (1b) | Rely on bounded log reporting alone; narrow or drop the reload | **Verified (real server), with the decision 21 narrowing confirmed.** Values seen: healthy: `ok`/false, then `ok`/true; failed load: `error` "Failed to load workspaces."; missing proc-macro server: `warning` (392 characters, including an absolute path). Recovery: **Broken mid-session:** `error` 0.19 s after the break, `ok` 0.26 s after the fix, no reload (probe). Also reproduced in 3 opt-in runs of the build. **Broken from the start:** no recovery without a reload (90 s probe, 15 s in the build); one reload recovered in 94–108 ms (3 runs). The trigger path (a `Cargo.toml` save in Craidd) is **Unverified** until U5 (see [Stage 1b verification record](#stage-1b-verification-record)) |
 
 Pull diagnostics are no longer deferred: they moved into Stage 1b ([design](design-lsp-stage-1-rust.md#pull-and-push-diagnostics)).
 
@@ -563,5 +563,78 @@ None is set from measured evidence yet; V26, G3 and G5 are unmeasured.
 5. **V15 / decision 22 not measured.** Retention stays bounded with visible eviction and "+N not retained". Whether complete sets fit a measured budget needs a large cargo check (G5, V20), so it is not claimed.
 6. **No-status servers.** Decision 20's bounded wait for servers without a status notification is not built; only Rust ships, and its adapter always declares the notification.
 
-*Last updated: Phase 3 (Stage 1a, adapter integrated as 99863a4; F1–F3 investigated; decisions 16–27 approved; Stage 1b implementation recorded). Author: ShinkuKira21.*
+## Stage 1b verification record
+
+Verification lane, independent of the Implementation lane. Run on 2026-10-29 against `feat/lsp-stage-1b` at `8620328`, in a separate detached checkout. Tooling is on `verify/lsp-stage-1b` (`verification/lsp-1b/`, decision 27: not merged here). No implementation code was changed.
+
+**Environment.** Arch Linux, kernel 7.2.11, 32 logical CPUs, 60 GiB RAM. `rust-analyzer 1 (9074e9b4c6 2026-09-06)`, pacman `20260907-1`, no rustup. cargo and rustc 1.99.1 (Arch); node v24.21.0. `fs.inotify.max_user_watches` = 524288.
+
+**Method.** There are three kinds of evidence, labelled throughout:
+
+- **build:** the branch's own tests, re-run here.
+- **probe:** a client sending the build's exact client capabilities (`caps::client_capabilities(false, {"serverStatusNotification": true})`, checked by hand) and init options to the real server.
+- **inferred:** read from the code, not run.
+
+UI-level items wait for the scripted manual runs in `verification/lsp-1b/UI-STEPS.md` (decision 25), which the user performs and reviews by eye.
+
+### Implementation claims, reproduced
+
+| Claim | Result here | Reproduced |
+|---|---|---|
+| `cargo test --lib`: 215 passed, 7 ignored, 62 in `lsp::` | 215 passed, 0 failed, 7 ignored; 62 `lsp::` passed, 3 ignored (two real-server tests and the fake server's entry) | Yes |
+| `process_cleanup`: 7 passed, 1 ignored | 7 passed, 1 ignored | Yes |
+| DAP suite 26, unchanged | 26 passed; `commands/debug*` byte-identical to `0d110f1` | Yes |
+| `node --test`: 107, 23 new | 107 passed; `lspDocuments` + `lspDiagnostics`: 23 | Yes |
+| `tsc`, `vite build` clean | `tsc --noEmit` exit 0; `vite build` succeeded (only the existing chunk-size and dynamic-import warnings) | Yes |
+| Repeatability (not claimed) | `lsp::` tests: 10 consecutive runs, 10 passed | — |
+| A pull before readiness is refused; ready at about 1.9 s | Refused in 3/3 runs; quiescent at 1360–1385 ms | Yes (timing differs by machine) |
+| Push 87 ms after save | 83–86 ms (3 runs) | Yes |
+| V27: a mid-session break recovers alone; a break from the start needs a reload, about 100 ms | Alone in 3/3; reload recovered in 94–108 ms in 3/3. My own probe agrees (0.26 s without a reload mid-session; none in 90 s from the start) | Yes |
+| The hooks are development-only and read-only | `metrics.ts`: every hook is gated on `import.meta.env.DEV` and writes only its own counters (inferred) | Yes, by reading |
+
+The opt-in tests call `reload_workspace` directly. The production trigger (`Cargo.toml` saved in Craidd → `lsp_manifest_changed`) is not exercised against the real server; that is U5.
+
+### Real-server evidence for V24, V27 and decision 19
+
+- **V24 / decision 20.** A pull 2 ms after `didOpen` returned an empty `full` report while `quiescent:false`. The same file has 2 × E0061 once ready, so the gate is necessary. The build's gate refused the early pull in all runs. Refresh requests arrive twice before readiness (about 0.5 s); the gate must keep ignoring them for authority, which the node test "decision 20: becoming ready drops reports of earlier pulls" covers.
+- **V27 / decision 21.** Mid-session recovery happens without a reload; a break present from the start needs one. This confirms decision 21's narrowing (reload only while health is not `ok`).
+- **Decision 19 refresh.** Refresh follows every kind of change at the server, within milliseconds (V23 row). The accepted limitation "edited while Craidd stays focused" is covered at the server level. Whether the build's wave turns those refreshes into pulls in the IDE is U3 step 5.
+
+### Failures
+
+1. **Watcher-failure surfacing is not built (1b scope; design UI table "Watcher problem → status chip and Output").**
+   - **Measured:** with watches exhausted, the server is silent on the protocol and only writes a stderr WARN.
+   - **Inferred:** the build forwards stderr to Output as plain log lines, but nothing matches it, so the chip never warns. The user sees no sign that edits to unopened files are being missed.
+   - **Status:** Failed against the 1b scope until it is built, or the architect rewords the claim (V2's flip condition).
+
+### Design conflicts raised by the Implementation lane
+
+| # | Point | Conflicts with the design? | Note |
+|---|---|---|---|
+| 1 | No lock glyph (needs go-to-definition, 1c) | **Yes.** The Stage 1b scope lists "lock glyph" as user-visible | The reasoning holds: nothing in 1b opens an unowned file. It needs the architect to move it to 1c |
+| 2 | Unopened files attributed to the deepest containing project folder | **Yes.** The design attributes `projectId` "via project ownership", and the 1a record made moving the frontend prefix lookups onto `owning_project` 1b work | A file explicitly included by one project but under another's deeper folder, a config-facet file, or an ambiguous file would be mis-attributed. Fix: ask the backend resolver for unopened files too |
+| 3 | No bounded wait for servers without status notifications | **Yes**, decision 20 ("No status notification" bullet) | Not reachable with this server: every run sent `experimental/serverStatus`. If a server version stops sending it, the first pull never happens and server diagnostics are silently absent. Needs the architect to accept the deferral with that risk stated, or the wait built |
+| 4 | Wave tests in node, not against the fake server | **Partly.** The Testing section lists "waves (fake server)" | The behaviours listed there are covered by node tests with a scripted transport, and the backend refresh path by the F2 fake-server test. A method difference, not a coverage gap |
+
+### Further findings (for review)
+
+1. **Decision 21 guards are narrower than the design.**
+   - "Affected" is a path-prefix test against the session root, not membership from `cargo metadata`, so a separate crate nested under the root (like `fx-ws/outside`) counts.
+   - No identity-change check (the design says restart instead of reload).
+   - The effect is limited by the health-not-`ok` guard. Inferred from `lsp_manifest_changed`.
+2. **Test coverage below the design's Testing list.** Inferred from the test names.
+   - Decision 21 negative cases (unchanged manifest, non-affected file, failed save, not Ready, identity change, timeout): only coalescing has a fake-server test.
+   - "Hooks off": the node tests run with `DEV` false, so hooks are off by construction, but there is no on/off comparison.
+   - F3 edge cases: 1 of 4.
+3. **V16 holder risk.** If the canonical-path tab becomes the holder of a symlinked file, the build sends a URI the server does not treat as part of the crate. Measured: hover was empty for that path. Holder selection may need to prefer the path inside the project tree.
+4. **Method notes for G3.**
+   - The build's `inputToPaint` is keydown to the first animation frame, which comes before the paint, so it reads low. The verification probe uses the second frame; both are recorded in U12.
+   - `metrics.ts` states that WebKitGTK has no long-task entries. That is asserted, not measured; U12 records `longtask_supported`.
+5. **Retention evidence.** `fx-many` pushes about 7320 diagnostics (61 per file), not about 2400. Under the build's caps (500 per file, 20,000 closed total) the set fits by count. A memory budget is still Unmeasured (G5, V20).
+
+### Waiting for the scripted manual runs (user review)
+
+U1 (G1), U2 (G2), U3 (V3, V26, decision 19 in the IDE), U4 (V24 in the IDE), U5 (V27 trigger path), U6 (V2 surfacing in the IDE), U7 (G5, V15, V20), U8 (G6), U9 (G7), U10 (V16 holder), U11 (V9), U12 (G3, G3b, V4 lock, V26).
+
+*Last updated: Phase 3 (Stage 1a, adapter integrated as 99863a4; F1–F3 investigated; decisions 16–27 approved; Stage 1b implementation recorded and independently verified). Author: ShinkuKira21.*
 *This document is a record.*
