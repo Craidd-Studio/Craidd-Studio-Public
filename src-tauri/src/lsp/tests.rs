@@ -255,7 +255,7 @@ fn every_terminal_cause_leaves_the_same_invariants() {
 fn context(script: &str, root: &str) -> ServerContext {
     let (program, args, env) = fake_server::command(script);
     ServerContext { implementation: ToolRef { path: program, version: "fake".into() }, args, root: root.into(),
-        projects: vec![], init_options: json!({}), env, lsp_language_id: "rust", experimental: json!({}), reload_method: None, notes: vec![] }
+        projects: vec![], init_options: json!({}), env, lsp_language_id: "rust", experimental: json!({}), reload_method: None, manifests: None, notes: vec![] }
 }
 
 #[test]

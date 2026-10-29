@@ -27,6 +27,9 @@ pub(crate) struct ServerContext {
     pub experimental: Value,
     /// A request asking the server to reload its workspace, if it has one.
     pub reload_method: Option<&'static str>,
+    /// Manifests that belong to the resolved workspace; `None` when they
+    /// could not be resolved (for example a broken manifest).
+    pub manifests: Option<Vec<PathBuf>>,
     /// Non-fatal notes, for example a fallback root.
     pub notes: Vec<String>,
 }
@@ -45,6 +48,8 @@ pub(crate) trait LanguageAdapter: Send + Sync {
     fn resolve(&self, project: &ProjectRef) -> Result<ServerContext, ResolveNote>;
     /// The `workspace/configuration` section the server asks for.
     fn configuration_section(&self) -> &'static str;
+    /// The workspace's manifests as resolved now (cached by the adapter); `None` if unknown.
+    fn workspace_manifests(&self, _project: &ProjectRef) -> Option<Vec<PathBuf>> { None }
 }
 
 /// `( implementation id, resolved root, configuration identity )`.
@@ -111,7 +116,7 @@ mod tests {
 
     fn context(path: &str, version: &str, root: &str, options: Value) -> ServerContext {
         ServerContext { implementation: ToolRef { path: path.into(), version: version.into() }, args: vec![], root: root.into(),
-            projects: vec![], init_options: options, env: vec![], lsp_language_id: "rust", experimental: Value::Null, reload_method: None, notes: vec![] }
+            projects: vec![], init_options: options, env: vec![], lsp_language_id: "rust", experimental: Value::Null, reload_method: None, manifests: None, notes: vec![] }
     }
 
     #[test]

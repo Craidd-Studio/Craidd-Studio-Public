@@ -3,7 +3,7 @@
 //! lock or blocks the async runtime across a server round trip: waits run
 //! on blocking threads and are bounded.
 use std::collections::HashMap;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex, MutexGuard, Weak};
 use std::time::{Duration, Instant};
 
@@ -40,8 +40,12 @@ fn enabled() -> bool { std::env::var("CRAIDD_LSP").map_or(true, |v| v != "0") }
 
 struct Tracked {
     session: Session, identity: ServerIdentity, project_folder: PathBuf,
-    /// The session root: manifests under it are affected (decision 21).
+    /// The session root, the project it was resolved for, and the
+    /// workspace's manifests (`None` when unknown) for decision 21.
     root: PathBuf,
+    project: super::adapter::ProjectRef,
+    language: String,
+    members: Option<Vec<PathBuf>>,
     /// Content hash of each manifest when its last reload was sent.
     reloaded_against: HashMap<PathBuf, u64>,
 }
@@ -193,6 +197,7 @@ pub(crate) async fn lsp_attach(window: WebviewWindow, state: State<'_, LspManage
         };
         let identity = context.as_ref().ok().map(|c| c.identity());
         let session_root = context.as_ref().map(|c| c.root.clone()).unwrap_or_default();
+        let members = context.as_ref().ok().and_then(|c| c.manifests.clone());
         let (session, launched) = match worker.registry.revalidate_and_ensure(context) {
             LaunchDecision::Skip(reason) => return Ok((AttachReply::Skipped { reason: reason.into() }, None)),
             LaunchDecision::Attach(session) => (session, false),
@@ -200,7 +205,8 @@ pub(crate) async fn lsp_attach(window: WebviewWindow, state: State<'_, LspManage
         };
         let generation = session.status().generation;
         lock(&worker.sessions).entry(generation).or_insert_with(|| Tracked {
-            session: session.clone(), identity: identity.expect("resolved"), project_folder: reference.folder.clone(), root: session_root, reloaded_against: HashMap::new() });
+            session: session.clone(), identity: identity.expect("resolved"), project_folder: reference.folder.clone(), root: session_root,
+            project: reference.clone(), language: adapter.language().into(), members, reloaded_against: HashMap::new() });
         let canonical = std::fs::canonicalize(&path).unwrap_or_else(|_| path.clone()).display().to_string();
         Ok((AttachReply::Routed {
             session: generation, uri: file_uri(&path), canonical, language_id,
@@ -335,30 +341,60 @@ pub(crate) fn lsp_cancel_pull(window: WebviewWindow, state: State<'_, LspManager
     Ok(())
 }
 
-/// Decision 21: Craidd saved, or reloaded from disk, the manifest at
-/// `path`. Each live session whose root contains it reloads its workspace,
-/// unless it is not Ready, its health is `ok` (a healthy server reloads by
-/// itself, measured), or the content equals the one it last reloaded
-/// against. A manifest changed by another program is not detected here
-/// (the accepted external-change limitation); the manual restart stays.
-#[tauri::command]
-pub(crate) fn lsp_manifest_changed(window: WebviewWindow, state: State<'_, LspManager>, path: String) -> Vec<u64> {
-    let Some(lsp) = lock(&state.windows).get(window.label()).cloned() else { return vec![]; };
-    let path = PathBuf::from(path);
-    if path.file_name().and_then(|n| n.to_str()) != Some("Cargo.toml") { return vec![]; }
-    let content = std::fs::read(&path).ok().map(|bytes| super::adapter::configuration_identity(&Value::String(String::from_utf8_lossy(&bytes).into()), &[]));
-    let mut reloaded = vec![];
-    for (generation, tracked) in lock(&lsp.sessions).iter_mut() {
-        if !path.starts_with(&tracked.root) { continue; }
-        let status = tracked.session.status();
-        if status.phase != super::delivery::Phase::Ready || status.health.is_some_and(|h| h.health == "ok") { continue; }
-        if content.is_some() && tracked.reloaded_against.get(&path) == content.as_ref() { continue; }
-        if tracked.session.reload_workspace(&format!("{} changed", path.display())) {
-            if let Some(hash) = content { tracked.reloaded_against.insert(path.clone(), hash); }
-            reloaded.push(*generation);
-        }
+/// Decision 21: is `path` an affected manifest? It must belong to the
+/// resolved workspace (the root's manifest or a member's), judged before and
+/// after the change; a nested crate that is not a member never is. Only when
+/// membership is unknown on both sides (a broken manifest) does any
+/// `Cargo.toml` under the session root count.
+pub(crate) fn manifest_affects(path: &Path, root: &Path, before: Option<&[PathBuf]>, now: Option<&[PathBuf]>) -> bool {
+    let canon = |p: &Path| p.canonicalize().unwrap_or_else(|_| p.to_path_buf());
+    let path = canon(path);
+    let listed = |members: Option<&[PathBuf]>| members.map(|m| m.iter().any(|p| canon(p) == path));
+    match (listed(before), listed(now)) {
+        (Some(true), _) | (_, Some(true)) => true,
+        (None, None) => path.starts_with(canon(root)) && path.file_name().and_then(|n| n.to_str()) == Some("Cargo.toml"),
+        _ => false,
     }
-    reloaded
+}
+
+/// Decision 21's bounds: only a Ready session, only when health is not `ok`
+/// (a healthy server reloads by itself, measured), only for an affected
+/// manifest whose content differs from the one last reloaded against.
+pub(crate) fn should_reload(ready: bool, healthy: bool, affected: bool, same_as_last_reload: bool) -> bool {
+    ready && !healthy && affected && !same_as_last_reload
+}
+
+/// Craidd saved, or reloaded from disk, the manifest at `path`. A manifest
+/// changed by another program is not detected here (the accepted
+/// external-change limitation); the manual restart stays.
+#[tauri::command]
+pub(crate) async fn lsp_manifest_changed(window: WebviewWindow, state: State<'_, LspManager>, path: String) -> Result<Vec<u64>, String> {
+    let Some(lsp) = lock(&state.windows).get(window.label()).cloned() else { return Ok(vec![]); };
+    let path = PathBuf::from(path);
+    if path.file_name().and_then(|n| n.to_str()) != Some("Cargo.toml") { return Ok(vec![]); }
+    tauri::async_runtime::spawn_blocking(move || {
+        let content = std::fs::read(&path).ok().map(|bytes| super::adapter::configuration_identity(&Value::String(String::from_utf8_lossy(&bytes).into()), &[]));
+        let candidates: Vec<(u64, super::adapter::ProjectRef, String)> = lock(&lsp.sessions).iter()
+            .map(|(generation, t)| (*generation, t.project.clone(), t.language.clone())).collect();
+        let mut reloaded = vec![];
+        for (generation, project, language) in candidates {
+            // Fresh membership through the adapter's stamp-keyed cache (bounded `cargo metadata`).
+            let now = lsp.adapters.iter().find(|a| a.language() == language).and_then(|a| a.workspace_manifests(&project));
+            let mut sessions = lock(&lsp.sessions);
+            let Some(tracked) = sessions.get_mut(&generation) else { continue; };
+            let affected = manifest_affects(&path, &tracked.root, tracked.members.as_deref(), now.as_deref());
+            if now.is_some() { tracked.members = now; }
+            let status = tracked.session.status();
+            let same = content.is_some() && tracked.reloaded_against.get(&path) == content.as_ref();
+            let healthy = status.health.is_some_and(|h| h.health == "ok");
+            if !should_reload(status.phase == super::delivery::Phase::Ready, healthy, affected, same) { continue; }
+            if tracked.session.reload_workspace(&format!("{} changed", path.display())) {
+                if let Some(hash) = content { tracked.reloaded_against.insert(path.clone(), hash); }
+                reloaded.push(generation);
+            }
+        }
+        reloaded
+    }).await.map_err(|e| e.to_string())
 }
 
 #[tauri::command]
@@ -414,6 +450,32 @@ pub(crate) fn close_window(app: &tauri::AppHandle, label: &str) {
 mod tests {
     use super::*;
     use crate::ownership::tests::{languages, project, solution, Scripted};
+
+    #[test]
+    fn decision_21_only_workspace_manifests_are_affected() {
+        let root = Path::new("/ws");
+        let members = vec![PathBuf::from("/ws/Cargo.toml"), PathBuf::from("/ws/a/Cargo.toml")];
+        assert!(manifest_affects(Path::new("/ws/a/Cargo.toml"), root, Some(&members), Some(&members)));
+        assert!(manifest_affects(Path::new("/ws/Cargo.toml"), root, Some(&members), None), "the root manifest, now broken");
+        assert!(!manifest_affects(Path::new("/ws/tools/gen/Cargo.toml"), root, Some(&members), Some(&members)),
+            "a nested separate crate under the root is not a member");
+        assert!(!manifest_affects(Path::new("/elsewhere/Cargo.toml"), root, Some(&members), Some(&members)), "a non-member manifest");
+        assert!(!manifest_affects(Path::new("/ws/tools/gen/Cargo.toml"), root, Some(&members), None), "known membership is not widened by a failure");
+        assert!(manifest_affects(Path::new("/ws/tools/gen/Cargo.toml"), root, None, None), "membership unknown on both sides: anything under the root");
+        assert!(!manifest_affects(Path::new("/other/Cargo.toml"), root, None, None));
+        let mut added = members.clone();
+        added.push(PathBuf::from("/ws/b/Cargo.toml"));
+        assert!(manifest_affects(Path::new("/ws/b/Cargo.toml"), root, Some(&members), Some(&added)), "a newly added member counts");
+    }
+
+    #[test]
+    fn decision_21_reloads_are_never_redundant() {
+        assert!(should_reload(true, false, true, false));
+        assert!(!should_reload(true, true, true, false), "a healthy-state save sends nothing");
+        assert!(!should_reload(true, false, true, true), "content equal to the last reload sends nothing");
+        assert!(!should_reload(true, false, false, false), "a non-member manifest sends nothing");
+        assert!(!should_reload(false, false, true, false), "not Ready sends nothing");
+    }
 
     #[test]
     fn tabless_diagnostics_are_attributed_by_the_ownership_resolver_not_by_folder() {

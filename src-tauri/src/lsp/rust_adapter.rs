@@ -31,7 +31,11 @@ pub(crate) fn default_init_options() -> Value {
 }
 
 type Stamp = Option<(SystemTime, u64)>;
-type Root = Result<PathBuf, String>;
+/// The workspace root and the manifests that belong to it: the root's own
+/// and every member's (`cargo metadata --no-deps` lists members as packages).
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub(crate) struct Workspace { pub root: PathBuf, pub manifests: Vec<PathBuf> }
+type Root = Result<Workspace, String>;
 
 fn stamp(path: &Path) -> Stamp {
     let meta = std::fs::metadata(path).ok()?;
@@ -76,7 +80,9 @@ impl RustAdapter {
 
     /// Cached by the canonical folder plus manifest stamps; failures are
     /// cached too; concurrent callers for one folder share one subprocess.
-    pub(crate) fn workspace_root(&self, folder: &Path) -> Root {
+    pub(crate) fn workspace_root(&self, folder: &Path) -> Result<PathBuf, String> { self.workspace(folder).map(|w| w.root) }
+
+    pub(crate) fn workspace(&self, folder: &Path) -> Root {
         let key = folder.canonicalize().unwrap_or_else(|_| folder.to_path_buf());
         if let Some(cached) = self.cache.lock().unwrap_or_else(|p| p.into_inner()).get(&key) {
             if cached.stamps.iter().all(|(path, old)| stamp(path) == *old) { return cached.root.clone(); }
@@ -97,8 +103,8 @@ impl RustAdapter {
         let before = stamp(&manifest);
         let root = (self.cargo)().and_then(|cargo| { self.runs.fetch_add(1, Ordering::AcqRel); run_metadata(&cargo, &key, self.timeout) });
         let mut stamps = vec![(manifest, before)];
-        if let Ok(root) = &root {
-            let workspace = root.join("Cargo.toml");
+        if let Ok(found) = &root {
+            let workspace = found.root.join("Cargo.toml");
             if workspace != stamps[0].0 { stamps.push((workspace.clone(), stamp(&workspace))); }
         }
         self.cache.lock().unwrap_or_else(|p| p.into_inner()).insert(key.clone(), Cached { stamps, root: root.clone() });
@@ -147,20 +153,28 @@ fn run_metadata(cargo: &Path, folder: &Path, timeout: Duration) -> Root {
     }
     if bytes.len() as u64 > METADATA_MAX_BYTES { return Err("cargo metadata output is too large".into()); }
     let value: Value = serde_json::from_slice(&bytes).map_err(|e| format!("cargo metadata output is not JSON: {e}"))?;
-    value.get("workspace_root").and_then(Value::as_str).map(PathBuf::from)
-        .ok_or_else(|| "cargo metadata reported no workspace_root".into())
+    let root = value.get("workspace_root").and_then(Value::as_str).map(PathBuf::from)
+        .ok_or_else(|| "cargo metadata reported no workspace_root".to_string())?;
+    let mut manifests = vec![root.join("Cargo.toml")];
+    for package in value.get("packages").and_then(Value::as_array).into_iter().flatten() {
+        if let Some(path) = package.get("manifest_path").and_then(Value::as_str) { manifests.push(PathBuf::from(path)); }
+    }
+    manifests.sort();
+    manifests.dedup();
+    Ok(Workspace { root, manifests })
 }
 
 impl LanguageAdapter for RustAdapter {
     fn language(&self) -> &'static str { "rust" }
     fn document_extensions(&self) -> &'static [&'static str] { &["rs"] }
     fn configuration_section(&self) -> &'static str { "rust-analyzer" }
+    fn workspace_manifests(&self, project: &ProjectRef) -> Option<Vec<PathBuf>> { self.workspace(&project.folder).ok().map(|w| w.manifests) }
 
     fn resolve(&self, project: &ProjectRef) -> Result<ServerContext, ResolveNote> {
         let implementation = (self.tool)().map_err(ResolveNote)?;
-        let (root, notes) = match self.workspace_root(&project.folder) {
-            Ok(root) => (root, vec![]),
-            Err(error) => (project.folder.clone(), vec![format!("Cargo workspace discovery failed; using the project folder ({error})")]),
+        let (root, manifests, notes) = match self.workspace(&project.folder) {
+            Ok(found) => (found.root, Some(found.manifests), vec![]),
+            Err(error) => (project.folder.clone(), None, vec![format!("Cargo workspace discovery failed; using the project folder ({error})")]),
         };
         Ok(ServerContext { implementation, args: vec![], root, projects: vec![project.clone()],
             init_options: default_init_options(), env: vec![], lsp_language_id: "rust",
@@ -168,7 +182,7 @@ impl LanguageAdapter for RustAdapter {
             experimental: serde_json::json!({ "serverStatusNotification": true }),
             // V27: health stays `error` after a fixed manifest until the workspace reloads.
             reload_method: Some("rust-analyzer/reloadWorkspace"),
-            notes })
+            manifests, notes })
     }
 }
 
@@ -198,6 +212,22 @@ mod tests {
     }
     fn project(folder: &Path) -> ProjectRef {
         ProjectRef { id: folder.display().to_string(), name: "p".into(), language: "rust".into(), folder: folder.into() }
+    }
+
+    #[test]
+    fn workspace_manifests_are_the_root_and_members_only() {
+        let ws = dir("members");
+        write(ws.0.join("Cargo.toml"), "[workspace]\nmembers = [\"a\"]\nresolver = \"2\"\n");
+        krate(&ws.0.join("a"), "a");
+        // A separate crate nested under the root, not a member (its own workspace).
+        write(ws.0.join("tools/gen/Cargo.toml"), "[package]\nname = \"gen\"\nversion = \"0.1.0\"\nedition = \"2021\"\n[workspace]\n");
+        write(ws.0.join("tools/gen/src/main.rs"), "fn main() {}");
+        let found = adapter().workspace(&ws.0.join("a")).unwrap();
+        let canon = |p: &Path| p.canonicalize().unwrap();
+        let manifests: Vec<PathBuf> = found.manifests.iter().map(|p| canon(p)).collect();
+        assert!(manifests.contains(&canon(&ws.0.join("Cargo.toml"))) && manifests.contains(&canon(&ws.0.join("a/Cargo.toml"))));
+        assert!(!manifests.contains(&canon(&ws.0.join("tools/gen/Cargo.toml"))), "{manifests:?}");
+        assert!(!super::super::commands::manifest_affects(&ws.0.join("tools/gen/Cargo.toml"), &found.root, Some(&found.manifests), Some(&found.manifests)));
     }
 
     #[test]
