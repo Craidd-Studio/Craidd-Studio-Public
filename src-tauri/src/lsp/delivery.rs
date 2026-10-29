@@ -46,6 +46,9 @@ pub(crate) struct StatusRecord {
     pub workspace_ready: Option<bool>,
     /// `rust-analyzer/reloadWorkspace` requests sent (decision on V27).
     pub reloads: u64,
+    /// V2: the latest server line that reports a file-watcher failure, raw.
+    /// A warning on the chip; the line itself stays in Output.
+    pub watcher_warning: Option<String>,
     /// Bumped on every change, so a delivery task sends only changed records.
     pub revision: u64,
 }
@@ -53,7 +56,7 @@ pub(crate) struct StatusRecord {
 impl StatusRecord {
     pub(crate) fn new(generation: u64) -> Self {
         Self { generation, phase: Phase::Spawning, terminal_reason: None, caps: None, resync: BTreeSet::new(),
-            refresh: 0, writer_room: 0, unresponsive: false, health: None, workspace_ready: None, reloads: 0, revision: 0 }
+            refresh: 0, writer_room: 0, unresponsive: false, health: None, workspace_ready: None, reloads: 0, watcher_warning: None, revision: 0 }
     }
 
     /// Any non-phase field change goes through here so the revision moves.

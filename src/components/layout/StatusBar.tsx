@@ -24,12 +24,13 @@ function LanguageServerChip({ fileId }: { fileId: string | null }) {
   const name = serverName(view);
   const health = view.status.health;
   const warn = health && health.health !== "ok" ? health : null;
+  const watcher = view.status.watcherWarning;
   const colour = state === "crashed" || state === "failed" || warn?.health === "error" ? "text-red-400"
-    : state === "unresponsive" || warn || view.pullDegraded ? "text-amber-400"
+    : state === "unresponsive" || warn || watcher || view.pullDegraded ? "text-amber-400"
     : state === "ready" ? "text-zinc-400" : "text-blue-400";
   const detail = [
     `${view.server} (${view.version})`, `Root: ${view.root}`,
-    view.status.phase === "ready" ? "File watching: server-side" : null,
+    view.status.phase === "ready" ? (watcher ? `File watching failed (changes on disk may be missed): ${watcher}` : "File watching: server-side") : null,
     view.status.terminalReason ? `Ended: ${view.status.terminalReason}` : null,
     warn ? `Server ${warn.health}: ${warn.message ?? ""}` : null,
     view.pullDegraded, info.alias ? `Also open as ${info.alias}: language features are off in this tab` : null,
@@ -38,7 +39,7 @@ function LanguageServerChip({ fileId }: { fileId: string | null }) {
   const ended = state === "crashed" || state === "failed" || state === "stopped";
   return <span className="flex items-center gap-1">
     <button type="button" onClick={showLspOutput} title={detail} className={`${colour} hover:text-zinc-200`}>
-      {info.alias ? `${name}: alias` : chipLabel(state, name)}{warn ? " ⚠" : ""}
+      {info.alias ? `${name}: alias` : chipLabel(state, name)}{warn || watcher ? " ⚠" : ""}
     </button>
     {(ended || state === "unresponsive") && <button type="button" title={`Restart ${name}`} aria-label={`Restart ${name}`}
       onClick={() => void restartSession(info.session).catch((error) => console.warn("[lsp] restart failed:", error))}

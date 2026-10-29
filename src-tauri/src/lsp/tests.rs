@@ -658,3 +658,22 @@ fn real_rust_analyzer_broken_at_start_recovers_through_reload() {
     session.stop();
     let _ = std::fs::remove_dir_all(&dir);
 }
+
+#[test]
+fn v2_a_watch_limit_line_on_stderr_warns_on_the_chip_and_stays_in_output() {
+    let session = ready("watch_limit");
+    assert!(session.wait_until(WAIT, |s| s.watcher_warning.is_some()));
+    let status = session.status();
+    assert!(status.watcher_warning.as_deref().unwrap().contains("OS file watch limit reached."));
+    assert_eq!(status.phase, Phase::Ready);
+    assert!(status.health.is_none(), "health is untouched: the server reports nothing on the protocol");
+    let lines = session.logs().0;
+    assert!(lines.iter().any(|l| l.source == LogSource::Stderr && l.text.ends_with("WARN notify error: OS file watch limit reached.")),
+        "the raw line is kept for Output");
+    assert!(lines.iter().any(|l| l.text.ends_with("No path was found.")));
+    session.stop();
+    let quiet = ready("stderr");
+    std::thread::sleep(Duration::from_millis(200));
+    assert!(quiet.status().watcher_warning.is_none(), "ordinary stderr never warns");
+    quiet.stop();
+}

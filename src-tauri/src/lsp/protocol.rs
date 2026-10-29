@@ -43,6 +43,16 @@ pub(crate) enum Snapshot {
     Progress { token: String, kind: ProgressKind, value: Value },
 }
 
+/// V2: does a server line report that file watching failed? Best-effort
+/// text matching on what servers print, never on anything Craidd infers.
+/// Verified against rust-analyzer 2026-09-06 at its default log level:
+/// `WARN notify error: OS file watch limit reached.` Other `notify error`
+/// lines (for example `No path was found.`) do not stop watching and do not match.
+pub(crate) fn is_watcher_failure(line: &str) -> bool {
+    let line = line.to_ascii_lowercase();
+    line.contains("file watch limit") || line.contains("inotify watch limit") || line.contains("max_user_watches")
+}
+
 /// `experimental/serverStatus` (rust-analyzer), parsed by shape. Health is
 /// separate from the session phase: a Ready session can report `error`.
 #[derive(Clone, Debug, PartialEq, Eq, serde::Serialize)]
@@ -203,6 +213,15 @@ mod tests {
             Inbound::Response { id: Some(2), outcome: Outcome::Retrigger });
         assert_eq!(of(json!({"jsonrpc":"2.0","id":2,"error":{"code":SERVER_CANCELLED,"message":"m","data":{"retriggerRequest":false}}})).unwrap(),
             Inbound::Response { id: Some(2), outcome: Outcome::NoResult });
+    }
+
+    #[test]
+    fn watcher_failures_are_recognised_by_text() {
+        assert!(is_watcher_failure("2026-10-29T10:00:00Z  WARN notify error: OS file watch limit reached."));
+        assert!(is_watcher_failure("WARN notify error: OS file watch limit reached."));
+        assert!(is_watcher_failure("increase fs.inotify.max_user_watches"));
+        assert!(!is_watcher_failure("WARN notify error: No path was found."));
+        assert!(!is_watcher_failure("INFO did change watched files"));
     }
 
     #[test]

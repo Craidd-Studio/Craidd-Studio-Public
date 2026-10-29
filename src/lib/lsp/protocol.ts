@@ -35,6 +35,8 @@ export interface StatusRecord {
   /** null: the server reports no workspace status; false until it first reports quiescent. */
   workspaceReady: boolean | null;
   reloads: number;
+  /** V2: the server's raw line reporting a file-watcher failure, if any. */
+  watcherWarning: string | null;
   revision: number;
 }
 

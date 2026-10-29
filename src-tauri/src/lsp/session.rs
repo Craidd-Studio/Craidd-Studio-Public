@@ -459,7 +459,7 @@ impl Session {
                 }
             }
             Ok(Inbound::Snapshot(snapshot)) => { lock(&self.0.snapshots).push(snapshot); self.0.changed.notify_all(); }
-            Ok(Inbound::Log(line)) => { lock(&self.0.logs).push(line); self.0.changed.notify_all(); }
+            Ok(Inbound::Log(line)) => { self.note_watcher_failure(&line.text); lock(&self.0.logs).push(line); self.0.changed.notify_all(); }
             Ok(Inbound::Health(Ok(health))) => {
                 if health.health != "ok" {
                     lock(&self.0.logs).push(LogLine { source: LogSource::Log, severity: if health.health == "error" { 1 } else { 2 },
@@ -520,6 +520,13 @@ impl Session {
         }
     }
 
+    /// V2: promote a watcher-failure line to the chip; the raw line stays in Output.
+    fn note_watcher_failure(&self, text: &str) {
+        if !protocol::is_watcher_failure(text) { return; }
+        let text: String = text.chars().take(super::protocol::HEALTH_MESSAGE_BYTES).collect();
+        lock(&self.0.status).touch(|s| s.watcher_warning = Some(text));
+    }
+
     fn drain_stderr(&self, stderr: impl Read) {
         let mut reader = BufReader::new(stderr);
         loop {
@@ -528,6 +535,7 @@ impl Session {
                 Ok(0) | Err(_) => return,
                 Ok(_) => {
                     let text = String::from_utf8_lossy(&line).trim_end().to_string();
+                    self.note_watcher_failure(&text);
                     lock(&self.0.logs).push(LogLine { source: LogSource::Stderr, severity: 4, text });
                     self.0.changed.notify_all();
                 }

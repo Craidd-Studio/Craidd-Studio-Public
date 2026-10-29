@@ -68,6 +68,10 @@ impl Fake {
 
     fn on_initialized(&mut self) {
         if self.has("stderr") { for n in 0..5 { eprintln!("fake stderr line {n}"); } }
+        if self.has("watch_limit") {
+            eprintln!("2026-10-29T10:00:00.000Z  WARN notify error: No path was found.");
+            eprintln!("2026-10-29T10:00:01.000Z  WARN notify error: OS file watch limit reached.");
+        }
         if self.has("child") {
             use std::os::unix::process::CommandExt;
             let mut sleeper = std::process::Command::new("sleep");
