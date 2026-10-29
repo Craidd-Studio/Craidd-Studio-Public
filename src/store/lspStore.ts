@@ -64,7 +64,7 @@ export function chipState(view: LspSessionView): ChipState {
   if (phase === "exited" || phase === "shuttingDown") return "stopped";
   if (phase === "spawning" || phase === "initializing") return "starting";
   if (unresponsive) return "unresponsive";
-  if (Object.keys(view.progress).length > 0 || view.status.workspaceReady === false) return "indexing";
+  if (Object.keys(view.progress).length > 0 || (view.status.workspaceReady === false && !view.status.readyFallback)) return "indexing";
   return "ready";
 }
 

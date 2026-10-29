@@ -6,7 +6,7 @@ import { useSplit } from "../../store/splitStore";
 import { appendLspOutput, serverName, useLsp, type LspSessionView } from "../../store/lspStore";
 import { LANGUAGES } from "../languages";
 import { DocumentTracker, type Binding, type DocTransport } from "./documents";
-import { DiagnosticsModel, isAuthoritative, type Attribution, type Route } from "./diagnostics";
+import { DiagnosticsModel, gateOpen, isAuthoritative, type Attribution, type Route } from "./diagnostics";
 import { PullScheduler, type PullReply, type PullReport } from "./pulls";
 import { fileUri, isTerminal, uriToPath, toMonacoRange, type Batch, type ContentChange, type DocView, type LspDiagnostic, type StatusRecord } from "./protocol";
 import { metrics } from "./metrics";
@@ -294,8 +294,12 @@ function onBatch(generation: number, batch: Batch): void {
   void invoke("lsp_ack", { session: generation }).catch(() => {});
 }
 
+/** Was the readiness gate open when the latest pull for (session, uri) was sent? */
+const sentOpen = new Map<string, boolean>();
+
 const pullTransport = {
   async pull(session: number, uri: string, previousResultId: string | null): Promise<PullReply> {
+    sentOpen.set(`${session}\u0000${uri}`, gateOpen(lastStatus.get(session)));
     const reply = await invoke<{ kind: string; report?: PullReport; code?: number; message?: string }>("lsp_pull", { session, uri, previousResultId });
     if (reply.kind === "notReady") {
       const fileId = useSolution.getState().tabs.find((tab) => fileUri(tab.fileId) === uri)?.fileId;
@@ -321,8 +325,10 @@ function pullHost(session: number) {
     accept: (fileId: string, report: PullReport) => {
       metrics.pullReport(report.kind);
       if (report.kind === "full") {
-        const ready = lastStatus.get(session)?.workspaceReady;
-        queueDiagnostics(session, tracker.binding(fileId)!.uri, "pull", report.items, isAuthoritative(ready, report.items.length));
+        const uri = tracker.binding(fileId)!.uri;
+        const authoritative = isAuthoritative(sentOpen.get(`${session}\u0000${uri}`) ?? false, report.items.length);
+        // An earlier empty report is discarded: the stored set and the unknown state stay as they were.
+        if (authoritative || report.items.length > 0) queueDiagnostics(session, uri, "pull", report.items, authoritative);
       }
     },
     degraded: (message: string | null) => {

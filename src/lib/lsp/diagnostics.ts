@@ -41,12 +41,18 @@ export interface LspProblem {
 }
 
 /**
- * Decision 20: is an accepted pull report proof of the file's diagnostics?
- * Before the workspace has reported ready (the bounded fallback), an empty
- * report clears the set but leaves the route unknown; a non-empty one is real.
+ * Decision 31: an empty report is authoritative only if its pull was sent
+ * after readiness (the status reported ready, or the status-less fallback
+ * fired). An earlier empty report is discarded and the route stays unknown;
+ * a non-empty report is evidence whenever it arrives.
  */
-export function isAuthoritative(workspaceReady: boolean | null | undefined, itemCount: number): boolean {
-  return workspaceReady !== false || itemCount > 0;
+export function isAuthoritative(sentAfterReadiness: boolean, itemCount: number): boolean {
+  return sentAfterReadiness || itemCount > 0;
+}
+
+/** Whether a session's readiness gate is open for a pull sent now. */
+export function gateOpen(status: { workspaceReady: boolean | null; readyFallback: boolean } | undefined): boolean {
+  return !status || status.workspaceReady !== false || status.readyFallback;
 }
 
 const keyOf = (session: number, uri: string, route: Route) => `${session}\u0000${route}\u0000${uri}`;

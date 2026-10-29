@@ -322,13 +322,15 @@ impl Session {
         if armed.elapsed() < self.0.limits.ready_fallback { return; }
         let fell_back = {
             let mut status = lock(&self.0.status);
-            let due = status.phase == Phase::Ready && status.workspace_ready == Some(false) && !status.ready_fallback;
+            // Decision 31: only a session that has never sent a status is status-less.
+            let due = status.phase == Phase::Ready && status.workspace_ready == Some(false) && !status.ready_fallback && status.health.is_none();
             if due { status.touch(|s| s.ready_fallback = true); }
             due
         };
         *lock(&self.0.gate_armed) = None;
         if fell_back {
-            self.note(&format!("[lsp] no workspace-ready report within {} s; pulling anyway (empty results stay provisional)", self.0.limits.ready_fallback.as_secs()));
+            self.note(&format!("[lsp] the server sent no workspace status within {} s of starting; treating it as status-less and pulling diagnostics without waiting",
+                self.0.limits.ready_fallback.as_secs()));
         }
     }
 
@@ -484,16 +486,22 @@ impl Session {
                 }
             }
             Ok(Inbound::Snapshot(snapshot)) => { lock(&self.0.snapshots).push(snapshot); self.0.changed.notify_all(); }
-            Ok(Inbound::Log(line)) => { self.note_watcher_failure(&line.text); lock(&self.0.logs).push(line); self.0.changed.notify_all(); }
+            Ok(Inbound::Log(line)) => {
+                // Decision 28: stderr and `logMessage` text; `showMessage` is not matched.
+                if line.source == LogSource::Log { self.note_watcher_failure(&line.text); }
+                lock(&self.0.logs).push(line);
+                self.0.changed.notify_all();
+            }
             Ok(Inbound::Health(Ok(health))) => {
                 if health.health != "ok" {
                     lock(&self.0.logs).push(LogLine { source: LogSource::Log, severity: if health.health == "error" { 1 } else { 2 },
                         text: format!("[lsp] server status {}: {}", health.health, health.message.as_deref().unwrap_or("")) });
                 }
                 lock(&self.0.status).touch(|s| {
+                    // Decision 31: a status arriving after the fallback switches gating back to it.
+                    if s.ready_fallback { s.ready_fallback = false; s.workspace_ready = Some(false); }
                     if health.quiescent == Some(true) && health.health != "error" && s.workspace_ready == Some(false) {
                         s.workspace_ready = Some(true);
-                        s.ready_fallback = false;
                     }
                     s.health = Some(health);
                 });
@@ -839,7 +847,8 @@ impl Session {
             // The readiness gate re-arms; the frontend's wave follows the next ready report.
             lock(&session.0.status).touch(|s| {
                 s.reloads += 1;
-                if s.workspace_ready.is_some() { s.workspace_ready = Some(false); s.ready_fallback = false; }
+                // A status-less session has nothing that would reopen the gate; it stays open.
+                if s.workspace_ready.is_some() && !s.ready_fallback { s.workspace_ready = Some(false); }
             });
             if lock(&session.0.status).workspace_ready == Some(false) { *lock(&session.0.gate_armed) = Some(Instant::now()); }
             session.0.changed.notify_all();

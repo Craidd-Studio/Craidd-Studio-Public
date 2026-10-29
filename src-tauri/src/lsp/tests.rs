@@ -585,8 +585,11 @@ fn real_rust_analyzer_smoke() {
     let uri = super::adapter::file_uri(&dir.join("src/main.rs"));
     session.open_document(&uri, "rust", main).unwrap();
     let gated = matches!(session.begin_pull(&uri, None), Err(super::session::PullError::NotReady));
-    assert!(session.wait_until(long, |s| s.workspace_ready == Some(true)), "never quiescent: {:?}", session.status().health);
+    // Ready by status, or (status-less, for example a tap that drops every serverStatus) by the fallback.
+    assert!(session.wait_until(long, |s| s.workspace_ready == Some(true) || s.ready_fallback), "the gate never opened: {:?}", session.status());
     let quiescent_ms = started.elapsed().as_millis();
+    let status_less = session.status().ready_fallback;
+    if status_less { eprintln!("[smoke] status-less: no serverStatus arrived; fallback opened the gate after {quiescent_ms} ms"); }
     let first = session.begin_pull(&uri, None).unwrap().wait(long);
     let Outcome::Result(report) = &first else { panic!("pull: {first:?}") };
     let codes: Vec<String> = report["items"].as_array().unwrap().iter().map(|d| format!("{}:{}", d["source"], d["code"])).collect();
@@ -606,6 +609,16 @@ fn real_rust_analyzer_smoke() {
         } else { session.wait_for_delivery(Duration::from_millis(200)); }
     }
     // V27: break the manifest, then fix it; health recovers only after a reload.
+    if status_less {
+        eprintln!("[smoke] ready after {ready_ms} ms; gate opened by fallback after {quiescent_ms} ms; pull refused before: {gated}");
+        eprintln!("[smoke] first pull: kind {} items {codes:?}; second pull: {second:?}; push after didSave: {pushed:?}", report["kind"]);
+        eprintln!("[smoke] V27 part skipped: health is only reported through serverStatus");
+        assert!(pushed.is_some());
+        session.stop();
+        assert_clean_end(&session, Phase::Exited, "stopped");
+        let _ = std::fs::remove_dir_all(&dir);
+        return;
+    }
     std::fs::write(dir.join("Cargo.toml"), "[package\nname = \"smoke\"\n").unwrap();
     let broke = session.wait_until(Duration::from_secs(60), |s| s.health.as_ref().is_some_and(|h| h.health == "error"));
     let broken_message = session.status().health.and_then(|h| h.message);
@@ -646,7 +659,13 @@ fn real_rust_analyzer_broken_at_start_recovers_through_reload() {
     let project = ProjectRef { id: "b".into(), name: "b".into(), language: "rust".into(), folder: dir.clone() };
     let session = Session::start(adapter.resolve(&project).unwrap().launch_spec("rust-analyzer"), Limits::default(), 1);
     assert!(session.wait_until(Duration::from_secs(60), |s| s.phase == Phase::Ready));
-    let broke = session.wait_until(Duration::from_secs(60), |s| s.health.as_ref().is_some_and(|h| h.health == "error"));
+    let broke = session.wait_until(Duration::from_secs(60), |s| s.health.as_ref().is_some_and(|h| h.health == "error") || s.ready_fallback);
+    if session.status().ready_fallback {
+        eprintln!("[broken-start] status-less: no serverStatus within the fallback bound; V27 needs health, skipped");
+        session.stop();
+        let _ = std::fs::remove_dir_all(&dir);
+        return;
+    }
     std::fs::write(dir.join("Cargo.toml"), "[package]\nname = \"smoke\"\nversion = \"0.1.0\"\nedition = \"2021\"\n").unwrap();
     let alone = session.wait_until(Duration::from_secs(15), |s| s.health.as_ref().is_some_and(|h| h.health == "ok"));
     let at = Instant::now();
@@ -679,22 +698,30 @@ fn v2_a_watch_limit_line_on_stderr_warns_on_the_chip_and_stays_in_output() {
 }
 
 #[test]
-fn decision_20_a_missing_ready_report_falls_back_after_the_bound() {
+fn decision_31_a_status_less_server_falls_back_after_the_bound() {
     let mut limits = limits();
     limits.ready_fallback = Duration::from_millis(600);
     // Declares the status notification; the fake never sends one.
-    let session = Session::start(status_spec("pull"), limits, 1);
+    let session = Session::start(status_spec("pull"), limits.clone(), 1);
     assert!(session.wait_until(WAIT, |s| s.phase == Phase::Ready));
     session.open_document(DOC, "rust", "bad()").unwrap();
-    assert!(matches!(session.begin_pull(DOC, None), Err(super::session::PullError::NotReady)));
+    assert!(matches!(session.begin_pull(DOC, None), Err(super::session::PullError::NotReady)), "before the timeout: no pull, so no early report");
     assert!(session.wait_until(WAIT, |s| s.ready_fallback), "suppression is bounded");
-    assert_eq!(session.status().workspace_ready, Some(false), "still not ready: results stay provisional");
-    assert!(log_text(&session, "[lsp] no workspace-ready report").is_some());
-    assert!(matches!(pull(&session, None), Outcome::Result(_)));
-    // A real ready report ends the fallback.
+    assert!(log_text(&session, "[lsp] the server sent no workspace status").is_some(), "the log records it");
+    assert!(matches!(pull(&session, None), Outcome::Result(_)), "after the timeout the gate is open");
+    // A status arriving later switches gating to it: closed until it reports ready.
+    session.notify("test/quiesce_error", json!({})).unwrap();
+    assert!(session.wait_until(WAIT, |s| !s.ready_fallback && s.health.is_some()));
+    assert!(matches!(session.begin_pull(DOC, None), Err(super::session::PullError::NotReady)));
     session.notify("test/quiesce", json!({})).unwrap();
-    assert!(session.wait_until(WAIT, |s| s.workspace_ready == Some(true) && !s.ready_fallback));
+    assert!(session.wait_until(WAIT, |s| s.workspace_ready == Some(true)));
     session.stop();
+    // A server that sends status (still loading) is never treated as status-less.
+    let loading = Session::start(status_spec("pull,loading"), limits, 1);
+    assert!(loading.wait_until(WAIT, |s| s.phase == Phase::Ready));
+    std::thread::sleep(Duration::from_millis(1200));
+    assert!(!loading.status().ready_fallback, "a long load with status is not a fallback");
+    loading.stop();
 }
 
 #[test]

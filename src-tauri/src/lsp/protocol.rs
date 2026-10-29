@@ -49,8 +49,8 @@ pub(crate) enum Snapshot {
 /// `WARN notify error: OS file watch limit reached.` Other `notify error`
 /// lines (for example `No path was found.`) do not stop watching and do not match.
 pub(crate) fn is_watcher_failure(line: &str) -> bool {
-    let line = line.to_ascii_lowercase();
-    line.contains("file watch limit") || line.contains("inotify watch limit") || line.contains("max_user_watches")
+    // Decision 28: the stable fragment, case-insensitively; not the severity word.
+    line.to_ascii_lowercase().contains("os file watch limit reached")
 }
 
 /// `experimental/serverStatus` (rust-analyzer), parsed by shape. Health is
@@ -219,7 +219,7 @@ mod tests {
     fn watcher_failures_are_recognised_by_text() {
         assert!(is_watcher_failure("2026-10-29T10:00:00Z  WARN notify error: OS file watch limit reached."));
         assert!(is_watcher_failure("WARN notify error: OS file watch limit reached."));
-        assert!(is_watcher_failure("increase fs.inotify.max_user_watches"));
+        assert!(is_watcher_failure("ERROR notify: os FILE WATCH LIMIT REACHED"), "the severity word does not matter");
         assert!(!is_watcher_failure("WARN notify error: No path was found."));
         assert!(!is_watcher_failure("INFO did change watched files"));
     }

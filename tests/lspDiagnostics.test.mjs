@@ -262,10 +262,13 @@ test("attribution is looked up at display time: pending, owned, ambiguous and ex
   assert.equal(rows.outside.external, true);
 });
 
-test("decision 20 fallback: early empty reports are provisional, non-empty ones are real", async () => {
-  const { isAuthoritative } = await import("../src/lib/lsp/diagnostics.ts");
-  assert.equal(isAuthoritative(false, 0), false, "empty before readiness: unknown, never 'no problems'");
-  assert.equal(isAuthoritative(false, 2), true);
-  assert.equal(isAuthoritative(true, 0), true);
-  assert.equal(isAuthoritative(null, 0), true, "a server with no status reporting is not gated");
+test("decision 31: an empty report counts only if its pull was sent after readiness", async () => {
+  const { isAuthoritative, gateOpen } = await import("../src/lib/lsp/diagnostics.ts");
+  assert.equal(isAuthoritative(false, 0), false, "an empty report from before readiness is discarded; the route stays unknown");
+  assert.equal(isAuthoritative(false, 2), true, "a non-empty report is evidence whenever it arrives");
+  assert.equal(isAuthoritative(true, 0), true, "after readiness an empty report clears a non-empty set");
+  assert.equal(gateOpen({ workspaceReady: false, readyFallback: false }), false);
+  assert.equal(gateOpen({ workspaceReady: false, readyFallback: true }), true, "status-less after the timeout");
+  assert.equal(gateOpen({ workspaceReady: true, readyFallback: false }), true);
+  assert.equal(gateOpen({ workspaceReady: null, readyFallback: false }), true, "a server with no status declared is not gated");
 });

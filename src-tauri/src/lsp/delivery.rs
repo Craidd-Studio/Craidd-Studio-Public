@@ -44,9 +44,9 @@ pub(crate) struct StatusRecord {
     /// health other than `error`, and false again after a workspace reload.
     /// Pulls wait for it, because an earlier empty report proves nothing.
     pub workspace_ready: Option<bool>,
-    /// Decision 20 fallback: the server declared status notifications but
-    /// sent no ready report within the bound, so pulls proceed. Until real
-    /// readiness, an empty report is not proof of zero diagnostics.
+    /// Decision 31: no `experimental/serverStatus` arrived within the bound
+    /// after Ready, so the session is status-less and the gate is open. A
+    /// status arriving later clears this and gating follows it again.
     pub ready_fallback: bool,
     /// `rust-analyzer/reloadWorkspace` requests sent (decision on V27).
     pub reloads: u64,

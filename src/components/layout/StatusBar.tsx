@@ -32,6 +32,7 @@ function LanguageServerChip({ fileId }: { fileId: string | null }) {
     `${view.server} (${view.version})`, `Root: ${view.root}`,
     view.status.phase === "ready" ? (watcher ? `File watching failed (changes on disk may be missed): ${watcher}` : "File watching: server-side") : null,
     view.status.terminalReason ? `Ended: ${view.status.terminalReason}` : null,
+    view.status.readyFallback ? "The server reports no workspace status; diagnostics are pulled without waiting for it" : null,
     warn ? `Server ${warn.health}: ${warn.message ?? ""}` : null,
     view.pullDegraded, info.alias ? `Also open as ${info.alias}: language features are off in this tab` : null,
     ...view.notes, ...Object.values(view.progress).map((title) => `Working: ${title}`),
@@ -39,7 +40,7 @@ function LanguageServerChip({ fileId }: { fileId: string | null }) {
   const ended = state === "crashed" || state === "failed" || state === "stopped";
   return <span className="flex items-center gap-1">
     <button type="button" onClick={showLspOutput} title={detail} className={`${colour} hover:text-zinc-200`}>
-      {info.alias ? `${name}: alias` : chipLabel(state, name)}{warn || watcher ? " ⚠" : ""}
+      {info.alias ? `${name}: alias` : chipLabel(state, name)}{view.status.readyFallback ? " (no status)" : ""}{warn || watcher ? " ⚠" : ""}
     </button>
     {(ended || state === "unresponsive") && <button type="button" title={`Restart ${name}`} aria-label={`Restart ${name}`}
       onClick={() => void restartSession(info.session).catch((error) => console.warn("[lsp] restart failed:", error))}
