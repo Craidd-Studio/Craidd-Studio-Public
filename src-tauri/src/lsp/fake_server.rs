@@ -101,6 +101,10 @@ impl Fake {
             self.send(json!({"jsonrpc":"2.0","method":"textDocument/publishDiagnostics","params":{"uri":"file:///f0.rs","diagnostics":[]}}));
             self.log("flood done".into());
         }
+        if self.has("ask_stalled") {
+            // F3: no type, no actions, a string id, while nobody consumes deliveries.
+            self.send(json!({"jsonrpc":"2.0","id":"s-1","method":"window/showMessageRequest","params":{"message":"while stalled"}}));
+        }
         if let Some(count) = self.value("refresh").and_then(|n| n.parse::<usize>().ok()) {
             for n in 0..count { self.send(json!({"jsonrpc":"2.0","id":format!("r{n}"),"method":"workspace/diagnostic/refresh"})); }
         }

@@ -696,3 +696,20 @@ fn decision_20_a_missing_ready_report_falls_back_after_the_bound() {
     assert!(session.wait_until(WAIT, |s| s.workspace_ready == Some(true) && !s.ready_fallback));
     session.stop();
 }
+
+#[test]
+fn f3_show_message_request_with_no_type_or_actions_is_answered_while_the_consumer_is_stalled() {
+    let session = ready("flood=3000,ask_stalled");
+    // No batch is ever taken or acknowledged: the reply must not wait on the frontend (A3).
+    assert!(eventually(|| replies(&session).iter().any(|r| r["id"] == "s-1")), "never answered");
+    assert!(session.snapshot_keys() > 0, "the flood is still undelivered: the consumer really is stalled");
+    let reply: Vec<Value> = replies(&session).into_iter().filter(|r| r["id"] == "s-1").collect();
+    assert_eq!(reply.len(), 1, "exactly once");
+    assert_eq!(reply[0]["id"], json!("s-1"), "the string id is echoed verbatim");
+    assert_eq!(reply[0]["result"], Value::Null, "no selection");
+    assert!(reply[0].get("error").is_none());
+    assert!(session.logs().0.iter().any(|l| l.source == LogSource::Show && l.text == "while stalled" && l.severity == 3),
+        "no type → severity 3, shown as a notice");
+    session.stop();
+    assert_clean_end(&session, Phase::Exited, "stopped");
+}
