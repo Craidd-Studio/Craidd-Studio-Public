@@ -45,6 +45,8 @@ pub(crate) struct Limits {
     pub resync_bound: Duration,
     /// The writer signals room again once its depth falls to this.
     pub writer_low_water: usize,
+    /// Decision 20: how long pulls wait for a ready report before falling back.
+    pub ready_fallback: Duration,
 }
 
 impl Default for Limits {
@@ -64,6 +66,7 @@ impl Default for Limits {
             stderr_line_bytes: 16 * 1024,
             resync_bound: Duration::from_secs(10),
             writer_low_water: 64,
+            ready_fallback: Duration::from_secs(30),
         }
     }
 }
@@ -151,6 +154,8 @@ struct Inner {
     pulls: Mutex<HashMap<String, i64>>,
     /// Workspace reload: (in flight, another requested meanwhile).
     reload: Mutex<(bool, bool)>,
+    /// When the readiness gate was last armed (Ready, or a reload).
+    gate_armed: Mutex<Option<Instant>>,
     cursor: Mutex<Cursor>,
     writer: Mutex<Option<FrameWriter>>,
     process: Mutex<Option<Process>>,
@@ -209,6 +214,7 @@ impl Session {
             documents: Mutex::new(DocTable::default()),
             pulls: Mutex::default(),
             reload: Mutex::new((false, false)),
+            gate_armed: Mutex::new(None),
             cursor: Mutex::new(Cursor::default()),
             writer: Mutex::new(None),
             process: Mutex::new(None),
@@ -305,6 +311,24 @@ impl Session {
         while !self.wait_until(TREE_REFRESH, |status| status.phase.is_terminal()) {
             self.refresh_tree();
             self.check_resync_bound();
+            self.check_ready_fallback();
+        }
+    }
+
+    /// Decision 20: missing status notifications must not suppress pulls forever.
+    fn check_ready_fallback(&self) {
+        let armed = *lock(&self.0.gate_armed);
+        let Some(armed) = armed else { return; };
+        if armed.elapsed() < self.0.limits.ready_fallback { return; }
+        let fell_back = {
+            let mut status = lock(&self.0.status);
+            let due = status.phase == Phase::Ready && status.workspace_ready == Some(false) && !status.ready_fallback;
+            if due { status.touch(|s| s.ready_fallback = true); }
+            due
+        };
+        *lock(&self.0.gate_armed) = None;
+        if fell_back {
+            self.note(&format!("[lsp] no workspace-ready report within {} s; pulling anyway (empty results stay provisional)", self.0.limits.ready_fallback.as_secs()));
         }
     }
 
@@ -368,6 +392,7 @@ impl Session {
                     }
                     let line = format!("[lsp] ready after {} ms: {}", started.elapsed().as_millis(), negotiated.summary_line());
                     let notes = negotiated.notes.clone();
+                    if lock(&self.0.status).workspace_ready == Some(false) { *lock(&self.0.gate_armed) = Some(Instant::now()); }
                     if lock(&self.0.status).set_ready(negotiated) {
                         let mut logs = lock(&self.0.logs);
                         logs.push(LogLine { source: LogSource::Log, severity: 3, text: line });
@@ -466,7 +491,10 @@ impl Session {
                         text: format!("[lsp] server status {}: {}", health.health, health.message.as_deref().unwrap_or("")) });
                 }
                 lock(&self.0.status).touch(|s| {
-                    if health.quiescent == Some(true) && health.health != "error" && s.workspace_ready == Some(false) { s.workspace_ready = Some(true); }
+                    if health.quiescent == Some(true) && health.health != "error" && s.workspace_ready == Some(false) {
+                        s.workspace_ready = Some(true);
+                        s.ready_fallback = false;
+                    }
                     s.health = Some(health);
                 });
                 self.0.changed.notify_all();
@@ -774,7 +802,7 @@ impl Session {
             return Err(PullError::NotSynced);
         }
         let mut params = json!({ "textDocument": { "uri": uri } });
-        if lock(&self.0.status).workspace_ready == Some(false) { return Err(PullError::NotReady); }
+        { let s = lock(&self.0.status); if s.workspace_ready == Some(false) && !s.ready_fallback { return Err(PullError::NotReady); } }
         if let Some(identifier) = pull.identifier { params["identifier"] = Value::String(identifier); }
         if let Some(previous) = previous_result_id { params["previousResultId"] = Value::String(previous.into()); }
         self.cancel_pull(uri);
@@ -811,8 +839,9 @@ impl Session {
             // The readiness gate re-arms; the frontend's wave follows the next ready report.
             lock(&session.0.status).touch(|s| {
                 s.reloads += 1;
-                if s.workspace_ready.is_some() { s.workspace_ready = Some(false); }
+                if s.workspace_ready.is_some() { s.workspace_ready = Some(false); s.ready_fallback = false; }
             });
+            if lock(&session.0.status).workspace_ready == Some(false) { *lock(&session.0.gate_armed) = Some(Instant::now()); }
             session.0.changed.notify_all();
             if session.request(&method, Value::Null, RELOAD_TIMEOUT) != Ok(Outcome::Result(Value::Null)) {
                 session.note(&format!("[lsp] workspace reload got no reply within {} s", RELOAD_TIMEOUT.as_secs()));

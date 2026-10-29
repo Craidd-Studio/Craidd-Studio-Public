@@ -6,7 +6,7 @@ import { useSplit } from "../../store/splitStore";
 import { appendLspOutput, serverName, useLsp, type LspSessionView } from "../../store/lspStore";
 import { LANGUAGES } from "../languages";
 import { DocumentTracker, type Binding, type DocTransport } from "./documents";
-import { DiagnosticsModel, type Attribution, type Route } from "./diagnostics";
+import { DiagnosticsModel, isAuthoritative, type Attribution, type Route } from "./diagnostics";
 import { PullScheduler, type PullReply, type PullReport } from "./pulls";
 import { fileUri, isTerminal, uriToPath, toMonacoRange, type Batch, type ContentChange, type DocView, type LspDiagnostic, type StatusRecord } from "./protocol";
 import { metrics } from "./metrics";
@@ -89,12 +89,12 @@ function activeFiles(): string[] {
 
 // ---- Diagnostics: one store write per frame, markers only for changed open models ----
 
-type Pending = { session: number; uri: string; route: Route; items: LspDiagnostic[] | null };
+type Pending = { session: number; uri: string; route: Route; items: LspDiagnostic[] | null; authoritative: boolean };
 const pendingDiagnostics = new Map<string, Pending>();
 let frameQueued = false;
 
-function queueDiagnostics(session: number, uri: string, route: Route, items: LspDiagnostic[] | null): void {
-  pendingDiagnostics.set(`${session}\u0000${route}\u0000${uri}`, { session, uri, route, items });
+function queueDiagnostics(session: number, uri: string, route: Route, items: LspDiagnostic[] | null, authoritative = true): void {
+  pendingDiagnostics.set(`${session}\u0000${route}\u0000${uri}`, { session, uri, route, items, authoritative });
   metrics.arrival(route);
   if (frameQueued) return;
   frameQueued = true;
@@ -151,7 +151,10 @@ function flushDiagnostics(): void {
     const wrote = update.items === null
       ? diagnostics.clearPull(update.session, update.uri)
       : diagnostics.apply(update.session, update.uri, update.route, update.items, isOpenUri);
-    if (update.route === "pull" && update.items !== null) diagnostics.markKnown(update.session, update.uri);
+    if (update.route === "pull" && update.items !== null) {
+      if (update.authoritative) diagnostics.markKnown(update.session, update.uri);
+      else diagnostics.clearKnown(update.session, update.uri);
+    }
     if (wrote) { changed.push(update); metrics.storeWrite(update.route); }
     else if (knownBefore !== diagnostics.isKnown(update.session, update.uri)) publishUnknown();
   }
@@ -260,8 +263,8 @@ function onStatus(generation: number, status: StatusRecord): void {
     scheduler?.writerRoom();
     for (const fileId of tracker.pendingBound(generation)) if (activeFiles().includes(fileId)) void activateBound(fileId);
   }
-  // Decision 20: not ready → ready (first load, or after a reload) seeds every Open document.
-  if (status.workspaceReady === true && previous?.workspaceReady === false) {
+  // Decision 20: not ready → ready (first load, or after a reload), or the bounded fallback, seeds every Open document.
+  if ((status.workspaceReady === true && previous?.workspaceReady === false) || (status.readyFallback && previous && !previous.readyFallback)) {
     awaitingReady.delete(generation);
     scheduler?.ready();
   }
@@ -317,7 +320,10 @@ function pullHost(session: number) {
     flush: (fileId: string) => tracker.flush(fileId),
     accept: (fileId: string, report: PullReport) => {
       metrics.pullReport(report.kind);
-      if (report.kind === "full") queueDiagnostics(session, tracker.binding(fileId)!.uri, "pull", report.items);
+      if (report.kind === "full") {
+        const ready = lastStatus.get(session)?.workspaceReady;
+        queueDiagnostics(session, tracker.binding(fileId)!.uri, "pull", report.items, isAuthoritative(ready, report.items.length));
+      }
     },
     degraded: (message: string | null) => {
       if (useLsp.getState().sessions[session]?.pullDegraded !== message) updateSession(session, { pullDegraded: message });

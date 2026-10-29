@@ -261,3 +261,11 @@ test("attribution is looked up at display time: pending, owned, ambiguous and ex
   assert.deepEqual([rows.both.projectName, rows.both.external], ["ambiguous: a, b", false]);
   assert.equal(rows.outside.external, true);
 });
+
+test("decision 20 fallback: early empty reports are provisional, non-empty ones are real", async () => {
+  const { isAuthoritative } = await import("../src/lib/lsp/diagnostics.ts");
+  assert.equal(isAuthoritative(false, 0), false, "empty before readiness: unknown, never 'no problems'");
+  assert.equal(isAuthoritative(false, 2), true);
+  assert.equal(isAuthoritative(true, 0), true);
+  assert.equal(isAuthoritative(null, 0), true, "a server with no status reporting is not gated");
+});

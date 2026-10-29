@@ -677,3 +677,22 @@ fn v2_a_watch_limit_line_on_stderr_warns_on_the_chip_and_stays_in_output() {
     assert!(quiet.status().watcher_warning.is_none(), "ordinary stderr never warns");
     quiet.stop();
 }
+
+#[test]
+fn decision_20_a_missing_ready_report_falls_back_after_the_bound() {
+    let mut limits = limits();
+    limits.ready_fallback = Duration::from_millis(600);
+    // Declares the status notification; the fake never sends one.
+    let session = Session::start(status_spec("pull"), limits, 1);
+    assert!(session.wait_until(WAIT, |s| s.phase == Phase::Ready));
+    session.open_document(DOC, "rust", "bad()").unwrap();
+    assert!(matches!(session.begin_pull(DOC, None), Err(super::session::PullError::NotReady)));
+    assert!(session.wait_until(WAIT, |s| s.ready_fallback), "suppression is bounded");
+    assert_eq!(session.status().workspace_ready, Some(false), "still not ready: results stay provisional");
+    assert!(log_text(&session, "[lsp] no workspace-ready report").is_some());
+    assert!(matches!(pull(&session, None), Outcome::Result(_)));
+    // A real ready report ends the fallback.
+    session.notify("test/quiesce", json!({})).unwrap();
+    assert!(session.wait_until(WAIT, |s| s.workspace_ready == Some(true) && !s.ready_fallback));
+    session.stop();
+}

@@ -44,6 +44,10 @@ pub(crate) struct StatusRecord {
     /// health other than `error`, and false again after a workspace reload.
     /// Pulls wait for it, because an earlier empty report proves nothing.
     pub workspace_ready: Option<bool>,
+    /// Decision 20 fallback: the server declared status notifications but
+    /// sent no ready report within the bound, so pulls proceed. Until real
+    /// readiness, an empty report is not proof of zero diagnostics.
+    pub ready_fallback: bool,
     /// `rust-analyzer/reloadWorkspace` requests sent (decision on V27).
     pub reloads: u64,
     /// V2: the latest server line that reports a file-watcher failure, raw.
@@ -56,7 +60,7 @@ pub(crate) struct StatusRecord {
 impl StatusRecord {
     pub(crate) fn new(generation: u64) -> Self {
         Self { generation, phase: Phase::Spawning, terminal_reason: None, caps: None, resync: BTreeSet::new(),
-            refresh: 0, writer_room: 0, unresponsive: false, health: None, workspace_ready: None, reloads: 0, watcher_warning: None, revision: 0 }
+            refresh: 0, writer_room: 0, unresponsive: false, health: None, workspace_ready: None, ready_fallback: false, reloads: 0, watcher_warning: None, revision: 0 }
     }
 
     /// Any non-phase field change goes through here so the revision moves.

@@ -40,6 +40,15 @@ export interface LspProblem {
   external: boolean;
 }
 
+/**
+ * Decision 20: is an accepted pull report proof of the file's diagnostics?
+ * Before the workspace has reported ready (the bounded fallback), an empty
+ * report clears the set but leaves the route unknown; a non-empty one is real.
+ */
+export function isAuthoritative(workspaceReady: boolean | null | undefined, itemCount: number): boolean {
+  return workspaceReady !== false || itemCount > 0;
+}
+
 const keyOf = (session: number, uri: string, route: Route) => `${session}\u0000${route}\u0000${uri}`;
 
 export class DiagnosticsModel {
@@ -80,6 +89,7 @@ export class DiagnosticsModel {
   /** An accepted pull report (including an authoritative empty one) makes the pull route known. */
   markKnown(session: number, uri: string): void { this.known.add(keyOf(session, uri, "pull")); }
   isKnown(session: number, uri: string): boolean { return this.known.has(keyOf(session, uri, "pull")); }
+  clearKnown(session: number, uri: string): void { this.known.delete(keyOf(session, uri, "pull")); }
 
   /** Closing a document clears its pull set (decision 18); its push set stays. */
   clearPull(session: number, uri: string): boolean {
