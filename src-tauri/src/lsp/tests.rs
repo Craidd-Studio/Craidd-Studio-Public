@@ -541,3 +541,110 @@ fn v27_workspace_reloads_are_coalesced() {
     session.stop();
     assert_clean_end(&session, Phase::Exited, "stopped");
 }
+
+/// Opt-in smoke test against an installed rust-analyzer (skips cleanly when
+/// absent): `cargo test --lib real_rust_analyzer -- --ignored --nocapture`.
+/// Prints the measured timings and facts for the Stage 1b record.
+#[test]
+#[ignore]
+fn real_rust_analyzer_smoke() {
+    use super::adapter::{LanguageAdapter, ProjectRef};
+    use super::rust_adapter::RustAdapter;
+    let which = |name: &str| std::process::Command::new("which").arg(name).output().ok()
+        .filter(|o| o.status.success()).map(|o| PathBuf::from(String::from_utf8_lossy(&o.stdout).trim()));
+    let (Some(server), Some(cargo)) = (which("rust-analyzer"), which("cargo")) else { eprintln!("rust-analyzer or cargo absent: skipped"); return; };
+    let version = String::from_utf8_lossy(&std::process::Command::new(&server).arg("--version").output().unwrap().stdout).trim().to_string();
+    let dir = std::env::temp_dir().join(format!("craidd-ra-smoke-{}", std::process::id()));
+    let _ = std::fs::remove_dir_all(&dir);
+    std::fs::create_dir_all(dir.join("src")).unwrap();
+    let manifest = "[package]\nname = \"smoke\"\nversion = \"0.1.0\"\nedition = \"2021\"\n";
+    std::fs::write(dir.join("Cargo.toml"), manifest).unwrap();
+    let main = "mod util;\nfn main() { util::ok(1); }\n";
+    std::fs::write(dir.join("src/main.rs"), main).unwrap();
+    std::fs::write(dir.join("src/util.rs"), "pub fn ok() {}\n").unwrap();
+    let tool = (server.clone(), version.clone());
+    let adapter = RustAdapter::with(move || Ok(ToolRef { path: tool.0.clone(), version: tool.1.clone() }), move || Ok(cargo.clone()), Duration::from_secs(10));
+    let project = ProjectRef { id: "smoke".into(), name: "smoke".into(), language: "rust".into(), folder: dir.clone() };
+    let context = adapter.resolve(&project).unwrap();
+    let started = Instant::now();
+    let session = Session::start(context.launch_spec(adapter.configuration_section()), Limits::default(), 1);
+    let long = Duration::from_secs(120);
+    assert!(session.wait_until(long, |s| s.phase == Phase::Ready || s.phase.is_terminal()));
+    assert_eq!(session.status().phase, Phase::Ready, "{:?}", session.status().terminal_reason);
+    let ready_ms = started.elapsed().as_millis();
+    let uri = super::adapter::file_uri(&dir.join("src/main.rs"));
+    session.open_document(&uri, "rust", main).unwrap();
+    let gated = matches!(session.begin_pull(&uri, None), Err(super::session::PullError::NotReady));
+    assert!(session.wait_until(long, |s| s.workspace_ready == Some(true)), "never quiescent: {:?}", session.status().health);
+    let quiescent_ms = started.elapsed().as_millis();
+    let first = session.begin_pull(&uri, None).unwrap().wait(long);
+    let Outcome::Result(report) = &first else { panic!("pull: {first:?}") };
+    let codes: Vec<String> = report["items"].as_array().unwrap().iter().map(|d| format!("{}:{}", d["source"], d["code"])).collect();
+    assert!(codes.iter().any(|c| c.contains("E0061")), "pull reports the argument-count break: {codes:?}");
+    let second = session.begin_pull(&uri, report["resultId"].as_str()).unwrap().wait(long);
+    session.save_document(&uri, main).unwrap();
+    let saved = Instant::now();
+    let mut pushed = None;
+    while pushed.is_none() && saved.elapsed() < long {
+        if let Some(batch) = session.next_batch(256, 1 << 20, 1000) {
+            for event in batch.events {
+                if let Delivered::Diagnostics { uri: u, diagnostics, .. } = event {
+                    if u == uri && !diagnostics.is_empty() { pushed = Some((saved.elapsed().as_millis(), diagnostics.iter().map(|d| d["source"].to_string()).collect::<Vec<_>>())); }
+                }
+            }
+            session.ack_batch();
+        } else { session.wait_for_delivery(Duration::from_millis(200)); }
+    }
+    // V27: break the manifest, then fix it; health recovers only after a reload.
+    std::fs::write(dir.join("Cargo.toml"), "[package\nname = \"smoke\"\n").unwrap();
+    let broke = session.wait_until(Duration::from_secs(60), |s| s.health.as_ref().is_some_and(|h| h.health == "error"));
+    let broken_message = session.status().health.and_then(|h| h.message);
+    std::fs::write(dir.join("Cargo.toml"), manifest).unwrap();
+    let recovered_alone = session.wait_until(Duration::from_secs(10), |s| s.health.as_ref().is_some_and(|h| h.health == "ok"));
+    let reload_at = Instant::now();
+    let reloaded = !recovered_alone && session.reload_workspace("Cargo.toml changed");
+    let recovered = recovered_alone || session.wait_until(Duration::from_secs(60), |s| s.health.as_ref().is_some_and(|h| h.health == "ok"));
+    eprintln!("[smoke] server: {version}");
+    eprintln!("[smoke] ready after {ready_ms} ms; workspace quiescent after {quiescent_ms} ms; pull refused before readiness: {gated}");
+    eprintln!("[smoke] first pull: kind {} resultId {:?} items {codes:?}", report["kind"], report["resultId"]);
+    eprintln!("[smoke] second pull with previousResultId: {second:?}");
+    eprintln!("[smoke] push after didSave: {pushed:?}");
+    eprintln!("[smoke] broken manifest -> health error: {broke} ({broken_message:?}); recovered without reload in 10 s: {recovered_alone}; reload sent: {reloaded}; recovered: {recovered} ({} ms after reload)", reload_at.elapsed().as_millis());
+    eprintln!("[smoke] refreshes answered: {}, reloads: {}", session.counters().refreshes, session.status().reloads);
+    assert!(pushed.is_some(), "cargo check pushes after didSave");
+    assert!(recovered, "health returns to ok after the manifest is fixed");
+    session.stop();
+    assert_clean_end(&session, Phase::Exited, "stopped");
+    let _ = std::fs::remove_dir_all(&dir);
+}
+
+/// V27 variant: the session starts with a broken manifest that is fixed later.
+#[test]
+#[ignore]
+fn real_rust_analyzer_broken_at_start_recovers_through_reload() {
+    use super::adapter::{LanguageAdapter, ProjectRef};
+    use super::rust_adapter::RustAdapter;
+    let which = |name: &str| std::process::Command::new("which").arg(name).output().ok()
+        .filter(|o| o.status.success()).map(|o| PathBuf::from(String::from_utf8_lossy(&o.stdout).trim()));
+    let (Some(server), Some(cargo)) = (which("rust-analyzer"), which("cargo")) else { eprintln!("absent: skipped"); return; };
+    let dir = std::env::temp_dir().join(format!("craidd-ra-broken-{}", std::process::id()));
+    let _ = std::fs::remove_dir_all(&dir);
+    std::fs::create_dir_all(dir.join("src")).unwrap();
+    std::fs::write(dir.join("Cargo.toml"), "[package\nname = \"smoke\"\n").unwrap();
+    std::fs::write(dir.join("src/main.rs"), "fn main() {}\n").unwrap();
+    let adapter = RustAdapter::with(move || Ok(ToolRef { path: server.clone(), version: "installed".into() }), move || Ok(cargo.clone()), Duration::from_secs(10));
+    let project = ProjectRef { id: "b".into(), name: "b".into(), language: "rust".into(), folder: dir.clone() };
+    let session = Session::start(adapter.resolve(&project).unwrap().launch_spec("rust-analyzer"), Limits::default(), 1);
+    assert!(session.wait_until(Duration::from_secs(60), |s| s.phase == Phase::Ready));
+    let broke = session.wait_until(Duration::from_secs(60), |s| s.health.as_ref().is_some_and(|h| h.health == "error"));
+    std::fs::write(dir.join("Cargo.toml"), "[package]\nname = \"smoke\"\nversion = \"0.1.0\"\nedition = \"2021\"\n").unwrap();
+    let alone = session.wait_until(Duration::from_secs(15), |s| s.health.as_ref().is_some_and(|h| h.health == "ok"));
+    let at = Instant::now();
+    if !alone { assert!(session.reload_workspace("Cargo.toml changed")); }
+    let recovered = alone || session.wait_until(Duration::from_secs(60), |s| s.health.as_ref().is_some_and(|h| h.health == "ok"));
+    eprintln!("[broken-start] error at start: {broke}; recovered without reload in 15 s: {alone}; recovered after reload: {recovered} in {} ms; reloads {}",
+        at.elapsed().as_millis(), session.status().reloads);
+    assert!(recovered);
+    session.stop();
+    let _ = std::fs::remove_dir_all(&dir);
+}

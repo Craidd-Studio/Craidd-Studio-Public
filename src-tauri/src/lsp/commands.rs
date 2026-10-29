@@ -314,8 +314,10 @@ pub(crate) fn lsp_cancel_pull(window: WebviewWindow, state: State<'_, LspManager
 }
 
 /// Window focus and Craidd saves of a manifest: if an affected Cargo.toml
-/// changed since last seen, ask that session to reload its workspace
-/// (decision on V27). Unchanged stamps send nothing, so reloads are not redundant.
+/// changed since last seen and the server is not healthy, ask that session
+/// to reload its workspace (decision on V27). Measured on rust-analyzer
+/// 2026-09-06: a workspace that never loaded stays `error` after the fix
+/// until reloaded; one that broke mid-session recovers by itself.
 #[tauri::command]
 pub(crate) fn lsp_check_manifests(window: WebviewWindow, state: State<'_, LspManager>) -> Vec<u64> {
     let Some(lsp) = lock(&state.windows).get(window.label()).cloned() else { return vec![]; };
@@ -326,7 +328,12 @@ pub(crate) fn lsp_check_manifests(window: WebviewWindow, state: State<'_, LspMan
             let now = stamp(path);
             if now != *seen { *seen = now; changed.push(path.display().to_string()); }
         }
-        if !changed.is_empty() && tracked.session.reload_workspace(&format!("{} changed", changed.join(", "))) { reloaded.push(*generation); }
+        // A healthy server reloads changed manifests itself (measured); only an unhealthy
+        // one needs the request, so routine edits never cause a redundant reload.
+        let healthy = tracked.session.status().health.is_some_and(|h| h.health == "ok");
+        if !changed.is_empty() && !healthy && tracked.session.reload_workspace(&format!("{} changed", changed.join(", "))) {
+            reloaded.push(*generation);
+        }
     }
     reloaded
 }
