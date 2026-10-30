@@ -168,7 +168,7 @@ impl LanguageAdapter for RustAdapter {
     fn language(&self) -> &'static str { "rust" }
     fn document_extensions(&self) -> &'static [&'static str] { &["rs"] }
     fn configuration_section(&self) -> &'static str { "rust-analyzer" }
-    fn workspace_manifests(&self, project: &ProjectRef) -> Option<Vec<PathBuf>> { self.workspace(&project.folder).ok().map(|w| w.manifests) }
+    fn workspace_layout(&self, project: &ProjectRef) -> Option<(PathBuf, Vec<PathBuf>)> { self.workspace(&project.folder).ok().map(|w| (w.root, w.manifests)) }
 
     fn resolve(&self, project: &ProjectRef) -> Result<ServerContext, ResolveNote> {
         let implementation = (self.tool)().map_err(ResolveNote)?;
@@ -227,7 +227,7 @@ mod tests {
         let manifests: Vec<PathBuf> = found.manifests.iter().map(|p| canon(p)).collect();
         assert!(manifests.contains(&canon(&ws.0.join("Cargo.toml"))) && manifests.contains(&canon(&ws.0.join("a/Cargo.toml"))));
         assert!(!manifests.contains(&canon(&ws.0.join("tools/gen/Cargo.toml"))), "{manifests:?}");
-        assert!(!super::super::commands::manifest_affects(&ws.0.join("tools/gen/Cargo.toml"), &found.root, Some(&found.manifests), Some(&found.manifests)));
+        assert!(!super::super::commands::manifest_affects(&ws.0.join("tools/gen/Cargo.toml"), &found.root, &[&found.manifests]));
     }
 
     #[test]

@@ -341,59 +341,90 @@ pub(crate) fn lsp_cancel_pull(window: WebviewWindow, state: State<'_, LspManager
     Ok(())
 }
 
-/// Decision 21: is `path` an affected manifest? It must belong to the
-/// resolved workspace (the root's manifest or a member's), judged before and
-/// after the change; a nested crate that is not a member never is. Only when
-/// membership is unknown on both sides (a broken manifest) does any
-/// `Cargo.toml` under the session root count.
-pub(crate) fn manifest_affects(path: &Path, root: &Path, before: Option<&[PathBuf]>, now: Option<&[PathBuf]>) -> bool {
+/// Only manifests can trigger anything; `Cargo.lock` and other files never do.
+pub(crate) fn is_manifest(path: &Path) -> bool { path.file_name().and_then(|n| n.to_str()) == Some("Cargo.toml") }
+
+/// Decision 33: affected means actual workspace membership: the root
+/// manifest the session was started with, or a package manifest listed by a
+/// successful `cargo metadata` result (`known`: the last one kept by the
+/// session, and the fresh one if the change left the workspace resolvable).
+/// A nested separate crate, a manifest under `target/` or in a vendored
+/// directory is not a member. If metadata never succeeded, membership is
+/// unknown beyond the root manifest: a broken member is not recognised and
+/// recovery is the manual restart.
+pub(crate) fn manifest_affects(path: &Path, root: &Path, known: &[&[PathBuf]]) -> bool {
     let canon = |p: &Path| p.canonicalize().unwrap_or_else(|_| p.to_path_buf());
     let path = canon(path);
-    let listed = |members: Option<&[PathBuf]>| members.map(|m| m.iter().any(|p| canon(p) == path));
-    match (listed(before), listed(now)) {
-        (Some(true), _) | (_, Some(true)) => true,
-        (None, None) => path.starts_with(canon(root)) && path.file_name().and_then(|n| n.to_str()) == Some("Cargo.toml"),
-        _ => false,
-    }
+    path == canon(&root.join("Cargo.toml")) || known.iter().any(|members| members.iter().any(|p| canon(p) == path))
 }
 
-/// Decision 21's bounds: only a Ready session, only when health is not `ok`
-/// (a healthy server reloads by itself, measured), only for an affected
-/// manifest whose content differs from the one last reloaded against.
-pub(crate) fn should_reload(ready: bool, healthy: bool, affected: bool, same_as_last_reload: bool) -> bool {
-    ready && !healthy && affected && !same_as_last_reload
+#[derive(Debug, PartialEq, Eq)]
+pub(crate) enum ManifestAction { Nothing, Reload, Restart }
+
+/// Decision 21/33 bounds. A change that moved the workspace root is a new
+/// server identity: a clean restart (A1), never a reload. Otherwise a reload
+/// only for a Ready session whose health is not `ok` (a healthy server reloads
+/// by itself, measured) and whose manifest content differs from the last reload.
+pub(crate) fn manifest_action(affected: bool, root_changed: bool, ready: bool, healthy: bool, same_as_last_reload: bool) -> ManifestAction {
+    if !affected { ManifestAction::Nothing }
+    else if root_changed { ManifestAction::Restart }
+    else if ready && !healthy && !same_as_last_reload { ManifestAction::Reload }
+    else { ManifestAction::Nothing }
 }
+
+#[derive(Serialize, Default)]
+#[serde(rename_all = "camelCase")]
+pub(crate) struct ManifestReply { reloaded: Vec<u64>, restarted: Vec<u64> }
 
 /// Craidd saved, or reloaded from disk, the manifest at `path`. A manifest
 /// changed by another program is not detected here (the accepted
 /// external-change limitation); the manual restart stays.
 #[tauri::command]
-pub(crate) async fn lsp_manifest_changed(window: WebviewWindow, state: State<'_, LspManager>, path: String) -> Result<Vec<u64>, String> {
-    let Some(lsp) = lock(&state.windows).get(window.label()).cloned() else { return Ok(vec![]); };
+pub(crate) async fn lsp_manifest_changed(window: WebviewWindow, state: State<'_, LspManager>, path: String) -> Result<ManifestReply, String> {
+    let Some(lsp) = lock(&state.windows).get(window.label()).cloned() else { return Ok(ManifestReply::default()); };
     let path = PathBuf::from(path);
-    if path.file_name().and_then(|n| n.to_str()) != Some("Cargo.toml") { return Ok(vec![]); }
+    if !is_manifest(&path) { return Ok(ManifestReply::default()); }
+    let rust = state.rust.clone();
     tauri::async_runtime::spawn_blocking(move || {
         let content = std::fs::read(&path).ok().map(|bytes| super::adapter::configuration_identity(&Value::String(String::from_utf8_lossy(&bytes).into()), &[]));
         let candidates: Vec<(u64, super::adapter::ProjectRef, String)> = lock(&lsp.sessions).iter()
             .map(|(generation, t)| (*generation, t.project.clone(), t.language.clone())).collect();
-        let mut reloaded = vec![];
+        let mut reply = ManifestReply::default();
         for (generation, project, language) in candidates {
-            // Fresh membership through the adapter's stamp-keyed cache (bounded `cargo metadata`).
-            let now = lsp.adapters.iter().find(|a| a.language() == language).and_then(|a| a.workspace_manifests(&project));
+            // Fresh layout through the adapter's stamp-keyed cache (bounded `cargo metadata`).
+            let fresh = lsp.adapters.iter().find(|a| a.language() == language).and_then(|a| a.workspace_layout(&project));
             let mut sessions = lock(&lsp.sessions);
             let Some(tracked) = sessions.get_mut(&generation) else { continue; };
-            let affected = manifest_affects(&path, &tracked.root, tracked.members.as_deref(), now.as_deref());
-            if now.is_some() { tracked.members = now; }
+            let mut known: Vec<&[PathBuf]> = vec![];
+            if let Some(members) = &tracked.members { known.push(members); }
+            if let Some((_, members)) = &fresh { known.push(members); }
+            let affected = manifest_affects(&path, &tracked.root, &known);
+            let canon = |p: &Path| p.canonicalize().unwrap_or_else(|_| p.to_path_buf());
+            let root_changed = fresh.as_ref().is_some_and(|(root, _)| canon(root) != canon(&tracked.root));
+            if let Some((_, members)) = &fresh { if !root_changed { tracked.members = Some(members.clone()); } }
             let status = tracked.session.status();
             let same = content.is_some() && tracked.reloaded_against.get(&path) == content.as_ref();
             let healthy = status.health.is_some_and(|h| h.health == "ok");
-            if !should_reload(status.phase == super::delivery::Phase::Ready, healthy, affected, same) { continue; }
-            if tracked.session.reload_workspace(&format!("{} changed", path.display())) {
-                if let Some(hash) = content { tracked.reloaded_against.insert(path.clone(), hash); }
-                reloaded.push(generation);
+            match manifest_action(affected, root_changed, status.phase == super::delivery::Phase::Ready, healthy, same) {
+                ManifestAction::Nothing => {}
+                ManifestAction::Reload => {
+                    if tracked.session.reload_workspace(&format!("{} changed", path.display())) {
+                        if let Some(hash) = content { tracked.reloaded_against.insert(path.clone(), hash); }
+                        reply.reloaded.push(generation);
+                    }
+                }
+                ManifestAction::Restart => {
+                    let tracked = sessions.remove(&generation).expect("present");
+                    drop(sessions);
+                    tracked.session.note(&format!("[lsp] {} changed the workspace root; restarting with the new identity", path.display()));
+                    rust.forget(&tracked.project_folder);
+                    lsp.registry.retire(&tracked.identity);
+                    tracked.session.stop();
+                    reply.restarted.push(generation);
+                }
             }
         }
-        reloaded
+        reply
     }).await.map_err(|e| e.to_string())
 }
 
@@ -452,29 +483,62 @@ mod tests {
     use crate::ownership::tests::{languages, project, solution, Scripted};
 
     #[test]
-    fn decision_21_only_workspace_manifests_are_affected() {
+    fn decision_33_only_workspace_manifests_are_affected() {
         let root = Path::new("/ws");
         let members = vec![PathBuf::from("/ws/Cargo.toml"), PathBuf::from("/ws/a/Cargo.toml")];
-        assert!(manifest_affects(Path::new("/ws/a/Cargo.toml"), root, Some(&members), Some(&members)));
-        assert!(manifest_affects(Path::new("/ws/Cargo.toml"), root, Some(&members), None), "the root manifest, now broken");
-        assert!(!manifest_affects(Path::new("/ws/tools/gen/Cargo.toml"), root, Some(&members), Some(&members)),
-            "a nested separate crate under the root is not a member");
-        assert!(!manifest_affects(Path::new("/elsewhere/Cargo.toml"), root, Some(&members), Some(&members)), "a non-member manifest");
-        assert!(!manifest_affects(Path::new("/ws/tools/gen/Cargo.toml"), root, Some(&members), None), "known membership is not widened by a failure");
-        assert!(manifest_affects(Path::new("/ws/tools/gen/Cargo.toml"), root, None, None), "membership unknown on both sides: anything under the root");
-        assert!(!manifest_affects(Path::new("/other/Cargo.toml"), root, None, None));
-        let mut added = members.clone();
-        added.push(PathBuf::from("/ws/b/Cargo.toml"));
-        assert!(manifest_affects(Path::new("/ws/b/Cargo.toml"), root, Some(&members), Some(&added)), "a newly added member counts");
+        let known: &[&[PathBuf]] = &[&members];
+        assert!(manifest_affects(Path::new("/ws/a/Cargo.toml"), root, known));
+        assert!(manifest_affects(Path::new("/ws/Cargo.toml"), root, known));
+        for outside in ["/ws/tools/gen/Cargo.toml", "/ws/target/debug/build/x/out/Cargo.toml", "/ws/vendor/serde/Cargo.toml", "/elsewhere/Cargo.toml"] {
+            assert!(!manifest_affects(Path::new(outside), root, known), "{outside} is not a member");
+        }
+        // Metadata never succeeded (broken from the start): the root manifest only.
+        assert!(manifest_affects(Path::new("/ws/Cargo.toml"), root, &[]));
+        for unknown in ["/ws/a/Cargo.toml", "/ws/tools/gen/Cargo.toml", "/ws/target/x/Cargo.toml", "/ws/vendor/serde/Cargo.toml"] {
+            assert!(!manifest_affects(Path::new(unknown), root, &[]), "{unknown}: membership is unknown beyond the root manifest");
+        }
+        // The last successful result is kept; a fresh one adds a new member.
+        let added = vec![PathBuf::from("/ws/Cargo.toml"), PathBuf::from("/ws/a/Cargo.toml"), PathBuf::from("/ws/b/Cargo.toml")];
+        assert!(manifest_affects(Path::new("/ws/b/Cargo.toml"), root, &[&members, &added]));
     }
 
     #[test]
-    fn decision_21_reloads_are_never_redundant() {
-        assert!(should_reload(true, false, true, false));
-        assert!(!should_reload(true, true, true, false), "a healthy-state save sends nothing");
-        assert!(!should_reload(true, false, true, true), "content equal to the last reload sends nothing");
-        assert!(!should_reload(true, false, false, false), "a non-member manifest sends nothing");
-        assert!(!should_reload(false, false, true, false), "not Ready sends nothing");
+    fn decision_33_cargo_lock_and_other_files_never_trigger() {
+        assert!(is_manifest(Path::new("/ws/Cargo.toml")));
+        for other in ["/ws/Cargo.lock", "/ws/cargo.toml", "/ws/Cargo.toml.orig", "/ws/src/main.rs"] {
+            assert!(!is_manifest(Path::new(other)), "{other}");
+        }
+    }
+
+    #[test]
+    fn decision_33_reloads_are_never_redundant_and_identity_changes_restart() {
+        use ManifestAction::*;
+        assert_eq!(manifest_action(true, false, true, false, false), Reload);
+        assert_eq!(manifest_action(true, false, true, true, false), Nothing, "a healthy-state save sends nothing");
+        assert_eq!(manifest_action(true, false, true, false, true), Nothing, "content equal to the last reload sends nothing");
+        assert_eq!(manifest_action(false, false, true, false, false), Nothing, "a non-member manifest sends nothing");
+        assert_eq!(manifest_action(false, true, true, false, false), Nothing, "a non-member cannot restart either");
+        assert_eq!(manifest_action(true, false, false, false, false), Nothing, "not Ready sends nothing");
+        assert_eq!(manifest_action(true, true, true, false, false), Restart, "a moved workspace root is a new identity: restart, not reload");
+        assert_eq!(manifest_action(true, true, true, true, false), Restart, "even when healthy");
+    }
+
+    #[test]
+    fn decision_30_explicit_includes_and_ambiguous_files_come_from_the_resolver() {
+        let table: HashMap<String, LanguageFiles> = ["rust", "typescript"].iter().filter_map(|l| languages(l).map(|f| (l.to_string(), f))).collect();
+        let mut app = project("app", "app/app.craidd", "rust");
+        app.main_include = vec!["inner/src/lib.rs".into()];
+        let s = solution(vec![app, project("inner", "app/inner/inner.craidd", "rust")]);
+        let mut probe = Scripted::default();
+        probe.markers.insert("/ws/app/inner".into());
+        let got = attribute(&["/ws/app/inner/src/lib.rs".into(), "/ws/app/inner/src/other.rs".into()], &s, &table, &probe);
+        assert_eq!(got[0].project_name.as_deref(), Some("app"), "an explicit include wins over the nested project");
+        assert_eq!(got[1].project_name.as_deref(), Some("inner"));
+        // Two projects in one folder claiming the same file: reported, never guessed.
+        let s = solution(vec![project("a", "x/x.craidd", "typescript"), project("b", "x/x.ts.craidd", "typescript")]);
+        let got = attribute(&["/ws/x/a.ts".into()], &s, &table, &Scripted::default());
+        assert_eq!(got[0].project_id, None);
+        assert_eq!(got[0].ambiguous, vec!["a".to_string(), "b".to_string()]);
     }
 
     #[test]

@@ -59,6 +59,18 @@ export interface PullHost {
   degraded(message: string | null): void;
 }
 
+/**
+ * Decisions 20, 31 and 33: did the readiness gate just open? It opens on a
+ * not-ready → ready report (the first load, or the next one after a reload
+ * re-armed the gate) and when the status-less fallback fires. That moment
+ * seeds a wave over every Open document; nothing else here does.
+ */
+export function gateOpened(previous: { workspaceReady: boolean | null; readyFallback: boolean } | undefined,
+  status: { workspaceReady: boolean | null; readyFallback: boolean }): boolean {
+  if (!previous) return false;
+  return (status.workspaceReady === true && previous.workspaceReady === false) || (status.readyFallback && !previous.readyFallback);
+}
+
 export interface Timers { now(): number; set(run: () => void, ms: number): unknown; clear(handle: unknown): void }
 export const realTimers: Timers = { now: () => performance.now(), set: (run, ms) => setTimeout(run, ms), clear: (h) => clearTimeout(h as number) };
 

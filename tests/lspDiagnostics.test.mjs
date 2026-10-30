@@ -272,3 +272,19 @@ test("decision 31: an empty report counts only if its pull was sent after readin
   assert.equal(gateOpen({ workspaceReady: true, readyFallback: false }), true);
   assert.equal(gateOpen({ workspaceReady: null, readyFallback: false }), true, "a server with no status declared is not gated");
 });
+
+test("decision 33: a reload re-arms the gate and the next ready report runs one wave over every open document", async () => {
+  const { gateOpened } = await import("../src/lib/lsp/pulls.ts");
+  const at = (workspaceReady, readyFallback = false) => ({ workspaceReady, readyFallback });
+  const timeline = [at(false), at(true), at(false) /* reload re-armed */, at(false), at(true) /* ready again */, at(true)];
+  const opened = timeline.map((status, i) => gateOpened(timeline[i - 1], status));
+  assert.deepEqual(opened, [false, true, false, false, true, false], "one opening per ready report; re-arming seeds nothing");
+  assert.equal(gateOpened(at(false), at(false, true)), true, "the status-less fallback opens the gate");
+  assert.equal(gateOpened(at(false, true), at(false, false)), false, "a status arriving later closes it again without seeding");
+  // The opening seeds one wave over every open document, visible first.
+  const h = harness({ open: ["a", "b", "c"], visible: ["c"] });
+  if (opened[4]) h.scheduler.ready();
+  await h.c.advance(250);
+  assert.deepEqual(h.sent.map(([f]) => f), ["c", "b", "a"]);
+  assert.equal(h.scheduler.stats.waves, 1);
+});

@@ -47,6 +47,8 @@ pub(crate) struct Limits {
     pub writer_low_water: usize,
     /// Decision 20: how long pulls wait for a ready report before falling back.
     pub ready_fallback: Duration,
+    /// A workspace reload that is never answered is logged, never fatal.
+    pub reload_timeout: Duration,
 }
 
 impl Default for Limits {
@@ -67,6 +69,7 @@ impl Default for Limits {
             resync_bound: Duration::from_secs(10),
             writer_low_water: 64,
             ready_fallback: Duration::from_secs(30),
+            reload_timeout: Duration::from_secs(60),
         }
     }
 }
@@ -88,9 +91,6 @@ pub(crate) struct LaunchSpec {
     /// The adapter's workspace-reload request, if its server has one.
     pub reload_method: Option<String>,
 }
-
-/// ◇ A workspace reload that is never answered is logged, never fatal.
-const RELOAD_TIMEOUT: Duration = Duration::from_secs(60);
 
 /// ◇ How often a running server's process tree is re-read.
 const TREE_REFRESH: Duration = Duration::from_millis(500);
@@ -852,8 +852,9 @@ impl Session {
             });
             if lock(&session.0.status).workspace_ready == Some(false) { *lock(&session.0.gate_armed) = Some(Instant::now()); }
             session.0.changed.notify_all();
-            if session.request(&method, Value::Null, RELOAD_TIMEOUT) != Ok(Outcome::Result(Value::Null)) {
-                session.note(&format!("[lsp] workspace reload got no reply within {} s", RELOAD_TIMEOUT.as_secs()));
+            let timeout = session.0.limits.reload_timeout;
+            if session.request(&method, Value::Null, timeout) != Ok(Outcome::Result(Value::Null)) {
+                session.note(&format!("[lsp] workspace reload got no reply within {} s", timeout.as_secs_f32()));
             }
             let mut reload = lock(&session.0.reload);
             if reload.1 && lock(&session.0.status).phase == Phase::Ready { reload.1 = false; continue; }

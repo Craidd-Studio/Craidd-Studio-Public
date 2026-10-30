@@ -48,8 +48,9 @@ pub(crate) trait LanguageAdapter: Send + Sync {
     fn resolve(&self, project: &ProjectRef) -> Result<ServerContext, ResolveNote>;
     /// The `workspace/configuration` section the server asks for.
     fn configuration_section(&self) -> &'static str;
-    /// The workspace's manifests as resolved now (cached by the adapter); `None` if unknown.
-    fn workspace_manifests(&self, _project: &ProjectRef) -> Option<Vec<PathBuf>> { None }
+    /// The workspace root and its manifests as resolved now (cached by the
+    /// adapter); `None` when they cannot be resolved (a broken manifest).
+    fn workspace_layout(&self, _project: &ProjectRef) -> Option<(PathBuf, Vec<PathBuf>)> { None }
 }
 
 /// `( implementation id, resolved root, configuration identity )`.

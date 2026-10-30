@@ -785,3 +785,41 @@ fn real_rust_analyzer_v2_watch_limit_warns() {
     let _ = std::fs::remove_dir_all(&dir);
     assert!(warned, "the watch-limit line must reach the status record");
 }
+
+#[test]
+fn decision_33_a_reload_timeout_is_logged_never_fatal() {
+    let mut limits = limits();
+    limits.reload_timeout = Duration::from_millis(300);
+    let session = Session::start(spec("hang_reload"), limits, 1);
+    assert!(session.wait_until(WAIT, |s| s.phase == Phase::Ready));
+    assert!(session.reload_workspace("Cargo.toml changed"));
+    assert!(eventually(|| log_text(&session, "[lsp] workspace reload got no reply").is_some()));
+    assert_eq!(session.status().phase, Phase::Ready, "the session survives");
+    assert_eq!(session.request("test/echo", json!(1), WAIT), Ok(Outcome::Result(json!(1))));
+    assert!(session.reload_workspace("again"), "a later change can reload again");
+    session.stop();
+    assert_clean_end(&session, Phase::Exited, "stopped");
+}
+
+#[test]
+fn decision_28_log_message_text_warns_but_show_message_does_not() {
+    let session = ready("watch_limit_log");
+    assert!(session.wait_until(WAIT, |s| s.watcher_warning.is_some()));
+    assert_eq!(session.status().watcher_warning.as_deref(), Some("notify error: OS File Watch Limit Reached."), "logMessage, any case");
+    session.stop();
+}
+
+#[test]
+fn decision_28_the_output_ring_stays_bounded_and_keeps_the_raw_lines() {
+    let mut limits = limits();
+    limits.stderr_lines = 8;
+    let session = Session::start(spec("stderr,watch_limit"), limits, 1);
+    assert!(session.wait_until(WAIT, |s| s.phase == Phase::Ready && s.watcher_warning.is_some()));
+    assert!(eventually(|| session.logs().0.iter().any(|l| l.text.ends_with("OS file watch limit reached."))));
+    let (lines, dropped) = session.logs();
+    assert!(lines.len() <= 8, "the ring bound holds: {}", lines.len());
+    assert!(dropped > 0, "older lines are dropped and counted");
+    assert!(lines.iter().any(|l| l.source == LogSource::Stderr && l.text.ends_with("WARN notify error: OS file watch limit reached.")),
+        "the raw line is kept for Output");
+    session.stop();
+}

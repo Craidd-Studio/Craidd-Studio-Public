@@ -7,7 +7,7 @@ import { appendLspOutput, serverName, useLsp, type LspSessionView } from "../../
 import { LANGUAGES } from "../languages";
 import { DocumentTracker, type Binding, type DocTransport } from "./documents";
 import { DiagnosticsModel, gateOpen, isAuthoritative, type Attribution, type Route } from "./diagnostics";
-import { PullScheduler, type PullReply, type PullReport } from "./pulls";
+import { gateOpened, PullScheduler, type PullReply, type PullReport } from "./pulls";
 import { fileUri, isTerminal, uriToPath, toMonacoRange, type Batch, type ContentChange, type DocView, type LspDiagnostic, type StatusRecord } from "./protocol";
 import { metrics } from "./metrics";
 
@@ -264,7 +264,7 @@ function onStatus(generation: number, status: StatusRecord): void {
     for (const fileId of tracker.pendingBound(generation)) if (activeFiles().includes(fileId)) void activateBound(fileId);
   }
   // Decision 20: not ready → ready (first load, or after a reload), or the bounded fallback, seeds every Open document.
-  if ((status.workspaceReady === true && previous?.workspaceReady === false) || (status.readyFallback && previous && !previous.readyFallback)) {
+  if (gateOpened(previous, status)) {
     awaitingReady.delete(generation);
     scheduler?.ready();
   }
@@ -485,7 +485,12 @@ export async function startupComplete(): Promise<void> {
     for (const tab of state.tabs) {
       if (!tab.fileId.endsWith("/Cargo.toml")) continue;
       const before = previous.tabs.find((t) => t.fileId === tab.fileId);
-      if (before && before.originalContent !== tab.originalContent) void invoke("lsp_manifest_changed", { path: tab.fileId }).catch(() => {});
+      if (before && before.originalContent !== tab.originalContent) {
+        void invoke<{ reloaded: number[]; restarted: number[] }>("lsp_manifest_changed", { path: tab.fileId })
+          // Decision 33: a moved workspace root is a new identity; the backend stopped the old session.
+          .then((reply) => { for (const generation of reply.restarted) afterRestart(generation); })
+          .catch(() => {});
+      }
     }
   });
   onActive();
@@ -494,6 +499,11 @@ export async function startupComplete(): Promise<void> {
 /** The user's restart action: the old session stops; the active document attaches a fresh one. */
 export async function restartSession(generation: number): Promise<void> {
   await invoke("lsp_restart", { session: generation });
+  afterRestart(generation);
+}
+
+/** The old session is stopping: unbind its documents and attach the active one afresh. */
+function afterRestart(generation: number): void {
   for (const fileId of tracker.sessionEnded(generation)) refreshDocInfo(fileId);
   useLsp.setState((state) => {
     const docs = { ...state.docs };

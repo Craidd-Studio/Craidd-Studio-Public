@@ -68,6 +68,10 @@ impl Fake {
 
     fn on_initialized(&mut self) {
         if self.has("stderr") { for n in 0..5 { eprintln!("fake stderr line {n}"); } }
+        if self.has("watch_limit_log") {
+            self.send(json!({"jsonrpc":"2.0","method":"window/logMessage","params":{"type":2,"message":"notify error: OS File Watch Limit Reached."}}));
+            self.send(json!({"jsonrpc":"2.0","method":"window/showMessage","params":{"type":2,"message":"ignored: OS file watch limit reached"}}));
+        }
         if self.has("watch_limit") {
             eprintln!("2026-10-29T10:00:00.000Z  WARN notify error: No path was found.");
             eprintln!("2026-10-29T10:00:01.000Z  WARN notify error: OS file watch limit reached.");
@@ -153,6 +157,7 @@ fn fake_lsp_server_entry() {
             (Some("test/echo"), Some(id)) => { let params = message["params"].clone(); fake.reply(&id, params); }
             (Some("test/quiesce_error"), _) => fake.send(json!({"jsonrpc":"2.0","method":"experimental/serverStatus","params":{"health":"error","quiescent":true,"message":"Failed to load workspaces."}})),
             (Some("test/quiesce"), _) => fake.send(json!({"jsonrpc":"2.0","method":"experimental/serverStatus","params":{"health":"ok","quiescent":true}})),
+            (Some("rust-analyzer/reloadWorkspace"), Some(_)) if fake.has("hang_reload") => { fake.reloads += 1; fake.log("reload ignored".into()); }
             (Some("rust-analyzer/reloadWorkspace"), Some(id)) => {
                 fake.reloads += 1;
                 let n = fake.reloads;
