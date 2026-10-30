@@ -823,3 +823,64 @@ fn decision_28_the_output_ring_stays_bounded_and_keeps_the_raw_lines() {
         "the raw line is kept for Output");
     session.stop();
 }
+
+/// Decision 33 against the real server: a root broken from the start, a
+/// nested non-member manifest saved (expect no reload), then the root fixed.
+/// Runs the same layout, membership and action steps as `lsp_manifest_changed`.
+#[test]
+#[ignore]
+fn real_rust_analyzer_decision_33_broken_root_ignores_a_nested_non_member() {
+    use super::adapter::{LanguageAdapter, ProjectRef};
+    use super::commands::{manifest_action, manifest_affects, ManifestAction};
+    use super::rust_adapter::RustAdapter;
+    let which = |name: &str| std::process::Command::new("which").arg(name).output().ok()
+        .filter(|o| o.status.success()).map(|o| PathBuf::from(String::from_utf8_lossy(&o.stdout).trim()));
+    let (Some(server), Some(cargo)) = (which("rust-analyzer"), which("cargo")) else { eprintln!("absent: skipped"); return; };
+    let dir = std::env::temp_dir().join(format!("craidd-ra-d33-{}", std::process::id()));
+    let _ = std::fs::remove_dir_all(&dir);
+    std::fs::create_dir_all(dir.join("src")).unwrap();
+    std::fs::write(dir.join("Cargo.toml"), "[package\nname = \"d33\"\n").unwrap();
+    std::fs::write(dir.join("src/main.rs"), "fn main() {}\n").unwrap();
+    let adapter = RustAdapter::with(move || Ok(ToolRef { path: server.clone(), version: "installed".into() }), move || Ok(cargo.clone()), Duration::from_secs(10));
+    let project = ProjectRef { id: "d33".into(), name: "d33".into(), language: "rust".into(), folder: dir.clone() };
+    let context = adapter.resolve(&project).unwrap();
+    assert!(context.manifests.is_none(), "membership was never resolved");
+    let (root, members) = (context.root.clone(), context.manifests.clone());
+    let session = Session::start(context.launch_spec("rust-analyzer"), Limits::default(), 1);
+    assert!(session.wait_until(Duration::from_secs(60), |s| s.phase == Phase::Ready));
+    if !session.wait_until(Duration::from_secs(60), |s| s.health.as_ref().is_some_and(|h| h.health == "error") || s.ready_fallback)
+        || session.status().ready_fallback { eprintln!("[d33] no serverStatus: skipped"); session.stop(); return; }
+    let decide = |path: &std::path::Path| {
+        let fresh = adapter.workspace_layout(&project);
+        let mut known: Vec<&[PathBuf]> = vec![];
+        if let Some(m) = &members { known.push(m); }
+        if let Some((_, m)) = &fresh { known.push(m); }
+        let affected = manifest_affects(path, &root, &known);
+        let root_changed = fresh.as_ref().is_some_and(|(r, _)| r.canonicalize().ok() != root.canonicalize().ok());
+        let status = session.status();
+        let action = manifest_action(affected, root_changed, status.phase == Phase::Ready, status.health.is_some_and(|h| h.health == "ok"), false);
+        if action == ManifestAction::Reload { session.reload_workspace("Cargo.toml changed"); }
+        (affected, action)
+    };
+    // A separate crate nested under the root, saved while the root is broken.
+    let nested = dir.join("tools/gen");
+    std::fs::create_dir_all(nested.join("src")).unwrap();
+    std::fs::write(nested.join("src/main.rs"), "fn main() {}\n").unwrap();
+    std::fs::write(nested.join("Cargo.toml"), "[package]\nname = \"gen\"\nversion = \"0.1.0\"\nedition = \"2021\"\n[workspace]\n").unwrap();
+    let (affected, action) = decide(&nested.join("Cargo.toml"));
+    std::thread::sleep(Duration::from_secs(5));
+    let after_nested = session.status();
+    eprintln!("[d33] nested non-member saved: affected {affected}, action {action:?}, reloads {}, health {:?}",
+        after_nested.reloads, after_nested.health.as_ref().map(|h| h.health.clone()));
+    assert!(!affected && action == ManifestAction::Nothing && after_nested.reloads == 0);
+    // The root manifest fixed: it is affected even with membership unknown.
+    std::fs::write(dir.join("Cargo.toml"), "[package]\nname = \"d33\"\nversion = \"0.1.0\"\nedition = \"2021\"\n").unwrap();
+    let at = Instant::now();
+    let (affected, action) = decide(&dir.join("Cargo.toml"));
+    let recovered = session.wait_until(Duration::from_secs(60), |s| s.health.as_ref().is_some_and(|h| h.health == "ok"));
+    eprintln!("[d33] root fixed: affected {affected}, action {action:?}, reloads {}, recovered {recovered} in {} ms",
+        session.status().reloads, at.elapsed().as_millis());
+    assert!(affected && recovered);
+    session.stop();
+    let _ = std::fs::remove_dir_all(&dir);
+}
