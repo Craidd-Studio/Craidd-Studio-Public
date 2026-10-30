@@ -60,7 +60,7 @@ Stage exit evidence (not gates):
 | Stage | Exit evidence required | Status |
 |---|---|---|
 | 1a | Fake-server tests (framing, transport, delivery classes, overflow, pending table, capability validation, terminate table, process tree); DAP suite unchanged; verifications V1, V5, V6, V7, V8 recorded before the Rust adapter merges | **Partial.** Tests recorded and DAP suite unchanged; V1, V5, V6 and V8 verified. V7 is verified for the installed binary, but the rustup-shim case is Unverified (no rustup on this machine); whether that blocks the adapter merge is the architect's decision. |
-| 1b | Real-server diagnostics through push and pull, document lifetimes and file identity; G1, G2, G5, G6, G7 evidence; first G3 and G3b measurements; verifications V2–V4 (V3 revised), V9, V13–V16, V22–V27 | **Partial.** The implementation's test claims are reproduced. Real-server checks V14, V15, V22, V23, V24, V25 and V27 are verified. One 1b scope item is Failed (watcher-failure surfacing), and four design conflicts await the architect. The UI-dependent gates and checks wait for the scripted manual runs U1–U12. See [Stage 1b verification record](#stage-1b-verification-record). |
+| 1b | Real-server diagnostics through push and pull, document lifetimes and file identity; G1, G2, G5, G6, G7 evidence; first G3 and G3b measurements; verifications V2–V4 (V3 revised), V9, V13–V16, V22–V27 | **Partial.** The repair pass is verified (R1, R2, R3, R4, R6b, R6c and R6d Verified; R5 accepted by decision 32). **R6a fails decision 33** on one clause, and several required tests are missing. No gate is Pass. The UI-dependent gates and checks wait for the scripted manual runs U1–U13. See [Repair-pass verification](#repair-pass-verification). |
 | 1c | Completion and atomic-acceptance tests; G3 and G4 under provider load; verifications V10–V12 and V18; acceptance criterion 1 | Unmeasured |
 
 ---
@@ -204,7 +204,7 @@ Facts the design depends on but has not confirmed. They are not gates, but none 
 | ID | Item | Blocks | Flip condition if it fails | Status |
 |---|---|---|---|---|
 | V1 | `rust-analyzer.files.watcher`: accepted values, and self-watching when the client registers no watchers; pinned version recorded | Rust adapter merge (1a) | The server cannot self-watch: watcher ownership must be redesigned and a Craidd watcher with `didChangeWatchedFiles` moves into Stage 1 | **Verified.** Accepted values are `client` (default) and `server`. With `server` and no registered watchers, the server picked up edits to an unopened file by itself. Stop condition not triggered. See [evidence](#v1-v5-v6-and-v7-evidence). |
-| V2 | Watcher failure (for example the inotify limit): whether and how the server reports it | "Watcher failure surfaced" claim (1b) | The claim must be reworded | **Verified (server); the surfacing claim is Failed in the build.** With the user's watches exhausted (ENOSPC), the server no longer sees edits to unopened files. Health stays `ok`, and nothing appears on the protocol: no `showMessage`, no `logMessage`. The only signal is a stderr line, `WARN notify error: OS file watch limit reached.`, which the server's default log level keeps. The 1b build passes stderr to Output, but it has no watcher-failure matching, so the chip shows nothing (see [Stage 1b verification record](#stage-1b-verification-record)) |
+| V2 | Watcher failure (for example the inotify limit): whether and how the server reports it | "Watcher failure surfaced" claim (1b) | The claim must be reworded | **Verified (server); surfacing Verified at the backend after the repair pass.** With watches exhausted, the server is silent on the protocol and writes only the stderr WARN (measured, 2026-10-29). In the repaired build, with `RA_LOG` unset as Craidd launches it, that line set the watcher warning 129 ms after start; health stayed `ok`, the phase stayed Ready, and two raw lines were kept for Output (2026-10-30). The chip and the Output display are confirmed only in U6 (see [Repair-pass verification](#repair-pass-verification)) |
 | V3 | A change to an unopened file updates the server's diagnostics | Real-server smoke test (1b) | As V1 | **Partly measured.** The server-side intervals are measured; the interval to the store needs the scripted UI run U3. The server sends `workspace/diagnostic/refresh` about 40 ms after an external edit to an unopened file, within 1 ms of a `didChange`, and about 90 ms after a `didSave` (5 runs each). The store-side interval and whether the save seed adds anything are **Unmeasured** (see [Stage 1b verification record](#stage-1b-verification-record)) |
 | V4 | `cargo.targetDir` set to use a subdirectory of `target/` behaves as documented | Adapter options (1b) | Revert to the shared directory or find another isolation | **Partly verified.** `cargo.targetDir = true` makes the server use `target/rust-analyzer` (208 KiB on `fx-small`). Whether a user Build waits on the lock during a check is **Unmeasured**: a tiny crate cannot show it, so it moves to G3b on `src-tauri` (U12) (see [Stage 1b verification record](#stage-1b-verification-record)) |
 | V5 | The real `initialize` result (sync kind, save, `resolveProvider`, trigger characters) against the validation table | Rust adapter merge (1a) | Adjust the validation table | **Verified.** The real result passes the adapter's unchanged `caps::validate`: sync incremental, save plain, completion with resolve and 4 trigger characters, all four providers on. No table change needed. |
@@ -656,9 +656,49 @@ The opt-in tests call `reload_workspace` directly. The production trigger (`Carg
    - `metrics.ts` states that WebKitGTK has no long-task entries. That is asserted, not measured; U12 records `longtask_supported`.
 5. **Retention evidence.** `fx-many` pushes about 7320 diagnostics (61 per file), not about 2400. Under the build's caps (500 per file, 20,000 closed total) the set fits by count. A memory budget is still Unmeasured (G5, V20).
 
+### Repair-pass verification
+
+Verification lane, 2026-10-30, against `feat/lsp-stage-1b` at `1e567b5` (`a054599`–`1e567b5` on `ea33c1e`), in a separate detached checkout. The design reference is decisions 28–37 at `66f7a9a` on `feat/intellisense-ws`. No implementation code was changed. Same environment as above. Real-server runs use `rust-analyzer 1 (9074e9b4c6 2026-09-06)`.
+
+#### Claims, reproduced
+
+| Claim | Result here | Reproduced |
+|---|---|---|
+| `cargo test --lib`: 223 passed, 8 ignored | 223 passed, 0 failed, 8 ignored; `lsp::` 70 passed, 4 ignored (three real-server tests and the fake server's entry) | Yes |
+| `process_cleanup` 7, 1 ignored; DAP 26 unchanged | 7 passed, 1 ignored; 26 passed; `commands/debug*` still byte-identical to `0d110f1` | Yes |
+| `node --test` 112; `tsc` clean | 112 passed; `tsc --noEmit` exit 0 | Yes |
+| `vite build` (not claimed) | Exit 0 | — |
+| Repeatability (not claimed) | `lsp::` tests: 10 consecutive runs, 10 passed | — |
+| Without status, the fallback opened at 30.2 s and the first pull then had E0061 | Smoke test through the verification tap in no-status mode, 2 runs: the gate opened at 30 178 and 30 152 ms; the first pull had E0061. On the wire, no `textDocument/diagnostic` was sent before 30.14 s | Yes |
+| With status, ready at about 1.3 s; a manifest broken from the start recovered in 96 ms after one reload | 3 runs: quiescent at 1 333–1 730 ms; early pull refused 3/3; reload recovery in 92–96 ms; a manifest broken mid-session recovered without a reload 3/3; push 80–85 ms after `didSave` | Yes |
+| V2 matches only the fragment, on stderr or `logMessage` | Code: `is_watcher_failure` is a case-insensitive `contains("os file watch limit reached")`, called for stderr lines and for `logMessage` (not `showMessage`). The unit test rejects `No path was found.`. Real server: warned in 129 ms | Yes, by reading code and one real run |
+| An early-empty report counts only if its pull was sent with the gate open | Node test "decision 31: an empty report counts only if its pull was sent after readiness" passes. Real server, status-less: no pull was sent before the fallback opened the gate (tap) | Yes (test and wire) |
+
+#### R1–R6 verdicts
+
+| Repair | Verdict | Evidence and looseness |
+|---|---|---|
+| R1 — V2 warning (decision 28) | **Verified** (backend, real server). The chip and Output display are **Unverified** until U6 | Real server with watches exhausted (helper reached ENOSPC, released back to the baseline of 110 753 watches, no process left): warning in 129 ms, health `ok`, phase Ready, raw lines kept. Clearing only at session end matches decision 28. **Gap:** decision 28's `logMessage` case and its "ring bound still holds" case have no test; the `logMessage` path exists in code |
+| R2 — Lock glyph to 1c (decision 29) | **Verified** (docs) | `66f7a9a` moves the glyph from the 1b scope to 1c with the requirement unchanged. U10 no longer expects it |
+| R3 — Attribution through `owning_project` (decision 30) | **Verified** | `attributionOf` uses the tab binding for open files and `lsp_attribute` (the backend resolver) for the rest; no folder lookup remains in `src/lib/lsp`. **Gap:** decision 30 names an explicit include and an ambiguous file. The backend test covers a nested project, a config facet and an external file; ambiguity appears only in the node display test, and an explicit include in neither |
+| R4 — Readiness fallback (decision 31) | **Verified** | It is timer-driven (the 500 ms tree tick), so a silent server still trips it. It fires only for a session that has never sent a status. The real-server run is above. A 30 s bound against a measured readiness of about 1.3 s is long but marked ◇. Decision 31's "a wave is seeded" and the chip's ` (no status)` are visible only in the IDE (could be added to U4) |
+| R5 — Wave tests in node (decision 32) | **Accepted** by the architect | — |
+| R6a — Reload membership (decision 33) | **Failed (one clause); otherwise Verified** | Membership comes from `cargo metadata` (root and package manifests), kept across a break. The nested separate crate is rejected (unit test and real cargo). **Fails decision 33:** when membership was never resolved (a manifest broken from the start), `manifest_affects` accepts **any `Cargo.toml` under the root**. Decision 33 says membership is then "unknown beyond the root manifest", and the test at `commands.rs` asserts the widened behaviour ("membership unknown on both sides: anything under the root"). Effect: in that state, saving a nested crate's or a vendored manifest sends a reload to the broken session. **Missing tests required by decision 33:** a manifest under `target/` or in a vendored directory, a `Cargo.lock` change (filtered by file name, untested), a changed server identity restarting instead of reloading, a reload timeout not failing the session, and the gate re-arming with a wave after a reload |
+| R6b — F3 cases (decision 34) | **Verified** | All four are covered: no `type` and no actions (severity 3), sent while the consumer is stalled, before the `initialize` reply, and a string id echoed verbatim |
+| R6c — Hooks on and off (decision 35) | **Verified at unit level** | `createMetrics(dev, host)`: with `dev` off nothing is installed, exposed or emitted (node test). The same scripted tracker, scheduler and store session gives identical wire traffic, stored sets and statistics with hooks on and off (node test). Every hook call in `bridge.ts` is a bare statement whose result is unused (read). This is one scenario, not "the same suites run both ways" as decision 35 words it; the gap is small given the call sites. An IDE comparison (dev build against `tauri build --debug`) would also change React's dev mode, so a difference could not be attributed to the hooks; U13 is kept as optional corroboration |
+| R6d — `inputToPaint` to the visible paint (decision 36) | **Verified at unit level** | Node test: a key press is measured to the second animation frame after it, an upper bound by at most one frame. The IDE comparison with `frame_probe.js` is in U12 |
+
+#### Gate statuses after the repair pass
+
+No gate is **Pass**. G1, G2, G3, G5, G6 and G7 remain **Unmeasured**: their evidence is the scripted manual runs (U1, U2, U12, U7, U8, U9), which have not been run. G4's 1b evidence is reproduced; G3 and G4 complete in 1c. None is **Blocked** or **Fail** on the evidence so far.
+
+#### Not reproduced
+
+Nothing the Implementation lane claimed failed to reproduce. Timings differ by run as expected: readiness 1.33–1.73 s here against "about 1.3 s"; V2 warning at 129 ms against 125 ms.
+
 ### Waiting for the scripted manual runs (user review)
 
-U1 (G1), U2 (G2), U3 (V3, V26, decision 19 in the IDE), U4 (V24 in the IDE), U5 (V27 trigger path), U6 (V2 surfacing in the IDE), U7 (G5, V15, V20), U8 (G6), U9 (G7), U10 (V16 holder), U11 (V9), U12 (G3, G3b, V4 lock, V26).
+U1 (G1), U2 (G2), U3 (V3, V26, decision 19 in the IDE), U4 (V24 in the IDE), U5 (V27 trigger path; step 6 is the nested non-member), U6 (V2 chip and Output), U7 (G5, V15, V20), U8 (G6), U9 (G7), U10 (V16 holder, including the canonical-path-first case), U11 (V9), U12 (G3, G3b, V4 lock, V26, `inputToPaint` against the probe), U13 (optional: hooks on/off on the IDE's wire).
 
-*Last updated: Phase 3 (Stage 1a, adapter integrated as 99863a4; F1–F3 investigated; decisions 16–27 approved; Stage 1b implementation recorded and independently verified). Author: ShinkuKira21.*
+*Last updated: Phase 3 (Stage 1a, adapter integrated as 99863a4; F1–F3 investigated; decisions 16–37 approved; Stage 1b implementation and repair pass recorded and independently verified). Author: ShinkuKira21.*
 *This document is a record.*
