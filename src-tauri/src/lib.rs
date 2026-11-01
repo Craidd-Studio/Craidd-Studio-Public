@@ -153,6 +153,8 @@ pub fn run() {
             save_solution,
             save_solution_configs,
             create_project_folder,
+            commands::project_creation::preview_project_creation,
+            commands::project_creation::create_project_from_template,
             remove_project,
             delete_project,
             edit_cln_repoint_entry,

@@ -70,7 +70,7 @@ interface SolutionState {
   bannerAncestor: AncestorInfo | null;
 
   openFolder: (path: string) => Promise<OpenResult>;
-  openSolution: (clnPath: string) => Promise<OpenResult>;
+  openSolution: (clnPath: string, options?: { preserveTabs?: boolean }) => Promise<OpenResult>;
   resolveOpenDecision: (
     choice: "parent" | "browse" | "create" | "add-existing",
     parentClnPath?: string
@@ -565,7 +565,8 @@ export const useSolution = create<SolutionState>((storeSet, get) => {
     return { status: "no-solution" };
   },
 
-  openSolution: async (clnPath) => {
+  openSolution: async (clnPath, options) => {
+    const preserveTabs = options?.preserveTabs && get().clnPath === clnPath;
     log("openSolution called with:", JSON.stringify(clnPath));
 
     if (!clnPath || typeof clnPath !== "string") {
@@ -636,8 +637,7 @@ export const useSolution = create<SolutionState>((storeSet, get) => {
         solution: finalSolution,
         discovery,
         isSolutionLoading: false,
-        tabs: [],
-        activeTabId: null,
+        ...(preserveTabs ? {} : { tabs: [], activeTabId: null }),
         bannerState: "none",
         bannerMessage: null,
       });

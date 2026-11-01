@@ -8,6 +8,7 @@ import { startupComplete } from "./lib/lsp/bridge";
 
 const AppShell = lazy(() => import("./components/layout/AppShell"));
 const GetStarted = lazy(() => import("./components/startup/GetStarted"));
+const NewProjectDialog = lazy(() => import("./components/dialogs/NewProjectDialog"));
 
 async function openEntry(entry: WorkspaceEntry): Promise<void> {
   setWindowInstanceId(entry.instanceId ?? crypto.randomUUID());
@@ -131,10 +132,7 @@ export default function App() {
   return <Suspense fallback={<div className="h-screen bg-zinc-950" />}><GetStarted startup={startup} initialError={error} onOpen={async (entry) => {
     await openEntry(entry);
     setMode("workspace");
-  }} onStartProject={async (path) => {
-    const result = await useSolution.getState().openFolder(path);
-    if (result.status === "error") throw new Error(result.message);
-    setStartProjectDialog(result.status !== "needs-decision");
-    setMode("workspace");
-  }} /></Suspense>;
+  }} onStartProject={async () => setStartProjectDialog(true)} />
+    {startProjectDialog && <NewProjectDialog standalone onClose={() => setStartProjectDialog(false)} onCreated={() => setMode("workspace")} />}
+  </Suspense>;
 }

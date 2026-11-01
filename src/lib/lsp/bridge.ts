@@ -590,7 +590,8 @@ function onActive(): void {
 
 /** Revalidate, then route and get-or-start. A failed revalidation is silent: simply no launch. */
 async function attachActive(reason: "idle" | "timeout"): Promise<void> {
-  const { activeFileId: fileId, solution, tabs } = useSolution.getState();
+  const { activeFileId: fileId, solution } = useSolution.getState();
+  const tabs = useSolution.getState().tabs.filter(isFileTab);
   if (!gate.startupDone || !fileId || !solution || !tabs.some((t) => t.fileId === fileId)) return;
   // A read-only navigation tab is bound only by navigation from a live session (decision 51). Routing it would answer
   // "not routed" and overwrite its `ended` note, so an attach (for example after a restart) leaves it alone.

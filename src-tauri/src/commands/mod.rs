@@ -4,6 +4,7 @@ pub(crate) const IGNORE_DIRS: &[&str] = &[
     "__pycache__", "venv", "coverage", "out", "Pods", "vendor",
 ];
 pub mod solution;
+pub mod project_creation;
 pub mod search;
 pub mod toolchain;
 pub mod build;

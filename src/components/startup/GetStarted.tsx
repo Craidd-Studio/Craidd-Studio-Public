@@ -16,7 +16,7 @@ export default function GetStarted({ startup, initialError, onOpen, onStartProje
   startup: StartupState;
   initialError: string | null;
   onOpen: (entry: WorkspaceEntry) => Promise<void>;
-  onStartProject: (folder: string) => Promise<void>;
+  onStartProject: () => Promise<void>;
 }) {
   const [error, setError] = useState(initialError);
   const [busy, setBusy] = useState(false);
@@ -33,10 +33,7 @@ export default function GetStarted({ startup, initialError, onOpen, onStartProje
     return typeof selected === "string" ? selected : null;
   };
 
-  const createProject = () => run(async () => {
-    const folder = await pickFolder();
-    if (folder) await onStartProject(folder);
-  });
+  const createProject = () => run(onStartProject);
 
   const openFolder = () => run(async () => {
     const path = await pickFolder();
@@ -78,7 +75,7 @@ export default function GetStarted({ startup, initialError, onOpen, onStartProje
             <section>
               <h2 className="text-[11px] uppercase tracking-[0.15em] font-semibold text-zinc-500 mb-3">Start</h2>
               <div className="space-y-2">
-                <StartLink label="Create Project Wizard" detail="Choose a language, Config, and Fine Tune options" icon="＋" onClick={createProject} disabled={busy} />
+                <StartLink label="Create Project Wizard" detail="Choose a language and template, then make it yours" icon="＋" onClick={createProject} disabled={busy} />
                 <StartLink label="Open Folder" detail="Browse and edit files without a solution" icon="▤" onClick={openFolder} disabled={busy} />
                 <StartLink label="Open Solution" detail="Load a Craidd .cln workspace" icon="◇" onClick={openSolution} disabled={busy} />
               </div>

@@ -1,198 +1,239 @@
-import { useState } from "react";
-import type { Language } from "../../types/project";
-import { LANGUAGES } from "../../lib/languages";
+import { useEffect, useRef, useState } from "react";
 import { useSolution } from "../../store/solutionStore";
+import { useBuild } from "../../store/buildStore";
+import { appendOutput } from "../../lib/outputPresentation";
+import { filterProjectTemplates, projectNameError, projectTemplates, wizardLanguages,
+  type WizardLanguage, type ProjectCreationPlan, type ProjectCreationRequest, type ProjectCreationResult } from "../../lib/projectWizard";
+import "./projectWizard.css";
 
 interface Props {
   onClose: (opts?: { fineTuneAfter?: boolean; projectName?: string }) => void;
+  standalone?: boolean;
+  onCreated?: () => void;
 }
 
-export default function NewProjectDialog({ onClose }: Props) {
-  const createBlankProject = useSolution((s) => s.createBlankProject);
-  const addConfigHere = useSolution((s) => s.addConfigHere);
+function TechnologyLogo({ name, className = "" }: { name: string; className?: string }) {
+  return <img src={name === "tauri" ? "/tauri.svg" : `/language-icons/${name}.svg`} alt="" aria-hidden="true"
+    draggable={false} className={`pw-logo pw-logo-${name} ${name === "rust" ? "pw-logo-monochrome" : ""} ${className}`} />;
+}
 
-  const [name, setName] = useState("");
-  const [language, setLanguage] = useState<Language>("rust");
-  const [withConfig, setWithConfig] = useState(false);
-  const [configDir, setConfigDir] = useState(".");
+function templateLogo(id: string, language: string) {
+  return id.includes("tauri") ? "tauri" : id === "csharp-webapi" || id === "csharp-blade" ? "dotnet" : language;
+}
+
+export default function NewProjectDialog({ onClose, standalone = false, onCreated }: Props) {
+  const rootPath = useSolution((s) => s.rootPath);
+  const clnPath = useSolution((s) => s.clnPath);
+  const [language, setLanguage] = useState<WizardLanguage>("rust");
+  const [templateId, setTemplateId] = useState("rust-console");
+  const [query, setQuery] = useState("");
+  const [step, setStep] = useState(0);
+  const [name, setName] = useState("MyApp");
+  const [parent, setParent] = useState(standalone ? "" : rootPath ?? "");
+  const [addToSolution, setAddToSolution] = useState(!standalone && !!clnPath);
+  const [setupConfigs, setSetupConfigs] = useState(true);
+  const [framework, setFramework] = useState("net10.0");
   const [fineTuneAfter, setFineTuneAfter] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
+  const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [plan, setPlan] = useState<ProjectCreationPlan | null>(null);
+  const [created, setCreated] = useState<ProjectCreationResult | null>(null);
+  const [selectedFile, setSelectedFile] = useState("");
+  const dialog = useRef<HTMLDivElement>(null);
+  const heading = useRef<HTMLHeadingElement>(null);
+  const body = useRef<HTMLDivElement>(null);
+  const results = useRef<HTMLDivElement>(null);
+  const latest = useRef({ busy, onClose });
+  latest.current = { busy, onClose };
 
-  const showConfigCheckbox = language !== "config";
+  const template = projectTemplates.find((item) => item.id === templateId)!;
+  const templates = filterProjectTemplates(language, query);
+  const empty = templateId.endsWith("-empty");
+  const destination = `${parent.replace(/\/+$/, "")}/${name}`;
+  const nameError = projectNameError(name);
+  const request: ProjectCreationRequest = { templateId, name, parent, setupConfigs: setupConfigs && !empty,
+    dotnetFramework: framework, solutionPath: addToSolution ? clnPath : null };
 
-  const browseConfigDir = async () => {
+  useEffect(() => {
+    const previous = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const keyboard = (event: KeyboardEvent) => {
+      if (event.key === "Escape") { event.preventDefault(); event.stopPropagation(); if (!latest.current.busy) latest.current.onClose(); }
+      if (event.key !== "Tab") return;
+      const focusable = Array.from(dialog.current?.querySelectorAll<HTMLElement>("button:not(:disabled), input:not(:disabled), select:not(:disabled), summary, [tabindex='0']") ?? []).filter((element) => element.getClientRects().length > 0);
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (event.shiftKey && (document.activeElement === first || !focusable.includes(document.activeElement as HTMLElement))) { event.preventDefault(); last?.focus(); }
+      else if (!event.shiftKey && (document.activeElement === last || !focusable.includes(document.activeElement as HTMLElement))) { event.preventDefault(); first?.focus(); }
+    };
+    document.addEventListener("keydown", keyboard, true);
+    return () => { document.removeEventListener("keydown", keyboard, true); previous?.focus(); };
+  }, []);
+  useEffect(() => { heading.current?.focus(); if (body.current) body.current.scrollTop = 0; }, [step]);
+  useEffect(() => { if (results.current) results.current.scrollTop = 0; }, [language, query]);
+
+  const chooseLanguage = (next: WizardLanguage) => {
+    setLanguage(next); setQuery(""); setTemplateId(`${next}-console`); setError(null);
+  };
+
+  const searchTemplates = (value: string) => {
+    setQuery(value);
+    const matches = filterProjectTemplates(language, value);
+    if (matches.length && !matches.some((item) => item.id === templateId)) setTemplateId(matches[0].id);
+  };
+
+  const browse = async () => {
     try {
       const { open } = await import("@tauri-apps/plugin-dialog");
-      const selected = await open({ directory: true, multiple: false });
-      if (typeof selected !== "string") return;
-      setConfigDir(selected);
-    } catch (err) {
-      console.error("[craidd] browse config dir failed:", err);
-    }
+      const selected = await open({ directory: true, multiple: false, title: "Choose a parent location", defaultPath: parent || undefined });
+      if (typeof selected === "string") setParent(selected);
+    } catch (cause) { setError(String(cause)); }
   };
 
-  const submit = async () => {
-    setError(null);
-    const projectName = name.trim() || "NewProject";
-    setSubmitting(true);
+  const review = async () => {
+    setBusy(true); setError(null);
     try {
-      await createBlankProject({
-        name: projectName,
-        language,
-        subfolder: projectName,
-      });
-
-      if (withConfig && showConfigCheckbox) {
-        // Locate the project we just created and enable config on it.
-        const state = useSolution.getState();
-        const created = state.solution?.projects.find((p) => p.name === projectName);
-        if (created) {
-          if (configDir && configDir !== ".") {
-            await useSolution.getState().setConfigDirectory(created.id, configDir);
-          } else {
-            await addConfigHere(created.id);
-          }
-        }
-      }
-
-      onClose({ fineTuneAfter, projectName });
-    } catch (err) {
-      console.error("[craidd] NewProjectDialog failed:", err);
-      setError(String(err));
-    } finally {
-      setSubmitting(false);
-    }
+      if (!("__TAURI_INTERNALS__" in window)) throw new Error("Project creation is available in the Craidd desktop app. This browser preview shows the wizard interface only.");
+      const { invoke } = await import("@tauri-apps/api/core");
+      const result = await invoke<ProjectCreationPlan>("preview_project_creation", { request });
+      setPlan(result); setSelectedFile(result.files[0]?.path ?? ""); setStep(2);
+    } catch (cause) { setError(String(cause)); }
+    finally { setBusy(false); }
   };
 
-  return (
-    <div
-      className="fixed inset-0 z-[120] flex items-center justify-center bg-black/50"
-      onClick={submitting ? undefined : () => onClose()}
-    >
-      <div
-        onClick={(e) => e.stopPropagation()}
-        className="w-[480px] bg-zinc-900 border border-zinc-700 rounded-lg shadow-2xl overflow-hidden"
-      >
-        <div className="px-4 py-3 border-b border-zinc-800 text-sm text-zinc-200 font-medium">
-          Create Blank Project
-        </div>
+  const openCreated = async (result: ProjectCreationResult) => {
+    const state = useSolution.getState();
+    if (!standalone && state.rootPath && result.solutionPath !== state.clnPath) {
+      const { invoke } = await import("@tauri-apps/api/core");
+      await invoke("open_workspace_window", { entry: { path: result.solutionPath, name,
+        kind: "solution", windowLabel: "" } });
+    } else {
+      const opened = await state.openSolution(result.solutionPath, { preserveTabs: !standalone });
+      if (opened.status !== "loaded") throw new Error(opened.status === "error" ? opened.message : "Could not open the created solution.");
+    }
+    onCreated?.();
+    onClose({ fineTuneAfter: fineTuneAfter && addToSolution, projectName: name });
+  };
 
-        <div className="px-4 py-4 space-y-3 text-xs">
-          <label className="block">
-            <div className="text-zinc-400 mb-1">Project name</div>
-            <input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              autoFocus
-              disabled={submitting}
-              placeholder="MyProject"
-              className="w-full bg-zinc-950 border border-zinc-700 rounded px-2 py-1.5 text-zinc-100 outline-none focus:border-blue-500 disabled:opacity-50"
-            />
-          </label>
+  const create = async () => {
+    if (!plan) return;
+    setBusy(true); setError(null);
+    try {
+      let result = created;
+      if (!result) {
+        const { invoke } = await import("@tauri-apps/api/core");
+        result = await invoke<ProjectCreationResult>("create_project_from_template", { request, expectedToken: plan.token });
+        setCreated(result);
+        const log = result.log.join("\n");
+        useBuild.setState((state) => ({ output: appendOutput(state.output, log) }));
+      }
+      await openCreated(result);
+    } catch (cause) {
+      setError(String(cause));
+      useBuild.setState((state) => ({ output: appendOutput(state.output, `Project wizard: ${String(cause)}`) }));
+    } finally { setBusy(false); }
+  };
 
-          <label className="block">
-            <div className="text-zinc-400 mb-1">Language</div>
-            <select
-              value={language}
-              onChange={(e) => setLanguage(e.target.value as Language)}
-              disabled={submitting}
-              className="w-full rounded px-2 py-1.5 outline-none disabled:opacity-50"
-            >
-              {LANGUAGES.map((l) => (
-                <option key={l.id} value={l.id}>{l.label}</option>
-              ))}
-            </select>
-          </label>
+  const next = () => { setError(null); if (step === 0) setStep(1); else if (step === 1) void review(); else void create(); };
+  const title = created ? "Your project is ready" : ["Create a project", "Make it yours", "Ready to create"][step];
+  const reviewFiles: ProjectCreationPlan["files"] = plan ? [...plan.files, ...(addToSolution ? [{ path: plan.solutionPath, content: plan.solutionContent }] : [])] : [];
+  const previewFile = reviewFiles.find((file) => file.path === selectedFile);
 
-          {showConfigCheckbox && (
-            <div className="pt-2 border-t border-zinc-800 space-y-2">
-              <label className="flex items-center gap-2 cursor-pointer select-none">
-                <input
-                  type="checkbox"
-                  checked={withConfig}
-                  onChange={(e) => setWithConfig(e.target.checked)}
-                  disabled={submitting}
-                  className="accent-blue-600"
-                />
-                <span className="text-zinc-300">Create a Config project too?</span>
-              </label>
+  return <div className="pw-backdrop">
+    <div ref={dialog} role="dialog" aria-modal="true" aria-labelledby="project-wizard-title" aria-busy={busy} className="project-wizard">
+      <header className="pw-header">
+        <div><div className="pw-eyebrow">CRAIDD STUDIO <span>/</span> NEW PROJECT</div>
+          <h1 ref={heading} tabIndex={-1} id="project-wizard-title">{title}</h1>
+          <p>{step === 0 ? "Choose a language and a starting point for your next project." : step === 1 ? template.name : created ? "Files are saved. You can retry opening the solution." : "Review the files and configurations before writing anything."}</p></div>
+        <button type="button" className="pw-close" aria-label="Close project wizard" onClick={() => onClose()} disabled={busy}>×</button>
+      </header>
 
-              {withConfig && (
-                <div className="pl-6 space-y-1">
-                  <div className="text-zinc-500 text-[11px]">Config directory</div>
-                  <div className="flex gap-2">
-                    <input
-                      value={configDir}
-                      onChange={(e) => setConfigDir(e.target.value)}
-                      disabled={submitting}
-                      placeholder="."
-                      className="flex-1 bg-zinc-950 border border-zinc-700 rounded px-2 py-1 text-zinc-100 outline-none focus:border-blue-500 disabled:opacity-50 font-mono text-[11px]"
-                    />
-                    <button
-                      type="button"
-                      onClick={browseConfigDir}
-                      disabled={submitting}
-                      className="px-2.5 py-1 rounded text-[11px] text-zinc-300 border border-zinc-700 hover:bg-zinc-800 disabled:opacity-50"
-                    >
-                      Browse…
-                    </button>
-                  </div>
-                  <div className="text-zinc-600 text-[10.5px] leading-4">
-                    Use <span className="font-mono">.</span> for the project root, a subpath like
-                    <span className="font-mono"> config/</span>, or browse within the solution folder.
-                    For program-owned config files (states, save data), this is where they live.
-                  </div>
-                </div>
-              )}
+      <nav aria-label="Project creation progress" className="pw-steps">
+        {["Template", "Configure", "Review & create"].map((label, index) => <span key={label} aria-current={step === index ? "step" : undefined} className={index === step ? "is-current" : index < step ? "is-complete" : ""}>
+          <span className="pw-step-number">{index < step ? "✓" : index + 1}</span>{label}
+        </span>)}
+      </nav>
+
+      <div ref={body} className="pw-body">
+        {step === 0 && <div className="pw-browser">
+          <aside className="pw-languages" aria-label="Project language">
+            <div className="pw-section-label">LANGUAGE</div>
+            {wizardLanguages.map((item) => <button key={item.id} type="button" aria-pressed={language === item.id} onClick={() => chooseLanguage(item.id)} className={language === item.id ? "is-selected" : ""}>
+              <TechnologyLogo name={item.id} className="pw-language-logo" /><span><strong>{item.name}</strong><small>{item.detail}</small></span>
+            </button>)}
+            <p className="pw-language-note">Start small.<br />Add more languages as your solution grows.</p>
+          </aside>
+
+          <section className="pw-templates" aria-label="Project templates">
+            <label className="pw-search"><span aria-hidden="true">⌕</span><input type="search" aria-label="Search templates" placeholder="Search templates…" value={query} onChange={(event) => searchTemplates(event.target.value)} /></label>
+            <div className="pw-template-count">{templates.length} templates <span>·</span> {templates.filter((item) => item.available).length} available now</div>
+            <div ref={results} className="pw-template-results">
+            {templates.length === 0 && <div className="pw-empty"><strong>No matching templates</strong><p>Try console, web, or native, or clear your search.</p><button type="button" className="pw-button pw-button-outline" onClick={() => searchTemplates("")}>Clear search</button></div>}
+            {["Basic", "Frameworks", "Native / LDI"].map((category) => {
+              const matches = templates.filter((item) => item.category === category);
+              return matches.length > 0 && <div key={category} className="pw-template-group"><h2 className="pw-section-label">{category}</h2>
+                {matches.map((item) => <button key={item.id} type="button" onClick={() => setTemplateId(item.id)} onDoubleClick={() => { if (item.available) setStep(1); }} aria-pressed={item.id === templateId} className={`pw-template-row ${item.id === templateId ? "is-selected" : ""} ${!item.available ? "is-planned" : ""}`}>
+                  <TechnologyLogo name={templateLogo(item.id, item.language)} className="pw-template-logo" />
+                  <span className="pw-template-copy"><strong>{item.name}</strong><small>{item.description}</small></span>
+                  {!item.available && <span className="pw-badge">Planned</span>}
+                  <span className="pw-selection-indicator" aria-hidden="true">{item.id === templateId ? "✓" : ""}</span>
+                </button>)}
+              </div>;
+            })}
             </div>
-          )}
+          </section>
 
-          <div className="pt-2 border-t border-zinc-800">
-            <label className="flex items-center gap-2 cursor-pointer select-none">
-              <input
-                type="checkbox"
-                checked={fineTuneAfter}
-                onChange={(e) => setFineTuneAfter(e.target.checked)}
-                disabled={submitting}
-                className="accent-blue-600"
-              />
-              <span className="text-zinc-300">Fine Tune after creation?</span>
-            </label>
-            <div className="pl-6 text-zinc-600 text-[10.5px] leading-4 mt-0.5">
-              Opens Fine Tune once the project is created.
-            </div>
+          <aside className="pw-details">
+            {templates.length > 0 ? <>
+            <div className="pw-detail-logos"><TechnologyLogo name={templateLogo(templateId, language)} className="pw-detail-logo" />
+              {templateId.includes("tauri") && <TechnologyLogo name="react" className="pw-companion-logo" />}</div>
+            <div className="pw-section-label">{template.category}</div><h2>{template.name}</h2><p>{template.description}</p>
+            <div className="pw-detail-divider" />
+            {template.available ? <><span className="pw-local-label">● Local scaffold</span><p>Creation works offline. Dependencies may need downloading when you build or run.</p>
+              <h3>Tools for building</h3>{template.tools.length ? <ul>{template.tools.map((item) => <li key={item}>{item}</li>)}</ul> : <p>No tools required to create this project.</p>}
+              <p className="pw-detail-footnote">Installed tools are checked on the review screen. Craidd does not install toolchains.</p></> : <><span className="pw-badge">Planned template</span><p>This option is shown as a preview. Project generation is not implemented yet.</p></>}
+            </> : <div className="pw-no-selection"><h2>Find your starting point</h2><p>Clear or adjust the search to see templates for {wizardLanguages.find((item) => item.id === language)?.name}.</p></div>}
+          </aside>
+        </div>}
+
+        {step === 1 && <div className="pw-configure">
+          <form id="project-wizard-form" className="pw-form" onSubmit={(event) => { event.preventDefault(); if (!busy && !nameError && parent.trim()) void review(); }}>
+            <div className="pw-section-label">PROJECT DETAILS</div>
+            <label className="pw-field"><span>Project name</span><input value={name} onChange={(event) => setName(event.target.value)} aria-invalid={!!nameError} aria-describedby="pw-name-hint" disabled={busy} maxLength={64} required autoComplete="off" spellCheck={false} />
+              <small id="pw-name-hint">{nameError ?? "Letters, digits, hyphens, and underscores."}</small></label>
+            {!standalone && clnPath && <label className="pw-checkbox"><input type="checkbox" checked={addToSolution} disabled={busy} onChange={(event) => { setAddToSolution(event.target.checked); if (event.target.checked) setParent(rootPath ?? ""); }} /><span>Add to the current solution<small>Keep its projects and configurations.</small></span></label>}
+            <div className="pw-field"><label htmlFor="pw-parent">Parent location</label><div className="pw-location"><input id="pw-parent" value={parent} onChange={(event) => setParent(event.target.value)} placeholder="Choose a folder…" disabled={busy || addToSolution} autoComplete="off" spellCheck={false} aria-describedby="pw-parent-hint" required /><button type="button" onClick={() => void browse()} disabled={busy || addToSolution}>Browse…</button></div><small id="pw-parent-hint">The parent can contain files. Your new project folder must be new or empty.</small></div>
+            {!empty && language === "csharp" && <label className="pw-field"><span>Target framework</span><select value={framework} onChange={(event) => setFramework(event.target.value)} disabled={busy}><option value="net10.0">.NET 10</option><option value="net9.0">.NET 9</option><option value="net8.0">.NET 8</option></select><small>Choose a framework supported by your installed SDK.</small></label>}
+            {!empty && <label className="pw-checkbox"><input type="checkbox" checked={setupConfigs} onChange={(event) => setSetupConfigs(event.target.checked)} disabled={busy} /><span>Set up build, run, and debug configurations<small>Editable Power configurations, saved in your solution.</small></span></label>}
+            {addToSolution && <details className="pw-advanced"><summary>Advanced options</summary><label className="pw-checkbox"><input type="checkbox" checked={fineTuneAfter} onChange={(event) => setFineTuneAfter(event.target.checked)} disabled={busy} /><span>Open Fine Tune after creation</span></label></details>}
+          </form>
+          <aside className="pw-config-summary"><TechnologyLogo name={templateLogo(templateId, language)} className="pw-summary-logo" /><div className="pw-section-label">YOUR STARTING POINT</div><h2>{template.name}</h2><p>{template.description}</p><div className="pw-detail-divider" /><h3>Destination</h3><code>{parent && !nameError ? destination : "Choose a valid project name and location"}</code><h3>Solution</h3><code>{addToSolution ? clnPath : nameError ? "New solution" : `${name}.cln (new)`}</code><p className="pw-detail-footnote">{empty ? "Only project and solution metadata will be created. No Power configurations." : "No compiler, package manager, or installer runs during creation."}</p></aside>
+        </div>}
+
+        {step === 2 && plan && <div className="pw-review">
+          <div className="pw-review-main"><div className="pw-review-destination"><span className="pw-local-label">● {created ? "Created" : "Local scaffold"}</span><code>{plan.destination}</code></div>
+            <h2 className="pw-section-label">{plan.files.length} FILES TO CREATE{addToSolution ? " · 1 SOLUTION UPDATE" : ""}</h2>
+            <div className="pw-file-browser"><div className="pw-file-list" aria-label="Generated files">{reviewFiles.map((file) => <button key={file.path} aria-pressed={selectedFile === file.path} onClick={() => setSelectedFile(file.path)}>{file.path === plan.solutionPath ? "Solution update · " : ""}{file.path}</button>)}</div><div className="pw-file-preview"><div>{previewFile?.path}</div><pre tabIndex={0}>{previewFile?.encoding === "hex" ? `Binary PNG asset (${previewFile.content.length / 2} bytes)` : previewFile?.content}</pre></div></div>
+            {addToSolution && <p className="pw-metadata-note">Also updates <code>{plan.solutionPath}</code> with the new projects and configurations.</p>}
+            <h2 className="pw-section-label">CONFIGURATIONS</h2>
+            {plan.configurations.length ? <div className="pw-config-list">{plan.configurations.map((cfg) => <div key={cfg.name}><span>{cfg.name}</span><code>{cfg.command}</code></div>)}</div> : <p className="pw-metadata-note">No saved Power configurations. Manifest-based suggestions can still appear for executable projects.</p>}
           </div>
-
-          <div className="text-zinc-500 text-[11px] leading-5 pt-3 border-t border-zinc-800">
-            Folder <span className="font-mono text-zinc-300">{name || "MyProject"}/</span> will be
-            created in the solution root.
-          </div>
-
-          {error && (
-            <div className="text-red-400 text-[11px] bg-red-950/40 border border-red-900/60 rounded px-2 py-1.5">
-              {error}
-            </div>
-          )}
-        </div>
-
-        <div className="px-4 py-3 border-t border-zinc-800 flex justify-end gap-2">
-          <button
-            onClick={() => onClose()}
-            disabled={submitting}
-            className="px-3 py-1 rounded text-xs text-zinc-300 hover:bg-zinc-800 disabled:opacity-50"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={submit}
-            disabled={submitting || !name.trim()}
-            className="px-3 py-1 rounded text-xs bg-blue-700 hover:bg-blue-600 text-white disabled:opacity-50"
-          >
-            {submitting ? "Creating…" : "Create"}
-          </button>
-        </div>
+          <aside className="pw-review-aside"><h2 className="pw-section-label">BUILD REQUIREMENTS</h2>{plan.requirements.length === 0 && <p>No tools required.</p>}
+            {plan.requirements.map((item) => <div className="pw-requirement" key={item.name}><span>{item.path ? "✓" : "○"}</span><div><strong>{item.name}</strong><small>{item.path ?? "Not found on PATH. You can still create the project."}</small></div></div>)}
+            <div className="pw-detail-divider" />
+            {plan.notes.map((note) => <p key={note}>{note}</p>)}
+            {plan.nextSteps.length > 0 && <><h3>After creation</h3><p>From the new project folder:</p><pre>{plan.nextSteps.join("\n")}</pre></>}
+          </aside>
+        </div>}
       </div>
+
+      {error && <div role="alert" className="pw-error">{created && <strong>Project created, but opening failed. </strong>}{error}</div>}
+      <footer className="pw-footer"><div aria-live="polite">{busy ? step === 1 ? "Checking destination and preparing preview…" : "Creating files and opening solution…" : step === 0 ? !templates.length ? "Adjust your search to choose a template." : template.available ? "Select a template to continue." : "Planned · not available for creation" : created ? "Your files are saved." : "Nothing is written until you choose Create project."}</div>
+        <div className="pw-footer-actions"><button type="button" className="pw-button" onClick={() => onClose()} disabled={busy}>Cancel</button>
+          {step > 0 && !created && <button type="button" className="pw-button pw-button-outline" onClick={() => { setStep(step - 1); setError(null); setPlan(null); }} disabled={busy}>Back</button>}
+          <button type={step === 1 ? "submit" : "button"} form={step === 1 ? "project-wizard-form" : undefined} className="pw-button pw-button-primary" onClick={step === 1 ? undefined : next} disabled={busy || !template.available || (step === 0 && !templates.length) || (step === 1 && (!!nameError || !parent.trim()))}>
+            {busy ? "Working…" : created ? "Open project" : step === 2 ? "Create project" : step === 1 ? "Review project" : "Next"}<span aria-hidden="true">{step === 2 ? "+" : "→"}</span>
+          </button></div>
+      </footer>
     </div>
-  );
+  </div>;
 }
