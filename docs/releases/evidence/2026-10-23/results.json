@@ -1,0 +1,4647 @@
+{
+  "schema": 1,
+  "date": "2026-10-23",
+  "verdict": "NOT_READY",
+  "manifest": {
+    "started_utc": "2026-10-23T21:23:22.968766+00:00",
+    "workspace": "/home/skira24/.codex/worktrees/f6d4/Craidd-Studio",
+    "platform": "Linux-7.2.11-arch1-1-x86_64-with-glibc2.44",
+    "revisions": {
+      "HEAD": "8bac01edf9bf1f0a0b84b55441b5638bc1233a29",
+      "master": "ac78384c8ecf7cc83a4a4f2acdf4caa171e07e01",
+      "feat/create-project": "ac78384c8ecf7cc83a4a4f2acdf4caa171e07e01",
+      "codex/profiling-metric-csv-m1": "3059ea1cef1a053ed678ba9aae6b6734a6a691ee",
+      "codex/profiling-perf-timed": "464e40748877e6a775c0deba0e770acc1adbb533",
+      "public/master": "cd6a8bb9e8ff5865cc3458919528ac1579d59e93"
+    },
+    "initial_status": "",
+    "runtime": {
+      "node": {
+        "exit": 0,
+        "output": "v24.21.0"
+      },
+      "npm": {
+        "exit": 0,
+        "output": "11.19.0"
+      },
+      "cargo": {
+        "exit": 0,
+        "output": "cargo 1.99.1 (5f94df478 2026-08-27) (Arch Linux rust 1:1.99.1-1)"
+      },
+      "rustc": {
+        "exit": 0,
+        "output": "rustc 1.99.1 (58cf8f9c3 2026-10-13) (Arch Linux rust 1:1.99.1-1)"
+      },
+      "webkit": {
+        "exit": 0,
+        "output": "2.54.1"
+      },
+      "cpu": {
+        "exit": 0,
+        "output": "Architecture:                            x86_64\nCPU op-mode(s):                          32-bit, 64-bit\nAddress sizes:                           48 bits physical, 48 bits virtual\nByte Order:                              Little Endian\nCPU(s):                                  32\nOn-line CPU(s) list:                     0-31\nVendor ID:                               AuthenticAMD\nModel name:                              AMD Ryzen 9 9950X3D 16-Core Processor\nCPU family:                              26\nModel:                                   68\nThread(s) per core:                      2\nCore(s) per socket:                      16\nSocket(s):                               1\nStepping:                                0\nMicrocode version:                       0xb404035\nFrequency boost:                         enabled\nCPU(s) scaling MHz:                      94%\nCPU max MHz:                             5756.4521\nCPU min MHz:                             624.1940\nBogoMIPS:                                8599.98\nFlags:                                   fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush mmx fxsr sse sse2 ht syscall nx mmxext fxsr_opt pdpe1gb rdtscp lm constant_tsc rep_good amd_lbr_v2 nopl xtopology nonstop_tsc cpuid extd_apicid aperfmperf rapl pni pclmulqdq monitor ssse3 fma cx16 sse4_1 sse4_2 movbe popcnt aes xsave avx f16c rdrand lahf_lm cmp_legacy svm extapic cr8_legacy abm sse4a misalignsse 3dnowprefetch osvw ibs skinit wdt tce topoext perfctr_core perfctr_nb bpext perfctr_llc mwaitx cpuid_fault cpb cat_l3 cdp_l3 hw_pstate ssbd mba perfmon_v2 ibrs ibpb stibp ibrs_enhanced vmmcall fsgsbase tsc_adjust bmi1 avx2 smep bmi2 erms invpcid cqm rdt_a avx512f avx512dq rdseed adx smap avx512ifma clflushopt clwb avx512cd sha_ni avx512bw avx512vl xsaveopt xsavec xgetbv1 xsaves cqm_llc cqm_occup_llc cqm_mbm_total cqm_mbm_local user_shstk avx_vnni avx512_bf16 clzero irperf xsaveerptr rdpru wbnoinvd cppc arat npt lbrv svm_lock nrip_save tsc_scale vmcb_clean flushbyasid decodeassists pausefilter pfthreshold avic v_vmsave_vmload vgif x2avic v_spec_ctrl vnmi avx512vbmi umip pku ospke avx512_vbmi2 gfni vaes vpclmulqdq avx512_vnni avx512_bitalg avx512_vpopcntdq rdpid bus_lock_detect movdiri movdir64b overflow_recov succor smca fsrm avx512_vp2intersect flush_l1d amd_lbr_pmc_freeze\nVirtualization:                          AMD-V\nL1d cache:                               768 KiB (16 instances)\nL1i cache:                               512 KiB (16 instances)\nL2 cache:                                16 MiB (16 instances)\nL3 cache:                                128 MiB (2 instances)\nNUMA node(s):                            1\nNUMA node0 CPU(s):                       0-31\nVulnerability Gather data sampling:      Not affected\nVulnerability Ghostwrite:                Not affected\nVulnerability Indirect target selection: Not affected\nVulnerability Itlb multihit:             Not affected\nVulnerability L1tf:                      Not affected\nVulnerability Mds:                       Not affected\nVulnerability Meltdown:                  Not affected\nVulnerability Mmio stale data:           Not affected\nVulnerability Old microcode:             Not affected\nVulnerability Reg file data sampling:    Not affected\nVulnerability Retbleed:                  Not affected\nVulnerability Spec rstack overflow:      Mitigation; IBPB on VMEXIT only\nVulnerability Spec store bypass:         Mitigation; Speculative Store Bypass disabled via prctl\nVulnerability Spectre v1:                Mitigation; usercopy/swapgs barriers and __user pointer sanitization\nVulnerability Spectre v2:                Mitigation; Enhanced / Automatic IBRS; IBPB conditional; STIBP always-on; PBRSB-eIBRS Not affected; BHI Not affected\nVulnerability Srbds:                     Not affected\nVulnerability Tsa:                       Not affected\nVulnerability Tsx async abort:           Not affected\nVulnerability Vmscape:                   Mitigation; IBPB on VMEXIT"
+      }
+    },
+    "foreign_dirty_files": {
+      "/home/skira24/.codex/worktrees/9b33/Craidd-Studio/docs/feats/profiling/revisions/gr-001-m1-results.md": "150fa3551ee5f1fb8145069a5f9b732151c35b724bb30ed5c1664592198bd2d6",
+      "/home/skira24/.codex/worktrees/9b33/Craidd-Studio/docs/feats/profiling/revisions/gr-001-m1-uiux.md": "a4ebfe250a732823080c9b52d41129b3ec68c6516ae17808c567452825dc0c4c"
+    },
+    "host": "sk27"
+  },
+  "binaries": {
+    "baseline": {
+      "path": "/tmp/craidd-release-audit-f6d4/binaries/baseline",
+      "sha256": "50feda8f7242e668ce26c36a36d950160e0bc5d707d85e8abf0fdbb05331aaac",
+      "source_revision": "8bac01edf9bf1f0a0b84b55441b5638bc1233a29",
+      "build": "embedded debug; debuginfo 0; incremental disabled; no package",
+      "dist_files": {
+        "dist/assets/AppShell-C5CxljXa.js": "b57415efb2c224b7b6c1981d6bcc47689db1ad80ba19e7bc4da86fd59cf72570",
+        "dist/assets/AppShell-DD5cGtBy.css": "58d7228927f88bb2f7415b104c464eaba0f08487694179f2ffc883723ca5a5f1",
+        "dist/assets/GetStarted-CcZ-Pt_6.js": "f4f733a95a83312ae7676a7d7b2b326ebd94f05906b40f981033782dbb982d45",
+        "dist/assets/abap-08VXUWAP.js": "bffb36886b330040548e09a7c68fa82f1d414134008ecc3188dcd9db87cd677a",
+        "dist/assets/apex-BWPQTe0t.js": "794bb6262709d298e6318113816555bb314425ecb111f89ebe58cbe37e8cb774",
+        "dist/assets/app-CMtglwi5.js": "ad76ed041d98286701c2582670ebfb81695f31977d0fa584c644462e8f782347",
+        "dist/assets/azcli-Bc_sGQ0U.js": "2c3464d88876c09b13064125e728844a66cb31e3021ae346bb9683671699cd10",
+        "dist/assets/bat-i0X4ZdIN.js": "1c6f14208c883c792f2cf7d81efc333f0987c17062845ae5fc0377e057d138fe",
+        "dist/assets/bicep-B5-_aFwp.js": "2ea49cdc88d9d11eb71a63206916c8c59188f4533e204ef0fd7005cec109807d",
+        "dist/assets/breakpointStore-Bp0piDmR.js": "d90fe419b63b0530beea422f449381c9547038a15fd4e25ca7da0f067f30ebd6",
+        "dist/assets/cameligo-DMUM7wLl.js": "f8cf8a6a9453b4ac6482c32d39360ea484400aa198c783aeda4cfcf58ced7350",
+        "dist/assets/clojure-Cm7r79vr.js": "bc5c1f46b0ce8785c78dc51206bb6cabb2c49e4f60380207b522fd74c12f2b45",
+        "dist/assets/codicon-Brq4_Ui5.ttf": "cc2472e239e17062e7760af87f8f5997720cc0d94aa014a615c418baaf6333a8",
+        "dist/assets/coffee-Ba7i2nA0.js": "e5690905b616659b886795524f4349b37e19af5ae72519b06384dc4fb63409a1",
+        "dist/assets/core-DSevTNOc.js": "14a74e7e8d28c011bce9b59ac2ae6dea3c02b166c7b2e040d3533c9a3c1a00d1",
+        "dist/assets/cpp-C7h46wYY.js": "0f16cff9f7780af91337017f6be26bd4871a5005e6c04adb6d01047e246437f5",
+        "dist/assets/csharp-BKxtCVv1.js": "b5c2b4c55aff810ce2372f02543c3e90c404c1e8487bd343df88c5d24b7c737e",
+        "dist/assets/csp-bTuwJoIa.js": "a54603c0e0cfb172abe2c86bc617d1834fd6458dd32d3f1fe68997ee760fc3b6",
+        "dist/assets/css-DIMkf-bt.js": "361b35ed3c739617f90ee999b6bcfe6e7047c1d30c52df58401c50486f5fd8e4",
+        "dist/assets/css.worker-NNelxtRr.js": "a7e49d72c9ab7b0e338f9b164bd2868e1b7ba17d7d87567e3eab5e9c8dd74f91",
+        "dist/assets/cssMode-BcHU08w-.js": "789d5469b217a1f6cc89f2c2a52e1952c2ab9b1909fab7d8ec9912b8670a000f",
+        "dist/assets/cypher-CVaqCwHa.js": "0181ad561c8c1c97516cec2918b11f00f0321c07705dcdc9d03fe68cde282d58",
+        "dist/assets/dart-onAF5SnQ.js": "41649fe3b34c16edb251df57152184ba2b03adf729fa0bec731f56ce7b8c636c",
+        "dist/assets/debugSource-D7r6TCAG.js": "df336941380a98d16483570e1c16be6b32a357c031b48f79932a0d69d6890bbb",
+        "dist/assets/debugStore-vERitrLZ.js": "36aa8089e38209dea8664a46f0fb8c045e45616eba312af623224368b99bada0",
+        "dist/assets/dist-js-52QWKs3b.js": "0148511d7296353fbfd8de0d99ef88936f8b0218c457e8e56b80656577ec7e7d",
+        "dist/assets/dist-js-T3prQWCP.js": "dc75844099982f7333cb5ad2c9cdffbb2879300ffc7406b7526e687f1d9bebc2",
+        "dist/assets/dockerfile-DZFCIeNp.js": "84814a9784122bacec9f8f423f729a7262a98a8bf05a74d995e7a9aa5e55007a",
+        "dist/assets/ecl-D05T4iGw.js": "f1dcbc07ef5c96168389bccfb33cd78f1edcf598f4b76a54c35f6b8083a50243",
+        "dist/assets/editor.worker-DKXjC3Lf.js": "acb3d3a21995a8f11b7ba9b6b5e60e9dac93087eaa71e42c443226612490c5bb",
+        "dist/assets/elixir-6RTg0lbw.js": "fc0336d16849bf07801e67d229927011a21e2e0ef5b7c8e4494260455cf93f4c",
+        "dist/assets/event-D_ZbePVI.js": "f2adfd44c8c6a945e4866ab7c7788ed41d93838303761c831cfd717adedcc72d",
+        "dist/assets/flow9-C5_-GSwl.js": "9146223a874645367aa89e7189e958f0abb9c815e5b0439bf64c5263815a8dbd",
+        "dist/assets/freemarker2-B3lgJmx1.js": "d08f5088ff70e9f984455179f3a86bd05d00fdfa81e1a5e51523bb74b2ade446",
+        "dist/assets/fsharp-C8Ef5oNN.js": "5137a827baefcb111c2ff8747bbe07924c9f9ea8f3d4a7a07a7b6e7c25f69e45",
+        "dist/assets/go-C-y9NEjX.js": "ca236e02f3a5f8225d83597bb65b036ea8caae5f79549ea37213bb2979bcb085",
+        "dist/assets/graphql-fmXr3nnJ.js": "a66e3b8eacf8ad4017403825f7cc7978fbefc5fd1f80ea6c044f8059848c5186",
+        "dist/assets/handlebars-D5wwlRwr.js": "c4930d1d61cbb90043532764b68e3c7d44ec088113ef4fee2560429334f438e8",
+        "dist/assets/hcl-CpzslTdj.js": "15310bb6f51d2670886bac778d8c23351697bd2a8393bff1e1295361e84c99d2",
+        "dist/assets/html-Cc7QIT_O.js": "119f37b5e46e03a8f3c9d305c2c229dedb030b141d01c28896e230822cef7f6a",
+        "dist/assets/html.worker-B4rXkk6r.js": "dba5ea30ba18a3c8fae1806f78c546c5336b6f10090ecda9d5e8d6bb33f0bbb4",
+        "dist/assets/htmlMode-BGFhv25c.js": "fad60d7adb09f4e51b624d4607d0266f102b52325fc04c458d631fa96076838f",
+        "dist/assets/index-BgZ_o12d.js": "adc83b79f68ad0ca52814bb5ea8edb3aaed4cf9acacef43b757d05ef80a481b8",
+        "dist/assets/index-C6E9P8vX.css": "630bf78f7ea267f635b2ba6411aef3f7338d0edf04546f17aba1005a922a8e9c",
+        "dist/assets/ini-sBoK_t0W.js": "e9017a169ebca71c2edba3ee62e01ae57969c0330ca295c1f201e3e17829a54e",
+        "dist/assets/java-BEtHBSE6.js": "77d3a91eeaf54e004f8ec321e6208afecebe2435232146b41f68135373800953",
+        "dist/assets/javascript-PM3cbEZo.js": "537f05f259c2bb4d70b2609dc1ec16c43514e95b951d22fb219763cd892274f2",
+        "dist/assets/json.worker-izi4BK3w.js": "f08a02f2777c75e9c861c6741edde84c39f9adf2b5ae1ae04e58ba6e2681d968",
+        "dist/assets/jsonMode-Crb_1R5G.js": "f0f2ee02a8ba2dc35df1f537056f8e993b69065c15712d2ffde937bb43385295",
+        "dist/assets/julia-Bri6UV-V.js": "1a01df2b09226f1f376180126ae2717b2f4239a7829c30b4f853bd0c8e61d70c",
+        "dist/assets/kotlin-BOotOW0E.js": "cbd90a8ca4d40a492021fd1766b9f4696d0cdbcc9969a6efac0acd8cc862f643",
+        "dist/assets/ldiStore-CakxyBkq.js": "f452a8084c924fb018e114cba6fe8a09586d7dfea8584d7a7499e41ba95adbc1",
+        "dist/assets/less-B9JPFI3C.js": "44afa50e036a60b51d9e8946705b63e56e4d85d8f6ae10108de80b312b642dbc",
+        "dist/assets/lexon-CfSJPG6W.js": "df071e61a9754e5ff7a082a5bab4f6f5ee3a082c251f40d85d1c47ca48ba6807",
+        "dist/assets/liquid-DMJsbgQ2.js": "463c5bd779b0b661040c4407c84149c630f341af85e13630ed0cca39fed676b3",
+        "dist/assets/lspLanguageFeatures-CWo4AZpQ.js": "6cec1b3fdfeac172494d0692856dd602f0551299fd416b08153fdfd59cda21d7",
+        "dist/assets/lua-CsQS60Ue.js": "4faf3305fbfc61b59039430ea0a0c7952e992d741bbd4a15cc8aa37dd29a37cd",
+        "dist/assets/m3-D-oSqn_W.js": "c22429b1cf9e8ee53e35dfcdd44124bbbd06bc5c42291d9e9f1ff814c68b1115",
+        "dist/assets/markdown-Cimd5fb3.js": "621e51234c4fea96a2a3a6e0dd59151f1c0216d7cb4a963361ee29aa302c7977",
+        "dist/assets/mdx-DPL-ce7P.js": "7d6cd2b827bf01cbebf33b296e931a3335f4ff9c98856f35a582ee0f24e1b020",
+        "dist/assets/mips-CIPQ_RoX.js": "31ff67847e1488dbf870ec71f466f3644c1c6a700bc9e5f59ea6727835709fef",
+        "dist/assets/msdax-DauUninz.js": "c7e11cd45bd941f372201b9f1b7685fa76e18ed59609be2dacd125db0ee63915",
+        "dist/assets/mysql-SOo6toE5.js": "b34d7be6f8a903da0877bc96c65faee230d0a7a7000f52e5cc8950f789275331",
+        "dist/assets/nativeDebugStore-BazJJH3U.js": "0241a1e5bd4179eb5f85b144014659624a5acb21a789f03dc9149cd45a7a787f",
+        "dist/assets/objective-c-FvmIjYaQ.js": "fb4eab2690dc37ba7b619e074368450ed02be3c30b4fec782134e12d1474a573",
+        "dist/assets/pascal-DrH0SRf2.js": "2f334989ddf5ad3a0cd557d71162ebf9eeadade1526083d1b35797f1069bf3bc",
+        "dist/assets/pascaligo-D-ptJ9y-.js": "224cfd072a59e3ff45f37adcec85b544858b47e90b0617f54fe3e6ab4de832ad",
+        "dist/assets/perl-oz_6vUea.js": "c580f25e97de8b3bb096498919558aaa55e0fd2764d408cb73c66e3702cc2240",
+        "dist/assets/pgsql-DTj74zXo.js": "da731f252a2c8651c92bb10b22b77a69d67236aef1ad58bed8119212e4aa6a07",
+        "dist/assets/php-nr791fC2.js": "a592c0b5ded4d8136c1c45c1fe91e3d1a9aba10fba9cd690dedbdd575c960c97",
+        "dist/assets/pla-CopQ2nXW.js": "17aa9ef936a2a049be2b7d64aea32486f961c1edb7cf1c5c270f2612f2fef7ef",
+        "dist/assets/postiats-43DmfD33.js": "de5f427d26790893b215cba9cf83c78dd4401d1198d6fe6c467691b123960580",
+        "dist/assets/powerquery-D3hlyOfw.js": "87bfb26727836297fc573ec8fa8f8074e5cbebbdc40e844d7a56306fea006273",
+        "dist/assets/powershell-DmHpPYUd.js": "7d2fa4e26c98b5b27b23e9d3e00384db158153a042e32053b0ef2eb512369180",
+        "dist/assets/preload-helper-BZ1Pz5am.js": "8820987e6a8afb54d776f21e305917e1ecf83cef678b4db38c2e5a405d04a8bf",
+        "dist/assets/protobuf-C531GsRP.js": "084d9064c607e6db8ae6a69c261142379120ab495d0020a7f19332eddac203f0",
+        "dist/assets/pug-Z5eAx3Zn.js": "dd6fd0e69c38d8f4a1bd74de666762779629cd2dbd644288b46dcd6cc6646486",
+        "dist/assets/python-vrl9niC5.js": "6b43baa6658a1c914e93ec7e43f0796d000a3a46aafc09ffe0804312a522590a",
+        "dist/assets/qsharp-DkqhCAOL.js": "ef671378a8ae53aa91c7323d8f82956feaf6cb9bbb623f4ef83a69a8932bb30f",
+        "dist/assets/r-BwWrilGY.js": "923bf047ed7decb6ba5ab3df467b6f739552e06715b3b49550872ae5bae00e1e",
+        "dist/assets/razor-CZRbO1rD.js": "6ef5854f4e1d0329632af520c1ca1b0681606bfa654b167e4d597a61ca2e17ad",
+        "dist/assets/react-Cvdyeg_0.js": "adf02d35457fb7bb4d00a12cba117c972addb3d5e4849d3a2bc0871940270347",
+        "dist/assets/react-kkgycRwS.js": "3ce18970277214645510596606121de0246a6e2c8c120e195e7c54399cc0b674",
+        "dist/assets/redis-ClamHrr6.js": "3fa2881b96c9456be6c8fcc6d7840ee516499668f8f69ce7fa9e210ea4854393",
+        "dist/assets/redshift-DT7zqm-g.js": "3e62d2f263de782216bbe34bc3548c53b9d9a7de16bd6edaa8a006ed36c9bf77",
+        "dist/assets/restructuredtext-BYgofb2h.js": "52688aefe9a0825bd762aaceb78342771e2828d3681e2963d577e6564470ee60",
+        "dist/assets/rolldown-runtime-hePW80VL.js": "580ad8c58061a4dde99bde0a56905e382f0568516ee2f5b84dbfb52085709021",
+        "dist/assets/ruby-DezsRK8O.js": "721bbb944308c8e3388ef74930f0b5e192b98720f1889f4b324a033ef094a130",
+        "dist/assets/rust-DdL9SqIa.js": "306a2b66455042750a665f7329a1c5feb4a33b408dec0e54802755dae2963b87",
+        "dist/assets/sb-CcwsVR0C.js": "c4079c95ca545fc031101180dbc5e529e188c7faa1881bbf18bf8701b2d2eb67",
+        "dist/assets/scala-DHpiXF5c.js": "c82c096cd169dd2e720592c7723690c3c74a254fa64817cf00e968dd5c98314a",
+        "dist/assets/scheme-BeGwcela.js": "cfc22daf2ad0cd716773a3ca1f5a66a11e07ba918c860aa329c1e940d870c4ae",
+        "dist/assets/scss-gp-XZpBa.js": "7110a8b2dc55041f461998cf79b16e2f25d9793b07155446cbfc97b45f8b8cfd",
+        "dist/assets/sessionRestart-BDmqxJFo.js": "c12d91934fc2e848b8931a86beaffdb60c529388fedc6d9ce055aff3f4d175a5",
+        "dist/assets/shell-CC2rA5mh.js": "9380df24541bab1a9ab0999d08c542e6d63905cfd8116a61579e6896cfedba3c",
+        "dist/assets/solidity-BEEn4gHE.js": "6a06945b7a04d32e929fc5f86cd1097fc29dfa4fcee24a330b4c0e73ba43ddf5",
+        "dist/assets/solutionStore-DB-Pe5Za.js": "f8c8d9c5fff2e311d06e25505c78e85eefeffcd13845ab64ca8da853bdff82c9",
+        "dist/assets/sophia-CRfGWb83.js": "5f597679cef7e39dcc86886aeaba4dc7aa6a1ecb8abedde2cade18568a70c631",
+        "dist/assets/sparql-D_Lu-MrJ.js": "dc978506d1a47be041882cd4e6733cdc38b0bb579cd48fbfedd44f10ad6cd84f",
+        "dist/assets/sql-NEE52Syq.js": "fa4fe9ccff8882e93028a9fa6961b1a485b8eb480880fa480fdf4057b0de7cd0",
+        "dist/assets/st-DbInun42.js": "e2eaa622ad805796cece9e9832b5bb9ca398ade0d0371b693633990778ce5ffe",
+        "dist/assets/swift-Bxkupp3x.js": "3c0a146a88fdc340b543cb4e7c1b0379fcad231cda24b6315e8f1d830584e0b4",
+        "dist/assets/systemverilog-Bz4Y3fRF.js": "37c0497660cf7404b76122dff7e73a5a3a5e1e20bc01488f142d1bf37411bbce",
+        "dist/assets/tcl-DISqw1ZD.js": "b460f0ae3471b62c331c14155f86981cfc76b6f9f3c826ec937328b9137c9c62",
+        "dist/assets/ts.worker-9_CJKYKz.js": "9f57ae63afb49d88a1cfe4212099e18a1934442773707563ee0b3ef2615daf85",
+        "dist/assets/tsMode-DsnXqn20.js": "1e1308c4805694bdb76c279509766ad61ed5338751f64706148f2fa4a6bcd342",
+        "dist/assets/twig-De2hgUGE.js": "ed42be999634b7600e1b6ba924576151f93f84de2343134edfbc56fe95ec6119",
+        "dist/assets/typescript-BLXSLXll.js": "46e30612e1d055641209251e8b43bc7a5af352002a18afd06bebd17c0e41ec70",
+        "dist/assets/typespec-B8J7ngcE.js": "e128961ad6029fe9fb0c0168430de115b5e95ce1335085603eb1673317832f40",
+        "dist/assets/vb-DV3o63ZY.js": "83a1714a1a12ba92d31b12ab18752ddf5a4ee85a02ad8f67a4c310a674aab6c3",
+        "dist/assets/webviewWindow-CQPD4i0Z.js": "e759f037754e57a22b13334de2ad74d4c164f34fbedca2aaf2655ee45b35a73e",
+        "dist/assets/wgsl-DpFanUEy.js": "335b9279c9f8966b751b7990c9309dc53e267c70b8837023240c3b72e530020e",
+        "dist/assets/window-svy2gpbB.js": "b370f96c33664fb59c9fbf2bb92cd844fd0c645cb0d4326b2928b646d99af63b",
+        "dist/assets/workers-BiPU28re.js": "f29c58d7d54a896f3a001538ad6016f6c53d3b6fb4b1a59ce4a495f55625f2bb",
+        "dist/assets/xml-2HPzPwk8.js": "63d61828bc81013764719f094b7152d348ce3f058d63edd09bc85ef5b01c33f1",
+        "dist/assets/yaml-3lGXaGwi.js": "5431f7037ab1cc5bca5fd14c2e081543ab88656cfffb4218d8a263eb4a57c785",
+        "dist/craidd-icon.png": "1f3689f6374b0553996fdc99743799216703835070145d7f0e6ec11e6280139e",
+        "dist/index.html": "725a64c5347d94237c04c76d6c33b1dd4bb77b7e94efdeb275a906902c8da844",
+        "dist/tauri.svg": "e5d2738bbaa5543c4684001a558dc53165da9b636144827b28db1dcfacf81aa8",
+        "dist/vite.svg": "4a748afd443918bb16591c834c401dae33e87861ab5dbad0811c3a3b4a9214fb"
+      }
+    },
+    "wizard": {
+      "path": "/tmp/craidd-release-audit-f6d4/binaries/wizard",
+      "sha256": "59b9fef4576d56d98e57cd0244c9626f562f732b3a8e4a24125d0911bb6e1fce",
+      "source": "wizard-working-manifest.json",
+      "build": "embedded debug; debuginfo 0; incremental disabled"
+    },
+    "metrics": {
+      "path": "/tmp/craidd-release-audit-f6d4/binaries/release/metrics",
+      "sha256": "02cbe036bcd64336d5d1e991c9b8679f7cb4bf01461dff275f0fdec550062887",
+      "revision": "3059ea1cef1a053ed678ba9aae6b6734a6a691ee",
+      "mode": "embedded optimized release, no package"
+    }
+  },
+  "preservation": {
+    "foreign_dirty_hashes_unchanged": {
+      "/home/skira24/.codex/worktrees/9b33/Craidd-Studio/docs/feats/profiling/revisions/gr-001-m1-results.md": true,
+      "/home/skira24/.codex/worktrees/9b33/Craidd-Studio/docs/feats/profiling/revisions/gr-001-m1-uiux.md": true
+    },
+    "original_wizard_files_changed_since_snapshot": [],
+    "index_paths": [],
+    "owned_long_editor_exited": true
+  },
+  "checks": [
+    {
+      "name": "baseline-dependencies",
+      "cwd": "/home/skira24/.codex/worktrees/f6d4/Craidd-Studio",
+      "command": [
+        "npm",
+        "ls",
+        "--depth=0"
+      ],
+      "exit_code": 0,
+      "seconds": 0.126,
+      "finished_utc": "2026-10-23T21:23:23.212735+00:00",
+      "log_sha256": "7691e827aff6c64ca8c773246c89caffd972988dba113e68f75a7edf49c018e6",
+      "rust_results": []
+    },
+    {
+      "name": "baseline-embedded",
+      "cwd": "/home/skira24/.codex/worktrees/f6d4/Craidd-Studio",
+      "command": [
+        "env",
+        "CARGO_TARGET_DIR=/tmp/craidd-release-audit-f6d4-target",
+        "CARGO_PROFILE_DEV_DEBUG=0",
+        "CARGO_INCREMENTAL=0",
+        "npm",
+        "run",
+        "test:ui:build"
+      ],
+      "exit_code": 0,
+      "seconds": 16.429,
+      "finished_utc": "2026-10-23T21:26:02.549675+00:00",
+      "log_sha256": "2262bf92abdb5c3d1ae84537c1d6af378d801dec4dbc8a08a783a4e745efbdd5",
+      "rust_results": []
+    },
+    {
+      "name": "baseline-frontend-writable",
+      "cwd": "/home/skira24/.codex/worktrees/f6d4/Craidd-Studio",
+      "command": [
+        "npm",
+        "run",
+        "build"
+      ],
+      "exit_code": 0,
+      "seconds": 6.255,
+      "finished_utc": "2026-10-23T21:25:52.378707+00:00",
+      "log_sha256": "272a5d8bc3252e1d5532f6ebffdd06022871d86cb20355e3cf9a7865c6bfd0cc",
+      "rust_results": []
+    },
+    {
+      "name": "baseline-frontend",
+      "cwd": "/home/skira24/.codex/worktrees/f6d4/Craidd-Studio",
+      "command": [
+        "npm",
+        "run",
+        "build"
+      ],
+      "exit_code": 1,
+      "seconds": 2.492,
+      "finished_utc": "2026-10-23T21:23:31.233588+00:00",
+      "log_sha256": "4156e62d865f8bcc96f5cd8af061c4dd5fbb2cc73f76fd3e177bbd1d9fafedab",
+      "rust_results": []
+    },
+    {
+      "name": "baseline-node-detailed",
+      "cwd": "/home/skira24/.codex/worktrees/f6d4/Craidd-Studio",
+      "command": [
+        "node <each file>",
+        "tests/buildDiagnostics.test.mjs",
+        "tests/duplicateWindowPolicy.test.mjs",
+        "tests/exitBlockers.test.mjs",
+        "tests/linkedStartup.test.mjs",
+        "tests/markdownDocs.test.mjs",
+        "tests/nativeDebug.test.mjs",
+        "tests/nativeStepCapability.test.mjs",
+        "tests/outputPresentation.test.mjs",
+        "tests/pathActions.test.mjs",
+        "tests/profilerWorkspace.test.mjs",
+        "tests/profiling.test.mjs",
+        "tests/rustNativeGold.test.mjs",
+        "tests/saveRestartPolicy.test.mjs",
+        "tests/shortcuts.test.mjs",
+        "tests/windowAttention.test.mjs",
+        "tests/windowEventRouting.test.mjs"
+      ],
+      "exit_code": 0,
+      "finished_utc": "2026-10-23T21:24:26.486262+00:00",
+      "files": [
+        {
+          "file": "tests/buildDiagnostics.test.mjs",
+          "exit_code": 0,
+          "seconds": 0.046,
+          "counts": {
+            "tests": 5,
+            "pass": 5,
+            "fail": 0,
+            "cancelled": 0,
+            "skipped": 0,
+            "todo": 0
+          }
+        },
+        {
+          "file": "tests/duplicateWindowPolicy.test.mjs",
+          "exit_code": 0,
+          "seconds": 0.175,
+          "counts": {
+            "tests": 2,
+            "pass": 2,
+            "fail": 0,
+            "cancelled": 0,
+            "skipped": 0,
+            "todo": 0
+          }
+        },
+        {
+          "file": "tests/exitBlockers.test.mjs",
+          "exit_code": 0,
+          "seconds": 0.194,
+          "counts": {
+            "tests": 4,
+            "pass": 4,
+            "fail": 0,
+            "cancelled": 0,
+            "skipped": 0,
+            "todo": 0
+          }
+        },
+        {
+          "file": "tests/linkedStartup.test.mjs",
+          "exit_code": 0,
+          "seconds": 0.213,
+          "counts": {
+            "tests": 7,
+            "pass": 7,
+            "fail": 0,
+            "cancelled": 0,
+            "skipped": 0,
+            "todo": 0
+          }
+        },
+        {
+          "file": "tests/markdownDocs.test.mjs",
+          "exit_code": 0,
+          "seconds": 0.328,
+          "counts": {
+            "tests": 8,
+            "pass": 8,
+            "fail": 0,
+            "cancelled": 0,
+            "skipped": 0,
+            "todo": 0
+          }
+        },
+        {
+          "file": "tests/nativeDebug.test.mjs",
+          "exit_code": 0,
+          "seconds": 0.354,
+          "counts": {
+            "tests": 21,
+            "pass": 21,
+            "fail": 0,
+            "cancelled": 0,
+            "skipped": 0,
+            "todo": 0
+          }
+        },
+        {
+          "file": "tests/nativeStepCapability.test.mjs",
+          "exit_code": 0,
+          "seconds": 0.217,
+          "counts": {
+            "tests": 3,
+            "pass": 3,
+            "fail": 0,
+            "cancelled": 0,
+            "skipped": 0,
+            "todo": 0
+          }
+        },
+        {
+          "file": "tests/outputPresentation.test.mjs",
+          "exit_code": 0,
+          "seconds": 0.042,
+          "counts": {
+            "tests": 4,
+            "pass": 4,
+            "fail": 0,
+            "cancelled": 0,
+            "skipped": 0,
+            "todo": 0
+          }
+        },
+        {
+          "file": "tests/pathActions.test.mjs",
+          "exit_code": 0,
+          "seconds": 0.182,
+          "counts": {
+            "tests": 2,
+            "pass": 2,
+            "fail": 0,
+            "cancelled": 0,
+            "skipped": 0,
+            "todo": 0
+          }
+        },
+        {
+          "file": "tests/profilerWorkspace.test.mjs",
+          "exit_code": 0,
+          "seconds": 0.295,
+          "counts": {
+            "tests": 5,
+            "pass": 5,
+            "fail": 0,
+            "cancelled": 0,
+            "skipped": 0,
+            "todo": 0
+          }
+        },
+        {
+          "file": "tests/profiling.test.mjs",
+          "exit_code": 0,
+          "seconds": 0.3,
+          "counts": {
+            "tests": 28,
+            "pass": 28,
+            "fail": 0,
+            "cancelled": 0,
+            "skipped": 0,
+            "todo": 0
+          }
+        },
+        {
+          "file": "tests/rustNativeGold.test.mjs",
+          "exit_code": 0,
+          "seconds": 0.212,
+          "counts": {
+            "tests": 6,
+            "pass": 6,
+            "fail": 0,
+            "cancelled": 0,
+            "skipped": 0,
+            "todo": 0
+          }
+        },
+        {
+          "file": "tests/saveRestartPolicy.test.mjs",
+          "exit_code": 0,
+          "seconds": 0.183,
+          "counts": {
+            "tests": 9,
+            "pass": 9,
+            "fail": 0,
+            "cancelled": 0,
+            "skipped": 0,
+            "todo": 0
+          }
+        },
+        {
+          "file": "tests/shortcuts.test.mjs",
+          "exit_code": 0,
+          "seconds": 0.182,
+          "counts": {
+            "tests": 9,
+            "pass": 9,
+            "fail": 0,
+            "cancelled": 0,
+            "skipped": 0,
+            "todo": 0
+          }
+        },
+        {
+          "file": "tests/windowAttention.test.mjs",
+          "exit_code": 0,
+          "seconds": 0.147,
+          "counts": {
+            "tests": 2,
+            "pass": 2,
+            "fail": 0,
+            "cancelled": 0,
+            "skipped": 0,
+            "todo": 0
+          }
+        },
+        {
+          "file": "tests/windowEventRouting.test.mjs",
+          "exit_code": 0,
+          "seconds": 0.025,
+          "counts": {
+            "tests": 2,
+            "pass": 2,
+            "fail": 0,
+            "cancelled": 0,
+            "skipped": 0,
+            "todo": 0
+          }
+        }
+      ],
+      "totals": {
+        "tests": 117,
+        "pass": 117,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "name": "baseline-node",
+      "cwd": "/home/skira24/.codex/worktrees/f6d4/Craidd-Studio",
+      "command": [
+        "node",
+        "--test",
+        "tests/buildDiagnostics.test.mjs",
+        "tests/duplicateWindowPolicy.test.mjs",
+        "tests/exitBlockers.test.mjs",
+        "tests/linkedStartup.test.mjs",
+        "tests/markdownDocs.test.mjs",
+        "tests/nativeDebug.test.mjs",
+        "tests/nativeStepCapability.test.mjs",
+        "tests/outputPresentation.test.mjs",
+        "tests/pathActions.test.mjs",
+        "tests/profilerWorkspace.test.mjs",
+        "tests/profiling.test.mjs",
+        "tests/rustNativeGold.test.mjs",
+        "tests/saveRestartPolicy.test.mjs",
+        "tests/shortcuts.test.mjs",
+        "tests/windowAttention.test.mjs",
+        "tests/windowEventRouting.test.mjs"
+      ],
+      "exit_code": 0,
+      "seconds": 0.631,
+      "finished_utc": "2026-10-23T21:23:29.372534+00:00",
+      "log_sha256": "7f34823b003638e495b36fa7f6c2479e2c7a7e2a7cea2b8001aa07f1e8dc958f",
+      "rust_results": []
+    },
+    {
+      "name": "baseline-real-tools",
+      "cwd": "/home/skira24/.codex/worktrees/f6d4/Craidd-Studio",
+      "command": [
+        "env",
+        "CARGO_TARGET_DIR=/tmp/craidd-release-audit-f6d4-target",
+        "CARGO_PROFILE_DEV_DEBUG=0",
+        "CARGO_PROFILE_TEST_DEBUG=0",
+        "CARGO_INCREMENTAL=0",
+        "cargo",
+        "test",
+        "--locked",
+        "--offline",
+        "--manifest-path",
+        "src-tauri/Cargo.toml",
+        "--lib",
+        "-j",
+        "4",
+        "--",
+        "--ignored",
+        "--test-threads=1",
+        "--skip",
+        "running_unity_editor"
+      ],
+      "exit_code": 101,
+      "seconds": 34.334,
+      "finished_utc": "2026-10-23T21:39:54.889946+00:00",
+      "log_sha256": "79fb854d3e637d57523d2ef6fe0499c4f32bc778b16b59c04361db1733673ffa",
+      "rust_results": [
+        {
+          "passed": 3,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 3,
+          "failed": 1,
+          "ignored": 0
+        }
+      ]
+    },
+    {
+      "name": "baseline-rust-host",
+      "cwd": "/home/skira24/.codex/worktrees/f6d4/Craidd-Studio",
+      "command": [
+        "env",
+        "CARGO_TARGET_DIR=/tmp/craidd-release-audit-f6d4-target",
+        "CARGO_PROFILE_DEV_DEBUG=0",
+        "CARGO_PROFILE_TEST_DEBUG=0",
+        "CARGO_INCREMENTAL=0",
+        "cargo",
+        "test",
+        "--locked",
+        "--offline",
+        "--manifest-path",
+        "src-tauri/Cargo.toml",
+        "-j",
+        "4"
+      ],
+      "exit_code": 0,
+      "seconds": 11.425,
+      "finished_utc": "2026-10-23T21:25:19.058656+00:00",
+      "log_sha256": "956f99fcfc656555fc2f1ad71b26042c01a7cc979a7fdf174336bd2d95837064",
+      "rust_results": [
+        {
+          "passed": 181,
+          "failed": 0,
+          "ignored": 6
+        },
+        {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 7,
+          "failed": 0,
+          "ignored": 1
+        },
+        {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0
+        }
+      ]
+    },
+    {
+      "name": "baseline-rust",
+      "cwd": "/home/skira24/.codex/worktrees/f6d4/Craidd-Studio",
+      "command": [
+        "env",
+        "CARGO_TARGET_DIR=/tmp/craidd-release-audit-f6d4-target",
+        "CARGO_PROFILE_DEV_DEBUG=0",
+        "CARGO_PROFILE_TEST_DEBUG=0",
+        "CARGO_INCREMENTAL=0",
+        "cargo",
+        "test",
+        "--locked",
+        "--offline",
+        "--manifest-path",
+        "src-tauri/Cargo.toml",
+        "-j",
+        "4"
+      ],
+      "exit_code": 101,
+      "seconds": 52.171,
+      "finished_utc": "2026-10-23T21:24:20.913351+00:00",
+      "log_sha256": "f7d52cab513df7268db265a461e42c0b85a3568e72feaca80d15d63c4dda201a",
+      "rust_results": [
+        {
+          "passed": 176,
+          "failed": 5,
+          "ignored": 6
+        }
+      ]
+    },
+    {
+      "name": "baseline-ui",
+      "cwd": "/home/skira24/.codex/worktrees/f6d4/Craidd-Studio",
+      "command": [
+        "node <each file>",
+        "tests/ui/debug.test.mjs",
+        "tests/ui/exit.test.mjs",
+        "tests/ui/menus.test.mjs",
+        "tests/ui/profiler-icons.test.mjs",
+        "tests/ui/profiler-workspace.test.mjs",
+        "tests/ui/titles.test.mjs",
+        "tests/ui/unity-overlay.test.mjs",
+        "tests/ui/unity-profiling.test.mjs",
+        "tests/ui/unity-recovery.test.mjs",
+        "tests/ui/unity-review-regressions.test.mjs",
+        "tests/ui/unity-scopes.test.mjs"
+      ],
+      "exit_code": 1,
+      "finished_utc": "2026-10-23T21:29:49.007277+00:00",
+      "files": [
+        {
+          "file": "tests/ui/debug.test.mjs",
+          "exit_code": 1,
+          "seconds": 20.077,
+          "counts": {
+            "tests": 1,
+            "pass": 0,
+            "fail": 1,
+            "cancelled": 0,
+            "skipped": 0,
+            "todo": 0
+          }
+        },
+        {
+          "file": "tests/ui/exit.test.mjs",
+          "exit_code": 0,
+          "seconds": 3.621,
+          "counts": {
+            "tests": 1,
+            "pass": 1,
+            "fail": 0,
+            "cancelled": 0,
+            "skipped": 0,
+            "todo": 0
+          }
+        },
+        {
+          "file": "tests/ui/menus.test.mjs",
+          "exit_code": 1,
+          "seconds": 2.458,
+          "counts": {
+            "tests": 1,
+            "pass": 0,
+            "fail": 1,
+            "cancelled": 0,
+            "skipped": 0,
+            "todo": 0
+          }
+        },
+        {
+          "file": "tests/ui/profiler-icons.test.mjs",
+          "exit_code": 0,
+          "seconds": 3.139,
+          "counts": {
+            "tests": 1,
+            "pass": 1,
+            "fail": 0,
+            "cancelled": 0,
+            "skipped": 0,
+            "todo": 0
+          }
+        },
+        {
+          "file": "tests/ui/profiler-workspace.test.mjs",
+          "exit_code": 0,
+          "seconds": 5.551,
+          "counts": {
+            "tests": 1,
+            "pass": 1,
+            "fail": 0,
+            "cancelled": 0,
+            "skipped": 0,
+            "todo": 0
+          }
+        },
+        {
+          "file": "tests/ui/titles.test.mjs",
+          "exit_code": 0,
+          "seconds": 3.968,
+          "counts": {
+            "tests": 1,
+            "pass": 1,
+            "fail": 0,
+            "cancelled": 0,
+            "skipped": 0,
+            "todo": 0
+          }
+        },
+        {
+          "file": "tests/ui/unity-overlay.test.mjs",
+          "exit_code": 0,
+          "seconds": 21.844,
+          "counts": {
+            "tests": 1,
+            "pass": 1,
+            "fail": 0,
+            "cancelled": 0,
+            "skipped": 0,
+            "todo": 0
+          }
+        },
+        {
+          "file": "tests/ui/unity-profiling.test.mjs",
+          "exit_code": 1,
+          "seconds": 50.207,
+          "counts": {
+            "tests": 2,
+            "pass": 0,
+            "fail": 2,
+            "cancelled": 0,
+            "skipped": 0,
+            "todo": 0
+          }
+        },
+        {
+          "file": "tests/ui/unity-recovery.test.mjs",
+          "exit_code": 0,
+          "seconds": 26.794,
+          "counts": {
+            "tests": 1,
+            "pass": 1,
+            "fail": 0,
+            "cancelled": 0,
+            "skipped": 0,
+            "todo": 0
+          }
+        },
+        {
+          "file": "tests/ui/unity-review-regressions.test.mjs",
+          "exit_code": 0,
+          "seconds": 30.02,
+          "counts": {
+            "tests": 1,
+            "pass": 1,
+            "fail": 0,
+            "cancelled": 0,
+            "skipped": 0,
+            "todo": 0
+          }
+        },
+        {
+          "file": "tests/ui/unity-scopes.test.mjs",
+          "exit_code": 0,
+          "seconds": 34.443,
+          "counts": {
+            "tests": 1,
+            "pass": 1,
+            "fail": 0,
+            "cancelled": 0,
+            "skipped": 0,
+            "todo": 0
+          }
+        }
+      ],
+      "totals": {
+        "tests": 12,
+        "pass": 8,
+        "fail": 4,
+        "cancelled": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "name": "browser-test-dependencies",
+      "cwd": "/home/skira24/.codex/worktrees/f6d4/Craidd-Studio",
+      "command": [
+        "npm",
+        "install",
+        "--prefix",
+        "/tmp/craidd-release-audit-f6d4/browser-tools",
+        "--cache",
+        "/tmp/craidd-release-audit-f6d4/npm-cache",
+        "--ignore-scripts",
+        "--no-audit",
+        "--no-fund",
+        "playwright"
+      ],
+      "exit_code": 0,
+      "seconds": 1.557,
+      "finished_utc": "2026-10-23T21:37:58.285533+00:00",
+      "log_sha256": "65c731cd02e19c79f6f5a3e84a4dd64a49acd6c47d2ee551d7cc9da191e8c96c",
+      "rust_results": []
+    },
+    {
+      "name": "generated-api-build",
+      "cwd": "/home/skira24/.codex/worktrees/f6d4/Craidd-Studio",
+      "command": [
+        "env",
+        "DOTNET_CLI_HOME=/tmp/craidd-release-audit-f6d4/dotnet-home",
+        "DOTNET_SKIP_FIRST_TIME_EXPERIENCE=1",
+        "DOTNET_CLI_TELEMETRY_OPTOUT=1",
+        "dotnet",
+        "build",
+        "/tmp/craidd-release-audit-f6d4/scaffolds/CSharpApi/CSharpApi.csproj",
+        "--ignore-failed-sources"
+      ],
+      "exit_code": 1,
+      "seconds": 0.379,
+      "finished_utc": "2026-10-23T21:31:39.454375+00:00",
+      "log_sha256": "673799fc38ae7f34c0d312c51409b0bf090059824f134a1b1a6ca6de6c7cf4ca",
+      "rust_results": []
+    },
+    {
+      "name": "generated-cpp-build",
+      "cwd": "/home/skira24/.codex/worktrees/f6d4/Craidd-Studio",
+      "command": [
+        "cmake",
+        "--build",
+        "/tmp/craidd-release-audit-f6d4/scaffolds/CppConsole/build",
+        "-j",
+        "2"
+      ],
+      "exit_code": 0,
+      "seconds": 0.177,
+      "finished_utc": "2026-10-23T21:31:50.564551+00:00",
+      "log_sha256": "f0a2b200eb35acfda9601a6cf455f0a1ea0a23fb6d7704a59e3c8782c0859222",
+      "rust_results": []
+    },
+    {
+      "name": "generated-cpp-configure",
+      "cwd": "/home/skira24/.codex/worktrees/f6d4/Craidd-Studio",
+      "command": [
+        "cmake",
+        "-S",
+        "/tmp/craidd-release-audit-f6d4/scaffolds/CppConsole",
+        "-B",
+        "/tmp/craidd-release-audit-f6d4/scaffolds/CppConsole/build",
+        "-DCMAKE_BUILD_TYPE=Debug"
+      ],
+      "exit_code": 0,
+      "seconds": 0.138,
+      "finished_utc": "2026-10-23T21:31:39.216740+00:00",
+      "log_sha256": "0fb8d4b2308554061e42fe8fe9e2848babf28fd7982d7ecea2f6bb237d44c3ba",
+      "rust_results": []
+    },
+    {
+      "name": "generated-cpp-run",
+      "cwd": "/home/skira24/.codex/worktrees/f6d4/Craidd-Studio",
+      "command": [
+        "/tmp/craidd-release-audit-f6d4/scaffolds/CppConsole/build/app"
+      ],
+      "exit_code": 0,
+      "seconds": 0.001,
+      "finished_utc": "2026-10-23T21:32:06.607183+00:00",
+      "log_sha256": "00e977c7bd5155b36e76c28d05b111f4b6d94c9879194e49c952cc2b23aa707a",
+      "rust_results": []
+    },
+    {
+      "name": "generated-csharp-restore-host",
+      "cwd": "/home/skira24/.codex/worktrees/f6d4/Craidd-Studio",
+      "command": [
+        "env",
+        "DOTNET_CLI_HOME=/tmp/craidd-release-audit-f6d4/dotnet-home",
+        "DOTNET_SKIP_FIRST_TIME_EXPERIENCE=1",
+        "DOTNET_CLI_TELEMETRY_OPTOUT=1",
+        "NUGET_PACKAGES=/tmp/craidd-release-audit-f6d4/nuget-packages",
+        "dotnet",
+        "run",
+        "--project",
+        "/tmp/craidd-release-audit-f6d4/scaffolds/CSharpConsole/CSharpConsole.csproj",
+        "--no-launch-profile"
+      ],
+      "exit_code": 0,
+      "seconds": 4.396,
+      "finished_utc": "2026-10-23T21:38:02.220866+00:00",
+      "log_sha256": "f83e785cf0f4cdeae24f9865159188e71c5104688de960e3f5f13b1b07fdfe68",
+      "rust_results": []
+    },
+    {
+      "name": "generated-csharp",
+      "cwd": "/home/skira24/.codex/worktrees/f6d4/Craidd-Studio",
+      "command": [
+        "env",
+        "DOTNET_CLI_HOME=/tmp/craidd-release-audit-f6d4/dotnet-home",
+        "DOTNET_SKIP_FIRST_TIME_EXPERIENCE=1",
+        "DOTNET_CLI_TELEMETRY_OPTOUT=1",
+        "dotnet",
+        "run",
+        "--project",
+        "/tmp/craidd-release-audit-f6d4/scaffolds/CSharpConsole/CSharpConsole.csproj",
+        "--no-launch-profile"
+      ],
+      "exit_code": 1,
+      "seconds": 11.941,
+      "finished_utc": "2026-10-23T21:31:51.018764+00:00",
+      "log_sha256": "343c34c0a63f440841f843e906e917071c544b2fc16a1839a45df1edab337650",
+      "rust_results": []
+    },
+    {
+      "name": "generated-rust",
+      "cwd": "/home/skira24/.codex/worktrees/f6d4/Craidd-Studio",
+      "command": [
+        "env",
+        "CARGO_TARGET_DIR=/tmp/craidd-release-audit-f6d4/generated-rust-target",
+        "cargo",
+        "run",
+        "--offline",
+        "--manifest-path",
+        "/tmp/craidd-release-audit-f6d4/scaffolds/RustConsole/Cargo.toml"
+      ],
+      "exit_code": 0,
+      "seconds": 0.072,
+      "finished_utc": "2026-10-23T21:31:39.147902+00:00",
+      "log_sha256": "96ec5a1f1b059af625e11c261a9f56fa941ef7714328d92f6ba31a2dedaf3ec9",
+      "rust_results": []
+    },
+    {
+      "name": "generated-tauri-dependencies",
+      "cwd": "/tmp/craidd-release-audit-f6d4/scaffolds/TauriReact",
+      "command": [
+        "npm",
+        "install",
+        "--ignore-scripts",
+        "--cache",
+        "/tmp/craidd-release-audit-f6d4/npm-cache",
+        "--no-audit",
+        "--no-fund"
+      ],
+      "exit_code": 0,
+      "seconds": 5.369,
+      "finished_utc": "2026-10-23T21:32:45.311763+00:00",
+      "log_sha256": "142804b8058c8a4acb151371d01692d6782fc7db0c85964daa49bb9561a65d27",
+      "rust_results": []
+    },
+    {
+      "name": "generated-tauri-frontend-declared",
+      "cwd": "/tmp/craidd-release-audit-f6d4/scaffolds/TauriReact",
+      "command": [
+        "npm",
+        "run",
+        "build"
+      ],
+      "exit_code": 0,
+      "seconds": 0.971,
+      "finished_utc": "2026-10-23T21:33:09.752467+00:00",
+      "log_sha256": "f40814cabc86521811c7da9d03c85c1ab7e1fb2217ec3a28ce2e87f7d35f33fc",
+      "rust_results": []
+    },
+    {
+      "name": "generated-tauri-frontend",
+      "cwd": "/tmp/craidd-release-audit-f6d4/scaffolds/TauriReact",
+      "command": [
+        "npm",
+        "run",
+        "build"
+      ],
+      "exit_code": 2,
+      "seconds": 0.381,
+      "finished_utc": "2026-10-23T21:31:39.481992+00:00",
+      "log_sha256": "764d192400a5ca681536edc33f094c276b436d40ee92ce46099f3d3839705343",
+      "rust_results": []
+    },
+    {
+      "name": "generated-tauri-native",
+      "cwd": "/tmp/craidd-release-audit-f6d4/scaffolds/TauriReact",
+      "command": [
+        "env",
+        "CARGO_TARGET_DIR=/tmp/craidd-release-audit-f6d4-target",
+        "CARGO_PROFILE_DEV_DEBUG=0",
+        "CARGO_INCREMENTAL=0",
+        "cargo",
+        "check",
+        "--offline",
+        "--manifest-path",
+        "src-tauri/Cargo.toml"
+      ],
+      "exit_code": 0,
+      "seconds": 31.203,
+      "finished_utc": "2026-10-23T21:34:05.338606+00:00",
+      "log_sha256": "501dbb9ef8d58ef8e5799e8b3ebc8c3c77e18834536f49e4a88f36ba3708ecba",
+      "rust_results": []
+    },
+    {
+      "name": "markdown-browser-fixed",
+      "cwd": "/home/skira24/.codex/worktrees/f6d4/Craidd-Studio",
+      "command": [
+        "env",
+        "CRAIDD_PLAYWRIGHT_MODULE=/tmp/craidd-release-audit-f6d4/browser-tools/node_modules/playwright/index.mjs",
+        "CRAIDD_DOCS_URL=http://127.0.0.1:15341",
+        "node",
+        "test-results/release/2026-10-23/markdownDocs.browser.mjs"
+      ],
+      "exit_code": 0,
+      "seconds": 6.498,
+      "finished_utc": "2026-10-23T21:39:56.487903+00:00",
+      "log_sha256": "ad6ed6f7aa463dfb5273538e57b9a20f11ebab38671418ed1801243a8c44ec62",
+      "rust_results": []
+    },
+    {
+      "name": "markdown-browser",
+      "cwd": "/home/skira24/.codex/worktrees/f6d4/Craidd-Studio",
+      "command": [
+        "env",
+        "CRAIDD_PLAYWRIGHT_MODULE=/tmp/craidd-release-audit-f6d4/browser-tools/node_modules/playwright/index.mjs",
+        "CRAIDD_DOCS_URL=http://127.0.0.1:15341",
+        "node",
+        "test-results/release/2026-10-23/markdownDocs.browser.mjs"
+      ],
+      "exit_code": 1,
+      "seconds": 34.001,
+      "finished_utc": "2026-10-23T21:39:13.891838+00:00",
+      "log_sha256": "5f2f3836d26cb5cec46eb33d2679b322f8a600f0df7c6f330287d2a428d1b124",
+      "rust_results": []
+    },
+    {
+      "name": "markdown-shortcuts-browser-fixed",
+      "cwd": "/home/skira24/.codex/worktrees/f6d4/Craidd-Studio",
+      "command": [
+        "env",
+        "CRAIDD_PLAYWRIGHT_MODULE=/tmp/craidd-release-audit-f6d4/browser-tools/node_modules/playwright/index.mjs",
+        "CRAIDD_DOCS_URL=http://127.0.0.1:15341",
+        "node",
+        "test-results/release/2026-10-23/markdownShortcuts.browser.mjs"
+      ],
+      "exit_code": 0,
+      "seconds": 7.526,
+      "finished_utc": "2026-10-23T21:39:58.577892+00:00",
+      "log_sha256": "76f0098eb40d4eb67d2e08dfc229547d845462dc880b2a6a0d83718f1bc863e4",
+      "rust_results": []
+    },
+    {
+      "name": "markdown-shortcuts-browser",
+      "cwd": "/home/skira24/.codex/worktrees/f6d4/Craidd-Studio",
+      "command": [
+        "env",
+        "CRAIDD_PLAYWRIGHT_MODULE=/tmp/craidd-release-audit-f6d4/browser-tools/node_modules/playwright/index.mjs",
+        "CRAIDD_DOCS_URL=http://127.0.0.1:15341",
+        "node",
+        "test-results/release/2026-10-23/markdownShortcuts.browser.mjs"
+      ],
+      "exit_code": 1,
+      "seconds": 32.252,
+      "finished_utc": "2026-10-23T21:39:14.725133+00:00",
+      "log_sha256": "b9cd71627eeafd8534a9a295186cf91c21a96dcaf52b31ae0bb44e64a88d9a6c",
+      "rust_results": []
+    },
+    {
+      "name": "metrics-desktop",
+      "cwd": "/tmp/craidd-release-audit-f6d4/metrics",
+      "command": [
+        "node <each file>",
+        "tests/ui/metric-import.test.mjs",
+        "tests/ui/metric-ux.test.mjs",
+        "tests/ui/metric-release-acceptance.test.mjs"
+      ],
+      "exit_code": 0,
+      "finished_utc": "2026-10-23T21:36:59.199735+00:00",
+      "files": [
+        {
+          "file": "tests/ui/metric-import.test.mjs",
+          "exit_code": 0,
+          "seconds": 8.182,
+          "counts": {
+            "tests": 1,
+            "pass": 1,
+            "fail": 0,
+            "cancelled": 0,
+            "skipped": 0,
+            "todo": 0
+          }
+        },
+        {
+          "file": "tests/ui/metric-ux.test.mjs",
+          "exit_code": 0,
+          "seconds": 5.32,
+          "counts": {
+            "tests": 1,
+            "pass": 1,
+            "fail": 0,
+            "cancelled": 0,
+            "skipped": 0,
+            "todo": 0
+          }
+        },
+        {
+          "file": "tests/ui/metric-release-acceptance.test.mjs",
+          "exit_code": 0,
+          "seconds": 15.576,
+          "counts": {
+            "tests": 2,
+            "pass": 2,
+            "fail": 0,
+            "cancelled": 0,
+            "skipped": 0,
+            "todo": 0
+          }
+        }
+      ],
+      "totals": {
+        "tests": 4,
+        "pass": 4,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "name": "metrics-frontend-writable",
+      "cwd": "/tmp/craidd-release-audit-f6d4/metrics",
+      "command": [
+        "npm",
+        "run",
+        "build"
+      ],
+      "exit_code": 0,
+      "seconds": 6.634,
+      "finished_utc": "2026-10-23T21:25:52.766420+00:00",
+      "log_sha256": "fdc78a1c70842c28d2d50e1cc45c218c1eee2832861b6f40b4c849b9e000ebc4",
+      "rust_results": []
+    },
+    {
+      "name": "metrics-frontend",
+      "cwd": "/tmp/craidd-release-audit-f6d4/metrics",
+      "command": [
+        "npm",
+        "run",
+        "build"
+      ],
+      "exit_code": 1,
+      "seconds": 2.937,
+      "finished_utc": "2026-10-23T21:24:26.333380+00:00",
+      "log_sha256": "db341f0e1f75a5f3a29a0a380cf235687d70a125053baea6fc9622eb0a6527a0",
+      "rust_results": []
+    },
+    {
+      "name": "metrics-node-detailed",
+      "cwd": "/tmp/craidd-release-audit-f6d4/metrics",
+      "command": [
+        "node <each file>",
+        "tests/buildDiagnostics.test.mjs",
+        "tests/duplicateWindowPolicy.test.mjs",
+        "tests/exitBlockers.test.mjs",
+        "tests/linkedStartup.test.mjs",
+        "tests/markdownDocs.test.mjs",
+        "tests/metricRowKey.test.mjs",
+        "tests/nativeDebug.test.mjs",
+        "tests/nativeStepCapability.test.mjs",
+        "tests/outputPresentation.test.mjs",
+        "tests/pathActions.test.mjs",
+        "tests/profilerWorkspace.test.mjs",
+        "tests/profiling.test.mjs",
+        "tests/resizeHandle.test.mjs",
+        "tests/rustNativeGold.test.mjs",
+        "tests/saveRestartPolicy.test.mjs",
+        "tests/shortcuts.test.mjs",
+        "tests/windowAttention.test.mjs",
+        "tests/windowEventRouting.test.mjs"
+      ],
+      "exit_code": 0,
+      "finished_utc": "2026-10-23T21:24:26.817443+00:00",
+      "files": [
+        {
+          "file": "tests/buildDiagnostics.test.mjs",
+          "exit_code": 0,
+          "seconds": 0.044,
+          "counts": {
+            "tests": 5,
+            "pass": 5,
+            "fail": 0,
+            "cancelled": 0,
+            "skipped": 0,
+            "todo": 0
+          }
+        },
+        {
+          "file": "tests/duplicateWindowPolicy.test.mjs",
+          "exit_code": 0,
+          "seconds": 0.17,
+          "counts": {
+            "tests": 2,
+            "pass": 2,
+            "fail": 0,
+            "cancelled": 0,
+            "skipped": 0,
+            "todo": 0
+          }
+        },
+        {
+          "file": "tests/exitBlockers.test.mjs",
+          "exit_code": 0,
+          "seconds": 0.184,
+          "counts": {
+            "tests": 4,
+            "pass": 4,
+            "fail": 0,
+            "cancelled": 0,
+            "skipped": 0,
+            "todo": 0
+          }
+        },
+        {
+          "file": "tests/linkedStartup.test.mjs",
+          "exit_code": 0,
+          "seconds": 0.198,
+          "counts": {
+            "tests": 7,
+            "pass": 7,
+            "fail": 0,
+            "cancelled": 0,
+            "skipped": 0,
+            "todo": 0
+          }
+        },
+        {
+          "file": "tests/markdownDocs.test.mjs",
+          "exit_code": 0,
+          "seconds": 0.333,
+          "counts": {
+            "tests": 8,
+            "pass": 8,
+            "fail": 0,
+            "cancelled": 0,
+            "skipped": 0,
+            "todo": 0
+          }
+        },
+        {
+          "file": "tests/metricRowKey.test.mjs",
+          "exit_code": 0,
+          "seconds": 0.17,
+          "counts": {
+            "tests": 3,
+            "pass": 3,
+            "fail": 0,
+            "cancelled": 0,
+            "skipped": 0,
+            "todo": 0
+          }
+        },
+        {
+          "file": "tests/nativeDebug.test.mjs",
+          "exit_code": 0,
+          "seconds": 0.381,
+          "counts": {
+            "tests": 21,
+            "pass": 21,
+            "fail": 0,
+            "cancelled": 0,
+            "skipped": 0,
+            "todo": 0
+          }
+        },
+        {
+          "file": "tests/nativeStepCapability.test.mjs",
+          "exit_code": 0,
+          "seconds": 0.214,
+          "counts": {
+            "tests": 3,
+            "pass": 3,
+            "fail": 0,
+            "cancelled": 0,
+            "skipped": 0,
+            "todo": 0
+          }
+        },
+        {
+          "file": "tests/outputPresentation.test.mjs",
+          "exit_code": 0,
+          "seconds": 0.042,
+          "counts": {
+            "tests": 4,
+            "pass": 4,
+            "fail": 0,
+            "cancelled": 0,
+            "skipped": 0,
+            "todo": 0
+          }
+        },
+        {
+          "file": "tests/pathActions.test.mjs",
+          "exit_code": 0,
+          "seconds": 0.18,
+          "counts": {
+            "tests": 2,
+            "pass": 2,
+            "fail": 0,
+            "cancelled": 0,
+            "skipped": 0,
+            "todo": 0
+          }
+        },
+        {
+          "file": "tests/profilerWorkspace.test.mjs",
+          "exit_code": 0,
+          "seconds": 0.306,
+          "counts": {
+            "tests": 5,
+            "pass": 5,
+            "fail": 0,
+            "cancelled": 0,
+            "skipped": 0,
+            "todo": 0
+          }
+        },
+        {
+          "file": "tests/profiling.test.mjs",
+          "exit_code": 0,
+          "seconds": 0.322,
+          "counts": {
+            "tests": 28,
+            "pass": 28,
+            "fail": 0,
+            "cancelled": 0,
+            "skipped": 0,
+            "todo": 0
+          }
+        },
+        {
+          "file": "tests/resizeHandle.test.mjs",
+          "exit_code": 0,
+          "seconds": 0.169,
+          "counts": {
+            "tests": 3,
+            "pass": 3,
+            "fail": 0,
+            "cancelled": 0,
+            "skipped": 0,
+            "todo": 0
+          }
+        },
+        {
+          "file": "tests/rustNativeGold.test.mjs",
+          "exit_code": 0,
+          "seconds": 0.188,
+          "counts": {
+            "tests": 6,
+            "pass": 6,
+            "fail": 0,
+            "cancelled": 0,
+            "skipped": 0,
+            "todo": 0
+          }
+        },
+        {
+          "file": "tests/saveRestartPolicy.test.mjs",
+          "exit_code": 0,
+          "seconds": 0.181,
+          "counts": {
+            "tests": 9,
+            "pass": 9,
+            "fail": 0,
+            "cancelled": 0,
+            "skipped": 0,
+            "todo": 0
+          }
+        },
+        {
+          "file": "tests/shortcuts.test.mjs",
+          "exit_code": 0,
+          "seconds": 0.169,
+          "counts": {
+            "tests": 9,
+            "pass": 9,
+            "fail": 0,
+            "cancelled": 0,
+            "skipped": 0,
+            "todo": 0
+          }
+        },
+        {
+          "file": "tests/windowAttention.test.mjs",
+          "exit_code": 0,
+          "seconds": 0.149,
+          "counts": {
+            "tests": 2,
+            "pass": 2,
+            "fail": 0,
+            "cancelled": 0,
+            "skipped": 0,
+            "todo": 0
+          }
+        },
+        {
+          "file": "tests/windowEventRouting.test.mjs",
+          "exit_code": 0,
+          "seconds": 0.021,
+          "counts": {
+            "tests": 2,
+            "pass": 2,
+            "fail": 0,
+            "cancelled": 0,
+            "skipped": 0,
+            "todo": 0
+          }
+        }
+      ],
+      "totals": {
+        "tests": 123,
+        "pass": 123,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "name": "metrics-node",
+      "cwd": "/tmp/craidd-release-audit-f6d4/metrics",
+      "command": [
+        "node",
+        "--test",
+        "tests/buildDiagnostics.test.mjs",
+        "tests/duplicateWindowPolicy.test.mjs",
+        "tests/exitBlockers.test.mjs",
+        "tests/linkedStartup.test.mjs",
+        "tests/markdownDocs.test.mjs",
+        "tests/metricRowKey.test.mjs",
+        "tests/nativeDebug.test.mjs",
+        "tests/nativeStepCapability.test.mjs",
+        "tests/outputPresentation.test.mjs",
+        "tests/pathActions.test.mjs",
+        "tests/profilerWorkspace.test.mjs",
+        "tests/profiling.test.mjs",
+        "tests/resizeHandle.test.mjs",
+        "tests/rustNativeGold.test.mjs",
+        "tests/saveRestartPolicy.test.mjs",
+        "tests/shortcuts.test.mjs",
+        "tests/windowAttention.test.mjs",
+        "tests/windowEventRouting.test.mjs"
+      ],
+      "exit_code": 0,
+      "seconds": 0.986,
+      "finished_utc": "2026-10-23T21:23:59.869138+00:00",
+      "log_sha256": "3e4a68ac16b71b7be62117d8332e0c4f683bd008ac0cf8dcb9a20ce754fb8e4f",
+      "rust_results": []
+    },
+    {
+      "name": "metrics-parser",
+      "cwd": "/tmp/craidd-release-audit-f6d4/metrics",
+      "command": [
+        "env",
+        "CARGO_TARGET_DIR=/tmp/craidd-release-audit-f6d4-metrics-target",
+        "CARGO_PROFILE_DEV_DEBUG=0",
+        "CARGO_PROFILE_TEST_DEBUG=0",
+        "CARGO_INCREMENTAL=0",
+        "cargo",
+        "test",
+        "--locked",
+        "--offline",
+        "--manifest-path",
+        "workspaces/profiling-metrics/Cargo.toml",
+        "-j",
+        "2"
+      ],
+      "exit_code": 0,
+      "seconds": 4.966,
+      "finished_utc": "2026-10-23T21:28:01.284178+00:00",
+      "log_sha256": "9b4ddf6d61905b823bf59903b880f80ca2d86a20f276da084563905206176f0d",
+      "rust_results": [
+        {
+          "passed": 18,
+          "failed": 0,
+          "ignored": 0
+        }
+      ]
+    },
+    {
+      "name": "metrics-release-build",
+      "cwd": "/tmp/craidd-release-audit-f6d4/metrics",
+      "command": [
+        "env",
+        "CARGO_TARGET_DIR=/tmp/craidd-release-audit-f6d4-release",
+        "CARGO_INCREMENTAL=0",
+        "npm",
+        "run",
+        "tauri",
+        "--",
+        "build",
+        "--no-bundle"
+      ],
+      "exit_code": 0,
+      "seconds": 240.696,
+      "finished_utc": "2026-10-23T21:31:58.133371+00:00",
+      "log_sha256": "0d472fe944c6849ad8868c733e07a69802295e4ce8675074f1389fb3c09d4bd4",
+      "rust_results": []
+    },
+    {
+      "name": "metrics-rust",
+      "cwd": "/tmp/craidd-release-audit-f6d4/metrics",
+      "command": [
+        "env",
+        "CARGO_TARGET_DIR=/tmp/craidd-release-audit-f6d4-target",
+        "CARGO_PROFILE_DEV_DEBUG=0",
+        "CARGO_PROFILE_TEST_DEBUG=0",
+        "CARGO_INCREMENTAL=0",
+        "cargo",
+        "test",
+        "--locked",
+        "--offline",
+        "--manifest-path",
+        "src-tauri/Cargo.toml",
+        "-j",
+        "4"
+      ],
+      "exit_code": 0,
+      "seconds": 13.421,
+      "finished_utc": "2026-10-23T21:27:25.196635+00:00",
+      "log_sha256": "0dd6f5bce8ec385fee57638d8fe0105b44c1b3a152594861e08e7ec6c9e93c5f",
+      "rust_results": [
+        {
+          "passed": 185,
+          "failed": 0,
+          "ignored": 6
+        },
+        {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 7,
+          "failed": 0,
+          "ignored": 1
+        },
+        {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0
+        }
+      ]
+    },
+    {
+      "name": "native-dap-default-target",
+      "cwd": "/home/skira24/.codex/worktrees/f6d4/Craidd-Studio",
+      "command": [
+        "/tmp/craidd-release-audit-f6d4-target/debug/deps/craidd_studio_lib-aee7ee9f8ea8c42d",
+        "--exact",
+        "commands::native_debug::tests::real_dap_stacks_feed_production_rust_native_binding",
+        "--ignored",
+        "--nocapture"
+      ],
+      "exit_code": 0,
+      "seconds": 10.202,
+      "finished_utc": "2026-10-23T21:40:24.338124+00:00",
+      "log_sha256": "9715a54836723d5099a28782dd8c3019fc4f5f2eaaf1561317d7b756fad79239",
+      "rust_results": [
+        {
+          "passed": 1,
+          "failed": 0,
+          "ignored": 0
+        }
+      ]
+    },
+    {
+      "name": "perf-frontend-writable",
+      "cwd": "/tmp/craidd-release-audit-f6d4/perf",
+      "command": [
+        "npm",
+        "run",
+        "build"
+      ],
+      "exit_code": 0,
+      "seconds": 6.35,
+      "finished_utc": "2026-10-23T21:25:52.481038+00:00",
+      "log_sha256": "02c015ea23c9a42afb23ba788ea64d1aef8b35778d5432e95770b2f667023292",
+      "rust_results": []
+    },
+    {
+      "name": "perf-frontend",
+      "cwd": "/tmp/craidd-release-audit-f6d4/perf",
+      "command": [
+        "npm",
+        "run",
+        "build"
+      ],
+      "exit_code": 1,
+      "seconds": 2.889,
+      "finished_utc": "2026-10-23T21:24:26.284563+00:00",
+      "log_sha256": "e84f85da692faad784b9390ce0e0f6e2b6f3cd90c38bcf8ecd7d542e39b521e5",
+      "rust_results": []
+    },
+    {
+      "name": "perf-node-detailed",
+      "cwd": "/tmp/craidd-release-audit-f6d4/perf",
+      "command": [
+        "node <each file>",
+        "tests/buildDiagnostics.test.mjs",
+        "tests/duplicateWindowPolicy.test.mjs",
+        "tests/exitBlockers.test.mjs",
+        "tests/linkedStartup.test.mjs",
+        "tests/markdownDocs.test.mjs",
+        "tests/nativeDebug.test.mjs",
+        "tests/nativeStepCapability.test.mjs",
+        "tests/outputPresentation.test.mjs",
+        "tests/pathActions.test.mjs",
+        "tests/profilerWorkspace.test.mjs",
+        "tests/profiling.test.mjs",
+        "tests/resizeHandle.test.mjs",
+        "tests/rustNativeGold.test.mjs",
+        "tests/saveRestartPolicy.test.mjs",
+        "tests/shortcuts.test.mjs",
+        "tests/windowAttention.test.mjs",
+        "tests/windowEventRouting.test.mjs"
+      ],
+      "exit_code": 0,
+      "finished_utc": "2026-10-23T21:24:26.683315+00:00",
+      "files": [
+        {
+          "file": "tests/buildDiagnostics.test.mjs",
+          "exit_code": 0,
+          "seconds": 0.043,
+          "counts": {
+            "tests": 5,
+            "pass": 5,
+            "fail": 0,
+            "cancelled": 0,
+            "skipped": 0,
+            "todo": 0
+          }
+        },
+        {
+          "file": "tests/duplicateWindowPolicy.test.mjs",
+          "exit_code": 0,
+          "seconds": 0.173,
+          "counts": {
+            "tests": 2,
+            "pass": 2,
+            "fail": 0,
+            "cancelled": 0,
+            "skipped": 0,
+            "todo": 0
+          }
+        },
+        {
+          "file": "tests/exitBlockers.test.mjs",
+          "exit_code": 0,
+          "seconds": 0.19,
+          "counts": {
+            "tests": 4,
+            "pass": 4,
+            "fail": 0,
+            "cancelled": 0,
+            "skipped": 0,
+            "todo": 0
+          }
+        },
+        {
+          "file": "tests/linkedStartup.test.mjs",
+          "exit_code": 0,
+          "seconds": 0.197,
+          "counts": {
+            "tests": 7,
+            "pass": 7,
+            "fail": 0,
+            "cancelled": 0,
+            "skipped": 0,
+            "todo": 0
+          }
+        },
+        {
+          "file": "tests/markdownDocs.test.mjs",
+          "exit_code": 0,
+          "seconds": 0.325,
+          "counts": {
+            "tests": 8,
+            "pass": 8,
+            "fail": 0,
+            "cancelled": 0,
+            "skipped": 0,
+            "todo": 0
+          }
+        },
+        {
+          "file": "tests/nativeDebug.test.mjs",
+          "exit_code": 0,
+          "seconds": 0.379,
+          "counts": {
+            "tests": 21,
+            "pass": 21,
+            "fail": 0,
+            "cancelled": 0,
+            "skipped": 0,
+            "todo": 0
+          }
+        },
+        {
+          "file": "tests/nativeStepCapability.test.mjs",
+          "exit_code": 0,
+          "seconds": 0.204,
+          "counts": {
+            "tests": 3,
+            "pass": 3,
+            "fail": 0,
+            "cancelled": 0,
+            "skipped": 0,
+            "todo": 0
+          }
+        },
+        {
+          "file": "tests/outputPresentation.test.mjs",
+          "exit_code": 0,
+          "seconds": 0.046,
+          "counts": {
+            "tests": 4,
+            "pass": 4,
+            "fail": 0,
+            "cancelled": 0,
+            "skipped": 0,
+            "todo": 0
+          }
+        },
+        {
+          "file": "tests/pathActions.test.mjs",
+          "exit_code": 0,
+          "seconds": 0.175,
+          "counts": {
+            "tests": 2,
+            "pass": 2,
+            "fail": 0,
+            "cancelled": 0,
+            "skipped": 0,
+            "todo": 0
+          }
+        },
+        {
+          "file": "tests/profilerWorkspace.test.mjs",
+          "exit_code": 0,
+          "seconds": 0.294,
+          "counts": {
+            "tests": 5,
+            "pass": 5,
+            "fail": 0,
+            "cancelled": 0,
+            "skipped": 0,
+            "todo": 0
+          }
+        },
+        {
+          "file": "tests/profiling.test.mjs",
+          "exit_code": 0,
+          "seconds": 0.32,
+          "counts": {
+            "tests": 28,
+            "pass": 28,
+            "fail": 0,
+            "cancelled": 0,
+            "skipped": 0,
+            "todo": 0
+          }
+        },
+        {
+          "file": "tests/resizeHandle.test.mjs",
+          "exit_code": 0,
+          "seconds": 0.206,
+          "counts": {
+            "tests": 3,
+            "pass": 3,
+            "fail": 0,
+            "cancelled": 0,
+            "skipped": 0,
+            "todo": 0
+          }
+        },
+        {
+          "file": "tests/rustNativeGold.test.mjs",
+          "exit_code": 0,
+          "seconds": 0.204,
+          "counts": {
+            "tests": 6,
+            "pass": 6,
+            "fail": 0,
+            "cancelled": 0,
+            "skipped": 0,
+            "todo": 0
+          }
+        },
+        {
+          "file": "tests/saveRestartPolicy.test.mjs",
+          "exit_code": 0,
+          "seconds": 0.191,
+          "counts": {
+            "tests": 9,
+            "pass": 9,
+            "fail": 0,
+            "cancelled": 0,
+            "skipped": 0,
+            "todo": 0
+          }
+        },
+        {
+          "file": "tests/shortcuts.test.mjs",
+          "exit_code": 0,
+          "seconds": 0.159,
+          "counts": {
+            "tests": 9,
+            "pass": 9,
+            "fail": 0,
+            "cancelled": 0,
+            "skipped": 0,
+            "todo": 0
+          }
+        },
+        {
+          "file": "tests/windowAttention.test.mjs",
+          "exit_code": 0,
+          "seconds": 0.159,
+          "counts": {
+            "tests": 2,
+            "pass": 2,
+            "fail": 0,
+            "cancelled": 0,
+            "skipped": 0,
+            "todo": 0
+          }
+        },
+        {
+          "file": "tests/windowEventRouting.test.mjs",
+          "exit_code": 0,
+          "seconds": 0.022,
+          "counts": {
+            "tests": 2,
+            "pass": 2,
+            "fail": 0,
+            "cancelled": 0,
+            "skipped": 0,
+            "todo": 0
+          }
+        }
+      ],
+      "totals": {
+        "tests": 120,
+        "pass": 120,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "name": "perf-node",
+      "cwd": "/tmp/craidd-release-audit-f6d4/perf",
+      "command": [
+        "node",
+        "--test",
+        "tests/buildDiagnostics.test.mjs",
+        "tests/duplicateWindowPolicy.test.mjs",
+        "tests/exitBlockers.test.mjs",
+        "tests/linkedStartup.test.mjs",
+        "tests/markdownDocs.test.mjs",
+        "tests/nativeDebug.test.mjs",
+        "tests/nativeStepCapability.test.mjs",
+        "tests/outputPresentation.test.mjs",
+        "tests/pathActions.test.mjs",
+        "tests/profilerWorkspace.test.mjs",
+        "tests/profiling.test.mjs",
+        "tests/resizeHandle.test.mjs",
+        "tests/rustNativeGold.test.mjs",
+        "tests/saveRestartPolicy.test.mjs",
+        "tests/shortcuts.test.mjs",
+        "tests/windowAttention.test.mjs",
+        "tests/windowEventRouting.test.mjs"
+      ],
+      "exit_code": 0,
+      "seconds": 0.88,
+      "finished_utc": "2026-10-23T21:23:59.761667+00:00",
+      "log_sha256": "e868f82895fb4ac1c19002f4d6f624768bc95fd9131b6b2162acee9253aa1f94",
+      "rust_results": []
+    },
+    {
+      "name": "perf-rust",
+      "cwd": "/tmp/craidd-release-audit-f6d4/perf",
+      "command": [
+        "env",
+        "CARGO_TARGET_DIR=/tmp/craidd-release-audit-f6d4-target",
+        "CARGO_PROFILE_DEV_DEBUG=0",
+        "CARGO_PROFILE_TEST_DEBUG=0",
+        "CARGO_INCREMENTAL=0",
+        "cargo",
+        "test",
+        "--locked",
+        "--offline",
+        "--manifest-path",
+        "src-tauri/Cargo.toml",
+        "-j",
+        "4"
+      ],
+      "exit_code": 0,
+      "seconds": 18.678,
+      "finished_utc": "2026-10-23T21:28:13.762978+00:00",
+      "log_sha256": "be2445cc2c03f4704fc0cd9c0c5cf2e1827ae5a2bf954db716cec5776392f401",
+      "rust_results": [
+        {
+          "passed": 204,
+          "failed": 0,
+          "ignored": 6
+        },
+        {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 7,
+          "failed": 0,
+          "ignored": 1
+        },
+        {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0
+        }
+      ]
+    },
+    {
+      "name": "unity-discovery-opt-in",
+      "cwd": "/home/skira24/.codex/worktrees/f6d4/Craidd-Studio",
+      "command": [
+        "node",
+        "test-results/release/2026-10-23/unity-discovery.mjs"
+      ],
+      "exit_code": 0,
+      "seconds": 16.637,
+      "finished_utc": "2026-10-23T21:42:06.976800+00:00",
+      "log_sha256": "e42bd1aaf2efb7235ee71da98f3b9e86163ad21c30b042ee9e192613df0f8e56",
+      "rust_results": [
+        {
+          "passed": 1,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 1,
+          "failed": 0,
+          "ignored": 0
+        }
+      ]
+    },
+    {
+      "name": "unity-idle-repeat",
+      "cwd": "/home/skira24/.codex/worktrees/f6d4/Craidd-Studio",
+      "command": [
+        "node",
+        "tests/ui/unity-profiling.test.mjs"
+      ],
+      "exit_code": 0,
+      "seconds": 54.509,
+      "finished_utc": "2026-10-23T21:35:21.305250+00:00",
+      "log_sha256": "93967e90b8856ed4b3585e918948d04f672e302b830bc817d22d259d14086f09",
+      "rust_results": []
+    },
+    {
+      "name": "wizard-desktop-debug-pointer",
+      "cwd": "/home/skira24/.codex/worktrees/f6d4/Craidd-Studio",
+      "command": [
+        "node",
+        "test-results/release/2026-10-23/wizard-desktop.mjs"
+      ],
+      "exit_code": 0,
+      "seconds": 4.535,
+      "finished_utc": "2026-10-23T21:40:50.296557+00:00",
+      "log_sha256": "e6eea876f5d6f09da270debbf398e77572d4fa5662245793f0e1608f8d57eb47",
+      "rust_results": []
+    },
+    {
+      "name": "wizard-desktop-debug",
+      "cwd": "/home/skira24/.codex/worktrees/f6d4/Craidd-Studio",
+      "command": [
+        "node",
+        "test-results/release/2026-10-23/wizard-desktop.mjs"
+      ],
+      "exit_code": 1,
+      "seconds": 23.758,
+      "finished_utc": "2026-10-23T21:38:24.216157+00:00",
+      "log_sha256": "5aa8b8e449a2dad65862a916b9701a5d97d5bc09294d34db75283628ee814043",
+      "rust_results": []
+    },
+    {
+      "name": "wizard-desktop-ready",
+      "cwd": "/home/skira24/.codex/worktrees/f6d4/Craidd-Studio",
+      "command": [
+        "node",
+        "test-results/release/2026-10-23/wizard-desktop.mjs"
+      ],
+      "exit_code": 0,
+      "seconds": 3.867,
+      "finished_utc": "2026-10-23T21:33:39.831051+00:00",
+      "log_sha256": "e35e3b3d8f3e42f2630793a5c6c2993edfe944cd8adcc621deb2b8ca3059cdff",
+      "rust_results": []
+    },
+    {
+      "name": "wizard-desktop-retry",
+      "cwd": "/home/skira24/.codex/worktrees/f6d4/Craidd-Studio",
+      "command": [
+        "node",
+        "test-results/release/2026-10-23/wizard-desktop.mjs"
+      ],
+      "exit_code": 1,
+      "seconds": 1.412,
+      "finished_utc": "2026-10-23T21:32:41.355157+00:00",
+      "log_sha256": "4b5d5147da1f713019e88c12af07968feb3fe3db0b17632ae997bea114071439",
+      "rust_results": []
+    },
+    {
+      "name": "wizard-desktop",
+      "cwd": "/home/skira24/.codex/worktrees/f6d4/Craidd-Studio",
+      "command": [
+        "node",
+        "test-results/release/2026-10-23/wizard-desktop.mjs"
+      ],
+      "exit_code": 1,
+      "seconds": 1.42,
+      "finished_utc": "2026-10-23T21:31:24.334301+00:00",
+      "log_sha256": "81d417953eefba48cbacafb16b5a4e46f87480c5a612cc612828a1a331e24a36",
+      "rust_results": []
+    },
+    {
+      "name": "wizard-frontend",
+      "cwd": "/tmp/craidd-release-audit-f6d4/wizard",
+      "command": [
+        "npm",
+        "run",
+        "build"
+      ],
+      "exit_code": 1,
+      "seconds": 2.56,
+      "finished_utc": "2026-10-23T21:24:25.955478+00:00",
+      "log_sha256": "8f46bf4532af39b28e0f0e5bf0da31d65e5845e7c4d7f598a750ade1713aeaa6",
+      "rust_results": []
+    },
+    {
+      "name": "wizard-node-detailed",
+      "cwd": "/tmp/craidd-release-audit-f6d4/wizard",
+      "command": [
+        "node <each file>",
+        "tests/buildDiagnostics.test.mjs",
+        "tests/duplicateWindowPolicy.test.mjs",
+        "tests/exitBlockers.test.mjs",
+        "tests/linkedStartup.test.mjs",
+        "tests/markdownDocs.test.mjs",
+        "tests/nativeDebug.test.mjs",
+        "tests/nativeStepCapability.test.mjs",
+        "tests/outputPresentation.test.mjs",
+        "tests/pathActions.test.mjs",
+        "tests/rustNativeGold.test.mjs",
+        "tests/saveRestartPolicy.test.mjs",
+        "tests/shortcuts.test.mjs",
+        "tests/windowAttention.test.mjs",
+        "tests/windowEventRouting.test.mjs"
+      ],
+      "exit_code": 0,
+      "finished_utc": "2026-10-23T21:24:25.967610+00:00",
+      "files": [
+        {
+          "file": "tests/buildDiagnostics.test.mjs",
+          "exit_code": 0,
+          "seconds": 0.042,
+          "counts": {
+            "tests": 5,
+            "pass": 5,
+            "fail": 0,
+            "cancelled": 0,
+            "skipped": 0,
+            "todo": 0
+          }
+        },
+        {
+          "file": "tests/duplicateWindowPolicy.test.mjs",
+          "exit_code": 0,
+          "seconds": 0.182,
+          "counts": {
+            "tests": 2,
+            "pass": 2,
+            "fail": 0,
+            "cancelled": 0,
+            "skipped": 0,
+            "todo": 0
+          }
+        },
+        {
+          "file": "tests/exitBlockers.test.mjs",
+          "exit_code": 0,
+          "seconds": 0.183,
+          "counts": {
+            "tests": 4,
+            "pass": 4,
+            "fail": 0,
+            "cancelled": 0,
+            "skipped": 0,
+            "todo": 0
+          }
+        },
+        {
+          "file": "tests/linkedStartup.test.mjs",
+          "exit_code": 0,
+          "seconds": 0.2,
+          "counts": {
+            "tests": 7,
+            "pass": 7,
+            "fail": 0,
+            "cancelled": 0,
+            "skipped": 0,
+            "todo": 0
+          }
+        },
+        {
+          "file": "tests/markdownDocs.test.mjs",
+          "exit_code": 0,
+          "seconds": 0.325,
+          "counts": {
+            "tests": 8,
+            "pass": 8,
+            "fail": 0,
+            "cancelled": 0,
+            "skipped": 0,
+            "todo": 0
+          }
+        },
+        {
+          "file": "tests/nativeDebug.test.mjs",
+          "exit_code": 0,
+          "seconds": 0.364,
+          "counts": {
+            "tests": 21,
+            "pass": 21,
+            "fail": 0,
+            "cancelled": 0,
+            "skipped": 0,
+            "todo": 0
+          }
+        },
+        {
+          "file": "tests/nativeStepCapability.test.mjs",
+          "exit_code": 0,
+          "seconds": 0.214,
+          "counts": {
+            "tests": 3,
+            "pass": 3,
+            "fail": 0,
+            "cancelled": 0,
+            "skipped": 0,
+            "todo": 0
+          }
+        },
+        {
+          "file": "tests/outputPresentation.test.mjs",
+          "exit_code": 0,
+          "seconds": 0.045,
+          "counts": {
+            "tests": 4,
+            "pass": 4,
+            "fail": 0,
+            "cancelled": 0,
+            "skipped": 0,
+            "todo": 0
+          }
+        },
+        {
+          "file": "tests/pathActions.test.mjs",
+          "exit_code": 0,
+          "seconds": 0.17,
+          "counts": {
+            "tests": 2,
+            "pass": 2,
+            "fail": 0,
+            "cancelled": 0,
+            "skipped": 0,
+            "todo": 0
+          }
+        },
+        {
+          "file": "tests/rustNativeGold.test.mjs",
+          "exit_code": 0,
+          "seconds": 0.208,
+          "counts": {
+            "tests": 6,
+            "pass": 6,
+            "fail": 0,
+            "cancelled": 0,
+            "skipped": 0,
+            "todo": 0
+          }
+        },
+        {
+          "file": "tests/saveRestartPolicy.test.mjs",
+          "exit_code": 0,
+          "seconds": 0.23,
+          "counts": {
+            "tests": 9,
+            "pass": 9,
+            "fail": 0,
+            "cancelled": 0,
+            "skipped": 0,
+            "todo": 0
+          }
+        },
+        {
+          "file": "tests/shortcuts.test.mjs",
+          "exit_code": 0,
+          "seconds": 0.187,
+          "counts": {
+            "tests": 9,
+            "pass": 9,
+            "fail": 0,
+            "cancelled": 0,
+            "skipped": 0,
+            "todo": 0
+          }
+        },
+        {
+          "file": "tests/windowAttention.test.mjs",
+          "exit_code": 0,
+          "seconds": 0.193,
+          "counts": {
+            "tests": 2,
+            "pass": 2,
+            "fail": 0,
+            "cancelled": 0,
+            "skipped": 0,
+            "todo": 0
+          }
+        },
+        {
+          "file": "tests/windowEventRouting.test.mjs",
+          "exit_code": 0,
+          "seconds": 0.028,
+          "counts": {
+            "tests": 2,
+            "pass": 2,
+            "fail": 0,
+            "cancelled": 0,
+            "skipped": 0,
+            "todo": 0
+          }
+        }
+      ],
+      "totals": {
+        "tests": 84,
+        "pass": 84,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "name": "wizard-node",
+      "cwd": "/tmp/craidd-release-audit-f6d4/wizard",
+      "command": [
+        "node",
+        "--test",
+        "tests/buildDiagnostics.test.mjs",
+        "tests/duplicateWindowPolicy.test.mjs",
+        "tests/exitBlockers.test.mjs",
+        "tests/linkedStartup.test.mjs",
+        "tests/markdownDocs.test.mjs",
+        "tests/nativeDebug.test.mjs",
+        "tests/nativeStepCapability.test.mjs",
+        "tests/outputPresentation.test.mjs",
+        "tests/pathActions.test.mjs",
+        "tests/rustNativeGold.test.mjs",
+        "tests/saveRestartPolicy.test.mjs",
+        "tests/shortcuts.test.mjs",
+        "tests/windowAttention.test.mjs",
+        "tests/windowEventRouting.test.mjs"
+      ],
+      "exit_code": 0,
+      "seconds": 0.861,
+      "finished_utc": "2026-10-23T21:23:59.743384+00:00",
+      "log_sha256": "bc4c45fa6e46daba91483571063952f2dd5094af588a461d2c1a0764555508fa",
+      "rust_results": []
+    },
+    {
+      "name": "wizard-scaffolds",
+      "cwd": "/home/skira24/.codex/worktrees/f6d4/Craidd-Studio",
+      "command": [
+        "env",
+        "CRAIDD_WIZARD_SMOKE_ROOT=/tmp/craidd-release-audit-f6d4/scaffolds",
+        "/tmp/craidd-release-audit-f6d4-target/debug/deps/craidd_studio_lib-aee7ee9f8ea8c42d",
+        "--exact",
+        "commands::project_creation::tests::scaffold_smoke_fixtures",
+        "--ignored",
+        "--nocapture"
+      ],
+      "exit_code": 0,
+      "seconds": 0.007,
+      "finished_utc": "2026-10-23T21:31:21.083966+00:00",
+      "log_sha256": "2f78e29438a95e4c47e1d816754bad81ff3f91a2d43395a639232c2acd5befff",
+      "rust_results": [
+        {
+          "passed": 1,
+          "failed": 0,
+          "ignored": 0
+        }
+      ]
+    },
+    {
+      "name": "wizard-working-embedded",
+      "cwd": "/tmp/craidd-release-audit-f6d4/wizard-working",
+      "command": [
+        "env",
+        "CARGO_TARGET_DIR=/tmp/craidd-release-audit-f6d4-target",
+        "CARGO_PROFILE_DEV_DEBUG=0",
+        "CARGO_INCREMENTAL=0",
+        "npm",
+        "run",
+        "tauri",
+        "--",
+        "build",
+        "--debug",
+        "--no-bundle"
+      ],
+      "exit_code": 0,
+      "seconds": 11.83,
+      "finished_utc": "2026-10-23T21:30:10.011363+00:00",
+      "log_sha256": "28f6346ca0a3d890df1d2e7483316bce187ac2766dbdc7b934b84b46f7d8dcd2",
+      "rust_results": []
+    },
+    {
+      "name": "wizard-working-frontend",
+      "cwd": "/tmp/craidd-release-audit-f6d4/wizard-working",
+      "command": [
+        "npm",
+        "run",
+        "build"
+      ],
+      "exit_code": 0,
+      "seconds": 6.317,
+      "finished_utc": "2026-10-23T21:25:52.447176+00:00",
+      "log_sha256": "f9afedac678ec9417d7a09ca88d9a41d756816f1bdd50f02e0cbf6a61aab8a07",
+      "rust_results": []
+    },
+    {
+      "name": "wizard-working-node",
+      "cwd": "/tmp/craidd-release-audit-f6d4/wizard-working",
+      "command": [
+        "node <each file>",
+        "tests/buildDiagnostics.test.mjs",
+        "tests/duplicateWindowPolicy.test.mjs",
+        "tests/exitBlockers.test.mjs",
+        "tests/linkedStartup.test.mjs",
+        "tests/markdownDocs.test.mjs",
+        "tests/nativeDebug.test.mjs",
+        "tests/nativeStepCapability.test.mjs",
+        "tests/outputPresentation.test.mjs",
+        "tests/pathActions.test.mjs",
+        "tests/projectWizard.test.mjs",
+        "tests/rustNativeGold.test.mjs",
+        "tests/saveRestartPolicy.test.mjs",
+        "tests/shortcuts.test.mjs",
+        "tests/windowAttention.test.mjs",
+        "tests/windowEventRouting.test.mjs"
+      ],
+      "exit_code": 0,
+      "finished_utc": "2026-10-23T21:25:49.188581+00:00",
+      "files": [
+        {
+          "file": "tests/buildDiagnostics.test.mjs",
+          "exit_code": 0,
+          "seconds": 0.043,
+          "counts": {
+            "tests": 5,
+            "pass": 5,
+            "fail": 0,
+            "cancelled": 0,
+            "skipped": 0,
+            "todo": 0
+          }
+        },
+        {
+          "file": "tests/duplicateWindowPolicy.test.mjs",
+          "exit_code": 0,
+          "seconds": 0.2,
+          "counts": {
+            "tests": 2,
+            "pass": 2,
+            "fail": 0,
+            "cancelled": 0,
+            "skipped": 0,
+            "todo": 0
+          }
+        },
+        {
+          "file": "tests/exitBlockers.test.mjs",
+          "exit_code": 0,
+          "seconds": 0.19,
+          "counts": {
+            "tests": 4,
+            "pass": 4,
+            "fail": 0,
+            "cancelled": 0,
+            "skipped": 0,
+            "todo": 0
+          }
+        },
+        {
+          "file": "tests/linkedStartup.test.mjs",
+          "exit_code": 0,
+          "seconds": 0.216,
+          "counts": {
+            "tests": 7,
+            "pass": 7,
+            "fail": 0,
+            "cancelled": 0,
+            "skipped": 0,
+            "todo": 0
+          }
+        },
+        {
+          "file": "tests/markdownDocs.test.mjs",
+          "exit_code": 0,
+          "seconds": 0.382,
+          "counts": {
+            "tests": 8,
+            "pass": 8,
+            "fail": 0,
+            "cancelled": 0,
+            "skipped": 0,
+            "todo": 0
+          }
+        },
+        {
+          "file": "tests/nativeDebug.test.mjs",
+          "exit_code": 0,
+          "seconds": 0.438,
+          "counts": {
+            "tests": 21,
+            "pass": 21,
+            "fail": 0,
+            "cancelled": 0,
+            "skipped": 0,
+            "todo": 0
+          }
+        },
+        {
+          "file": "tests/nativeStepCapability.test.mjs",
+          "exit_code": 0,
+          "seconds": 0.239,
+          "counts": {
+            "tests": 3,
+            "pass": 3,
+            "fail": 0,
+            "cancelled": 0,
+            "skipped": 0,
+            "todo": 0
+          }
+        },
+        {
+          "file": "tests/outputPresentation.test.mjs",
+          "exit_code": 0,
+          "seconds": 0.042,
+          "counts": {
+            "tests": 4,
+            "pass": 4,
+            "fail": 0,
+            "cancelled": 0,
+            "skipped": 0,
+            "todo": 0
+          }
+        },
+        {
+          "file": "tests/pathActions.test.mjs",
+          "exit_code": 0,
+          "seconds": 0.204,
+          "counts": {
+            "tests": 2,
+            "pass": 2,
+            "fail": 0,
+            "cancelled": 0,
+            "skipped": 0,
+            "todo": 0
+          }
+        },
+        {
+          "file": "tests/projectWizard.test.mjs",
+          "exit_code": 0,
+          "seconds": 0.272,
+          "counts": {
+            "tests": 3,
+            "pass": 3,
+            "fail": 0,
+            "cancelled": 0,
+            "skipped": 0,
+            "todo": 0
+          }
+        },
+        {
+          "file": "tests/rustNativeGold.test.mjs",
+          "exit_code": 0,
+          "seconds": 0.22,
+          "counts": {
+            "tests": 6,
+            "pass": 6,
+            "fail": 0,
+            "cancelled": 0,
+            "skipped": 0,
+            "todo": 0
+          }
+        },
+        {
+          "file": "tests/saveRestartPolicy.test.mjs",
+          "exit_code": 0,
+          "seconds": 0.193,
+          "counts": {
+            "tests": 9,
+            "pass": 9,
+            "fail": 0,
+            "cancelled": 0,
+            "skipped": 0,
+            "todo": 0
+          }
+        },
+        {
+          "file": "tests/shortcuts.test.mjs",
+          "exit_code": 0,
+          "seconds": 0.212,
+          "counts": {
+            "tests": 9,
+            "pass": 9,
+            "fail": 0,
+            "cancelled": 0,
+            "skipped": 0,
+            "todo": 0
+          }
+        },
+        {
+          "file": "tests/windowAttention.test.mjs",
+          "exit_code": 0,
+          "seconds": 0.178,
+          "counts": {
+            "tests": 2,
+            "pass": 2,
+            "fail": 0,
+            "cancelled": 0,
+            "skipped": 0,
+            "todo": 0
+          }
+        },
+        {
+          "file": "tests/windowEventRouting.test.mjs",
+          "exit_code": 0,
+          "seconds": 0.029,
+          "counts": {
+            "tests": 2,
+            "pass": 2,
+            "fail": 0,
+            "cancelled": 0,
+            "skipped": 0,
+            "todo": 0
+          }
+        }
+      ],
+      "totals": {
+        "tests": 87,
+        "pass": 87,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "name": "wizard-working-rust",
+      "cwd": "/tmp/craidd-release-audit-f6d4/wizard-working",
+      "command": [
+        "env",
+        "CARGO_TARGET_DIR=/tmp/craidd-release-audit-f6d4-target",
+        "CARGO_PROFILE_DEV_DEBUG=0",
+        "CARGO_PROFILE_TEST_DEBUG=0",
+        "CARGO_INCREMENTAL=0",
+        "cargo",
+        "test",
+        "--locked",
+        "--offline",
+        "--manifest-path",
+        "src-tauri/Cargo.toml",
+        "-j",
+        "4"
+      ],
+      "exit_code": 0,
+      "seconds": 10.993,
+      "finished_utc": "2026-10-23T21:26:37.657032+00:00",
+      "log_sha256": "93dc5d3781aedd5936acb1a23b761c342488512ecb3e7956ed1148da600ae36a",
+      "rust_results": [
+        {
+          "passed": 151,
+          "failed": 0,
+          "ignored": 5
+        },
+        {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "passed": 7,
+          "failed": 0,
+          "ignored": 1
+        },
+        {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0
+        }
+      ]
+    },
+    {
+      "name": "unity-long-idle",
+      "cwd": "/home/skira24/.codex/worktrees/f6d4/Craidd-Studio",
+      "command": [
+        "node",
+        "--test",
+        "--test-isolation=none",
+        "--test-name-pattern=uncapped fps",
+        "tests/ui/unity-profiling.test.mjs"
+      ],
+      "exit_code": 1,
+      "seconds": 633.267,
+      "finished_utc": "2026-10-23T21:53:01.291228+00:00"
+    },
+    {
+      "exit_code": 0,
+      "name": "new-document-links-and-footers",
+      "checked": [
+        "docs/README.md",
+        "docs/feats/profiling/design-metric-inspection-editor.md",
+        "docs/handoffs/handoff-phase-3-x-public-release-audit-2026-10-23.md",
+        "docs/releases/README.md",
+        "docs/releases/evidence/2026-10-23/README.md",
+        "docs/releases/public-release-readiness-2026-10-23.md",
+        "docs/roadmaps/Roadmap-v0.0.4A.md",
+        "docs/uiux/design-public-release-sweep.md",
+        "docs/uiux/public-release-quality-gates.md"
+      ],
+      "errors": []
+    }
+  ],
+  "scope": "Per-source and per-evidence-lane results; no integrated package or new human acceptance. Initial failures are retained alongside corrected-environment/driver reruns.",
+  "metrics_release": {
+    "gate": "PASS",
+    "display": "xvfb",
+    "sessionType": "x11",
+    "binarySha256": "02cbe036bcd64336d5d1e991c9b8679f7cb4bf01461dff275f0fdec550062887",
+    "fixture": {
+      "path": "/tmp/craidd-release-audit-f6d4/million.csv",
+      "size": 153890865,
+      "sha256": "2816464b330512f766376e1fa3f9a1e557357a65571ce1809ac3145cbc5c4864"
+    },
+    "firstViewMs": 1539.444806,
+    "progressSeen": true,
+    "operations": {
+      "Zoom in": {
+        "n": 20,
+        "p50": 30,
+        "p95": 31,
+        "max": 31
+      },
+      "Pan right": {
+        "n": 20,
+        "p50": 29,
+        "p95": 31,
+        "max": 31
+      },
+      "Pan left": {
+        "n": 20,
+        "p50": 30,
+        "p95": 31,
+        "max": 31
+      },
+      "Zoom out": {
+        "n": 20,
+        "p50": 30,
+        "p95": 31,
+        "max": 39
+      },
+      "Series toggle": {
+        "n": 20,
+        "p50": 30,
+        "p95": 31,
+        "max": 31
+      },
+      "Row inspection": {
+        "n": 20,
+        "p50": 21,
+        "p95": 29,
+        "max": 30
+      }
+    },
+    "incrementalRssBytes": 300388352,
+    "incrementalRatio": 1.9519570053752053,
+    "method": "20 measured observations per operation, nearest-rank p50/p95, scripted application event to changed UI plus two RAFs, visible graph/inspector, warm file cache. Shared RSS pages double-counted; PSS separately sampled. No hardware input/display or GC attribution inferred.",
+    "memory": {
+      "oneWindow": {
+        "rssBytes": 823496704,
+        "pssBytes": 395850752
+      },
+      "baseline": {
+        "rssBytes": 1305096192,
+        "pssBytes": 593124352
+      },
+      "peak": {
+        "rssBytes": 1605484544,
+        "pssBytes": 887827456
+      }
+    },
+    "observations": [
+      {
+        "operation": "Zoom in",
+        "target": null,
+        "round": 1,
+        "ms": 30,
+        "uiMutationMs": 6,
+        "afterMutationMs": 24
+      },
+      {
+        "operation": "Pan right",
+        "target": null,
+        "round": 1,
+        "ms": 29,
+        "uiMutationMs": 5,
+        "afterMutationMs": 24
+      },
+      {
+        "operation": "Pan left",
+        "target": null,
+        "round": 1,
+        "ms": 29,
+        "uiMutationMs": 5,
+        "afterMutationMs": 24
+      },
+      {
+        "operation": "Zoom out",
+        "target": null,
+        "round": 1,
+        "ms": 31,
+        "uiMutationMs": 5,
+        "afterMutationMs": 26
+      },
+      {
+        "operation": "Series toggle",
+        "target": 1,
+        "round": 1,
+        "ms": 31,
+        "uiMutationMs": 5,
+        "afterMutationMs": 26
+      },
+      {
+        "operation": "Row inspection",
+        "target": 500001,
+        "round": 1,
+        "ms": 29,
+        "uiMutationMs": 2,
+        "afterMutationMs": 27
+      },
+      {
+        "operation": "Zoom in",
+        "target": null,
+        "round": 2,
+        "ms": 30,
+        "uiMutationMs": 4,
+        "afterMutationMs": 26
+      },
+      {
+        "operation": "Pan right",
+        "target": null,
+        "round": 2,
+        "ms": 22,
+        "uiMutationMs": 5,
+        "afterMutationMs": 17
+      },
+      {
+        "operation": "Pan left",
+        "target": null,
+        "round": 2,
+        "ms": 30,
+        "uiMutationMs": 5,
+        "afterMutationMs": 25
+      },
+      {
+        "operation": "Zoom out",
+        "target": null,
+        "round": 2,
+        "ms": 21,
+        "uiMutationMs": 6,
+        "afterMutationMs": 15
+      },
+      {
+        "operation": "Series toggle",
+        "target": 2,
+        "round": 2,
+        "ms": 30,
+        "uiMutationMs": 4,
+        "afterMutationMs": 26
+      },
+      {
+        "operation": "Row inspection",
+        "target": 500002,
+        "round": 2,
+        "ms": 18,
+        "uiMutationMs": 1,
+        "afterMutationMs": 17
+      },
+      {
+        "operation": "Zoom in",
+        "target": null,
+        "round": 3,
+        "ms": 30,
+        "uiMutationMs": 5,
+        "afterMutationMs": 25
+      },
+      {
+        "operation": "Pan right",
+        "target": null,
+        "round": 3,
+        "ms": 31,
+        "uiMutationMs": 5,
+        "afterMutationMs": 26
+      },
+      {
+        "operation": "Pan left",
+        "target": null,
+        "round": 3,
+        "ms": 22,
+        "uiMutationMs": 4,
+        "afterMutationMs": 18
+      },
+      {
+        "operation": "Zoom out",
+        "target": null,
+        "round": 3,
+        "ms": 30,
+        "uiMutationMs": 5,
+        "afterMutationMs": 25
+      },
+      {
+        "operation": "Series toggle",
+        "target": 1,
+        "round": 3,
+        "ms": 30,
+        "uiMutationMs": 5,
+        "afterMutationMs": 25
+      },
+      {
+        "operation": "Row inspection",
+        "target": 500003,
+        "round": 3,
+        "ms": 29,
+        "uiMutationMs": 1,
+        "afterMutationMs": 28
+      },
+      {
+        "operation": "Zoom in",
+        "target": null,
+        "round": 4,
+        "ms": 22,
+        "uiMutationMs": 6,
+        "afterMutationMs": 16
+      },
+      {
+        "operation": "Pan right",
+        "target": null,
+        "round": 4,
+        "ms": 31,
+        "uiMutationMs": 4,
+        "afterMutationMs": 27
+      },
+      {
+        "operation": "Pan left",
+        "target": null,
+        "round": 4,
+        "ms": 31,
+        "uiMutationMs": 5,
+        "afterMutationMs": 26
+      },
+      {
+        "operation": "Zoom out",
+        "target": null,
+        "round": 4,
+        "ms": 22,
+        "uiMutationMs": 7,
+        "afterMutationMs": 15
+      },
+      {
+        "operation": "Series toggle",
+        "target": 2,
+        "round": 4,
+        "ms": 29,
+        "uiMutationMs": 5,
+        "afterMutationMs": 24
+      },
+      {
+        "operation": "Row inspection",
+        "target": 500004,
+        "round": 4,
+        "ms": 18,
+        "uiMutationMs": 2,
+        "afterMutationMs": 16
+      },
+      {
+        "operation": "Zoom in",
+        "target": null,
+        "round": 5,
+        "ms": 29,
+        "uiMutationMs": 5,
+        "afterMutationMs": 24
+      },
+      {
+        "operation": "Pan right",
+        "target": null,
+        "round": 5,
+        "ms": 22,
+        "uiMutationMs": 6,
+        "afterMutationMs": 16
+      },
+      {
+        "operation": "Pan left",
+        "target": null,
+        "round": 5,
+        "ms": 31,
+        "uiMutationMs": 6,
+        "afterMutationMs": 25
+      },
+      {
+        "operation": "Zoom out",
+        "target": null,
+        "round": 5,
+        "ms": 30,
+        "uiMutationMs": 5,
+        "afterMutationMs": 25
+      },
+      {
+        "operation": "Series toggle",
+        "target": 1,
+        "round": 5,
+        "ms": 21,
+        "uiMutationMs": 5,
+        "afterMutationMs": 16
+      },
+      {
+        "operation": "Row inspection",
+        "target": 500005,
+        "round": 5,
+        "ms": 21,
+        "uiMutationMs": 1,
+        "afterMutationMs": 20
+      },
+      {
+        "operation": "Zoom in",
+        "target": null,
+        "round": 6,
+        "ms": 31,
+        "uiMutationMs": 4,
+        "afterMutationMs": 27
+      },
+      {
+        "operation": "Pan right",
+        "target": null,
+        "round": 6,
+        "ms": 21,
+        "uiMutationMs": 5,
+        "afterMutationMs": 16
+      },
+      {
+        "operation": "Pan left",
+        "target": null,
+        "round": 6,
+        "ms": 31,
+        "uiMutationMs": 5,
+        "afterMutationMs": 26
+      },
+      {
+        "operation": "Zoom out",
+        "target": null,
+        "round": 6,
+        "ms": 31,
+        "uiMutationMs": 5,
+        "afterMutationMs": 26
+      },
+      {
+        "operation": "Series toggle",
+        "target": 2,
+        "round": 6,
+        "ms": 30,
+        "uiMutationMs": 5,
+        "afterMutationMs": 25
+      },
+      {
+        "operation": "Row inspection",
+        "target": 500006,
+        "round": 6,
+        "ms": 19,
+        "uiMutationMs": 1,
+        "afterMutationMs": 18
+      },
+      {
+        "operation": "Zoom in",
+        "target": null,
+        "round": 7,
+        "ms": 22,
+        "uiMutationMs": 5,
+        "afterMutationMs": 17
+      },
+      {
+        "operation": "Pan right",
+        "target": null,
+        "round": 7,
+        "ms": 31,
+        "uiMutationMs": 4,
+        "afterMutationMs": 27
+      },
+      {
+        "operation": "Pan left",
+        "target": null,
+        "round": 7,
+        "ms": 31,
+        "uiMutationMs": 5,
+        "afterMutationMs": 26
+      },
+      {
+        "operation": "Zoom out",
+        "target": null,
+        "round": 7,
+        "ms": 30,
+        "uiMutationMs": 5,
+        "afterMutationMs": 25
+      },
+      {
+        "operation": "Series toggle",
+        "target": 1,
+        "round": 7,
+        "ms": 30,
+        "uiMutationMs": 5,
+        "afterMutationMs": 25
+      },
+      {
+        "operation": "Row inspection",
+        "target": 500007,
+        "round": 7,
+        "ms": 26,
+        "uiMutationMs": 1,
+        "afterMutationMs": 25
+      },
+      {
+        "operation": "Zoom in",
+        "target": null,
+        "round": 8,
+        "ms": 30,
+        "uiMutationMs": 5,
+        "afterMutationMs": 25
+      },
+      {
+        "operation": "Pan right",
+        "target": null,
+        "round": 8,
+        "ms": 29,
+        "uiMutationMs": 4,
+        "afterMutationMs": 25
+      },
+      {
+        "operation": "Pan left",
+        "target": null,
+        "round": 8,
+        "ms": 29,
+        "uiMutationMs": 4,
+        "afterMutationMs": 25
+      },
+      {
+        "operation": "Zoom out",
+        "target": null,
+        "round": 8,
+        "ms": 21,
+        "uiMutationMs": 5,
+        "afterMutationMs": 16
+      },
+      {
+        "operation": "Series toggle",
+        "target": 2,
+        "round": 8,
+        "ms": 31,
+        "uiMutationMs": 5,
+        "afterMutationMs": 26
+      },
+      {
+        "operation": "Row inspection",
+        "target": 500008,
+        "round": 8,
+        "ms": 29,
+        "uiMutationMs": 1,
+        "afterMutationMs": 28
+      },
+      {
+        "operation": "Zoom in",
+        "target": null,
+        "round": 9,
+        "ms": 31,
+        "uiMutationMs": 6,
+        "afterMutationMs": 25
+      },
+      {
+        "operation": "Pan right",
+        "target": null,
+        "round": 9,
+        "ms": 20,
+        "uiMutationMs": 5,
+        "afterMutationMs": 15
+      },
+      {
+        "operation": "Pan left",
+        "target": null,
+        "round": 9,
+        "ms": 30,
+        "uiMutationMs": 4,
+        "afterMutationMs": 26
+      },
+      {
+        "operation": "Zoom out",
+        "target": null,
+        "round": 9,
+        "ms": 31,
+        "uiMutationMs": 5,
+        "afterMutationMs": 26
+      },
+      {
+        "operation": "Series toggle",
+        "target": 1,
+        "round": 9,
+        "ms": 21,
+        "uiMutationMs": 5,
+        "afterMutationMs": 16
+      },
+      {
+        "operation": "Row inspection",
+        "target": 500009,
+        "round": 9,
+        "ms": 27,
+        "uiMutationMs": 1,
+        "afterMutationMs": 26
+      },
+      {
+        "operation": "Zoom in",
+        "target": null,
+        "round": 10,
+        "ms": 30,
+        "uiMutationMs": 5,
+        "afterMutationMs": 25
+      },
+      {
+        "operation": "Pan right",
+        "target": null,
+        "round": 10,
+        "ms": 31,
+        "uiMutationMs": 5,
+        "afterMutationMs": 26
+      },
+      {
+        "operation": "Pan left",
+        "target": null,
+        "round": 10,
+        "ms": 22,
+        "uiMutationMs": 4,
+        "afterMutationMs": 18
+      },
+      {
+        "operation": "Zoom out",
+        "target": null,
+        "round": 10,
+        "ms": 30,
+        "uiMutationMs": 6,
+        "afterMutationMs": 24
+      },
+      {
+        "operation": "Series toggle",
+        "target": 2,
+        "round": 10,
+        "ms": 22,
+        "uiMutationMs": 6,
+        "afterMutationMs": 16
+      },
+      {
+        "operation": "Row inspection",
+        "target": 500010,
+        "round": 10,
+        "ms": 30,
+        "uiMutationMs": 1,
+        "afterMutationMs": 29
+      },
+      {
+        "operation": "Zoom in",
+        "target": null,
+        "round": 11,
+        "ms": 31,
+        "uiMutationMs": 5,
+        "afterMutationMs": 26
+      },
+      {
+        "operation": "Pan right",
+        "target": null,
+        "round": 11,
+        "ms": 21,
+        "uiMutationMs": 4,
+        "afterMutationMs": 17
+      },
+      {
+        "operation": "Pan left",
+        "target": null,
+        "round": 11,
+        "ms": 30,
+        "uiMutationMs": 4,
+        "afterMutationMs": 26
+      },
+      {
+        "operation": "Zoom out",
+        "target": null,
+        "round": 11,
+        "ms": 21,
+        "uiMutationMs": 5,
+        "afterMutationMs": 16
+      },
+      {
+        "operation": "Series toggle",
+        "target": 1,
+        "round": 11,
+        "ms": 31,
+        "uiMutationMs": 5,
+        "afterMutationMs": 26
+      },
+      {
+        "operation": "Row inspection",
+        "target": 500011,
+        "round": 11,
+        "ms": 20,
+        "uiMutationMs": 1,
+        "afterMutationMs": 19
+      },
+      {
+        "operation": "Zoom in",
+        "target": null,
+        "round": 12,
+        "ms": 22,
+        "uiMutationMs": 5,
+        "afterMutationMs": 17
+      },
+      {
+        "operation": "Pan right",
+        "target": null,
+        "round": 12,
+        "ms": 31,
+        "uiMutationMs": 5,
+        "afterMutationMs": 26
+      },
+      {
+        "operation": "Pan left",
+        "target": null,
+        "round": 12,
+        "ms": 31,
+        "uiMutationMs": 4,
+        "afterMutationMs": 27
+      },
+      {
+        "operation": "Zoom out",
+        "target": null,
+        "round": 12,
+        "ms": 31,
+        "uiMutationMs": 5,
+        "afterMutationMs": 26
+      },
+      {
+        "operation": "Series toggle",
+        "target": 2,
+        "round": 12,
+        "ms": 31,
+        "uiMutationMs": 5,
+        "afterMutationMs": 26
+      },
+      {
+        "operation": "Row inspection",
+        "target": 500012,
+        "round": 12,
+        "ms": 29,
+        "uiMutationMs": 1,
+        "afterMutationMs": 28
+      },
+      {
+        "operation": "Zoom in",
+        "target": null,
+        "round": 13,
+        "ms": 30,
+        "uiMutationMs": 4,
+        "afterMutationMs": 26
+      },
+      {
+        "operation": "Pan right",
+        "target": null,
+        "round": 13,
+        "ms": 31,
+        "uiMutationMs": 5,
+        "afterMutationMs": 26
+      },
+      {
+        "operation": "Pan left",
+        "target": null,
+        "round": 13,
+        "ms": 31,
+        "uiMutationMs": 5,
+        "afterMutationMs": 26
+      },
+      {
+        "operation": "Zoom out",
+        "target": null,
+        "round": 13,
+        "ms": 22,
+        "uiMutationMs": 5,
+        "afterMutationMs": 17
+      },
+      {
+        "operation": "Series toggle",
+        "target": 1,
+        "round": 13,
+        "ms": 31,
+        "uiMutationMs": 5,
+        "afterMutationMs": 26
+      },
+      {
+        "operation": "Row inspection",
+        "target": 500013,
+        "round": 13,
+        "ms": 29,
+        "uiMutationMs": 1,
+        "afterMutationMs": 28
+      },
+      {
+        "operation": "Zoom in",
+        "target": null,
+        "round": 14,
+        "ms": 30,
+        "uiMutationMs": 5,
+        "afterMutationMs": 25
+      },
+      {
+        "operation": "Pan right",
+        "target": null,
+        "round": 14,
+        "ms": 30,
+        "uiMutationMs": 4,
+        "afterMutationMs": 26
+      },
+      {
+        "operation": "Pan left",
+        "target": null,
+        "round": 14,
+        "ms": 22,
+        "uiMutationMs": 4,
+        "afterMutationMs": 18
+      },
+      {
+        "operation": "Zoom out",
+        "target": null,
+        "round": 14,
+        "ms": 31,
+        "uiMutationMs": 5,
+        "afterMutationMs": 26
+      },
+      {
+        "operation": "Series toggle",
+        "target": 2,
+        "round": 14,
+        "ms": 30,
+        "uiMutationMs": 4,
+        "afterMutationMs": 26
+      },
+      {
+        "operation": "Row inspection",
+        "target": 500014,
+        "round": 14,
+        "ms": 29,
+        "uiMutationMs": 0,
+        "afterMutationMs": 29
+      },
+      {
+        "operation": "Zoom in",
+        "target": null,
+        "round": 15,
+        "ms": 30,
+        "uiMutationMs": 4,
+        "afterMutationMs": 26
+      },
+      {
+        "operation": "Pan right",
+        "target": null,
+        "round": 15,
+        "ms": 22,
+        "uiMutationMs": 5,
+        "afterMutationMs": 17
+      },
+      {
+        "operation": "Pan left",
+        "target": null,
+        "round": 15,
+        "ms": 30,
+        "uiMutationMs": 4,
+        "afterMutationMs": 26
+      },
+      {
+        "operation": "Zoom out",
+        "target": null,
+        "round": 15,
+        "ms": 22,
+        "uiMutationMs": 5,
+        "afterMutationMs": 17
+      },
+      {
+        "operation": "Series toggle",
+        "target": 1,
+        "round": 15,
+        "ms": 31,
+        "uiMutationMs": 4,
+        "afterMutationMs": 27
+      },
+      {
+        "operation": "Row inspection",
+        "target": 500015,
+        "round": 15,
+        "ms": 20,
+        "uiMutationMs": 1,
+        "afterMutationMs": 19
+      },
+      {
+        "operation": "Zoom in",
+        "target": null,
+        "round": 16,
+        "ms": 31,
+        "uiMutationMs": 4,
+        "afterMutationMs": 27
+      },
+      {
+        "operation": "Pan right",
+        "target": null,
+        "round": 16,
+        "ms": 23,
+        "uiMutationMs": 4,
+        "afterMutationMs": 19
+      },
+      {
+        "operation": "Pan left",
+        "target": null,
+        "round": 16,
+        "ms": 31,
+        "uiMutationMs": 4,
+        "afterMutationMs": 27
+      },
+      {
+        "operation": "Zoom out",
+        "target": null,
+        "round": 16,
+        "ms": 23,
+        "uiMutationMs": 5,
+        "afterMutationMs": 18
+      },
+      {
+        "operation": "Series toggle",
+        "target": 2,
+        "round": 16,
+        "ms": 31,
+        "uiMutationMs": 5,
+        "afterMutationMs": 26
+      },
+      {
+        "operation": "Row inspection",
+        "target": 500016,
+        "round": 16,
+        "ms": 21,
+        "uiMutationMs": 2,
+        "afterMutationMs": 19
+      },
+      {
+        "operation": "Zoom in",
+        "target": null,
+        "round": 17,
+        "ms": 23,
+        "uiMutationMs": 6,
+        "afterMutationMs": 17
+      },
+      {
+        "operation": "Pan right",
+        "target": null,
+        "round": 17,
+        "ms": 31,
+        "uiMutationMs": 6,
+        "afterMutationMs": 25
+      },
+      {
+        "operation": "Pan left",
+        "target": null,
+        "round": 17,
+        "ms": 21,
+        "uiMutationMs": 5,
+        "afterMutationMs": 16
+      },
+      {
+        "operation": "Zoom out",
+        "target": null,
+        "round": 17,
+        "ms": 31,
+        "uiMutationMs": 5,
+        "afterMutationMs": 26
+      },
+      {
+        "operation": "Series toggle",
+        "target": 1,
+        "round": 17,
+        "ms": 23,
+        "uiMutationMs": 6,
+        "afterMutationMs": 17
+      },
+      {
+        "operation": "Row inspection",
+        "target": 500017,
+        "round": 17,
+        "ms": 21,
+        "uiMutationMs": 2,
+        "afterMutationMs": 19
+      },
+      {
+        "operation": "Zoom in",
+        "target": null,
+        "round": 18,
+        "ms": 31,
+        "uiMutationMs": 5,
+        "afterMutationMs": 26
+      },
+      {
+        "operation": "Pan right",
+        "target": null,
+        "round": 18,
+        "ms": 31,
+        "uiMutationMs": 4,
+        "afterMutationMs": 27
+      },
+      {
+        "operation": "Pan left",
+        "target": null,
+        "round": 18,
+        "ms": 22,
+        "uiMutationMs": 5,
+        "afterMutationMs": 17
+      },
+      {
+        "operation": "Zoom out",
+        "target": null,
+        "round": 18,
+        "ms": 39,
+        "uiMutationMs": 11,
+        "afterMutationMs": 28
+      },
+      {
+        "operation": "Series toggle",
+        "target": 2,
+        "round": 18,
+        "ms": 26,
+        "uiMutationMs": 7,
+        "afterMutationMs": 19
+      },
+      {
+        "operation": "Row inspection",
+        "target": 500018,
+        "round": 18,
+        "ms": 17,
+        "uiMutationMs": 1,
+        "afterMutationMs": 16
+      },
+      {
+        "operation": "Zoom in",
+        "target": null,
+        "round": 19,
+        "ms": 30,
+        "uiMutationMs": 4,
+        "afterMutationMs": 26
+      },
+      {
+        "operation": "Pan right",
+        "target": null,
+        "round": 19,
+        "ms": 30,
+        "uiMutationMs": 4,
+        "afterMutationMs": 26
+      },
+      {
+        "operation": "Pan left",
+        "target": null,
+        "round": 19,
+        "ms": 30,
+        "uiMutationMs": 4,
+        "afterMutationMs": 26
+      },
+      {
+        "operation": "Zoom out",
+        "target": null,
+        "round": 19,
+        "ms": 30,
+        "uiMutationMs": 5,
+        "afterMutationMs": 25
+      },
+      {
+        "operation": "Series toggle",
+        "target": 1,
+        "round": 19,
+        "ms": 31,
+        "uiMutationMs": 5,
+        "afterMutationMs": 26
+      },
+      {
+        "operation": "Row inspection",
+        "target": 500019,
+        "round": 19,
+        "ms": 20,
+        "uiMutationMs": 2,
+        "afterMutationMs": 18
+      },
+      {
+        "operation": "Zoom in",
+        "target": null,
+        "round": 20,
+        "ms": 31,
+        "uiMutationMs": 5,
+        "afterMutationMs": 26
+      },
+      {
+        "operation": "Pan right",
+        "target": null,
+        "round": 20,
+        "ms": 22,
+        "uiMutationMs": 5,
+        "afterMutationMs": 17
+      },
+      {
+        "operation": "Pan left",
+        "target": null,
+        "round": 20,
+        "ms": 30,
+        "uiMutationMs": 4,
+        "afterMutationMs": 26
+      },
+      {
+        "operation": "Zoom out",
+        "target": null,
+        "round": 20,
+        "ms": 30,
+        "uiMutationMs": 5,
+        "afterMutationMs": 25
+      },
+      {
+        "operation": "Series toggle",
+        "target": 2,
+        "round": 20,
+        "ms": 22,
+        "uiMutationMs": 6,
+        "afterMutationMs": 16
+      },
+      {
+        "operation": "Row inspection",
+        "target": 500020,
+        "round": 20,
+        "ms": 21,
+        "uiMutationMs": 2,
+        "afterMutationMs": 19
+      }
+    ]
+  },
+  "images": {
+    "debugger-hover.png": {
+      "source": "/home/skira24/.codex/worktrees/f6d4/Craidd-Studio/test-results/ui/2026-10-23T21-26-26-907Z/debug-csharp/no-hover.png",
+      "sha256": "093be978dde7ee093f5ee5ad933fc93d0c7574fb57f130fba4cc61744369819a"
+    },
+    "explorer-edge.png": {
+      "source": "/home/skira24/.codex/worktrees/f6d4/Craidd-Studio/test-results/ui/2026-10-23T21-26-50-605Z/menus/README.md-bottom-right.png",
+      "sha256": "2dab5f4ec85358e6e6d88865af6ec6c2aa08e97fd28886c6977d5f28f672d0fd"
+    },
+    "wizard-template-900.png": {
+      "source": "/home/skira24/.codex/worktrees/f6d4/Craidd-Studio/test-results/ui/2026-10-23T21-40-45-780Z/release-wizard/02-template-900.png",
+      "sha256": "9a1bda14a7684c38ce22b685a5d36bd593f8b86b6e7158a064c59f47b7506c88"
+    },
+    "wizard-rust-debug.png": {
+      "source": "/home/skira24/.codex/worktrees/f6d4/Craidd-Studio/test-results/ui/2026-10-23T21-40-45-780Z/release-wizard/07-rust-debug.png",
+      "sha256": "50a011f9b751772aab11c8b8bb48f61c3494ff193b2649b5ebd30d279e19adf1"
+    },
+    "metric-current-editor.png": {
+      "source": "/tmp/craidd-release-audit-f6d4/metrics/test-results/ui/2026-10-23T21-36-38-323Z/metric-ux/02-editor-1280.png",
+      "sha256": "800f8eaf0cdc6aaa0cced1f44e91584b050f059cd2ae6762e8ecc5608e3e6ada"
+    },
+    "unity-long-rollover.png": {
+      "source": "/home/skira24/.codex/worktrees/f6d4/Craidd-Studio/test-results/ui/2026-10-23T21-42-28-054Z/unity-uncapped/long-rolling-history.png",
+      "sha256": "e268df6a7d70082545c26878e165d49e6f192af5649244c91e5eddcfcbd00607"
+    }
+  },
+  "wizard_snapshot": {
+    "source": "/home/skira24/.codex/worktrees/d667/Craidd-Studio",
+    "base": "ac78384c8ecf7cc83a4a4f2acdf4caa171e07e01",
+    "status": " M package.json\n M src-tauri/src/commands/mod.rs\n M src-tauri/src/lib.rs\n M src/App.tsx\n M src/components/dialogs/NewProjectDialog.tsx\n M src/components/startup/GetStarted.tsx\n M src/store/solutionStore.ts\n?? docs/handoffs/handoff-project-wizard-2026-10-20.md\n?? public/language-icons/\n?? src-tauri/src/commands/project_creation.rs\n?? src-tauri/templates/\n?? src/components/dialogs/projectWizard.css\n?? src/lib/projectTemplates.json\n?? src/lib/projectWizard.ts\n?? tests/projectWizard.test.mjs\n",
+    "file_hashes": {
+      "public/language-icons/LICENSE": "121194741d4a915b9f5890fdd6dd95121f9b1f816517c792358d72d7c838d664",
+      "public/language-icons/README.md": "84b549e8aa790de16e5f7d8dcb40e411f9f83b67ac2f0690b4671e93d5baf588",
+      "public/language-icons/cpp.svg": "7ff8253551235e3a6b002a7c2bd6e3190d85113a64fcb40f2254473caeb025d4",
+      "public/language-icons/csharp.svg": "7093478d0888e22a224b6fa832da6c9ffd14c433de8bd14aab0c1cb50925f3ee",
+      "public/language-icons/dotnet.svg": "b1b71d747aaf277a00efeab3f5f5844578fc4a42bb605f60c3b0510256009ca4",
+      "public/language-icons/react.svg": "5825b649c8c04dec13ecf01d0182401bd0ec71789d2fa06224866d882cd1515f",
+      "public/language-icons/rust.svg": "16c6c6a98e990944fc5e1cc64cc8fc7b8be3a662ec4ee7951b7995d2e52f5e12",
+      "src-tauri/src/commands/project_creation.rs": "82261d38e93dd2bef60d66fba1648cf75947cc23b99edcef4bef852bf2752892",
+      "src-tauri/templates/tauri-react/icon.png": "11dd79332287273ec23baed0c84e5a9f5a161783804385ae4bf98be6e29f12f9",
+      "src/components/dialogs/projectWizard.css": "defc8b8f499fe97d2d428cc4bc1949e6f2fea1f741d6181a152e3e2edcf15b20",
+      "src/lib/projectTemplates.json": "3b6db401e23ef61f6d731eb841a9c042a088dc1fb45f2212a0d44b3526e65f7c",
+      "src/lib/projectWizard.ts": "37cad74e05f40293c6458e507513ffabeb70b409511e59c4736db7ea9e5497a0",
+      "package.json": "fbaf7812816f2508a555dd862e6d226168eeb15182bbbf58bc4fcc3c2f16b065",
+      "src-tauri/src/commands/mod.rs": "53c5413e56830d28516bd47fe5d18d79d33cf4f1840d43713817e257d4d83e94",
+      "src-tauri/src/lib.rs": "c51a2dfd896965301d11ab083754f5a266fd60d422ff1e5f7148e4e0779a5526",
+      "src/App.tsx": "171527f46eed396eeba5faea6e647f83463ecb9777eab016696faa3062211ea8",
+      "src/AppErrorBoundary.tsx": "8687f1d15ca820d78be887358c8143ac9f4d17b360a8a2b2509169e9d84d38a4",
+      "src/assets/styles/index.css": "3fb20ae1a664cb6b5985b8593706f75007a703b4e6e528c0867f4ccc0d3e2651",
+      "src/components/command-palette/CommandPalette.tsx": "989813fcd20ab7d44e56db659edcd0eba93877c72a5d4da60a97a42ee40725d7",
+      "src/components/dialogs/AboutDialog.tsx": "8aa770ce667792ab6c6991240d0ec609759c5a5266d771653f8e57ace66daa76",
+      "src/components/dialogs/AncestorSolutionDialog.tsx": "b76dca530ecf791a960edec0d107b872adfb031ddf7ada37e826d65bc950f200",
+      "src/components/dialogs/DeleteConfirmDialog.tsx": "990273ab5886b5dececebf1326c94e83cdd13b1cdf5aa9eb08b5a8a6261c3176",
+      "src/components/dialogs/DeleteProjectDialog.tsx": "a710cbf8d9c9190391c6931fcfa31c713a5b166865a72bbfdbe3791ce3ca85ce",
+      "src/components/dialogs/DeletedFileDialog.tsx": "23d7904b19a4d5727f224eb9ba867841d31ffd07e5695133535c52122b8459d8",
+      "src/components/dialogs/DiffDialog.tsx": "9c665f8a32a9c281b99e5767b0de85a9fec22ff207d06743c82c53ae9c3c18ba",
+      "src/components/dialogs/FineTuneDialog.tsx": "bf1c3ccf1d295a4e542a76d20f8365590e095642b8f0899ecabb3e39308b45d1",
+      "src/components/dialogs/LinkedLaunchPlanDialog.tsx": "3573b62165c813bd8828d1bb6366e1d68cba9c8343383c946c5f65006e1fe14c",
+      "src/components/dialogs/MakeProjectDialog.tsx": "371a3e5f9c39e2182948ae632d0af315bfa63305202fc8d0e54304e1d7d590fc",
+      "src/components/dialogs/MissingProjectDialog.tsx": "bcd62082a8e25c9c5b7b4de6962aa4a0eece2a84228318c1409bf8363d3a125b",
+      "src/components/dialogs/NewFileDialog.tsx": "cab484ef9eb0ee53493f739a0eef9c29dc8776041a76b14715d9963cad03be96",
+      "src/components/dialogs/NewFolderDialog.tsx": "f61fb02638e85af43e7c48eb6287f2760a97f98dd2f3d5779a16f93f73efbd01",
+      "src/components/dialogs/NewProjectDialog.tsx": "ee87677a115118802acf56dcf638c65cfff6a9a8033f9105d9359d4028d429bb",
+      "src/components/dialogs/SaveConfirmDialog.tsx": "d9d317a729584c8c42748072cc9b66fef77b2fdaa2bd848b8e66b47ba377d002",
+      "src/components/dialogs/SaveConflictDialog.tsx": "624f4fd4860bb8f89087bbe22b9fab19a03dce5c9584b00ab31313fee0a26629",
+      "src/components/dialogs/SaveSessionDialog.tsx": "2d9127be086b5ae893f11cb80b089b64081de076928c2318e69f797a473e3ce0",
+      "src/components/dialogs/TauriSetupDialog.tsx": "0f45feedd6daa555ef15611af78e1d43b27204fd922e3eb74fa346cb55670797",
+      "src/components/dialogs/ToolchainConfigurationDialog.tsx": "adf1d05f29d0415baf65c41c15a1c7564ddc93fdee1c1fb317176baaf589a876",
+      "src/components/dialogs/configurations/BuildOrderEditor.tsx": "1615acd3afc2930137a2d79606c0796462b34ac0b9c6a01eb8f46eafbbe4fd0b",
+      "src/components/dialogs/configurations/ConfigurationForm.tsx": "206d4f840fa132869e0062bccdb059acc3460cd0e237277edbebd15b44429fbe",
+      "src/components/dialogs/configurations/ConfigurationsDialog.tsx": "c8e230744da885cbc524312467ff7209c2f419667e4f621e3e68b72bbe796f39",
+      "src/components/dialogs/configurations/LinkedStartupWizard.tsx": "560ff8585e8542135493dc0cd6a98254c741aca2e6c53348a8dc9829ea53aa9c",
+      "src/components/dialogs/configurations/SectionRail.tsx": "be4348a3f37d8d33af0953945abebdd2653147b3160bf6c2b2eff7d319fd7fc0",
+      "src/components/dialogs/configurations/build/BuildSection.tsx": "1066ebb00a591fad348ea3985f18cd8e327dfcf164b447422b4dd420a3c0a295",
+      "src/components/dialogs/configurations/build/CommandPreview.tsx": "760dbe5c1ab29615677de6023c3f72990515401b659b2a6536da54d66feda2f4",
+      "src/components/dialogs/configurations/build/ConfigurationForm.tsx": "d3e7ce76b93879c0de6b57e704bdb3306d9eb08eca0f7362a3f06dc252eae35a",
+      "src/components/dialogs/configurations/build/ConfigurationTree.tsx": "229620ad6fdf92c0cdd67d23251ec8ef69025a0fb4b9c2e3036a84ab067edc7e",
+      "src/components/dialogs/configurations/build/InheritedField.tsx": "57b231327279a529296e58bea83a6b77f6ecbb538099235b2c2b3c0dcafc5343",
+      "src/components/dialogs/configurations/build/constants.ts": "b56cbc68c9f4e700406f58f2304b47e83add75798612575c5ae0df030435cdff",
+      "src/components/dialogs/configurations/build/methods/CargoFields.tsx": "6ef88dc5e726a75d6b358b4d17d85dc730c1138069a8ec8cc49a083d777175d1",
+      "src/components/dialogs/configurations/build/methods/CmakeFields.tsx": "ac02123bc1fbaf11e8b3672a3a6480cb8a041069d7ecdc2ae532416d838320e2",
+      "src/components/dialogs/configurations/build/methods/ComposedFields.tsx": "279a36fcbb8e6ffda21072396a77e303674fe0ef51de7942559ebc8952c6a6c2",
+      "src/components/dialogs/configurations/build/methods/DotnetFields.tsx": "9b02005d5ba4842312c3dfef47826b44329d32acf363c16ac8d08ec4f9421937",
+      "src/components/dialogs/configurations/build/methods/NpmFields.tsx": "261d349c23316754dec979262dda71759d8a6837f554bed03be839de67ab9b0b",
+      "src/components/dialogs/configurations/build/methods/ShellFields.tsx": "7437c9cd7bc6c75c1fe255941e97f7545306798af19e9184ae5f2e1d76edb522",
+      "src/components/dialogs/configurations/build/methods/index.tsx": "05b2bd64a35991943289e90639fb215f0093c88eb1918226627d693dfd812082",
+      "src/components/dialogs/configurations/build/sections/CommonSection.tsx": "8c3d06f3c7177bffece87cf50b66a2d7bef8d76ead713a60778bdcce20a3502c",
+      "src/components/dialogs/configurations/build/sections/MethodSection.tsx": "b2dca606a9fadb27e5c368f9e08c57dbd4e0cdb87083c716ddfda01298afdbc4",
+      "src/components/dialogs/configurations/build/sections/UniversalSection.tsx": "3e3a58bab607f0e3ab1ed7db81b2e74817d48b895c1b9ad518077f9c58e7cbeb",
+      "src/components/editor/Breadcrumb.tsx": "ba913c1670be4a0a7c90b1367d9ce60f299662c43228544dbe066de4df1cbe9d",
+      "src/components/editor/BreakpointMenu.tsx": "19126848bede8d528f542e9afae053180884af7d761111512cef191faac56f33",
+      "src/components/editor/CodeView.tsx": "edf3837c7258f3d34be5d902514441134c7d278dc93a12154a8aa3c880d80655",
+      "src/components/editor/DocumentView.tsx": "f9f82651cbde5551fdbf8e7731d8226a5bcf4936e10bc47404f493710fd9b8a0",
+      "src/components/editor/EditorPane.tsx": "fd864f373bdd96a80e992847a41d3190119b0d0e7e649a8fff85d88435252728",
+      "src/components/editor/EditorTabs.tsx": "08dec916dd07960ffab55bc31877a6959ed1c2883af7ef5ef080a5d2c99ee2ff",
+      "src/components/editor/MarkdownPreview.tsx": "6a2e38b9cdc4bdd3a26827aa2dcf2bf707b060f74c5b97e3c16b8d735c721daf",
+      "src/components/editor/SideEditor.tsx": "4fec004c01b9882153283518d4bfaaae8ff9f9ebddab13ba777a5753f2d53da1",
+      "src/components/editor/markdown.css": "575c62e573238e4aac78e61b6581016eb48946b08cf1f45aae30badd197fab15",
+      "src/components/layout/ActivityBar.tsx": "67890786bea517e79dd41d3d36d402bbd45bc497f7d2675fcca5dcffbfd2aa95",
+      "src/components/layout/AppShell.tsx": "62dcbcec5059b2318ba01f7b74175ca4487493fe1c0d3029247d6d17231c7a0c",
+      "src/components/layout/CriticalWorkspaceBanner.tsx": "4b713accebf0b0dbc86f8fdc5a46f3bba533fda147a9aed9e06754906c5d7bfd",
+      "src/components/layout/EnvironmentNotice.tsx": "77df4ff06d8851125fbb613acdebc0b48d4237f07ee45ada2c7b0d28dc571c9b",
+      "src/components/layout/NativeThreadDropdown.tsx": "2193838104fc8b71662cb627abe2375781159898f72caba3bfadbc87585b4484",
+      "src/components/layout/RemoteContext.tsx": "94cf255bca4a4ec2ba60b998828f57bff1f49d28528e60fdd6fa89241542d9ab",
+      "src/components/layout/ResizeHandle.tsx": "2229b7154941d7b1f24599f2a039778eefc83b6056a9b39fa64343c512c207e0",
+      "src/components/layout/SessionNotice.tsx": "44ff92501f9900ea50b4a3a5567dfa2fb613b5ceb9dd5d8611ac2b49c4c0ff34",
+      "src/components/layout/StatusBar.tsx": "ce289da954ebd1723b91333bd1044865a8b69f1db61888ccc9fa98cdf70f86ae",
+      "src/components/layout/ThreadDropdown.tsx": "9bffc9e6e7d98c48a7bf42e73645d581753ba535fb49b0d49d59376901a3948a",
+      "src/components/layout/Toolbar.tsx": "96204657b41e5798ef96824aca596c221429a2c71653425337d193e6cf8f2085",
+      "src/components/layout/WindowManager.tsx": "94fc413da155e86d11b807c93a30322df246c0db02315540be89a9667110209a",
+      "src/components/menu/MenuBar.tsx": "bbd4bbf69be3a9c00a34a6c269232b0861182ea6dc83acce11ebbb2853a6efc1",
+      "src/components/panels/BottomPanel.tsx": "407c255823da6ab038b42607165c64d77c50c4221b404d263c9902ae38114956",
+      "src/components/panels/DebugSidebar.tsx": "7879719474557a87610a895d7598bd2edfabf8e258b0354c3d44bb3f635745c3",
+      "src/components/panels/LdiSessionCard.tsx": "13783ab23b66631d804b2fad2da8bc1756595c81d22905c3973c52414078ff65",
+      "src/components/panels/ProfilerPanel.tsx": "084cd443bcb86c0a7bf86d28cefff999d524144bb105cf5e0302e29d362fd35f",
+      "src/components/panels/RightPanel.tsx": "5285119a3cb5f29ac8b354c2b919af6fce4bea7980e6f4bde56dbaae4c139a27",
+      "src/components/panels/VariableTree.tsx": "127fc33b059b6b4046ea01238cfc44d2f6a563e27fb4cb612fbd359e8d6b1ee4",
+      "src/components/panels/WatchSection.tsx": "a490a084f9d7ad32e9c9a172de046520bf70dc1a9345737e7526a159d0b5c9c5",
+      "src/components/preferences/PreferencesDialog.tsx": "e08dd955e3df76dce6e67e311337620dcb5051d39c12ba8cefb2cb6176a52736",
+      "src/components/sidebar/FileTree.tsx": "9e89a2087362514b300468a460793ccac075578fa26681a28c1f0af924963aa7",
+      "src/components/sidebar/PathActions.tsx": "f3d58c0aa8eed29d775b3240f88aecd36da029044d10d3499ed3d29c5bdd08b0",
+      "src/components/sidebar/Sidebar.tsx": "356ccfc8c043615605485217ffa2320fcaef5be157f2e7fbcd821926a8d21f18",
+      "src/components/sidebar/discovery/FileDiscovery.tsx": "1910b2113a066153055d87bb8a0f35ac7fa56fae89467332a0015a2629ca1b1f",
+      "src/components/sidebar/docs/DocsBrowser.tsx": "c7375709805c99e3586595011bd7d572f0deee7c233b8fed873e5daedef756f3",
+      "src/components/sidebar/search/SearchPanel.tsx": "46bce73156bd16fe94b75a8e1765e8b1585b09768abb831b003249c19fb464ce",
+      "src/components/sidebar/solution/SolutionBanner.tsx": "7f8cc6bce8830f25d49aaf06f152c745d591a75b499a893fa58823d9a5dd1024",
+      "src/components/sidebar/solution/SolutionExplorer.tsx": "b08d52e5a979b297c1bb03cebd497bec32b366528e97e387c5d1baf570e62432",
+      "src/components/startup/GetStarted.tsx": "7f94c8c166017065ec77abf00b62cc508cdec90f562706f6757ec1a33cc0dff5",
+      "src/hooks/useKeyboardShortcuts.ts": "7889b9beedefbe8ffb7c6a5907d6bd0827b60f860bf04f4d772b3f68c22d56f3",
+      "src/lib/activeEditor.ts": "73dfbee4e104218f6f21f9e816f5c3e21426a01e98375620668dcdc1ba5a72e7",
+      "src/lib/breakpointFocus.ts": "316120444d3185c3bb8d9b21d5b055f6432bc93a55d265c889f955870745e41b",
+      "src/lib/buildDiagnostics.ts": "d20fe77e97d057b15eba2172a1b3e2268b95406cb03107279c3e97ac82c5f910",
+      "src/lib/debugInspect.ts": "ca77549929b3c7dd99a1c6add210aa8147f80da38856c4d769182d635f61244e",
+      "src/lib/debugSource.ts": "9059aa025a0385bb3636b9d8a1d883d73342d6839f31240a34d3812c396b916b",
+      "src/lib/docsDiscovery.ts": "5cce5bf8c915e1a29b913054bdafcb676e3eaeae7f256768a21fabdeeaf5965c",
+      "src/lib/documentLinks.ts": "bca17101d24a61de6efcbed579ed40b6eb464cdbb3d194d6d7ea409ed661a08b",
+      "src/lib/duplicateWindowPolicy.ts": "f35aab52fe4980644eaa9de7a3461d7969d50ae23243bc18d548937d1940956d",
+      "src/lib/editorThemes.ts": "f7289083975e0be798534d60f8ade2187b8664c805aaa661d9866ee81fc0874b",
+      "src/lib/exitBlockers.ts": "fb811ba0403d7551417d8bff4d0b1c8d02e29ae6e539576da6a169b1bca99b05",
+      "src/lib/fileActions.ts": "c326b8dbe32179746bc5f2ddbae446b2bf2b667f0954c6c780f0b2224f833c70",
+      "src/lib/frameworkSetup.ts": "c7058478732f30c0259cf3e6ea23f48ce280638c4c16b09d155765dab6800e08",
+      "src/lib/languages.ts": "5217af64648e71f14dc629421b0fc10d8ccd166e10fcf620f5e51d0fc1c823e1",
+      "src/lib/linkedStartup.ts": "a138de77c1d641cd23496f021e64d9231751320801939a33f53287e57ed0cd29",
+      "src/lib/markdownPreview.ts": "a609bd64f8df2c0b3e6353ea951c8b29148f27da6eced3617469892a05aec2e9",
+      "src/lib/markdownSelection.ts": "04c453731eea8dbd0ca081fd3bd6e429a96ea0259ed871c093485f747bbb5cf2",
+      "src/lib/openWorkspaceFile.ts": "ccf7e60555521979984cecb49bc07e2c5b8cf9f3ed977ae22d833d180c861105",
+      "src/lib/outputPresentation.ts": "e7d2a72b45690b03f0335dcbbe89f28e8ed815070998dace2347972809b1bf09",
+      "src/lib/pathActions.ts": "a6235364e2f32b8124b505f4392ce3de4e2264082e9d2388ea74fe2dddc65e3a",
+      "src/lib/rustNativeGold.ts": "ce622d6e765d2d766c590a7ac9de5a8d839d94e6ec8c6a9624975767d098a21c",
+      "src/lib/saveRestartPolicy.ts": "64cf9520cbc487e8e8583de06de5061b51770d5cfcfbb8ddae67d93991fc21c5",
+      "src/lib/sessionRestart.ts": "3855413a1c9c3d245b53cd1fdf1e03c2d7c757ac5a4ed6e56d52f839e40ffca6",
+      "src/lib/shortcuts.ts": "b91359fb729d21bc71814af5920154e6d3b3f6ecd5d27816f28157162db55f59",
+      "src/lib/viewedActions.ts": "17b38abdc0e141826b0f8a73e6a1d4901b230df91258b4759273e592c20af9af",
+      "src/lib/windowAttention.ts": "9abeeb98455e5d0760a5cc0c610612160e8064be78d7c5bb936da1d3557e5a89",
+      "src/lib/workspaceActions.ts": "919b10c3ece40c2ba9831f0b7d34d1743de074cebd1293263cb9ffdf93c4102a",
+      "src/main.tsx": "fa4dea10b4179159453ebaec25375c2978f1b900222d82e5eaaa1619bbd46d01",
+      "src/monacoSetup.ts": "ede775f26c59b5d8e252cb203924453ba51ad5a595fdf6c8b17aef897b95a56e",
+      "src/store/breakpointStore.ts": "51549a22c153a071ef16c434a6445782d38ec626fbc14b8df15cc15526aeaa88",
+      "src/store/buildStore.ts": "c1ba6d67aefbf8dd2a88ead67a49218421e4b6f82964b5a5936eb9106b30d0cd",
+      "src/store/debugStore.ts": "114d4714f72a71bd34d000af95be6e85c95faf71c7dd4657e4b50c34081eb57d",
+      "src/store/layoutStore.ts": "7010796ebae5aa617cf84797c52bf8f1a9e44683ccda18e12e57d04187059d83",
+      "src/store/ldiStore.ts": "fdd2b27437453daefa9a6b38718163732ec4a580e2e8e1603f8e1de3ab637656",
+      "src/store/linkedWindowsStore.ts": "c31c91009d145911240ec305a8d923b3da67fc58031765a9fad0a53e1931470a",
+      "src/store/markdownStore.ts": "043942a556f3a51d23474cb03ffa765f95dbc082460af1fd0ee7ae82ed4dca6b",
+      "src/store/nativeDebugStore.ts": "7e6eee1225772527f7db31562def2bbe87b72fbbcc1d5451fe33a10dd0eab548",
+      "src/store/preferencesStore.ts": "5d0f3f05280dd478571d6b7aca99b397fc385d6e1a0996f1d13be177a411316c",
+      "src/store/searchStore.ts": "40b5fdce8011a82ef955940c9e0fa79738a0065a6da34886243ddeff32139c8f",
+      "src/store/sessionFeedbackStore.ts": "5531024ee57c8d28a3b5129a1ce2e2d054479ca66ec19c3b66f7e59997e16d4b",
+      "src/store/solutionStore.ts": "47a835bc74961f8314c1aeddf0334b612566b72a4cfa007d9eacf6976408f4e3",
+      "src/store/splitStore.ts": "2887b54687809af73495d6fa1a637131fa0343561b321b33a4a94706975e6744",
+      "src/types/project.ts": "6ae58deed9c025702379ffd92e05363ca2cfe334f6e320b66f20b241abc4eb4f",
+      "src/types/startup.ts": "320054043435803c55b9ebcac5e5e8a8c11940fd76c8d6d28a95eac186c7d441",
+      "src/vite-env.d.ts": "65996936fbb042915f7b74a200fcdde7e410f32a669b1ab9597cfaa4b0faddb5"
+    }
+  },
+  "unity_long": {
+    "source_record": "/home/skira24/.codex/worktrees/f6d4/Craidd-Studio/test-results/ui/2026-10-23T21-42-28-054Z/unity-uncapped/record.json",
+    "observedAtMs": 614854.742392,
+    "counters": {
+      "evictedCaptures": 9862208,
+      "agedSamples": 1,
+      "rejectedEvents": 0,
+      "disconnects": 0,
+      "sourceGaps": 155
+    },
+    "dropped": 155,
+    "samples": 2400,
+    "captures": 134,
+    "footer": "\u25c6 Gold connected\nCoverage interrupted",
+    "unity": {
+      "pid": 287550,
+      "playing": true,
+      "changing": false,
+      "nativeLiveBytes": 0,
+      "frames": 9862211,
+      "overlayDraws": 0,
+      "lastCommand": 5,
+      "menuExecuted": true,
+      "error": ""
+    },
+    "checkpoints": [
+      {
+        "step": "long-counter-sample",
+        "at": "2026-10-23T21:42:40.899Z",
+        "observedAtMs": 4670.102685,
+        "counters": {
+          "evictedCaptures": 49211,
+          "agedSamples": 0,
+          "rejectedEvents": 0,
+          "disconnects": 0,
+          "sourceGaps": 0
+        },
+        "dropped": 0,
+        "samples": 18,
+        "captures": 132,
+        "batch": 2,
+        "generation": 1
+      },
+      {
+        "step": "long-counter-sample",
+        "at": "2026-10-23T21:42:56.117Z",
+        "observedAtMs": 19886.488832000003,
+        "counters": {
+          "evictedCaptures": 295528,
+          "agedSamples": 0,
+          "rejectedEvents": 0,
+          "disconnects": 0,
+          "sourceGaps": 0
+        },
+        "dropped": 0,
+        "samples": 78,
+        "captures": 132,
+        "batch": 2,
+        "generation": 1
+      },
+      {
+        "step": "long-counter-sample",
+        "at": "2026-10-23T21:43:11.152Z",
+        "observedAtMs": 34916.865431,
+        "counters": {
+          "evictedCaptures": 525660,
+          "agedSamples": 0,
+          "rejectedEvents": 0,
+          "disconnects": 0,
+          "sourceGaps": 155
+        },
+        "dropped": 155,
+        "samples": 137,
+        "captures": 134,
+        "batch": 2,
+        "generation": 1
+      },
+      {
+        "step": "long-counter-sample",
+        "at": "2026-10-23T21:43:26.400Z",
+        "observedAtMs": 50169.255945000004,
+        "counters": {
+          "evictedCaptures": 770736,
+          "agedSamples": 0,
+          "rejectedEvents": 0,
+          "disconnects": 0,
+          "sourceGaps": 155
+        },
+        "dropped": 155,
+        "samples": 198,
+        "captures": 134,
+        "batch": 2,
+        "generation": 1
+      },
+      {
+        "step": "long-counter-sample",
+        "at": "2026-10-23T21:43:41.655Z",
+        "observedAtMs": 65423.90552400001,
+        "counters": {
+          "evictedCaptures": 1017985,
+          "agedSamples": 0,
+          "rejectedEvents": 0,
+          "disconnects": 0,
+          "sourceGaps": 155
+        },
+        "dropped": 155,
+        "samples": 258,
+        "captures": 134,
+        "batch": 2,
+        "generation": 1
+      },
+      {
+        "step": "long-counter-sample",
+        "at": "2026-10-23T21:43:56.678Z",
+        "observedAtMs": 80446.18352800001,
+        "counters": {
+          "evictedCaptures": 1260729,
+          "agedSamples": 0,
+          "rejectedEvents": 0,
+          "disconnects": 0,
+          "sourceGaps": 155
+        },
+        "dropped": 155,
+        "samples": 317,
+        "captures": 134,
+        "batch": 2,
+        "generation": 1
+      },
+      {
+        "step": "long-counter-sample",
+        "at": "2026-10-23T21:44:11.716Z",
+        "observedAtMs": 95483.60636300001,
+        "counters": {
+          "evictedCaptures": 1503632,
+          "agedSamples": 0,
+          "rejectedEvents": 0,
+          "disconnects": 0,
+          "sourceGaps": 155
+        },
+        "dropped": 155,
+        "samples": 376,
+        "captures": 134,
+        "batch": 2,
+        "generation": 1
+      },
+      {
+        "step": "long-counter-sample",
+        "at": "2026-10-23T21:44:26.787Z",
+        "observedAtMs": 110553.963121,
+        "counters": {
+          "evictedCaptures": 1746816,
+          "agedSamples": 0,
+          "rejectedEvents": 0,
+          "disconnects": 0,
+          "sourceGaps": 155
+        },
+        "dropped": 155,
+        "samples": 436,
+        "captures": 134,
+        "batch": 2,
+        "generation": 1
+      },
+      {
+        "step": "long-counter-sample",
+        "at": "2026-10-23T21:44:41.921Z",
+        "observedAtMs": 125685.322273,
+        "counters": {
+          "evictedCaptures": 1983855,
+          "agedSamples": 0,
+          "rejectedEvents": 0,
+          "disconnects": 0,
+          "sourceGaps": 155
+        },
+        "dropped": 155,
+        "samples": 495,
+        "captures": 134,
+        "batch": 2,
+        "generation": 1
+      },
+      {
+        "step": "long-counter-sample",
+        "at": "2026-10-23T21:44:57.062Z",
+        "observedAtMs": 140827.481863,
+        "counters": {
+          "evictedCaptures": 2221745,
+          "agedSamples": 0,
+          "rejectedEvents": 0,
+          "disconnects": 0,
+          "sourceGaps": 155
+        },
+        "dropped": 155,
+        "samples": 555,
+        "captures": 134,
+        "batch": 2,
+        "generation": 1
+      },
+      {
+        "step": "long-counter-sample",
+        "at": "2026-10-23T21:45:12.201Z",
+        "observedAtMs": 155967.46871,
+        "counters": {
+          "evictedCaptures": 2463212,
+          "agedSamples": 0,
+          "rejectedEvents": 0,
+          "disconnects": 0,
+          "sourceGaps": 155
+        },
+        "dropped": 155,
+        "samples": 614,
+        "captures": 134,
+        "batch": 2,
+        "generation": 1
+      },
+      {
+        "step": "long-counter-sample",
+        "at": "2026-10-23T21:45:27.364Z",
+        "observedAtMs": 171127.601994,
+        "counters": {
+          "evictedCaptures": 2703222,
+          "agedSamples": 0,
+          "rejectedEvents": 0,
+          "disconnects": 0,
+          "sourceGaps": 155
+        },
+        "dropped": 155,
+        "samples": 674,
+        "captures": 134,
+        "batch": 2,
+        "generation": 1
+      },
+      {
+        "step": "long-counter-sample",
+        "at": "2026-10-23T21:45:42.566Z",
+        "observedAtMs": 186331.58401700002,
+        "counters": {
+          "evictedCaptures": 2942623,
+          "agedSamples": 0,
+          "rejectedEvents": 0,
+          "disconnects": 0,
+          "sourceGaps": 155
+        },
+        "dropped": 155,
+        "samples": 733,
+        "captures": 134,
+        "batch": 2,
+        "generation": 1
+      },
+      {
+        "step": "long-counter-sample",
+        "at": "2026-10-23T21:45:57.789Z",
+        "observedAtMs": 201554.14130299998,
+        "counters": {
+          "evictedCaptures": 3184686,
+          "agedSamples": 0,
+          "rejectedEvents": 0,
+          "disconnects": 0,
+          "sourceGaps": 155
+        },
+        "dropped": 155,
+        "samples": 793,
+        "captures": 134,
+        "batch": 2,
+        "generation": 1
+      },
+      {
+        "step": "long-counter-sample",
+        "at": "2026-10-23T21:46:13.016Z",
+        "observedAtMs": 216779.489796,
+        "counters": {
+          "evictedCaptures": 3427743,
+          "agedSamples": 0,
+          "rejectedEvents": 0,
+          "disconnects": 0,
+          "sourceGaps": 155
+        },
+        "dropped": 155,
+        "samples": 853,
+        "captures": 134,
+        "batch": 2,
+        "generation": 1
+      },
+      {
+        "step": "long-counter-sample",
+        "at": "2026-10-23T21:46:28.271Z",
+        "observedAtMs": 232035.332424,
+        "counters": {
+          "evictedCaptures": 3669439,
+          "agedSamples": 0,
+          "rejectedEvents": 0,
+          "disconnects": 0,
+          "sourceGaps": 155
+        },
+        "dropped": 155,
+        "samples": 912,
+        "captures": 134,
+        "batch": 2,
+        "generation": 1
+      },
+      {
+        "step": "long-counter-sample",
+        "at": "2026-10-23T21:46:43.285Z",
+        "observedAtMs": 247049.277888,
+        "counters": {
+          "evictedCaptures": 3908884,
+          "agedSamples": 0,
+          "rejectedEvents": 0,
+          "disconnects": 0,
+          "sourceGaps": 155
+        },
+        "dropped": 155,
+        "samples": 971,
+        "captures": 134,
+        "batch": 2,
+        "generation": 1
+      },
+      {
+        "step": "long-counter-sample",
+        "at": "2026-10-23T21:46:58.323Z",
+        "observedAtMs": 262084.672124,
+        "counters": {
+          "evictedCaptures": 4150881,
+          "agedSamples": 0,
+          "rejectedEvents": 0,
+          "disconnects": 0,
+          "sourceGaps": 155
+        },
+        "dropped": 155,
+        "samples": 1030,
+        "captures": 134,
+        "batch": 2,
+        "generation": 1
+      },
+      {
+        "step": "long-counter-sample",
+        "at": "2026-10-23T21:47:13.360Z",
+        "observedAtMs": 277123.58542200003,
+        "counters": {
+          "evictedCaptures": 4395838,
+          "agedSamples": 0,
+          "rejectedEvents": 0,
+          "disconnects": 0,
+          "sourceGaps": 155
+        },
+        "dropped": 155,
+        "samples": 1089,
+        "captures": 134,
+        "batch": 2,
+        "generation": 1
+      },
+      {
+        "step": "long-counter-sample",
+        "at": "2026-10-23T21:47:28.411Z",
+        "observedAtMs": 292173.801031,
+        "counters": {
+          "evictedCaptures": 4641988,
+          "agedSamples": 0,
+          "rejectedEvents": 0,
+          "disconnects": 0,
+          "sourceGaps": 155
+        },
+        "dropped": 155,
+        "samples": 1148,
+        "captures": 134,
+        "batch": 2,
+        "generation": 1
+      },
+      {
+        "step": "long-counter-sample",
+        "at": "2026-10-23T21:47:43.493Z",
+        "observedAtMs": 307256.039714,
+        "counters": {
+          "evictedCaptures": 4887753,
+          "agedSamples": 0,
+          "rejectedEvents": 0,
+          "disconnects": 0,
+          "sourceGaps": 155
+        },
+        "dropped": 155,
+        "samples": 1207,
+        "captures": 134,
+        "batch": 2,
+        "generation": 1
+      },
+      {
+        "step": "long-counter-sample",
+        "at": "2026-10-23T21:47:58.584Z",
+        "observedAtMs": 322346.31859000004,
+        "counters": {
+          "evictedCaptures": 5134200,
+          "agedSamples": 0,
+          "rejectedEvents": 0,
+          "disconnects": 0,
+          "sourceGaps": 155
+        },
+        "dropped": 155,
+        "samples": 1266,
+        "captures": 134,
+        "batch": 2,
+        "generation": 1
+      },
+      {
+        "step": "long-counter-sample",
+        "at": "2026-10-23T21:48:13.720Z",
+        "observedAtMs": 337481.633723,
+        "counters": {
+          "evictedCaptures": 5380542,
+          "agedSamples": 0,
+          "rejectedEvents": 0,
+          "disconnects": 0,
+          "sourceGaps": 155
+        },
+        "dropped": 155,
+        "samples": 1325,
+        "captures": 134,
+        "batch": 2,
+        "generation": 1
+      },
+      {
+        "step": "long-counter-sample",
+        "at": "2026-10-23T21:48:28.867Z",
+        "observedAtMs": 352628.941152,
+        "counters": {
+          "evictedCaptures": 5625185,
+          "agedSamples": 0,
+          "rejectedEvents": 0,
+          "disconnects": 0,
+          "sourceGaps": 155
+        },
+        "dropped": 155,
+        "samples": 1384,
+        "captures": 134,
+        "batch": 2,
+        "generation": 1
+      },
+      {
+        "step": "long-counter-sample",
+        "at": "2026-10-23T21:48:44.050Z",
+        "observedAtMs": 367809.359051,
+        "counters": {
+          "evictedCaptures": 5869338,
+          "agedSamples": 0,
+          "rejectedEvents": 0,
+          "disconnects": 0,
+          "sourceGaps": 155
+        },
+        "dropped": 155,
+        "samples": 1443,
+        "captures": 134,
+        "batch": 2,
+        "generation": 1
+      },
+      {
+        "step": "long-counter-sample",
+        "at": "2026-10-23T21:48:59.261Z",
+        "observedAtMs": 383020.858639,
+        "counters": {
+          "evictedCaptures": 6114820,
+          "agedSamples": 0,
+          "rejectedEvents": 0,
+          "disconnects": 0,
+          "sourceGaps": 155
+        },
+        "dropped": 155,
+        "samples": 1502,
+        "captures": 134,
+        "batch": 2,
+        "generation": 1
+      },
+      {
+        "step": "long-counter-sample",
+        "at": "2026-10-23T21:49:14.465Z",
+        "observedAtMs": 398225.746441,
+        "counters": {
+          "evictedCaptures": 6364093,
+          "agedSamples": 0,
+          "rejectedEvents": 0,
+          "disconnects": 0,
+          "sourceGaps": 155
+        },
+        "dropped": 155,
+        "samples": 1561,
+        "captures": 134,
+        "batch": 2,
+        "generation": 1
+      },
+      {
+        "step": "long-counter-sample",
+        "at": "2026-10-23T21:49:29.700Z",
+        "observedAtMs": 413460.93338600005,
+        "counters": {
+          "evictedCaptures": 6612604,
+          "agedSamples": 0,
+          "rejectedEvents": 0,
+          "disconnects": 0,
+          "sourceGaps": 155
+        },
+        "dropped": 155,
+        "samples": 1621,
+        "captures": 134,
+        "batch": 2,
+        "generation": 1
+      },
+      {
+        "step": "long-counter-sample",
+        "at": "2026-10-23T21:49:44.964Z",
+        "observedAtMs": 428724.20132500003,
+        "counters": {
+          "evictedCaptures": 6859037,
+          "agedSamples": 0,
+          "rejectedEvents": 0,
+          "disconnects": 0,
+          "sourceGaps": 155
+        },
+        "dropped": 155,
+        "samples": 1680,
+        "captures": 134,
+        "batch": 2,
+        "generation": 1
+      },
+      {
+        "step": "long-counter-sample",
+        "at": "2026-10-23T21:49:59.973Z",
+        "observedAtMs": 443731.537624,
+        "counters": {
+          "evictedCaptures": 7101161,
+          "agedSamples": 0,
+          "rejectedEvents": 0,
+          "disconnects": 0,
+          "sourceGaps": 155
+        },
+        "dropped": 155,
+        "samples": 1738,
+        "captures": 134,
+        "batch": 2,
+        "generation": 1
+      },
+      {
+        "step": "long-counter-sample",
+        "at": "2026-10-23T21:50:15.030Z",
+        "observedAtMs": 458789.03459600004,
+        "counters": {
+          "evictedCaptures": 7346998,
+          "agedSamples": 0,
+          "rejectedEvents": 0,
+          "disconnects": 0,
+          "sourceGaps": 155
+        },
+        "dropped": 155,
+        "samples": 1797,
+        "captures": 134,
+        "batch": 2,
+        "generation": 1
+      },
+      {
+        "step": "long-counter-sample",
+        "at": "2026-10-23T21:50:30.079Z",
+        "observedAtMs": 473837.60124600003,
+        "counters": {
+          "evictedCaptures": 7591911,
+          "agedSamples": 0,
+          "rejectedEvents": 0,
+          "disconnects": 0,
+          "sourceGaps": 155
+        },
+        "dropped": 155,
+        "samples": 1855,
+        "captures": 134,
+        "batch": 2,
+        "generation": 1
+      },
+      {
+        "step": "long-counter-sample",
+        "at": "2026-10-23T21:50:45.181Z",
+        "observedAtMs": 488937.79198599997,
+        "counters": {
+          "evictedCaptures": 7838988,
+          "agedSamples": 0,
+          "rejectedEvents": 0,
+          "disconnects": 0,
+          "sourceGaps": 155
+        },
+        "dropped": 155,
+        "samples": 1914,
+        "captures": 134,
+        "batch": 2,
+        "generation": 1
+      },
+      {
+        "step": "long-counter-sample",
+        "at": "2026-10-23T21:51:00.279Z",
+        "observedAtMs": 504037.157895,
+        "counters": {
+          "evictedCaptures": 8083438,
+          "agedSamples": 0,
+          "rejectedEvents": 0,
+          "disconnects": 0,
+          "sourceGaps": 155
+        },
+        "dropped": 155,
+        "samples": 1972,
+        "captures": 134,
+        "batch": 2,
+        "generation": 1
+      },
+      {
+        "step": "long-counter-sample",
+        "at": "2026-10-23T21:51:15.382Z",
+        "observedAtMs": 519139.407352,
+        "counters": {
+          "evictedCaptures": 8330242,
+          "agedSamples": 0,
+          "rejectedEvents": 0,
+          "disconnects": 0,
+          "sourceGaps": 155
+        },
+        "dropped": 155,
+        "samples": 2031,
+        "captures": 134,
+        "batch": 2,
+        "generation": 1
+      },
+      {
+        "step": "long-counter-sample",
+        "at": "2026-10-23T21:51:30.483Z",
+        "observedAtMs": 534240.339833,
+        "counters": {
+          "evictedCaptures": 8577808,
+          "agedSamples": 0,
+          "rejectedEvents": 0,
+          "disconnects": 0,
+          "sourceGaps": 155
+        },
+        "dropped": 155,
+        "samples": 2089,
+        "captures": 134,
+        "batch": 2,
+        "generation": 1
+      },
+      {
+        "step": "long-counter-sample",
+        "at": "2026-10-23T21:51:45.615Z",
+        "observedAtMs": 549372.688296,
+        "counters": {
+          "evictedCaptures": 8825529,
+          "agedSamples": 0,
+          "rejectedEvents": 0,
+          "disconnects": 0,
+          "sourceGaps": 155
+        },
+        "dropped": 155,
+        "samples": 2148,
+        "captures": 134,
+        "batch": 2,
+        "generation": 1
+      },
+      {
+        "step": "long-counter-sample",
+        "at": "2026-10-23T21:52:00.730Z",
+        "observedAtMs": 564486.202978,
+        "counters": {
+          "evictedCaptures": 9066078,
+          "agedSamples": 0,
+          "rejectedEvents": 0,
+          "disconnects": 0,
+          "sourceGaps": 155
+        },
+        "dropped": 155,
+        "samples": 2206,
+        "captures": 134,
+        "batch": 2,
+        "generation": 1
+      },
+      {
+        "step": "long-counter-sample",
+        "at": "2026-10-23T21:52:15.926Z",
+        "observedAtMs": 579682.066768,
+        "counters": {
+          "evictedCaptures": 9307453,
+          "agedSamples": 0,
+          "rejectedEvents": 0,
+          "disconnects": 0,
+          "sourceGaps": 155
+        },
+        "dropped": 155,
+        "samples": 2265,
+        "captures": 134,
+        "batch": 2,
+        "generation": 1
+      },
+      {
+        "step": "long-counter-sample",
+        "at": "2026-10-23T21:52:31.166Z",
+        "observedAtMs": 594921.605959,
+        "counters": {
+          "evictedCaptures": 9548243,
+          "agedSamples": 0,
+          "rejectedEvents": 0,
+          "disconnects": 0,
+          "sourceGaps": 155
+        },
+        "dropped": 155,
+        "samples": 2324,
+        "captures": 134,
+        "batch": 2,
+        "generation": 1
+      },
+      {
+        "step": "long-counter-sample",
+        "at": "2026-10-23T21:52:46.411Z",
+        "observedAtMs": 610168.23871,
+        "counters": {
+          "evictedCaptures": 9788733,
+          "agedSamples": 0,
+          "rejectedEvents": 0,
+          "disconnects": 0,
+          "sourceGaps": 155
+        },
+        "dropped": 155,
+        "samples": 2383,
+        "captures": 134,
+        "batch": 2,
+        "generation": 1
+      }
+    ],
+    "result": "FAIL: source gaps at rollover",
+    "post_rollover_snapshot_and_replay": "NOT REACHED",
+    "screenshot_sha256": "e268df6a7d70082545c26878e165d49e6f192af5649244c91e5eddcfcbd00607"
+  },
+  "final_changed_paths": [
+    "docs/README.md",
+    "docs/feats/profiling/assets/metric-inspection-candidate-2026-10-22.png",
+    "docs/feats/profiling/design-metric-inspection-editor.md",
+    "docs/handoffs/handoff-phase-3-x-public-release-audit-2026-10-23.md",
+    "docs/releases/README.md",
+    "docs/releases/evidence/2026-10-23/README.md",
+    "docs/releases/evidence/2026-10-23/debugger-hover.png",
+    "docs/releases/evidence/2026-10-23/explorer-edge.png",
+    "docs/releases/evidence/2026-10-23/metric-current-editor.png",
+    "docs/releases/evidence/2026-10-23/results.json",
+    "docs/releases/evidence/2026-10-23/unity-long-rollover.png",
+    "docs/releases/evidence/2026-10-23/wizard-rust-debug.png",
+    "docs/releases/evidence/2026-10-23/wizard-template-900.png",
+    "docs/releases/public-release-readiness-2026-10-23.md",
+    "docs/roadmaps/Roadmap-v0.0.4A.md",
+    "docs/uiux/design-public-release-sweep.md",
+    "docs/uiux/public-release-quality-gates.md",
+    "tests/fixtures/markdown-docs/main.tsx"
+  ],
+  "fixture_repair": {
+    "file": "tests/fixtures/markdown-docs/main.tsx",
+    "sha256": "6080c62d79e36eae88d73c162fa0ec737f86886be163b652a001bea5a6211726",
+    "scope": "Browser fixture typed-tab shape only; no production UI change"
+  }
+}

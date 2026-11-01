@@ -34,7 +34,7 @@ mockIPC((cmd, args: any) => {
   if (cmd === "overwrite_file") { files[args.path] = args.content; return; }
   return null;
 }, { shouldMockEvents: true });
-useSolution.setState({ rootPath: "/lab", discovery: listings["/lab"] as any, tabs: [{ fileId: "/lab/README.md", name: "README.md", language: null, monacoLanguage: "markdown", content, originalContent: content, dirty: false, diskState: "inSync", mtimeAtLastSync: 1 }], activeFileId: "/lab/README.md" });
+useSolution.setState({ rootPath: "/lab", discovery: listings["/lab"] as any, tabs: [{ kind: "file", id: "/lab/README.md", fileId: "/lab/README.md", name: "README.md", language: "plaintext", monacoLanguage: "markdown", content, originalContent: content, dirty: false, diskState: "inSync", mtimeAtLastSync: 1 }], activeTabId: "/lab/README.md", activeFileId: "/lab/README.md" });
 useLayout.getState().setActiveView("docs");
 usePreferences.setState({ sidebarVisible: true, theme: "craidd-dark", ideTheme: "craidd-dark" });
 Object.assign(window, { docsTest: { files, mtimes, calls, original: content, solution: useSolution, markdown: useMarkdown, layout: useLayout, preferences: usePreferences } });

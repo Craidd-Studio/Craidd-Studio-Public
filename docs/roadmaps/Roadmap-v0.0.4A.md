@@ -4,7 +4,14 @@
 
 **Current work:** Phase 3.x — debugger reliability, ordinary multi-thread debugging, then bounded MT with LDI.
 
-**Companions:** [Codebase map](Current-place.md), [lab acceptance](playground/Playground-direction.md), [phase and attribution conventions](../documentation-guide.md).
+**Release checkpoint, 23 October 2026:** use the
+[public-release assessment](../releases/public-release-readiness-2026-10-23.md)
+and [quality gates](../uiux/public-release-quality-gates.md) for current
+cross-branch implementation and verification status. The dated phase table
+below preserves the 7 October plan; its profiling entries are not a current
+source inventory. No integrated public-release candidate is certified.
+
+**Companions:** [Codebase map](Roadmap-Current_Place_Roadmap-v0.0.4A.md), [lab acceptance](playground/Playground-direction.md), [attribution rules](../../AGENT.md#documentation-shape).
 
 ## What changed since v0.0.3A
 
@@ -19,7 +26,7 @@ skira24 reports that the MT lab worked smoothly and that the latest LDI flow
 feels good. These are useful desktop observations. They do not certify every
 language, cancellation race or close/restart case in the acceptance matrix.
 Backend review fixes are also merged; packaged CSP/editor-worker and live
-process-lifecycle checks remain open in the [fix record](../bugs/07-10-2026-backend-core-fix-status.md).
+process-lifecycle checks remain open in the [fix record](../bugs/07-10-2026/backend-core-fix-status.md).
 
 ## Phase reference
 
@@ -109,5 +116,5 @@ and launch/stop/crash/close cleanup. No completion percentage is assigned.
 
 ---
 
-*Last updated: Phase 3.x. Author: ShinkuKira21.*
+*Last updated: Phase 3.x / 3.5 release checkpoint, 23 October 2026. Author: ShinkuKira21.*
 *This document is a record.*

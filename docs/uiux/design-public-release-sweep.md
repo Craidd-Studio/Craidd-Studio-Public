@@ -4,6 +4,16 @@
 
 **Status:** Confirmed design, 9 October 2026. Implementation in progress on `uiux/public-release-sweep`.
 
+**Current assessment, 23 October 2026:** the slice descriptions below retain
+their historical scope and results. Current source, desktop failures and
+cross-branch release gaps are recorded in the
+[release assessment](../releases/public-release-readiness-2026-10-23.md).
+The [quality gates](public-release-quality-gates.md) extend the review to
+project creation, language intelligence, standard/Unity profiling and imported
+metric analysis. See the [refined metric concept](../feats/profiling/design-metric-inspection-editor.md)
+for the proposed chart-first editor. Historical layout-only text below does
+not describe the implemented native profiler in this checkout.
+
 **Purpose:** Gather the UI/UX gaps that stand between the alpha and a public
 release. Record what the code does today and the proposed fix for each, then
 split the work into slices that can each be reviewed and verified alone.

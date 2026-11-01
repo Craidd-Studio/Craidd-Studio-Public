@@ -8,6 +8,7 @@ Start here for the project model and working conventions:
 - [`.craidd` and `.cln` model](craidd-cln-model.md) — the project and solution contract.
 - [Current place](roadmaps/Roadmap-Current_Place_Roadmap-v0.0.4A.md) — a map of the codebase.
 - [Current roadmap](roadmaps/Roadmap-v0.0.4A.md) — phase meanings, delivery order and acceptance gates.
+- [Public-release readiness](releases/README.md) — current cross-branch assessment, fresh checks, failed/unrun gates and the remaining work.
 - [Playground direction](roadmaps/playground/Playground-direction.md) — real linked-debugging acceptance.
 - [Documentation conventions](../AGENT.md) — reading order, document footers and contributor attribution.
 - [Roadmap archive](roadmaps/archive/README.md) — original historical phase snapshots.
@@ -51,6 +52,7 @@ The rest of the docs are grouped by purpose:
 | --- | --- |
 | [roadmaps/](roadmaps/README.md) | Current roadmap, source map, phase plans and archive |
 | [bugs/](bugs/README.md) | Review findings, fixes and remaining runtime acceptance |
+| [releases/](releases/README.md) | Dated release assessments, quality gates and portable evidence |
 | [feats/](feats/) | Feature designs, including [multi-thread debugging](feats/mt-debugging/design-multi-thread-debugging-implementation.md), [LDI debugging](feats/ldi-debugging/), [linked windows](feats/linked-windows/), and the proposed [Git workspaces architecture](feats/version-control/git-workspaces/design-worktree-workspaces.md) |
 | [uiux/](uiux/design-public-release-sweep.md) | UI/UX designs that justify interface changes, starting with the public-release sweep |
 | [philosophies/](philosophies/README.md) | Design principles and reasoning, including the proposed [Git workspaces philosophy](philosophies/version-control/git-workspaces/philosophy-workspaces.md) |
@@ -72,5 +74,5 @@ and HTML/PDF viewers remain future work. Session context is in the
 
 ---
 
-*Last updated: Phase 3.x / 3.5, 20 October 2026. Author(s): ShinkuKira21.*
+*Last updated: Phase 3.x / 3.5 release checkpoint, 23 October 2026. Author(s): ShinkuKira21.*
 *This document is a record.*
