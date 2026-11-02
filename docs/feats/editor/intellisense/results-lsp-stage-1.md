@@ -60,7 +60,7 @@ Stage exit evidence (not gates):
 | Stage | Exit evidence required | Status |
 |---|---|---|
 | 1a | Fake-server tests (framing, transport, delivery classes, overflow, pending table, capability validation, terminate table, process tree); DAP suite unchanged; verifications V1, V5, V6, V7, V8 recorded before the Rust adapter merges | **Partial.** Tests recorded and DAP suite unchanged; V1, V5, V6 and V8 verified. V7 is verified for the installed binary, but the rustup-shim case is Unverified (no rustup on this machine); whether that blocks the adapter merge is the architect's decision. |
-| 1b | Real-server diagnostics through push and pull, document lifetimes and file identity; G1, G2, G5, G6, G7 evidence; first G3 and G3b measurements; verifications V2–V4 (V3 revised), V9, V13–V16, V22–V27 | **Partial.** The repair pass is verified (R1, R2, R3, R4, R6b, R6c and R6d Verified; R5 accepted by decision 32). **R6a fails decision 33** on one clause, and several required tests are missing. No gate is Pass. The UI-dependent gates and checks wait for the scripted manual runs U1–U13. See [Repair-pass verification](#repair-pass-verification). |
+| 1b | Real-server diagnostics through push and pull, document lifetimes and file identity; G1, G2, G5, G6, G7 evidence; first G3 and G3b measurements; verifications V2–V4 (V3 revised), V9, V13–V16, V22–V27 | **Partial.** The repair pass and the decision 33 follow-up are verified (decisions 28, 30 and 33 Verified; see [Decision 33 follow-up verification](#decision-33-follow-up-verification)). No gate is Pass. The UI-dependent gates and checks wait for the scripted manual runs U1–U13. |
 | 1c | Completion and atomic-acceptance tests; G3 and G4 under provider load; verifications V10–V12 and V18; acceptance criterion 1 | Unmeasured |
 
 ---
@@ -687,7 +687,7 @@ Verification lane, 2026-10-30, against `feat/lsp-stage-1b` at `1e567b5` (`a05459
 | R3 — Attribution through `owning_project` (decision 30) | **Verified** | `attributionOf` uses the tab binding for open files and `lsp_attribute` (the backend resolver) for the rest; no folder lookup remains in `src/lib/lsp`. **Gap:** decision 30 names an explicit include and an ambiguous file. The backend test covers a nested project, a config facet and an external file; ambiguity appears only in the node display test, and an explicit include in neither |
 | R4 — Readiness fallback (decision 31) | **Verified** | It is timer-driven (the 500 ms tree tick), so a silent server still trips it. It fires only for a session that has never sent a status. The real-server run is above. A 30 s bound against a measured readiness of about 1.3 s is long but marked ◇. Decision 31's "a wave is seeded" and the chip's ` (no status)` are visible only in the IDE (could be added to U4) |
 | R5 — Wave tests in node (decision 32) | **Accepted** by the architect | — |
-| R6a — Reload membership (decision 33) | **Failed (one clause); otherwise Verified** | Membership comes from `cargo metadata` (root and package manifests), kept across a break. The nested separate crate is rejected (unit test and real cargo). **Fails decision 33:** when membership was never resolved (a manifest broken from the start), `manifest_affects` accepts **any `Cargo.toml` under the root**. Decision 33 says membership is then "unknown beyond the root manifest", and the test at `commands.rs` asserts the widened behaviour ("membership unknown on both sides: anything under the root"). Effect: in that state, saving a nested crate's or a vendored manifest sends a reload to the broken session. **Missing tests required by decision 33:** a manifest under `target/` or in a vendored directory, a `Cargo.lock` change (filtered by file name, untested), a changed server identity restarting instead of reloading, a reload timeout not failing the session, and the gate re-arming with a wave after a reload |
+| R6a — Reload membership (decision 33) | **Failed at `1e567b5` (one clause); fixed and Verified at `502668a`** (see [Decision 33 follow-up verification](#decision-33-follow-up-verification)) | Membership comes from `cargo metadata` (root and package manifests), kept across a break. The nested separate crate is rejected (unit test and real cargo). **Fails decision 33:** when membership was never resolved (a manifest broken from the start), `manifest_affects` accepts **any `Cargo.toml` under the root**. Decision 33 says membership is then "unknown beyond the root manifest", and the test at `commands.rs` asserts the widened behaviour ("membership unknown on both sides: anything under the root"). Effect: in that state, saving a nested crate's or a vendored manifest sends a reload to the broken session. **Missing tests required by decision 33:** a manifest under `target/` or in a vendored directory, a `Cargo.lock` change (filtered by file name, untested), a changed server identity restarting instead of reloading, a reload timeout not failing the session, and the gate re-arming with a wave after a reload |
 | R6b — F3 cases (decision 34) | **Verified** | All four are covered: no `type` and no actions (severity 3), sent while the consumer is stalled, before the `initialize` reply, and a string id echoed verbatim |
 | R6c — Hooks on and off (decision 35) | **Verified at unit level** | `createMetrics(dev, host)`: with `dev` off nothing is installed, exposed or emitted (node test). The same scripted tracker, scheduler and store session gives identical wire traffic, stored sets and statistics with hooks on and off (node test). Every hook call in `bridge.ts` is a bare statement whose result is unused (read). This is one scenario, not "the same suites run both ways" as decision 35 words it; the gap is small given the call sites. An IDE comparison (dev build against `tauri build --debug`) would also change React's dev mode, so a difference could not be attributed to the hooks; U13 is kept as optional corroboration |
 | R6d — `inputToPaint` to the visible paint (decision 36) | **Verified at unit level** | Node test: a key press is measured to the second animation frame after it, an upper bound by at most one frame. The IDE comparison with `frame_probe.js` is in U12 |
@@ -700,9 +700,44 @@ No gate is **Pass**. G1, G2, G3, G5, G6 and G7 remain **Unmeasured**: their evid
 
 Nothing the Implementation lane claimed failed to reproduce. Timings differ by run as expected: readiness 1.33–1.73 s here against "about 1.3 s"; V2 warning at 129 ms against 125 ms.
 
+### Decision 33 follow-up verification
+
+Verification lane, 2026-10-30, against `feat/lsp-stage-1b` at `502668a` (`008ce44`, `13cac64`, `502668a` on `6ef1c21`), in a separate detached checkout. The design reference is decisions 28, 30 and 33 at `66f7a9a` on `feat/intellisense-ws`. No implementation code was changed.
+
+#### Claims, reproduced
+
+| Claim | Result here | Reproduced |
+|---|---|---|
+| `cargo test --lib` 228 passed, 9 ignored (75 in `lsp::`) | 228 passed, 0 failed, 9 ignored; `lsp::` 75 passed, 5 ignored (four real-server tests and the fake server's entry) | Yes |
+| `process_cleanup` 7, 1 ignored; DAP 26 unchanged | 7 passed, 1 ignored; 26 passed; `commands/debug*` byte-identical to `0d110f1` | Yes |
+| `node --test` 113; `tsc` clean | 113 passed; `tsc --noEmit` exit 0 | Yes |
+| `vite build`; 10× `lsp::` (not claimed) | Exit 0; 10 of 10 runs passed | — |
+| With the root broken from the start, saving a nested non-member: not affected, 0 reloads, health stays `error` | 3 runs of `real_rust_analyzer_decision_33_broken_root_ignores_a_nested_non_member` through the verification tap: affected `false`, action `Nothing`, 0 reloads, health `error`. **On the wire: no `rust-analyzer/reloadWorkspace` was sent during the nested save** | Yes |
+| Fixing the root: exactly 1 reload, `ok` 112 ms later | Same 3 runs: exactly **one** `rust-analyzer/reloadWorkspace` on the wire (at 5.11 s); health `ok` 116–119 ms after the fix | Yes (116–119 ms against 112 ms) |
+
+That opt-in test re-runs the steps of `lsp_manifest_changed` (layout, membership, action) in the test rather than calling the Tauri command. The production command path is confirmed in U5 step 6.
+
+#### Verdicts
+
+| Decision | Verdict | Evidence |
+|---|---|---|
+| **28** — watcher-limit warning | **Verified** (backend). The chip and Output display are **Unverified** until U6 | New tests: the `logMessage` fragment matches in any case and `showMessage` is ignored; the Output ring stays bounded and keeps the raw lines. Real server (repair pass): warning in 129 ms with `RA_LOG` unset |
+| **30** — attribution through the resolver | **Verified** | New backend test: an explicit include and an ambiguous file are resolved by `owning_project` (ambiguous reported, not guessed), in addition to a nested project, a config facet and an external file. The frontend keeps no folder lookup |
+| **33** — reload membership | **Verified** | `manifest_affects` accepts only the session's starting root manifest and the package manifests of the last successful `cargo metadata` (kept after a break; a fresh result is added). With membership never resolved, only the root counts. `manifest_action`: not affected → nothing; root moved → restart; otherwise reload only while Ready, not healthy and not the same content. Tests cover `target/`, vendored, nested non-member, `Cargo.lock` (never triggers), identity change → restart, reload timeout logged and not fatal, and the gate re-arming with exactly one wave after a reload. Real `cargo metadata` on the `fx-ws` fixture lists only the root, `alpha` and `beta` (not `outside`, `target/x` or `vendor/v`); with the root broken, metadata fails and writes no `Cargo.lock` |
+
+#### Finding (for the architect)
+
+**A member project whose workspace root is broken from the start is not recovered by a reload.** The adapter falls back to the project folder as the session root when `cargo metadata` fails. So for a member project such as `fx-ws/alpha`, the session's "root manifest" is `alpha/Cargo.toml`, and fixing the real workspace root (`fx-ws/Cargo.toml`) is not affected under decision 33. Measured against the real server, started that way with `RA_LOG` unset: health stayed `error` for 45 s after the fix; one explicit `rust-analyzer/reloadWorkspace` recovered it. In Craidd the chip therefore stays on error until `↻ Restart`.
+
+This is consistent with decision 33's stated residual limitation ("membership is unknown beyond the root manifest … recovery there is the manual restart"). It extends to the common case of opening a member project, which the decision text does not name. Possible direction (not designed): treat the nearest ancestor `Cargo.toml` of the fallback root as a root candidate. U5 step 6b records the IDE behaviour.
+
+#### Gates
+
+No gate is **Pass**. G1, G2, G3, G5, G6 and G7 remain **Unmeasured** until the scripted manual runs. G3 and G4 complete in 1c.
+
 ### Waiting for the scripted manual runs (user review)
 
-U1 (G1), U2 (G2), U3 (V3, V26, decision 19 in the IDE), U4 (V24 in the IDE), U5 (V27 trigger path; step 6 is the nested non-member), U6 (V2 chip and Output), U7 (G5, V15, V20), U8 (G6), U9 (G7), U10 (V16 holder, including the canonical-path-first case), U11 (V9), U12 (G3, G3b, V4 lock, V26, `inputToPaint` against the probe), U13 (optional: hooks on/off on the IDE's wire).
+U1 (G1), U2 (G2), U3 (V3, V26, decision 19 in the IDE), U4 (V24 in the IDE), U5 (V27 trigger path; step 6a nested non-member, 6b member with a broken workspace root), U6 (V2 chip and Output), U7 (G5, V15, V20), U8 (G6), U9 (G7), U10 (V16 holder, including the canonical-path-first case), U11 (V9), U12 (G3, G3b, V4 lock, V26, `inputToPaint` against the probe), U13 (optional: hooks on/off on the IDE's wire).
 
-*Last updated: Phase 3 (Stage 1a, adapter integrated as 99863a4; F1–F3 investigated; decisions 16–37 approved; Stage 1b implementation and repair pass recorded and independently verified). Author: ShinkuKira21.*
+*Last updated: Phase 3 (Stage 1a, adapter integrated as 99863a4; F1–F3 investigated; decisions 16–37 approved; Stage 1b implementation, repair pass and decision 33 follow-up recorded and independently verified). Author: ShinkuKira21.*
 *This document is a record.*
