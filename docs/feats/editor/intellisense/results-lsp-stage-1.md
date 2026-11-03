@@ -31,7 +31,7 @@ Rules:
 
 | Gate | Subject | Status | Evidence |
 |---|---|---|---|
-| G1 | No server during startup or restore; bounded deferral; startup measured apart from server cost | Unmeasured | Needs U1 (scripted, manual) |
+| G1 | No server during startup or restore; bounded deferral; startup measured apart from server cost | **Fail** | U1, 2026-11-03: no server ever launches in the IDE (`startupDone` never set) |
 | G2 | One `rust-analyzer` per shared Cargo workspace | Unmeasured | Fake-server registry test reproduced; the real count needs U2 |
 | G3 | Indexing never blocks interaction; separate target directory cost; Channel message rate and size | Unmeasured | Needs U12; completes in 1c |
 | G4 | Rapid typing, file switching and a stalled consumer are bounded | Unmeasured | 1b fake and node evidence reproduced; completes in 1c |
@@ -47,7 +47,7 @@ The three-stage plan is approved, so evidence is also recorded per stage. A stag
 
 | Gate | 1a evidence | 1b evidence | 1c evidence | Accepted |
 |---|---|---|---|---|
-| G1 | Partial: backend revalidation tests only (see Stage 1a record) | Unmeasured (U1 pending) | n/a | Unmeasured |
+| G1 | Partial: backend revalidation tests only (see Stage 1a record) | **Fail** (U1, 2026-11-03: the IDE never attaches a server) | n/a | Unmeasured |
 | G2 | Recorded: identity tests against real `cargo` workspaces | Partial: `registry_shares_one_server_per_identity_and_solution_close_stops_all` reproduced; real count Unmeasured (U2) | n/a | Unmeasured |
 | G3 (including G3b) | n/a | Unmeasured | Unmeasured | Unmeasured |
 | G4 | Recorded: stalled consumer against the fake server | n/a | Unmeasured | Unmeasured |
@@ -60,7 +60,7 @@ Stage exit evidence (not gates):
 | Stage | Exit evidence required | Status |
 |---|---|---|
 | 1a | Fake-server tests (framing, transport, delivery classes, overflow, pending table, capability validation, terminate table, process tree); DAP suite unchanged; verifications V1, V5, V6, V7, V8 recorded before the Rust adapter merges | **Partial.** Tests recorded and DAP suite unchanged; V1, V5, V6 and V8 verified. V7 is verified for the installed binary, but the rustup-shim case is Unverified (no rustup on this machine); whether that blocks the adapter merge is the architect's decision. |
-| 1b | Real-server diagnostics through push and pull, document lifetimes and file identity; G1, G2, G5, G6, G7 evidence; first G3 and G3b measurements; verifications V2–V4 (V3 revised), V9, V13–V16, V22–V27 | **Partial.** The repair pass and the decision 33 follow-up are verified (decisions 28, 30 and 33 Verified; see [Decision 33 follow-up verification](#decision-33-follow-up-verification)). No gate is Pass. The UI-dependent gates and checks wait for the scripted manual runs U1–U13. |
+| 1b | Real-server diagnostics through push and pull, document lifetimes and file identity; G1, G2, G5, G6, G7 evidence; first G3 and G3b measurements; verifications V2–V4 (V3 revised), V9, V13–V16, V22–V27 | **Held.** The repair pass and the decision 33 follow-up are verified, but the manual UI review found that the IDE never attaches a language server (`startupDone` is never set in `bridge.ts`), so G1 is **Fail** and every other UI-level item is held. See [Manual UI review](#manual-ui-review-2026-11-03-in-progress-held). |
 | 1c | Completion and atomic-acceptance tests; G3 and G4 under provider load; verifications V10–V12 and V18; acceptance criterion 1 | Unmeasured |
 
 ---
@@ -734,6 +734,27 @@ This is consistent with decision 33's stated residual limitation ("membership is
 #### Gates
 
 No gate is **Pass**. G1, G2, G3, G5, G6 and G7 remain **Unmeasured** until the scripted manual runs. G3 and G4 complete in 1c.
+
+### Manual UI review, 2026-11-03 (in progress, held)
+
+Build: `feat/lsp-stage-1b` at `502668a`, dev build (`npm run tauri dev`), launched by the user from the Verification lane's run checkout (`502668a` + `3ad3f27`, docs only). Method: the scripted UI steps in `verification/lsp-1b/UI-STEPS.md` at `3e462f1`, with the process sampler at 100 ms.
+
+#### U1 — G1: **Fail (blocked by a defect)**
+
+- **Attempt 1, invalid.** Preferences → Rust → Language Server was `/usr/bin/lldb-dap (custom path)`, not rust-analyzer, so any language-server activity came from `lldb-dap`. No `lldb-dap` or IDE process remained after the IDE closed.
+- **Attempt 2.** Server set to `/bin/rust-analyzer` (`/bin` links to `/usr/bin` on Arch); `fx-small.cln` open with `main.rs` and `util.rs`, `main.rs` active. **Observed by the user:** the status bar showed no language-server chip at all, only `⚠ 0 ✕ 0`, and `pgrep rust-analyzer` found nothing while the IDE ran. **Measured:** 2 338 process samples over 265 s, never a `rust-analyzer` process.
+- **Root cause (code and history):** the module-level `startupDone` in `src/lib/lsp/bridge.ts` is declared `false` (line 33) and is **never set to `true`** in any Stage 1b commit (checked at `028847a`, `8620328`, `1e567b5` and `502668a`). `startupComplete()` wires everything up but never sets it. Both `onActive()` (line 363) and `attachActive()` (line 388) return early while it is `false`. So the IDE never schedules a launch, never calls `lsp_attach`, never creates a document entry (hence no chip) and never starts a server. **Every IDE-level Stage 1b path is inert in this build.**
+- **Why tests missed it:** no test imports `bridge.ts`. The node tests drive the tracker, scheduler and store directly, and the metrics on/off test re-creates the bridge's hook calls. The real-server tests drive `Session` directly.
+- **Proposed fix (Implementation lane; not applied):**
+  - In `startupComplete()`, set `startupDone = true` once wiring is complete, immediately before the final `onActive()`. When `CRAIDD_LSP=0` it stays `false`, so nothing else changes.
+  - Add a test that imports the bridge, or extracts the start-up gate into a testable function, asserting that after `startupComplete()` an active `.rs` tab schedules exactly one launch and a non-Rust active tab schedules none (G1's revalidation cases).
+- **Effect on the review:** every U-step depends on a server attaching in the IDE, so U1–U13 are held until a fix is approved and verified. No harness was run, because no unblocked step remains. G1 is **Fail** on this evidence; G2, G3, G5, G6 and G7 stay **Unmeasured**.
+
+#### Other findings recorded during U1 (not 1b verdicts)
+
+1. **The language-server usable check accepts any binary that exits 0.** `lldb-dap` was accepted as Rust's language server. That is consistent with the designed check (V7), which proves only that a binary runs. What the chip showed for that session was not observed.
+2. **Toolchain discovery never rescans.** Preferences showed the language server "Not found" on Automatic. The rust toolchain scan in `~/.craidd-studio/user_preferences.toml` (`scanned = true`, cargo 1.98.1) predates the rust-analyzer install. This is an existing discovery limitation; Choose Path… is the workaround.
+3. **Harness artifact.** Vite warned that Monaco's `codicon.ttf` is outside its serving allow list, because the run checkout's `node_modules` is linked to the main checkout. Icons may not render. LSP behaviour is unaffected.
 
 ### Waiting for the scripted manual runs (user review)
 
