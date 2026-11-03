@@ -31,7 +31,7 @@ Rules:
 
 | Gate | Subject | Status | Evidence |
 |---|---|---|---|
-| G1 | No server during startup or restore; bounded deferral; startup measured apart from server cost | **Fail** | U1, 2026-11-03: no server ever launches in the IDE (`startupDone` never set) |
+| G1 | No server during startup or restore; bounded deferral; startup measured apart from server cost | **Fail** | U1, 2026-11-03: attempt 2, no server ever launched (`startupDone`, fixed in `700b59d`); attempt 3, the window crashes on the first attach (`view.server` undefined) |
 | G2 | One `rust-analyzer` per shared Cargo workspace | Unmeasured | Fake-server registry test reproduced; the real count needs U2 |
 | G3 | Indexing never blocks interaction; separate target directory cost; Channel message rate and size | Unmeasured | Needs U12; completes in 1c |
 | G4 | Rapid typing, file switching and a stalled consumer are bounded | Unmeasured | 1b fake and node evidence reproduced; completes in 1c |
@@ -47,7 +47,7 @@ The three-stage plan is approved, so evidence is also recorded per stage. A stag
 
 | Gate | 1a evidence | 1b evidence | 1c evidence | Accepted |
 |---|---|---|---|---|
-| G1 | Partial: backend revalidation tests only (see Stage 1a record) | **Fail** (U1, 2026-11-03: the IDE never attaches a server) | n/a | Unmeasured |
+| G1 | Partial: backend revalidation tests only (see Stage 1a record) | **Fail** (U1, 2026-11-03: attempt 2, no attach; attempt 3 at `700b59d`, the window crashes on the first attach) | n/a | Unmeasured |
 | G2 | Recorded: identity tests against real `cargo` workspaces | Partial: `registry_shares_one_server_per_identity_and_solution_close_stops_all` reproduced; real count Unmeasured (U2) | n/a | Unmeasured |
 | G3 (including G3b) | n/a | Unmeasured | Unmeasured | Unmeasured |
 | G4 | Recorded: stalled consumer against the fake server | n/a | Unmeasured | Unmeasured |
@@ -60,7 +60,7 @@ Stage exit evidence (not gates):
 | Stage | Exit evidence required | Status |
 |---|---|---|
 | 1a | Fake-server tests (framing, transport, delivery classes, overflow, pending table, capability validation, terminate table, process tree); DAP suite unchanged; verifications V1, V5, V6, V7, V8 recorded before the Rust adapter merges | **Partial.** Tests recorded and DAP suite unchanged; V1, V5, V6 and V8 verified. V7 is verified for the installed binary, but the rustup-shim case is Unverified (no rustup on this machine); whether that blocks the adapter merge is the architect's decision. |
-| 1b | Real-server diagnostics through push and pull, document lifetimes and file identity; G1, G2, G5, G6, G7 evidence; first G3 and G3b measurements; verifications V2–V4 (V3 revised), V9, V13–V16, V22–V27 | **Held.** The repair pass and the decision 33 follow-up are verified, but the manual UI review found that the IDE never attaches a language server (`startupDone` is never set in `bridge.ts`), so G1 is **Fail** and every other UI-level item is held. See [Manual UI review](#manual-ui-review-2026-11-03-in-progress-held). |
+| 1b | Real-server diagnostics through push and pull, document lifetimes and file identity; G1, G2, G5, G6, G7 evidence; first G3 and G3b measurements; verifications V2–V4 (V3 revised), V9, V13–V16, V22–V27 | **Held.** The repair pass and the decision 33 follow-up are verified. The manual UI review found that the IDE never attached a language server (`startupDone`, fixed in `700b59d` and verified). It then found that the IDE window crashes on the first attach (a status batch creates a partial session view before the attach reply). G1 is **Fail**, and every other UI-level item is held. See [Manual UI review](#manual-ui-review-2026-11-03-in-progress-held). |
 | 1c | Completion and atomic-acceptance tests; G3 and G4 under provider load; verifications V10–V12 and V18; acceptance criterion 1 | Unmeasured |
 
 ---
@@ -737,7 +737,7 @@ No gate is **Pass**. G1, G2, G3, G5, G6 and G7 remain **Unmeasured** until the s
 
 ### Manual UI review, 2026-11-03 (in progress, held)
 
-Build: `feat/lsp-stage-1b` at `502668a`, dev build (`npm run tauri dev`), launched by the user from the Verification lane's run checkout (`502668a` + `3ad3f27`, docs only). Method: the scripted UI steps in `verification/lsp-1b/UI-STEPS.md` at `3e462f1`, with the process sampler at 100 ms.
+Attempts 1–2 build: `feat/lsp-stage-1b` at `502668a`, dev build (`npm run tauri dev`), launched by the user from the Verification lane's run checkout (`502668a` + `3ad3f27`, docs only). Method: the scripted UI steps in `verification/lsp-1b/UI-STEPS.md` at `3e462f1`, with the process sampler at 100 ms.
 
 #### U1 — G1: **Fail (blocked by a defect)**
 
@@ -750,6 +750,45 @@ Build: `feat/lsp-stage-1b` at `502668a`, dev build (`npm run tauri dev`), launch
   - Add a test that imports the bridge, or extracts the start-up gate into a testable function, asserting that after `startupComplete()` an active `.rs` tab schedules exactly one launch and a non-Rust active tab schedules none (G1's revalidation cases).
 - **Effect on the review:** every U-step depends on a server attaching in the IDE, so U1–U13 are held until a fix is approved and verified. No harness was run, because no unblocked step remains. G1 is **Fail** on this evidence; G2, G3, G5, G6 and G7 stay **Unmeasured**.
 
+#### Start-up fix `700b59d`, verified
+
+The Implementation lane fixed the `startupDone` defect in `700b59d` (parent `ef358d5`). The start-up gate moved into `LaunchGate` (`src/lib/lsp/launch.ts`). `startupComplete()` calls `gate.complete()` after the `if (!enabled) return;` and immediately before the final `onActive()`. The filtering in `onActive()` is unchanged, and `tests/lspLaunch.test.mjs` adds three tests. This matches the proposed fix. The backend is unchanged since `502668a`, and `commands/debug*` is still byte-identical to `0d110f1`.
+
+| Suite at `700b59d` | Result |
+|---|---|
+| `node --test tests/*.test.mjs` | 116 passed (113 + 3 in `lspLaunch`) |
+| `tsc --noEmit`, `vite build` | Exit 0 |
+| `cargo test --lib` | 228 passed, 0 failed, 9 ignored; `lsp::` 75 passed, 5 ignored |
+| `cargo test --test process_cleanup` | 7 passed, 1 ignored |
+| DAP suite (`commands::debug`) | 26 passed, unchanged |
+| `lsp::` repeated | 10 of 10 runs passed |
+| Opt-in real-server tests (`real_rust_analyzer`, `--ignored`) | 4 passed |
+
+#### U1, attempt 3 (harness, `700b59d`): **Fail (a second defect)**. Harness-observed, pending user review.
+
+Method: the WebDriver harness (`verification/lsp-1b/scripts/harness.py`, `f2b4381`) drives the dev build (`700b59d` frontend from Vite, debug binary built from the unchanged backend) under Xvfb. It uses an isolated `HOME`, with the server set to `/usr/bin/rust-analyzer`. The process sampler ran at 100 ms throughout. A subscription to the frontend store logged session and document updates. Evidence is in `verification/lsp-1b/runs/harness-20261103/u1/`: `steps.jsonl`, `proc.jsonl` and screenshots `01`–`03`.
+
+- **Premise of U1 steps 2, 3 and 5:** this build has no tab restore at launch. The main window always starts on the welcome screen. "Previously Opened Windows" reopens the solution without its tabs. Tabs are reopened only when a parked (hidden) linked window is brought back (`restoredFromHidden`). The harness therefore opened `fx-small` from the welcome screen, waited, and then opened `src/main.rs` from the Solution Explorer. The parked-window restore path was not exercised.
+- **Observed before the crash:**
+  - The solution was open with no tab for 8.7 s, and no server ran: 0 of 117 samples over 13.2 s before the click.
+  - `startupInteractive` was 3002 ms.
+  - Opening `main.rs` scheduled one launch, at 11 735 ms page time, 4 ms before the click was logged.
+  - The launch fired by `timeout`, after the 1.5 s bound; WebKitGTK exposes no idle callback.
+  - The chip showed `language server…`, and a `rust-analyzer` process (with its proc-macro server) appeared 1.6 s after the click.
+  - Nothing was left after the IDE closed.
+- **New defect: the IDE window crashes on the first attach.** About 20 ms after the server spawns, the whole window is replaced by the error boundary: "This IDE window could not render … undefined is not an object (evaluating 'view.server.split')". The error comes from `serverName` (`src/store/lspStore.ts:34`), called from `LanguageServerChip` (`StatusBar.tsx:42`). It happened in 4 of 4 harness runs.
+- **Cause (store trace):**
+  - The order was: `main.rs` waiting (t 13 235) → session 1 created with **only** `status` (`spawning`), from a Channel batch (t 13 255) → `main.rs` bound (t 13 256).
+  - The backend's first status batch arrives before the `lsp_attach` reply resolves. `updateSession()` (`bridge.ts`) creates a session view from any patch containing `status` (`if (!current && !patch.status) return state;`).
+  - `attachActive()` then writes the attach reply's `server`, `version`, `root` and `notes` only when the session does not exist yet (`if (!useLsp.getState().sessions[reply.session])`). So those fields are never written. The chip renders a view without `server` and throws.
+  - The `startupDone` defect hid this, because no attach ever happened in the IDE. No test renders the chip or orders a status batch before the attach reply.
+- **Proposed fix (Implementation lane; not applied):**
+  - In `attachActive()`, always merge the reply's descriptive fields (`generation`, `server`, `version`, `root`, `notes`) into the session view. Initialise `status`, `progress` and `pullDegraded` only when the view is absent, so a newer status from the Channel is not overwritten by the reply's older one.
+  - Alternatively, `updateSession()` could refuse to create a view from a status-only patch. `lastStatus` already keeps the status, and the reply's `!lastStatus.has(...)` check already replays it.
+  - Add a node test where a status batch for a new generation arrives before the attach reply, asserting the view then has `server`, `version` and `root`.
+  - Optional hardening, for the architect: a failure inside the status chip currently takes down the whole IDE window through `AppErrorBoundary`. A local boundary, or a chip that tolerates a partial view, would contain it.
+- **Effect on the review:** every U-step attaches a server, so U1–U13 are held again until this is fixed and verified. G1 stays **Fail**. Its start-up part (no server before a Rust tab is active, one bounded launch) is harness-observed and looks right, but a gate needs the whole step. G2, G3, G5, G6 and G7 stay **Unmeasured**.
+
 #### Other findings recorded during U1 (not 1b verdicts)
 
 1. **The language-server usable check accepts any binary that exits 0.** `lldb-dap` was accepted as Rust's language server. That is consistent with the designed check (V7), which proves only that a binary runs. What the chip showed for that session was not observed.
@@ -760,5 +799,5 @@ Build: `feat/lsp-stage-1b` at `502668a`, dev build (`npm run tauri dev`), launch
 
 U1 (G1), U2 (G2), U3 (V3, V26, decision 19 in the IDE), U4 (V24 in the IDE), U5 (V27 trigger path; step 6a nested non-member, 6b member with a broken workspace root), U6 (V2 chip and Output), U7 (G5, V15, V20), U8 (G6), U9 (G7), U10 (V16 holder, including the canonical-path-first case), U11 (V9), U12 (G3, G3b, V4 lock, V26, `inputToPaint` against the probe), U13 (optional: hooks on/off on the IDE's wire).
 
-*Last updated: Phase 3 (Stage 1a, adapter integrated as 99863a4; F1–F3 investigated; decisions 16–37 approved; Stage 1b implementation, repair pass and decision 33 follow-up recorded and independently verified). Author: ShinkuKira21.*
+*Last updated: Phase 3 (Stage 1a, adapter integrated as 99863a4; F1–F3 investigated; decisions 16–37 approved; Stage 1b implementation, repair pass and decision 33 follow-up recorded and independently verified; U1 attempt 3 at 700b59d held by a chip defect). Author: ShinkuKira21.*
 *This document is a record.*
