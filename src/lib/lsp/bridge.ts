@@ -10,6 +10,7 @@ import { DiagnosticsModel, gateOpen, isAuthoritative, type Attribution, type Rou
 import { gateOpened, PullScheduler, type PullReply, type PullReport } from "./pulls";
 import { fileUri, isTerminal, uriToPath, toMonacoRange, type Batch, type ContentChange, type DocView, type LspDiagnostic, type StatusRecord } from "./protocol";
 import { metrics } from "./metrics";
+import { LaunchGate } from "./launch";
 
 /**
  * Wires Monaco models, the solution store and the backend together
@@ -30,8 +31,6 @@ interface AttachRouted {
 type AttachReply = AttachRouted | { kind: "notRouted" | "skipped" | "unavailable"; reason: string } | { kind: "disabled" };
 
 let monacoRef: Monaco | null = null;
-let startupDone = false;
-let launchTimer: { cancel(): void } | null = null;
 let solutionKey: string | null = null;
 const lastStatus = new Map<number, StatusRecord>();
 const schedulers = new Map<number, PullScheduler>();
@@ -357,35 +356,35 @@ async function activateBound(fileId: string): Promise<void> {
   for (const scheduler of schedulers.values()) scheduler.activated(fileId);
 }
 
+/** Idle-deferred with a bound; WebKitGTK may not expose idle callbacks, and then the bound is the whole deferral. */
+const scheduleIdle = (fire: (reason: "idle" | "timeout") => void) => {
+  metrics.launchScheduled();
+  if (typeof window.requestIdleCallback === "function") {
+    const handle = window.requestIdleCallback((deadline) => fire(deadline.didTimeout ? "timeout" : "idle"), { timeout: LAUNCH_MAX_WAIT_MS });
+    return { cancel: () => window.cancelIdleCallback(handle) };
+  }
+  const handle = window.setTimeout(() => fire("timeout"), LAUNCH_MAX_WAIT_MS);
+  return { cancel: () => window.clearTimeout(handle) };
+};
+
+const gate = new LaunchGate(scheduleIdle, (reason) => void attachActive(reason), DOCUMENT_EXTENSIONS);
+
 /** The visible, active document changed (or startup finished): bound documents activate; others schedule the deferred launch. */
 function onActive(): void {
   const fileId = useSolution.getState().activeFileId;
-  if (!startupDone || !fileId || !useLsp.getState().enabled) return;
-  if (!DOCUMENT_EXTENSIONS.some((ext) => fileId.toLowerCase().endsWith(`.${ext}`))) return;
-  const binding = tracker.binding(fileId);
-  if (binding && !isTerminal(lastStatus.get(binding.session)?.phase ?? "exited")) { void activateBound(fileId); return; }
-  if (useLsp.getState().docs[fileId]?.kind === "notRouted") return;
-  scheduleLaunch();
-}
-
-function scheduleLaunch(): void {
-  launchTimer?.cancel();
-  const fire = (reason: "idle" | "timeout") => { launchTimer = null; void attachActive(reason); };
-  if (typeof window.requestIdleCallback === "function") {
-    const handle = window.requestIdleCallback((deadline) => fire(deadline.didTimeout ? "timeout" : "idle"), { timeout: LAUNCH_MAX_WAIT_MS });
-    launchTimer = { cancel: () => window.cancelIdleCallback(handle) };
-  } else {
-    // WebKitGTK may not expose idle callbacks: the bound is then the whole deferral.
-    const handle = window.setTimeout(() => fire("timeout"), LAUNCH_MAX_WAIT_MS);
-    launchTimer = { cancel: () => window.clearTimeout(handle) };
-  }
-  metrics.launchScheduled();
+  const binding = fileId ? tracker.binding(fileId) : null;
+  const outcome = gate.onActive(fileId, {
+    enabled: useLsp.getState().enabled,
+    boundToLiveSession: Boolean(binding && !isTerminal(lastStatus.get(binding.session)?.phase ?? "exited")),
+    notRouted: fileId !== null && useLsp.getState().docs[fileId]?.kind === "notRouted",
+  });
+  if (outcome === "activate" && fileId) void activateBound(fileId);
 }
 
 /** Revalidate, then route and get-or-start. A failed revalidation is silent: simply no launch. */
 async function attachActive(reason: "idle" | "timeout"): Promise<void> {
   const { activeFileId: fileId, solution, tabs } = useSolution.getState();
-  if (!startupDone || !fileId || !solution || !tabs.some((t) => t.fileId === fileId)) return;
+  if (!gate.startupDone || !fileId || !solution || !tabs.some((t) => t.fileId === fileId)) return;
   const key = solutionKey;
   useLsp.setState((state) => ({ docs: { ...state.docs, [fileId]: { kind: "waiting" } } }));
   const languages = languageTable();
@@ -416,7 +415,7 @@ async function attachActive(reason: "idle" | "timeout"): Promise<void> {
 }
 
 function closeSolution(): void {
-  launchTimer?.cancel();
+  gate.cancel();
   for (const scheduler of schedulers.values()) scheduler.stop();
   schedulers.clear();
   awaitingReady.clear();
@@ -493,6 +492,8 @@ export async function startupComplete(): Promise<void> {
       }
     }
   });
+  // Wiring is complete: launches may now be scheduled. With CRAIDD_LSP=0 this is never reached.
+  gate.complete();
   onActive();
 }
 
@@ -510,7 +511,7 @@ function afterRestart(generation: number): void {
     for (const [fileId, info] of Object.entries(docs)) if (info.kind === "bound" && info.session === generation) delete docs[fileId];
     return { docs };
   });
-  scheduleLaunch();
+  gate.scheduleLaunch();
 }
 
 export function showLspOutput(): void { window.dispatchEvent(new CustomEvent("craidd:show-output", { detail: "lsp" })); }
