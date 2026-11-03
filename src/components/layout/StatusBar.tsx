@@ -3,6 +3,7 @@ import { usePreferences } from "../../store/preferencesStore";
 import { useBuild } from "../../store/buildStore";
 import { chipLabel, chipState, serverName, useLsp } from "../../store/lspStore";
 import { restartSession, showLspOutput } from "../../lib/lsp/bridge";
+import ChipBoundary from "./ChipBoundary";
 
 /**
  * The language-server status chip (design: "User-visible surfaces"). Click
@@ -79,7 +80,7 @@ export default function StatusBar() {
       <span className="text-zinc-700">|</span>
       <span>{Math.round(fontSize)}px</span>
       <div className="ml-auto flex items-center gap-3">
-        <LanguageServerChip fileId={activeFileId} />
+        <ChipBoundary key={activeFileId ?? ""}><LanguageServerChip fileId={activeFileId} /></ChipBoundary>
         <span className="text-yellow-400" title="Warnings from the last build and the language server">⚠ {warnings}</span>
         <span className="text-red-400" title="Errors from the last build and the language server">✕ {errors}</span>
       </div>

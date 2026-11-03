@@ -3,7 +3,7 @@ import type { editor } from "monaco-editor";
 import { Channel, invoke } from "@tauri-apps/api/core";
 import { useSolution } from "../../store/solutionStore";
 import { useSplit } from "../../store/splitStore";
-import { appendLspOutput, serverName, useLsp, type LspSessionView } from "../../store/lspStore";
+import { appendLspOutput, serverName, useLsp, viewWithAttach, viewWithStatus, type LspSessionView } from "../../store/lspStore";
 import { LANGUAGES } from "../languages";
 import { DocumentTracker, type Binding, type DocTransport } from "./documents";
 import { DiagnosticsModel, gateOpen, isAuthoritative, type Attribution, type Route } from "./diagnostics";
@@ -231,15 +231,15 @@ function clearSessionDiagnostics(session: number): void {
 function updateSession(generation: number, patch: Partial<LspSessionView>): void {
   useLsp.setState((state) => {
     const current = state.sessions[generation];
-    if (!current && !patch.status) return state;
-    return { sessions: { ...state.sessions, [generation]: { ...(current as LspSessionView), ...patch } } };
+    if (!current) return state;
+    return { sessions: { ...state.sessions, [generation]: { ...current, ...patch } } };
   });
 }
 
 function onStatus(generation: number, status: StatusRecord): void {
   const previous = lastStatus.get(generation);
   lastStatus.set(generation, status);
-  updateSession(generation, { status });
+  useLsp.setState((state) => ({ sessions: { ...state.sessions, [generation]: viewWithStatus(state.sessions[generation], generation, status) } }));
   if (isTerminal(status.phase)) {
     if (previous && isTerminal(previous.phase)) return;
     schedulers.get(generation)?.stop();
@@ -400,10 +400,9 @@ async function attachActive(reason: "idle" | "timeout"): Promise<void> {
     return;
   }
   if (reply.launched) metrics.launched(reason);
-  if (!useLsp.getState().sessions[reply.session]) {
-    updateSession(reply.session, { generation: reply.session, status: reply.status, server: reply.server, version: reply.version,
-      root: reply.root, notes: reply.notes, progress: {}, pullDegraded: null });
-  }
+  // The Channel's first status batch can arrive before this reply and create the view: merge, never skip.
+  useLsp.setState((state) => ({ sessions: { ...state.sessions, [reply.session]: viewWithAttach(state.sessions[reply.session], {
+    generation: reply.session, server: reply.server, version: reply.version, root: reply.root, notes: reply.notes, status: reply.status }) } }));
   const binding: Binding = { session: reply.session, uri: reply.uri, canonical: reply.canonical, languageId: reply.languageId,
     projectId: reply.projectId, projectName: reply.projectName, syncKind: "incremental" };
   tracker.bind(fileId, binding);

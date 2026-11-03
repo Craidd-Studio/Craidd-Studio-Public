@@ -16,6 +16,36 @@ export interface LspSessionView {
   pullDegraded: string | null;
 }
 
+/** The attach reply's part of a session view; only the reply carries these. */
+export interface SessionDescription {
+  generation: number;
+  server: string;
+  version: string;
+  root: string;
+  notes: string[];
+  status: StatusRecord;
+}
+
+/**
+ * A status for `generation`. The Channel's first batch can arrive before the
+ * attach reply, so this may create a view that has no description yet.
+ */
+export function viewWithStatus(current: LspSessionView | undefined, generation: number, status: StatusRecord): LspSessionView {
+  return { progress: {}, pullDegraded: null, ...current, generation, status } as LspSessionView;
+}
+
+/**
+ * The attach reply. Its description is always written; its status, and the
+ * progress and degradation fields, only when the view has none, so a newer
+ * status from the Channel is never replaced by the reply's older one.
+ */
+export function viewWithAttach(current: LspSessionView | undefined, reply: SessionDescription): LspSessionView {
+  return {
+    ...current, generation: reply.generation, server: reply.server, version: reply.version, root: reply.root, notes: reply.notes,
+    status: current?.status ?? reply.status, progress: current?.progress ?? {}, pullDegraded: current?.pullDegraded ?? null,
+  };
+}
+
 /** Why the active document has, or does not have, a language server. */
 export type LspDocInfo =
   | { kind: "none" }
@@ -70,7 +100,8 @@ export function chipState(view: LspSessionView): ChipState {
 
 /** The server's own name (from `serverInfo`), else the binary's file name; never hardcoded. */
 export function serverName(view: LspSessionView): string {
-  return view.status.caps?.serverName ?? view.server.split("/").pop() ?? "language server";
+  // `server` is absent until the attach reply is merged (see `viewWithStatus`).
+  return view.status.caps?.serverName ?? (view.server?.split("/").pop() || "language server");
 }
 
 export function chipLabel(state: ChipState, name: string): string {
