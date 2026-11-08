@@ -883,6 +883,39 @@ Fix under test: `fix/lsp-1b-attach-keys` at `ab52d83` (one commit on `2631cac`: 
 - **Cold start and containment on `ab52d83`:** `coldstart_check.py --runs 3 --contain`: no crash, ready at 3.0 s, containment held, no leftover processes, and the only page errors were the injected fault's own. Evidence `/mnt/ext_drives/Development/Development/Desktop Development/Craidd-Studio/.claude/worktrees/intellisense-verify-0b263b/verification/lsp-1b/runs/fix-coldstart/`.
 - **Verdict (check: `lsp_open` fix):** **Verified**, harness-observed, pending user review. The defect recorded above is resolved at `ab52d83`: a document opened in the IDE now reaches the server and produces markers. No gate moves. U3, U4, U5, U7, U9, U10, U11, G5, G7 and V3, V20, V25, V26 are unblocked and will be run against `ab52d83`.
 
+#### Job B, batch 1: U1 (reworded), U2 and U8 on `ab52d83` (2026-11-08, DA-3). Harness-observed, pending user review.
+
+Build: `ab52d83` (code identical to the tip `0778c9e`), dev binary on port 1440, Xvfb `:98`, isolated `HOME` per launch, `/usr/bin/rust-analyzer 1 (9074e9b4c6 2026-09-06)`. Scripts: `scripts/jobb_u1.py`, `jobb_u2.py`, `jobb_u8.py` on `verify/lsp-stage-1b-jobb`. Evidence root `/mnt/ext_drives/Development/Development/Desktop Development/Craidd-Studio/.claude/worktrees/intellisense-verify-0b263b/verification/lsp-1b/runs/jobb/` (git-ignored). No gate status is changed by this entry; where a gate's pass condition is met by the measurement but the step needs the user's eyes or a missing measurement, that is said.
+
+**U1, G1 (reworded under DA-4), 5 runs with LSP on and 5 with `CRAIDD_LSP=0`** (`u1-fix/`; per run `result.json`, `proc.jsonl` at 100 ms).
+
+| Check | Result |
+|---|---|
+| Server processes with the solution open and no tabs | 0 in 10 of 10 runs (4 s of 100 ms samples) |
+| Server processes with a non-Rust tab (`fx-small.cln`) active | 0 in 10 of 10 runs |
+| Open `main.rs`, switch to a non-Rust tab and back within about 0.7 s | Exactly 1 server, never more (`max_servers` 1 in 5 of 5 LSP-on runs). The first server appeared 2.77 to 2.81 s after the click, after the 1.5 s bound. One `launch` line per run, reason `timeout`, `schedulingDelayMs` 1520 |
+| Startup to interactive (T1, the `startupInteractive` event) | LSP on: 2954, 2955, 2955, 2956, 2957 ms. `CRAIDD_LSP=0`: 2953, 2955, 2958, 2959, 2960 ms. No measurable difference at this resolution |
+| T2 (scheduling delay) | 1520 ms, reason `timeout` (WebKitGTK exposes no idle callback; the bound fired every time) |
+| T3 (spawn to `initialize` reply) | The Output line reads `ready after 0 ms`. That is the app's own number; it looks too small to be a spawn-to-reply time and is **not trusted** here |
+| T4 (`initialize` reply to end of indexing) | **Not measured** (needs a tap run) |
+| Chip | `language server…` then `rust-analyzer` (ready) 3.0 s after the click |
+| Baseline (`CRAIDD_LSP=0`) | No server in any run; the chip never appears |
+
+Not covered (Unverified): the parked-window hide and restore steps (4 and 6 of the reworded U1); the WebDriver cannot hide and restore a window. A never-idle forced start-up is also not run. The `Get Started…` menu item does **not** close the solution, and the server stays up; the harness's only reachable close is closing the window (observation for Docs, not a gate failure). **G1:** its status is left at **Fail** as recorded; the crash behind it is resolved (above), and the evidence here meets the first, second and fourth conditions, but T3 is untrusted, T4 is missing and the parked-window case is not run. Whether that moves G1 is for the lead.
+
+**U2, G2, 3 runs** (`u2-fix/run*/result.json`, `proctree`): servers after opening `alpha/src/main.rs`, then `beta/src/main.rs`, then `outside/src/main.rs` of `fx-ws`: **1, 1, 2** in 3 of 3 runs (the two processes had different roots; each has 2 descendants). The chip read `rust-analyzer` after each open, and nothing remained after the run. This is the pass condition's count (one server for the shared workspace, a separate one for the outside crate). The "diagnostics in all three files" part of U2 is not measured here; the numbers are from the process table. G2 stays **Unmeasured** until the user's review.
+
+**U8, G6** (`u8-fix-*`, 4 scenarios; `result.json`, `after_*_samples` at 500 ms):
+
+| Fixture | Action | Descendants seen while running | Servers left | Cargo, rustc or proc-macro left |
+|---|---|---|---|---|
+| `fx-procmacro` | Close the IDE window | `rust-analyzer-proc-macro-srv` (2 processes) | 0 at the first 0.5 s sample | None |
+| `fx-procmacro` | `kill -9` the IDE | the same | 0 at 0.5 s | None |
+| scratch copy of `src-tauri`, during indexing | Close the IDE window | `rust-analyzer-proc-macro-srv` (2); an earlier run on `39f4e89` saw `cargo` and `rustc` too (4 and 7 children) | 0 at 0.5 s | None |
+| scratch copy of `src-tauri`, during indexing | `kill -9` the IDE | the same | 0 at 0.5 s | None |
+
+`kill -9` of the IDE left no `rust-analyzer`, `cargo`, `rustc` or proc-macro process within 0.5 s (supervisor backstop). Limits: "close the solution" with the window left open has no harness path (see above); the closing action here is closing the window, which also closes the solution. The `src-tauri` copy lives in the run checkout, not the repo's real `src-tauri`. G6 stays **Unmeasured** until the user's review; the pass condition is met by these measurements.
+
 #### Other findings recorded during U1 (not 1b verdicts)
 
 1. **The language-server usable check accepts any binary that exits 0.** `lldb-dap` was accepted as Rust's language server. That is consistent with the designed check (V7), which proves only that a binary runs. What the chip showed for that session was not observed.
