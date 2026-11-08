@@ -1017,6 +1017,34 @@ Build: the tip of `feat/lsp-stage-1b` at `dd02020`, own run checkout, isolated `
 
 V27 steps 2 to 4, 6a and the 6b limitation are **Verified** as far as these limits go (harness-observed, pending user review); step 5 and the 6b restart are **Unverified**.
 
+#### Job B, batch 7: U12 (G3, V4; G3b and V26 only in part) on the final 1b code (2026-11-08, DA-3). Harness-observed, pending user review.
+
+Build: the tip of `feat/lsp-stage-1b` at `dd02020`, own run checkout, isolated `HOME`, Xvfb `:98` (a software-rendered X server, so frame times are **not** comparable with a real desktop; the comparison is between the two modes on the same rig). Workspace: a scratch copy of Craidd's own `src-tauri` inside the run checkout (about 400 crates), opened as a solution; no repo file was touched. Script `scripts/jobb_u12.py`; evidence `/mnt/ext_drives/Development/Development/Desktop Development/Craidd-Studio/.claude/worktrees/intellisense-verify-0b263b/verification/lsp-1b/runs/jobb/u12/{on,off}{1,2,3}/result.json` and `end.png`. Each run: open `commands/debug.rs` (2824 lines) and `lib.rs`, start the probe (`frame_probe.js`, the approved A3 substitute), then for 40 s send real key events (3 characters about every 150 ms, 657 to 672 keystrokes), scroll the editor every fourth batch and switch tabs every twelfth, all while the server indexes. Three runs with LSP on and three with `CRAIDD_LSP=0`, alternating. The typed text was never saved.
+
+| Measure (40 s, 3 runs each) | LSP on | `CRAIDD_LSP=0` |
+|---|---|---|
+| Frame gap p50 / p95 | 16 / 17 ms in every run | 16 / 17 ms in every run |
+| Frame gap max | 82, 82, 108 ms | 75, 100, 104 ms |
+| Gaps over 50 ms | 1, 2, 1 | 1, 1, 1 |
+| Gaps over 100 ms | 1, 0, 0 | 0, 0, 1 |
+| Input to paint p50 | 29, 29, 29 ms | 30, 28, 28 ms |
+| Input to paint p95 | 37, 35, 34 ms | 35, 34, 35 ms |
+| Input to paint max | 186, 117, 128 ms | 112, 131, 130 ms |
+| `longtask` supported by this WebKitGTK | No | No |
+| Channel messages over the run | 838, 573, 544 | 0 |
+| Startup to interactive | 2959, 2960, 2978 ms | 2960, 2959, 2961 ms |
+| Server CPU over the 40 s (`/proc` utime+stime) | 65.9, 69.8, 70.5 CPU-seconds (about 1.7 cores) | no server |
+| Webview (WebKitWebProcess) VmRSS at the end | 782, 753, 765 MB | 765, 743, 769 MB |
+| `rust-analyzer` VmRSS at the end | 3378, 2615, 2715 MB | none |
+
+Reading: with the server indexing a large workspace, typing, scrolling and tab switching were no different from the baseline on this rig. One run with LSP on had the single largest input-to-paint value (186 ms), and the baseline had gaps of the same size, so no regression is shown, but three runs per mode on one machine under a software X server is a small sample. These are labelled **substitutes** (frame gaps measure cadence, not task duration; input to paint ends at the second frame after the key, not at the display). The build's own `inputToPaint` hook only saw 0 to 5 samples (its keydown sampling is sparse) and cannot be compared with the probe; the probe's numbers are the ones used.
+
+**V4 (separate target directory).** `cargo.targetDir = true` puts the server's checks in `src-tauri/target/rust-analyzer`, **961 MB** after these runs (cumulative over the 6 runs that reused the checkout, and only for the LSP-on ones), beside 4.5 GB in `target/debug`. First-check time and whether a user Build waits on the lock were **not measured** (no Build was issued during a check). **G3b** is therefore **Unmeasured**.
+
+**V26.** Server CPU while typing is in the table (about 1.7 cores averaged over 40 s of initial indexing plus typing); the pull-request rate and waves under typing were **not measured** in this batch (no tap, to avoid perturbing the timing); V26 stays **Unverified**. The Channel message rate is the total above (about 14 to 21 messages per second on average) with no per-message size.
+
+**G3 status:** the numbers are recorded and compared with the baseline as the gate requires; the gate also asks for the Channel message size and the pull rate, which are not here, so G3 stays **Unmeasured** pending those and the user's look.
+
 #### Other findings recorded during U1 (not 1b verdicts)
 
 1. **The language-server usable check accepts any binary that exits 0.** `lldb-dap` was accepted as Rust's language server. That is consistent with the designed check (V7), which proves only that a binary runs. What the chip showed for that session was not observed.
