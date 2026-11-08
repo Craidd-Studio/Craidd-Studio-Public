@@ -1121,6 +1121,8 @@ These are not designed here. They are recorded so Stage 1 does not close doors o
 
     The fixes change no earlier decision. G1 stays as the results record states it; this decision does not mark any gate.
 
+**Proposed for Stage 1c (not approved).** Decisions 40–55 are proposed in [plan-lsp-stage-1c-providers.md](plan-lsp-stage-1c-providers.md#proposed-decisions), each marked "proposed, stand-in approval pending (DA-12)"; 42, 44, 52 and 54 name a case that needs the architect, and 49 adds a restriction the design does not state.
+
 Checked against the applied philosophy: nothing in decisions 20–37 contradicts it. `rust-analyzer/reloadWorkspace` and the status notification are adapter-owned extensions beneath the philosophy's "every other server is a table entry" rule, and the manual restart button it requires is preserved.
 
 The ◇ values introduced by this revision (admission reserve, cancelled-entry expiry, bad-body tolerance, Unresponsive bound; class T has none because it is a fixed-size record) are initial proposals to be tuned from measured results. The pull revision adds more: the pull debounce, the concurrency cap, the retrigger bound, the consecutive-failure bound, the reload coalescing window and timeout, and the readiness wait for a server with no status notification.
@@ -1157,6 +1159,7 @@ The ◇ values introduced by this revision (admission reserve, cancelled-entry e
 - **Scope.** Completion (trigger context, `isIncomplete`, resolve) and atomic acceptance; hover; definition; references; document symbols; provider registration once per language, capability-gated. **Navigation to unowned files, with the read-only rule and the tab lock glyph** (moved from 1b, decision 29; the requirement of decision 4 is unchanged), and the symlinked-vendor navigation cases (a)–(d).
 - **Exit evidence.** Completion and acceptance tests; V10–V12 and V18 recorded; G3 and G4 recorded under provider load; acceptance criterion 1 demonstrated.
 - Stage 1 is accepted when every gate is Pass.
+- **Plan.** The implementation plan, work packages, test list, U-step outline and the choices the design leaves open are in [plan-lsp-stage-1c-providers.md](plan-lsp-stage-1c-providers.md). It starts only after the 1b merge (DA-10).
 
 ### Which stage completes which gate
 
@@ -1176,5 +1179,5 @@ Philosophy amendments are applied or withdrawn before the stage they govern is m
 
 ---
 
-*Last updated: Phase 3 (Stage 1 proposal; pull diagnostics in Stage 1b, decisions 16–18 approved, decisions 19–36 and 38 and amendments A2, A4 approved; A2 wording corrected and decision 39 recorded under stand-in approvals DA-4 and DA-5; decision 37 keeps V16 open). Author(s): ShinkuKira21*
+*Last updated: Phase 3 (Stage 1 proposal; pull diagnostics in Stage 1b, decisions 16–18 approved, decisions 19–36 and 38 and amendments A2, A4 approved; A2 wording corrected and decision 39 recorded under stand-in approvals DA-4 and DA-5; Stage 1c plan linked, decisions 40–55 proposed; decision 37 keeps V16 open). Author(s): ShinkuKira21*
 *This document is a design.*
