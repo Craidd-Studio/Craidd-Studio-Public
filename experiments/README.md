@@ -70,3 +70,9 @@ This is bounded experimental behavior, not a guarantee of independent
 stepping for every program, adapter version, newly created thread, or blocking
 wait. Keep the debugger route, owning process and observed counters explicit
 in a test report.
+
+## Monaco completion probes (LSP Stage 1c)
+
+[lsp-1c-monaco/](lsp-1c-monaco/README.md) holds headless-Chrome probes of
+Monaco 0.56.0's completion acceptance (V10, V11, V12), run before the accept
+path is written. Branch `exp/lsp-1c-monaco-verify`.
