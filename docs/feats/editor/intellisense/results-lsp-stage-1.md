@@ -951,6 +951,31 @@ An earlier run of the same script, which read the chip instead of the store, cou
 
 No gate moves. V24 for this scenario and V27 steps 2 to 4 are **Verified** as far as these limits go; the rest of U4 and U5 is Unverified.
 
+#### Job B, batch 4: U7 (G5, V15, V20, decision 22) on the final 1b code (2026-11-08, DA-3). Harness-observed, pending user review.
+
+Build: the tip of `feat/lsp-stage-1b` at `dd02020`, own run checkout, isolated `HOME`, no tap, Xvfb `:98`. Fixture `fx-many` (120 modules, 20 E0061 each), a fresh copy per run. Script `scripts/jobb_u7.py`; evidence `/mnt/ext_drives/Development/Development/Desktop Development/Craidd-Studio/.claude/worktrees/intellisense-verify-0b263b/verification/lsp-1b/runs/jobb/u7/` and `/mnt/ext_drives/Development/Development/Desktop Development/Craidd-Studio/.claude/worktrees/intellisense-verify-0b263b/verification/lsp-1b/runs/jobb/u7b/` (`result.json`, `after-check.png`, `end.png`). Two runs; the second adds a longer wait and the retention fields. Ten tabs (`m000.rs` to `m009.rs`) were opened, `m000.rs` was given a one-line edit and saved, the Problems panel was read, the ten tabs were closed, and `m005.rs` was reopened. The hooks are the dev build's `__craiddLspMetrics()` and the store.
+
+| Measure | Run 2 (`u7b`) | Run 1 (`u7`) |
+|---|---|---|
+| Server ready | 2.5 s after the first open | 2.5 s |
+| Stored diagnostics, push route (rustc) | 7167 | 7182, then 7212 after the close step |
+| Push arrivals delivered / store writes | 213 / 190 | 214 / 183 |
+| `setModelMarkers` calls, 10 tabs open | 22 | 25 |
+| Stored, pull route, 10 tabs open | 40 | 40 |
+| `unchanged` / `full` pull reports | 0 / 5 | 0 / 5 |
+| Evicted files, "not retained", pull-unknown | 0, 0, 0 | not read |
+| Problems header | `Language server (live): 2389 errors … showing 500 of 7207` | `2394 errors … showing 500 of 7222` |
+
+Reading:
+- **G5 counts.** The push set (about 7.2k diagnostics) arrived through 213 deliveries and about 190 store writes, and 22 to 25 `setModelMarkers` calls were made for 10 open files and about 2400 server errors, not one per diagnostic. The delivery count and store-write count are measured; the "at most one store write per frame" condition is **not** separated here (the `frameWrites` counter was 111 to 117 and its exact meaning was not checked against the code), and the `unchanged`/`full` ratio is 0 of 5, so the identical-report suppression is not exercised. **Approximate memory was not measured** (WebKitGTK has no `performance.memory`). G5 stays **Unmeasured**.
+- **The save-triggered check did not show.** The initial check that rust-analyzer runs on start-up already produced the ~7.2k push diagnostics, before the edit. After the edit and `Ctrl+S` on `m000.rs` (the file changed on disk, `m000.rs` line 1 is `// touch`), no further push arrival came in 75 s (`arrivals.push` unchanged). Whether the save started a check that produced identical results or did not start one is **not established**; the "save seed adds a check" expectation of U7 step 2 is **Unverified**.
+- **Step 3.** The panel stayed responsive in the harness; frame gaps stayed at 17 to 27 ms while scrolling and switching 10 tabs (p95 up to 25 ms, max 27 ms, 44 samples, run 1). The header carried per-source counts as the step expects, with the row cap stated (`showing 500 of N`).
+- **Step 4 and V15.** After closing the 10 tabs the pull set went from 40 to 0 and the push set stayed (7167, and 7212 in run 1); reopening `m005.rs` brought 20 pull diagnostics back through a new pull. That is the design: closed push rows stay, pull rows go.
+- **V15 and decision 22 retention budget: the limits were not reached.** The per-file and route cap is 500, the closed-file cap 2000 and the closed-set diagnostic cap 20 000; this fixture never exceeded any (`evictedFiles` 0, `notRetained` 0). So eviction, the "at least" wording and the next-check wording are **Unverified** here; a fixture with more than 20 000 closed-set diagnostics or more than 500 per file is needed.
+- **Observation (not a verdict):** the stored push count differed between two runs of the same fixture (7167, 7182 and 7212), so the exact count is not stable across runs.
+
+No gate moves: G5 Unmeasured, and V15, V20 and decision 22 are Unverified for eviction.
+
 #### Other findings recorded during U1 (not 1b verdicts)
 
 1. **The language-server usable check accepts any binary that exits 0.** `lldb-dap` was accepted as Rust's language server. That is consistent with the designed check (V7), which proves only that a binary runs. What the chip showed for that session was not observed.
