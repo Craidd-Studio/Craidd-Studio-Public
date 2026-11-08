@@ -580,7 +580,7 @@ Requirements:
 
 | Order | Mechanism | Cost | Depends on |
 |---|---|---|---|
-| F1 | Monaco waits for the resolve; if the resolve fails, times out, is stale or returns invalid edits, a compensating revert after accept (through the item's post-accept command) restores the document and shows a notice. | None when it works | V10 (waiting and revert feasibility) |
+| F1 | Monaco waits for the resolve; if the resolve fails, times out, is stale or returns invalid edits, a compensating revert after accept (through the item's post-accept command) restores the document and shows a notice. The revert command is a Monaco-local command that Craidd attaches to the item, not a server `workspace/executeCommand` (decision 54). | None when it works | V10 (waiting and revert feasibility) |
 | F2 | **Eager mode.** Craidd stops declaring lazy `additionalTextEdits`, so edits arrive complete in the completion list and an item is whole or absent. Documentation and detail stay lazy. | Slower completion lists, measured under G3 | V18 (the server then sends them eagerly) |
 | Never | Apply the primary edit alone. | — | — |
 
@@ -1121,7 +1121,24 @@ These are not designed here. They are recorded so Stage 1 does not close doors o
 
     The fixes change no earlier decision. G1 stays as the results record states it; this decision does not mark any gate.
 
-**Proposed for Stage 1c (not approved).** Decisions 40–55 are proposed in [plan-lsp-stage-1c-providers.md](plan-lsp-stage-1c-providers.md#proposed-decisions), each marked "proposed, stand-in approval pending (DA-12)"; 42, 44, 52 and 54 name a case that needs the architect, and 49 adds a restriction the design does not state.
+**Stage 1c decisions (stand-in approval, DA-14).** Approved by the lead while the architect is away ([delegated approvals](delegated-approvals-lsp-stage-1.md)); the architect may revise any of them. Details in the [plan](plan-lsp-stage-1c-providers.md#proposed-decisions).
+
+40. ~~**Provider requests are typed commands.**~~ **Approved.** *Stand-in approval (DA-14).* One typed Tauri command per kind (completion, resolve, hover, definition, references, document symbol), each shaped like `lsp_pull`; no generic send-any-method command. See the [plan](plan-lsp-stage-1c-providers.md#proposed-decisions).
+41. ~~**Per-kind timeouts and pending-table share.**~~ **Approved.** *Stand-in approval (DA-14).* ◇ timeouts per kind; a timeout is "no result" with the request cancelled; no kind may take the whole table. See the [plan](plan-lsp-stage-1c-providers.md#proposed-decisions).
+42. ~~**Completion trigger context.**~~ **Approved.** *Stand-in approval (DA-14).* Monaco's invoked, trigger-character and re-trigger map to the three LSP trigger kinds; `isIncomplete` is carried to Monaco's flag, whose name V11 settles. See the [plan](plan-lsp-stage-1c-providers.md#proposed-decisions).
+43. ~~**Resolve policy under F1.**~~ **Approved.** *Stand-in approval (DA-14).* Resolve runs when an item is selected, with a ◇ bound on how long accept waits; on timeout or failure the item is rejected, never partly applied. Chosen only if V10 shows F1 works. See the [plan](plan-lsp-stage-1c-providers.md#proposed-decisions).
+44. ~~**Notices use existing surfaces only.**~~ **Approved.** *Stand-in approval (DA-14).* An Output line plus the status chip detail. If that does not work, a new surface still needs the architect. See the [plan](plan-lsp-stage-1c-providers.md#proposed-decisions).
+45. ~~**Hover and documentation rendering.**~~ **Approved.** *Stand-in approval (DA-14).* Markdown with command links and raw HTML disabled, because the text comes from an external process. See the [plan](plan-lsp-stage-1c-providers.md#proposed-decisions).
+46. ~~**How a returned location opens.**~~ **Approved.** *Stand-in approval (DA-14).* Through a registered Monaco editor opener and Craidd's tab logic (holder focus, owned form, unowned read-only). See the [plan](plan-lsp-stage-1c-providers.md#proposed-decisions).
+47. ~~**Reference and symbol result caps.**~~ **Approved.** *Stand-in approval (DA-14).* A ◇ cap with a visible "+N more" and a log line; no silent truncation. See the [plan](plan-lsp-stage-1c-providers.md#proposed-decisions).
+48. ~~**Symbol shapes.**~~ **Approved.** *Stand-in approval (DA-14).* Prefer hierarchical `DocumentSymbol[]`, tolerate `SymbolInformation[]`; no outline panel. See the [plan](plan-lsp-stage-1c-providers.md#proposed-decisions).
+49. ~~**Unowned reads are restricted.**~~ **Approved.** *Stand-in approval (DA-14).* A backend read serves only a path the originating session returned, canonicalised, with a size cap, and never writes. It adds a restriction, not a permission; the architect should still see it. See the [plan](plan-lsp-stage-1c-providers.md#proposed-decisions).
+50. ~~**Read-only is a property of the tab's path view.**~~ **Approved.** *Stand-in approval (DA-14).* Not set on the shared Monaco model, so another view of the same file keeps its own editability. See the [plan](plan-lsp-stage-1c-providers.md#proposed-decisions).
+51. ~~**Binding of an unowned tab.**~~ **Approved.** *Stand-in approval (DA-14).* `didOpen` to the originating session with the canonical-path URI on activation; when the session ends the tab stays open, unbound; navigating from a live session rebinds. See the [plan](plan-lsp-stage-1c-providers.md#proposed-decisions).
+53. ~~**Provider-load measurement.**~~ **Approved.** *Stand-in approval (DA-14).* Extends the existing hooks and methods (decisions 23–26, 35, 36); no new switch; no invented budgets. See the [plan](plan-lsp-stage-1c-providers.md#proposed-decisions).
+54. ~~**Server item commands are not run; F1's revert is Monaco-local.**~~ **Approved.** *Stand-in approval (DA-14).* F1's compensating revert is a Monaco-local command that Craidd attaches to the item, not a server `workspace/executeCommand`; server item commands are still not executed. See the [plan](plan-lsp-stage-1c-providers.md#proposed-decisions).
+55. ~~**When Stage 1c is done.**~~ **Approved.** *Stand-in approval (DA-14).* Criterion 1 demonstrated, V10–V12 and V18 recorded, G3 and G4 recorded under provider load. Completing 1c accepts no gate. See the [plan](plan-lsp-stage-1c-providers.md#proposed-decisions).
+52. **Symlinked-vendor holder rule. Open, needs the architect.** If U10 shows the holder rule gives a canonical-path holder no features, the candidate change prefers the path inside the project tree, which alters [File identity](#file-identity-three-questions) rules 2 and 3. Not approved under DA-14; step 7 of the [plan](plan-lsp-stage-1c-providers.md#proposed-decisions) waits for U10 and the architect (relates to decision 37).
 
 Checked against the applied philosophy: nothing in decisions 20–37 contradicts it. `rust-analyzer/reloadWorkspace` and the status notification are adapter-owned extensions beneath the philosophy's "every other server is a table entry" rule, and the manual restart button it requires is preserved.
 
@@ -1159,7 +1176,7 @@ The ◇ values introduced by this revision (admission reserve, cancelled-entry e
 - **Scope.** Completion (trigger context, `isIncomplete`, resolve) and atomic acceptance; hover; definition; references; document symbols; provider registration once per language, capability-gated. **Navigation to unowned files, with the read-only rule and the tab lock glyph** (moved from 1b, decision 29; the requirement of decision 4 is unchanged), and the symlinked-vendor navigation cases (a)–(d).
 - **Exit evidence.** Completion and acceptance tests; V10–V12 and V18 recorded; G3 and G4 recorded under provider load; acceptance criterion 1 demonstrated.
 - Stage 1 is accepted when every gate is Pass.
-- **Plan.** The implementation plan, work packages, test list, U-step outline and the choices the design leaves open are in [plan-lsp-stage-1c-providers.md](plan-lsp-stage-1c-providers.md). It starts only after the 1b merge (DA-10).
+- **Plan.** The implementation plan, work packages, test list, U-step outline and the choices the design leaves open are in [plan-lsp-stage-1c-providers.md](plan-lsp-stage-1c-providers.md). It starts only after the 1b merge (DA-10). The plan's order of work, tests and exit evidence are approved under DA-14; decisions 40–51 and 53–55 are approved as stand-ins, and decision 52 waits for the architect (step 7, the symlinked-vendor cases, waits for U10 and for it).
 
 ### Which stage completes which gate
 
@@ -1179,5 +1196,5 @@ Philosophy amendments are applied or withdrawn before the stage they govern is m
 
 ---
 
-*Last updated: Phase 3 (Stage 1 proposal; pull diagnostics in Stage 1b, decisions 16–18 approved, decisions 19–36 and 38 and amendments A2, A4 approved; A2 wording corrected and decision 39 recorded under stand-in approvals DA-4 and DA-5; Stage 1c plan linked, decisions 40–55 proposed; decision 37 keeps V16 open). Author(s): ShinkuKira21*
+*Last updated: Phase 3 (Stage 1 proposal; pull diagnostics in Stage 1b, decisions 16–18 approved, decisions 19–36 and 38 and amendments A2, A4 approved; A2 wording corrected and decision 39 recorded under stand-in approvals DA-4 and DA-5; Stage 1c plan linked, decisions 40–51 and 53–55 approved as stand-ins (DA-14), decision 52 open; decision 37 keeps V16 open). Author(s): ShinkuKira21*
 *This document is a design.*
