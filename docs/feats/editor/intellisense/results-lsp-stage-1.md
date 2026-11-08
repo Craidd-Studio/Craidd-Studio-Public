@@ -31,7 +31,7 @@ Rules:
 
 | Gate | Subject | Status | Evidence |
 |---|---|---|---|
-| G1 | No server during startup or restore; bounded deferral; startup measured apart from server cost | **Fail** | U1, 2026-11-03: attempt 2, no server ever launched (`startupDone`, fixed in `700b59d`); attempt 3, the window crashes on the first attach (`view.server` undefined) |
+| G1 | No server during startup or restore; bounded deferral; startup measured apart from server cost | **Fail** | U1, 2026-11-03: attempt 2, no server ever launched (`startupDone`, fixed in `700b59d`); attempt 3, the window crashes on the first attach (`view.server` undefined; fixed in `ead1a68`, verified 2026-11-08); gate measurements not yet rerun |
 | G2 | One `rust-analyzer` per shared Cargo workspace | Unmeasured | Fake-server registry test reproduced; the real count needs U2 |
 | G3 | Indexing never blocks interaction; separate target directory cost; Channel message rate and size | Unmeasured | Needs U12; completes in 1c |
 | G4 | Rapid typing, file switching and a stalled consumer are bounded | Unmeasured | 1b fake and node evidence reproduced; completes in 1c |
@@ -789,6 +789,46 @@ Method: the WebDriver harness (`verification/lsp-1b/scripts/harness.py`, `f2b438
   - Optional hardening, for the architect: a failure inside the status chip currently takes down the whole IDE window through `AppErrorBoundary`. A local boundary, or a chip that tolerates a partial view, would contain it.
 - **Effect on the review:** every U-step attaches a server, so U1–U13 are held again until this is fixed and verified. G1 stays **Fail**. Its start-up part (no server before a Rust tab is active, one bounded launch) is harness-observed and looks right, but a gate needs the whole step. G2, G3, G5, G6 and G7 stay **Unmeasured**.
 
+#### Chip-crash fix `ead1a68` + `39f4e89`, verified (2026-11-08). Harness-observed, pending user review.
+
+- **What changed, as read:**
+  - `updateSession()` no longer creates a session view.
+  - `onStatus()` creates or updates the view through `viewWithStatus` (empty `progress`, null `pullDegraded`).
+  - `attachActive()` always merges the reply through `viewWithAttach`. `server`, `version`, `root` and `notes` are always written. `status`, `progress` and `pullDegraded` are written only when the view lacks them, so a newer Channel status is kept.
+  - `serverName` falls back to `language server`.
+  - `ChipBoundary` wraps only `LanguageServerChip`, keyed by the active document. Its fallback is a muted, non-clickable `language server`.
+  - The backend is unchanged since `700b59d` (and since `502668a`).
+- **Suites at `39f4e89`:**
+
+  | Suite | Result |
+  |---|---|
+  | node | 120 passed, including 4 in `lspSessionView`: status before registration, registration before status, no rollback, chip containment |
+  | `tsc --noEmit`, `vite build` | Exit 0 |
+  | `cargo test --lib` | 228 passed, 9 ignored; `lsp::` 75 passed, 5 ignored |
+  | `process_cleanup` | 7 passed, 1 ignored |
+  | DAP | 26 passed, unchanged |
+  | `lsp::` repeated | 10 of 10 runs passed |
+  | Real-server opt-in tests | 4 passed |
+
+  These match the Implementation lane's counts.
+- **Cold starts in the real IDE:**
+  - **Method:** five runs with `verification/lsp-1b/scripts/coldstart_check.py --runs 5 --contain`. The dev build is served by Vite on port 1440 (1420 belongs to another project on this machine), under Xvfb. Each run is a fresh process with a fresh isolated `HOME` and the server set to `/usr/bin/rust-analyzer`. Each run opens `fx-small` from the welcome screen, then `src/main.rs`.
+  - **Evidence:** `verification/lsp-1b/runs/harness-20261108/coldstart-39f4e89/` (`summary.json`; per run `steps.jsonl`, `proc.jsonl`, and screenshots `ready`, `contain`, `after-switch`).
+  - **Negative control:** the same script at `700b59d` reported the crash and a status-only first write.
+
+  | | Result in 5 of 5 runs |
+  |---|---|
+  | Window crash | None |
+  | Chip | Went from `rust-analyzer: indexing` to `rust-analyzer` (ready) 3.0 s after the click. Hover: `/usr/bin/rust-analyzer (rust-analyzer 1 (9074e9b4c6 2026-09-06))`, the fixture root, `File watching: server-side` |
+  | Status before reply | Every run: the first session write had no `server` (phase `spawning`). The reply was merged 1–2 ms later, still `spawning`, and the document was bound in the same millisecond. Phases then ran `spawning`, `initializing`, `ready` |
+  | Start-up (G1 inputs, not a gate result) | 0 server samples before the click (78–84 samples); first server 1.6 s after it; one launch, reason `timeout`; `startupInteractive` 2915–2969 ms |
+  | Containment | With the bound session's `status` set to `null` in the store (a chip render fault), the window kept rendering and the Solution Explorer stayed. The chip showed the muted fallback `language server` ("The language server status could not be shown"), and the error was logged as `[lsp] Status chip rendering failed`. After the view was restored, switching to `util.rs` reset the boundary, and the chip read `rust-analyzer` again |
+  | Page errors | Only the injected fault's two lines |
+  | Leftovers after close | None |
+
+- **Minor (cosmetic, not a defect for this pass):** until the reply is merged (1–2 ms here), the chip's hover would read `undefined (undefined)` for the server and version.
+- **Verdict:** the window-crash defect is **resolved**, harness-observed and pending user review. **G1 stays Fail.** Its gate measurements (U1, whose steps are being reworded because tab restore is not a product requirement) have not been run. U1–U13 acceptance testing has not started.
+
 #### Other findings recorded during U1 (not 1b verdicts)
 
 1. **The language-server usable check accepts any binary that exits 0.** `lldb-dap` was accepted as Rust's language server. That is consistent with the designed check (V7), which proves only that a binary runs. What the chip showed for that session was not observed.
@@ -799,5 +839,5 @@ Method: the WebDriver harness (`verification/lsp-1b/scripts/harness.py`, `f2b438
 
 U1 (G1), U2 (G2), U3 (V3, V26, decision 19 in the IDE), U4 (V24 in the IDE), U5 (V27 trigger path; step 6a nested non-member, 6b member with a broken workspace root), U6 (V2 chip and Output), U7 (G5, V15, V20), U8 (G6), U9 (G7), U10 (V16 holder, including the canonical-path-first case), U11 (V9), U12 (G3, G3b, V4 lock, V26, `inputToPaint` against the probe), U13 (optional: hooks on/off on the IDE's wire).
 
-*Last updated: Phase 3 (Stage 1a, adapter integrated as 99863a4; F1–F3 investigated; decisions 16–37 approved; Stage 1b implementation, repair pass and decision 33 follow-up recorded and independently verified; U1 attempt 3 at 700b59d held by a chip defect). Author: ShinkuKira21.*
+*Last updated: Phase 3 (Stage 1a, adapter integrated as 99863a4; F1–F3 investigated; decisions 16–37 approved; Stage 1b implementation, repair pass and decision 33 follow-up recorded and independently verified; U1 attempt 3 at 700b59d held by a chip defect; chip-crash fix ead1a68 verified). Author: ShinkuKira21.*
 *This document is a record.*
