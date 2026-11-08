@@ -1144,6 +1144,24 @@ The first `textDocument/diagnostic` pull went out at **30.03 s** (tap clock), wh
 
 **U3 step 6 (close and reopen) Unverified.** There was no `rustc` (push) set in this run, so the "pull rows clear, push rows stay" part could not be read; after `main.rs` was closed its model was gone from Monaco's model list, and on reopen the 2 pull markers were present at once. The state while the tab was closed was not read.
 
+#### Independent re-check of the candidate `1ab81d5` (Restart fix and `didChange` fix) (2026-11-08, DA-7). Harness-observed, pending user review.
+
+Candidate: `lead/lsp-1b-candidate` at `1ab81d5`; own run checkout `/mnt/ext_drives/Development/Development/Desktop Development/Craidd-Studio/.claude/worktrees/intellisense-verify-0b263b/verification/lsp-1b/runs/cand-1ab81d5`, dev binary on port 1440, Xvfb `:98`, isolated `HOME`. Scripts on `verify/lsp-stage-1b-jobb`; evidence `/mnt/ext_drives/Development/Development/Desktop Development/Craidd-Studio/.claude/worktrees/intellisense-verify-0b263b/verification/lsp-1b/runs/jobb/c-*`.
+
+| Check | Result |
+|---|---|
+| Suites | `node --test` 125 passed; `tsc` 0; `vite build` 0; `cargo test --lib` 236 passed, 9 ignored; `process_cleanup` 7 passed, 1 ignored; 26 `commands::debug*` tests ok |
+| `didChange` during continuous typing (scratch `src-tauri`, tap, 40 s, two clean runs) | **Fixed.** 711 `didChange` for 714 keystrokes and 730 for 732, one change per message, flowing from the first keystroke (before: three messages, then one with 663 changes at the end) |
+| After indexing finished (15 s typing) | 267 `didChange` for 267 keystrokes (before: one with 782 changes at the end). One batch of 501 changes was also seen |
+| V26, pulls per keystroke | 99 and 110 pulls in 40 s (**0.14 and 0.15 per keystroke**, about 2.5 to 2.75 per second) during indexing; 62 pulls for 267 keystrokes (**0.23**) after indexing. A pull is not sent per keystroke, but about one per 4 to 7 keystrokes while typing continues. No budget is declared by the design; recorded as measured |
+| U5 step 5 / 6b Restart | `fx-ws` with the root manifest broken: the `↻ Restart` control is **offered** while health is `error` (before: absent); clicking it ended the old session (`shuttingDown`) and started a new one, health `ready/ok` |
+| U9 (sync) | Byte for byte equal at every step including 5a, 5c, 5b (CRLF), the 2000-line insert, the non-BMP character and the tab switch; no version errors, max in flight 1 |
+| U3 marker latency (5 runs, change seed) | Edit to marker **0.05 to 0.10 s** and undo to clear 0.16 to 0.21 s. This is **not** the 0.31 to 0.36 s recorded before the fix, so the earlier gap is no longer present on this build; Implementation expected it to stay |
+
+One harness incident, unexplained: the first `g3a` run on the candidate ended with `RemoteDisconnected` about 3 s into typing (`c-g3a/`); no core dump of the app exists, and two repeat runs were clean. Recorded as the third occurrence of this symptom, not counted as a crash.
+
+**Verdict:** the `didChange` fix and the Restart fix are **Verified**, harness-observed, pending user review. Not re-run in this pass: the U7 save seed and the WebKitGTK check of the "Illegal invocation" cause itself (the behaviour change above is the evidence).
+
 #### Other findings recorded during U1 (not 1b verdicts)
 
 1. **The language-server usable check accepts any binary that exits 0.** `lldb-dap` was accepted as Rust's language server. That is consistent with the designed check (V7), which proves only that a binary runs. What the chip showed for that session was not observed.
