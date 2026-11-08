@@ -4,7 +4,7 @@
 
 **Roadmap track:** Phase 3 language intelligence, Stage 1. See the [current roadmap](../../../roadmaps/Roadmap-v0.0.4A.md).
 
-**Status:** Draft for the lead's review. Prepared under DA-11 and DA-12 and **not started**: Stage 1c begins only after `feat/lsp-stage-1b` is merged into `feat/intellisense-ws` (DA-10). No code has been written under this plan. Every decision below is **proposed, stand-in approval pending (DA-12)**; those marked **needs the architect** are outside what DA-12 allows.
+**Status:** Reviewed by the lead. The plan and decisions 40–51 and 53–55 have **stand-in approval (DA-14)**. Decision 52 **needs the architect**. Stage 1c begins only after `feat/lsp-stage-1b` is merged into `feat/intellisense-ws` (DA-10). No code has been written under this plan. See [DA-14](delegated-approvals-lsp-stage-1.md) for the conditions attached to 44, 49 and 54.
 
 **Scope:** exactly the design's [Stage 1c](design-lsp-stage-1-rust.md#stage-1c--providers). Nothing else: no rename, code actions, signature help, inlay hints, semantic tokens, workspace symbols or formatting (the design's non-goals), and no language other than Rust.
 

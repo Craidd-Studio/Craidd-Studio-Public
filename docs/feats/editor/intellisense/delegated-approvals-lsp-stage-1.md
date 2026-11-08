@@ -46,12 +46,15 @@ The handoff's standing rules apply unchanged. In particular:
 | DA-12 | New design choices inside Stage 1c | The lead may approve a choice that the design leaves open (a ◇ value, a test method, an ordering) if it does not contradict an existing decision or the philosophy. Each one is recorded as a numbered design decision marked "Stand-in approval (DA-12)". A choice that would change an existing decision or the philosophy waits for the architect. | This keeps every approval visible and revocable. |
 | DA-13 | V7, V16 | V7 (rustup shim) stays Unverified, as a release qualification. V16 is decided only from U10's facts. If U10 is harness-observed, V16 gets a proposed wording, not a decision. | No change from the handoff. |
 
+| DA-14 | Stage 1c plan ([plan-lsp-stage-1c-providers.md](plan-lsp-stage-1c-providers.md)) and its proposed decisions 40–55 | **The plan's order of work, tests and exit evidence are approved.** Decisions **40, 41, 42, 43, 45, 46, 47, 48, 50, 51, 53 and 55** are approved as proposed, under DA-12. **44** is approved as "existing surfaces only" (an Output line plus the chip detail). If that turns out not to work, a new surface still needs the architect. **49** is approved: unowned reads are restricted to paths the session returned. It adds a restriction, not a permission, so it narrows risk. The architect should still see it. **54** is approved with this clarification: F1's compensating revert is a **Monaco-local** command that Craidd attaches to the item. It is not a server `workspace/executeCommand`, and server item commands are still not executed. **52 is not approved.** It changes design file-identity rules 2 and 3 and stays with the architect, so step 7 waits for U10 and for the architect. The approved decisions are added to the design's open-decisions list marked "Stand-in approval (DA-14)". | Every approved choice fills a gap the design leaves open, and none changes an existing decision. 45 and 49 tighten security around text and paths from an external process. |
+
 ## Still waiting for the architect
 
 - DA-9 items: A6, A7, the stage 6 wording.
 - Stage 1b acceptance, and Stage 1 acceptance.
 - Every U-step and gate marked harness-observed, pending user review.
-- Any entry above that the architect wants to change. DA-4 (A2) and DA-11 (starting 1c) are the most consequential.
+- Decision 52 (symlinked-vendor holder rule), which waits for U10/V16 facts.
+- Any entry above that the architect wants to change. DA-4 (A2), DA-11 (starting 1c) and DA-14 (decisions 49 and 54) are the most consequential.
 
 ---
 
