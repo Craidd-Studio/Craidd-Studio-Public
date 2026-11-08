@@ -180,3 +180,22 @@ test("a chip rendering failure is contained to an inert fallback", async () => {
   const main = await readFile(new URL("../src/main.tsx", import.meta.url), "utf8");
   assert.match(main, /<AppErrorBoundary><App \/><\/AppErrorBoundary>/);
 });
+
+test("↻ Restart is offered when a live session's health is error, not for a warning (decision 38)", async () => {
+  const env = await started();
+  env.release(reply(status("ready", 1)));
+  await settle();
+  const ready = (health, revision) => ({ ...status("ready", revision), workspaceReady: true, health });
+  const restart = () => /Restart rust-analyzer/.test(renderToStaticMarkup(createElement(env.StatusBar)));
+  env.deliver(batch(ready(null, 2)));
+  assert.equal(restart(), false, "a healthy ready session shows no Restart");
+  env.deliver(batch(ready({ health: "warning", quiescent: true, message: "slow" }, 3)));
+  assert.equal(restart(), false, "a warning keeps the bar quiet");
+  env.deliver(batch(ready({ health: "error", quiescent: true, message: "Failed to load workspaces" }, 4)));
+  assert.equal(restart(), true, "an error offers the manual restart");
+  env.deliver(batch(ready({ health: "ok", quiescent: true, message: null }, 5)));
+  assert.equal(restart(), false, "it goes away when the server recovers");
+  assert.equal(env.lsp.restartOffered("crashed", null), true);
+  assert.equal(env.lsp.restartOffered("unresponsive", null), true);
+  assert.equal(env.lsp.restartOffered("ready", "ok"), false);
+});

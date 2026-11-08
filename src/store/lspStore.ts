@@ -104,6 +104,16 @@ export function serverName(view: LspSessionView): string {
   return view.status.caps?.serverName ?? (view.server?.split("/").pop() || "language server");
 }
 
+/**
+ * Whether the chip offers ↻ Restart (decision 38: recovery is the manual restart).
+ * It does once the session ended or went unresponsive, and also while a live
+ * session's own health is "error" (for example a broken workspace root).
+ * Health "warning" keeps the bar quiet.
+ */
+export function restartOffered(state: ChipState, health: string | undefined | null): boolean {
+  return state === "crashed" || state === "failed" || state === "stopped" || state === "unresponsive" || health === "error";
+}
+
 export function chipLabel(state: ChipState, name: string): string {
   return state === "ready" ? name : state === "notFound" ? `${name} not found` : `${name}: ${state}`;
 }
