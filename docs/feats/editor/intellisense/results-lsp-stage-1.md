@@ -1045,6 +1045,39 @@ Reading: with the server indexing a large workspace, typing, scrolling and tab s
 
 **G3 status:** the numbers are recorded and compared with the baseline as the gate requires; the gate also asks for the Channel message size and the pull rate, which are not here, so G3 stays **Unmeasured** pending those and the user's look.
 
+#### Job B, batch 8: U11 (V9) and the retention bounds with memory (U7, larger fixture) on the final 1b code (2026-11-08, DA-3). Harness-observed, pending user review.
+
+Build: the tip of `feat/lsp-stage-1b` at `21c926d`, own run checkout, isolated `HOME`, Xvfb `:98`. Scripts `scripts/jobb_u11.py` and `scripts/jobb_u7big.py`; the fixture generator `scripts/make_fx_big.py` (the fixture's `src/` is generated and git-ignored); evidence `/mnt/ext_drives/Development/Development/Desktop Development/Craidd-Studio/.claude/worktrees/intellisense-verify-0b263b/verification/lsp-1b/runs/jobb/u11/` and `/mnt/ext_drives/Development/Development/Desktop Development/Craidd-Studio/.claude/worktrees/intellisense-verify-0b263b/verification/lsp-1b/runs/jobb/u7big/`.
+
+**U11, V9 (one run; the split view is not tested and stays Unverified).** Monaco was reached by importing the same `monaco-editor` module the app uses (`import('/node_modules/.vite/deps/monaco-editor.js')` in the dev build), so the URI and model events could be read; listeners on `onDidCreateModel` and `onWillDisposeModel`, plus the tap.
+
+| Step | Models (URI file name, number of views) | Tap document messages |
+|---|---|---|
+| Before any file | none | none |
+| Open `main.rs` | `main.rs` (1) | `didOpen main.rs` 1 |
+| Open `util.rs`, `main.rs` tab stays | `main.rs` (0), `util.rs` (1) | no `didOpen util.rs` yet after 1.5 s |
+| Switch back to `main.rs` | `main.rs` (1), `util.rs` (0) | `didOpen util.rs` 1 (it arrived by then) |
+| Close the `main.rs` tab | `main.rs` (0), `util.rs` (1): **the model is not disposed** | `didClose main.rs` 1 |
+| Reopen `main.rs` | `main.rs` (1), `util.rs` (0): the same model reused | `didOpen main.rs` 2 |
+
+- The model URI is `file://` plus the percent-encoded path (scheme `file`, language `rust`), for example `file:///…/fx-small/src/main.rs`, not an `inmemory` URI.
+- A model outlives its view: switching tabs leaves a model with 0 views, and closing the tab does **not** dispose it. Only two `create` events were seen (one per file) and **no `dispose` event** in the run, including after the tab close and the reopen. That is what `keepCurrentModel` implies. The server's side follows the tab, not the model: one `didClose` on tab close and a fresh `didOpen` on reopen.
+- The second document's `didOpen` was not on the wire 1.5 s after its tab was opened and appeared by the next step; its attach had not completed, and the timing was not pinned down.
+- **Observation (not a verdict):** closed models stay in Monaco for the life of the window; with many files opened and closed that is memory the product keeps. Not measured here.
+- **Verdict (V9):** the URI and lifetime parts are **Verified** for open, switch, close and reopen (harness-observed, pending user review); the split view and the path-change case are **Unverified**.
+
+**Retention bounds and memory, larger fixture.** `fx-big` has 2100 modules with 10 E0061 each, plus `huge.rs` with 700 (generated, so the decision 22 bounds are exceeded: 500 per file and route, 2000 closed files, 20 000 diagnostics in closed sets). One run: open the solution, open `huge.rs`, wait for the start-up check.
+
+| Measure | Result |
+|---|---|
+| Stored push diagnostics | rose to about **20 480 to 20 490** and stayed there |
+| Files evicted / diagnostics "not retained" | **1443 / 1801** |
+| Problems header | `Language server (live): 7110 errors … · counts are at least: diagnostics for 1443 files and 1801 more diagnostics not retained · showing 500 of 20986` |
+| Webview VmRSS (WebKitWebProcess) | 560 MB with the solution open, 1117 MB after opening the file, 1338 MB after the check, 1404 MB at the end (with about 21 000 diagnostic rows stored). Method: `/proc/<pid>/status` of the app's `WebKitWebProcess` child |
+| `rust-analyzer` VmRSS | 929 MB |
+
+So the retention limits do engage: the stored set is capped at about 20 000 rows, files are evicted, and the header says the counts are "at least" and names both the evicted files and the diagnostics not retained (the wording the design asks for). The per-file cap's own wording (a single file above 500) is inside that "not retained" count and was not separated. Whether an evicted set comes back on reopening was not tested on this fixture. **G5's memory figure** is recorded above; the gate's other missing conditions (store writes per frame, the `unchanged` ratio, the save-triggered check) are unchanged from batch 4, so **G5 stays Unmeasured**. **V15 and V20** (retention and eviction behaviour) are **Verified** for the cap and the wording, harness-observed, pending user review; the eviction order was not examined.
+
 #### Other findings recorded during U1 (not 1b verdicts)
 
 1. **The language-server usable check accepts any binary that exits 0.** `lldb-dap` was accepted as Rust's language server. That is consistent with the designed check (V7), which proves only that a binary runs. What the chip showed for that session was not observed.
