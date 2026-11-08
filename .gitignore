@@ -44,3 +44,4 @@ workspaces/rust-debug-smoke/target/
 
 # Claude-only working instructions (not shared with other agents)
 CLAUDE.md
+/docs/local
