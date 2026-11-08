@@ -930,6 +930,27 @@ Build `ab52d83` (code identical to `0778c9e`), isolated `HOME`, the LSP tap (`ru
 
 **V3 (revised)** is partly answered from this: change-seed trigger to wire reply is a few ms to about 50 ms and trigger to marker is 0.31 to 0.36 s on this machine, n 5, one fixture. That is a distribution of one fixture, not a budget. The cross-document and focus-return cases are **Unverified** (step 3 beside, step 5). No gate moves.
 
+#### Job B, batch 3: T3 and T4 for U1, U4 and U5 on the final 1b code (2026-11-08, DA-3). Harness-observed, pending user review.
+
+Build for U4 and U5: the tip of `feat/lsp-stage-1b` at the time (`dd02020`, the code of `345eb37` on top of `ab52d83`), own run checkout, isolated `HOME`, tap as the language server, Xvfb `:98`. Scripts `scripts/jobb_t34.py` (T3 and T4, on `ab52d83`) and `scripts/jobb_u45.py` (U4 and U5); evidence `/mnt/ext_drives/Development/Development/Desktop Development/Craidd-Studio/.claude/worktrees/intellisense-verify-0b263b/verification/lsp-1b/runs/jobb/t34/`, `u4/`, `u5/`, `u5-r2/`, `u5-r3/`. Edits go through Monaco's API and save is `Ctrl+S` to the editor.
+
+**U1: what `ready after N ms` means, and T3 and T4.** The Output line `[lsp] ready after N ms` (`session.rs`) measures from sending `initialize` to its reply, so it is the wrong quantity for T3; the `0 ms` recorded above is plausible and is **not** T3. From the store trace (3 runs): the session phase `spawning` to `ready` took **about 10 ms** (0.009 to 0.011 s). The 100 ms process sampler first saw the server 30 to 100 ms after the `spawning` phase, so spawn to ready is at most a sampler resolution of 100 ms and about 10 ms by the store clock. **T3 is therefore about 10 ms, with the 100 ms sampling limit stated.** **T4** (ready to the end of initial indexing, from the last progress `end` in the same trace, with the status's `quiescent: true`): **1.39 s** in all 3 runs on `fx-small` (store timestamps; the chip's `rust-analyzer` text appears about 3.0 s after the click because the launch waits the 1.5 s bound). One small fixture; not a large-workspace figure. The parked-window case for G1 is still not run (no window-manager hide in WebDriver; the app's park action was not looked for in this batch).
+
+**U4, V24 (1 run).** The copy of `fx-small` had the argument break (`pub fn ok(x: u32)`) in `util.rs` on disk, and `util.rs` then `main.rs` were opened at once with the Problems tab showing. Timeline (chip text, whether the panel text `No problems from the last build or the language server` was shown, markers on `main.rs`):
+- 0.16 s: no server yet, the panel text **was** shown (before any server exists; it says nothing about the server);
+- 1.7 to 3.0 s, `rust-analyzer: indexing`: the panel text was **not** shown, no markers;
+- from 3.24 s the E0061 markers (`expected 1 argument, found 0` and the rustc rows) appeared.
+On the wire the first `textDocument/diagnostic` pull went out 1 ms after the first `quiescent: true` status (1.3458 s against 1.3448 s of the tap clock), so no pull preceded readiness. This matches V24 and decision 19 for this case. Step 3 (the status-less server) was not run.
+
+**U5, V27 (steps 1 to 5; steps 6a and 6b not run).** Method: `Cargo.toml` edited through Monaco's API (`[package]` to `[package`) and saved. The chip only renders while a Rust tab is active, so the status was read from the store (phase, and the server's health) instead of the chip. Three identical runs (`u5/`, `u5-r2/`, `u5-r3/`):
+- Step 2: health `error` (`cargo check failed to start: Cargo watcher failed, …`), 0 `rust-analyzer/reloadWorkspace` sent by the tap at that point.
+- Step 3: health back to `ok` **0.3 s** after the restoring save. **One reload** was counted by then, not none (the guide expects none: a manifest broken mid-session recovered without one when measured headless on 2026-10-29). Decision 21 sends one reload per successful save of an affected `Cargo.toml`, coalesced, and a broken-content save is a successful save, so one is consistent with decision 21 but not with the guide's text; recorded for the architect.
+- Step 4 (two break and fix pairs, 0.4 s apart): no further reload; the total for steps 2 to 4 was 1 (the bound is 2).
+- Step 5: the `↻ Restart` action is shown only for a failed chip, so it was not available; **restart is Unverified in this run**.
+An earlier run of the same script, which read the chip instead of the store, counted 1 reload at step 2 and 2 at step 4; its chip was absent all along, because `Cargo.toml` was the active tab, so it is not used. The cause of the difference in counts is not established.
+
+No gate moves. V24 for this scenario and V27 steps 2 to 4 are **Verified** as far as these limits go; the rest of U4 and U5 is Unverified.
+
 #### Other findings recorded during U1 (not 1b verdicts)
 
 1. **The language-server usable check accepts any binary that exits 0.** `lldb-dap` was accepted as Rust's language server. That is consistent with the designed check (V7), which proves only that a binary runs. What the chip showed for that session was not observed.
