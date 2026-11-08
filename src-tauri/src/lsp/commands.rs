@@ -142,8 +142,10 @@ pub(crate) fn lsp_subscribe(window: WebviewWindow, state: State<'_, LspManager>,
     }
 }
 
+/// `rename_all` on an enum renames only the variants; `rename_all_fields`
+/// is what camel-cases the struct variants' keys that bridge.ts reads.
 #[derive(Serialize)]
-#[serde(rename_all = "camelCase", tag = "kind")]
+#[serde(rename_all = "camelCase", rename_all_fields = "camelCase", tag = "kind")]
 pub(crate) enum AttachReply {
     Routed {
         session: u64, uri: String, canonical: String, language_id: String,
@@ -481,6 +483,29 @@ pub(crate) fn close_window(app: &tauri::AppHandle, label: &str) {
 mod tests {
     use super::*;
     use crate::ownership::tests::{languages, project, solution, Scripted};
+
+    #[test]
+    fn attach_reply_keys_are_the_ones_the_frontend_reads() {
+        // The frontend (bridge.ts `bind`) reads exactly these keys; a snake_case key reads as undefined.
+        let keys = |reply: AttachReply| {
+            let value = serde_json::to_value(reply).unwrap();
+            let mut keys: Vec<String> = value.as_object().unwrap().keys().cloned().collect();
+            keys.sort();
+            keys
+        };
+        let routed = AttachReply::Routed {
+            session: 1, uri: "u".into(), canonical: "c".into(), language_id: "rust".into(), project_id: "p".into(),
+            project_name: "n".into(), launched: true, server: "s".into(), version: "v".into(), root: "r".into(),
+            notes: vec![], status: StatusRecord::new(1),
+        };
+        assert_eq!(keys(routed), ["canonical", "kind", "languageId", "launched", "notes", "projectId", "projectName",
+            "root", "server", "session", "status", "uri", "version"]);
+        let value = serde_json::to_value(AttachReply::NotRouted { reason: "r".into() }).unwrap();
+        assert_eq!(value, serde_json::json!({"kind": "notRouted", "reason": "r"}));
+        assert_eq!(keys(AttachReply::Skipped { reason: "r".into() }), ["kind", "reason"]);
+        assert_eq!(keys(AttachReply::Unavailable { reason: "r".into() }), ["kind", "reason"]);
+        assert_eq!(serde_json::to_value(AttachReply::Disabled).unwrap(), serde_json::json!({"kind": "disabled"}));
+    }
 
     #[test]
     fn decision_33_only_workspace_manifests_are_affected() {
