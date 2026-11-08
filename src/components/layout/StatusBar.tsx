@@ -1,14 +1,15 @@
 import { useSolution } from "../../store/solutionStore";
 import { usePreferences } from "../../store/preferencesStore";
 import { useBuild } from "../../store/buildStore";
-import { chipLabel, chipState, serverName, useLsp } from "../../store/lspStore";
+import { chipLabel, chipState, restartOffered, serverName, useLsp } from "../../store/lspStore";
 import { restartSession, showLspOutput } from "../../lib/lsp/bridge";
 import ChipBoundary from "./ChipBoundary";
 
 /**
  * The language-server status chip (design: "User-visible surfaces"). Click
  * opens the server log in Output; hover gives binary, version, root and
- * the server's own health message. Restart appears once a session ended.
+ * the server's own health message. Restart appears once a session ended or
+ * went unresponsive, and while its health is "error" (decision 38).
  */
 function LanguageServerChip({ fileId }: { fileId: string | null }) {
   const info = useLsp((s) => (fileId ? s.docs[fileId] : undefined));
@@ -39,12 +40,11 @@ function LanguageServerChip({ fileId }: { fileId: string | null }) {
     view.pullDegraded, info.alias ? `Also open as ${info.alias}: language features are off in this tab` : null,
     ...(view.notes ?? []), ...Object.values(view.progress).map((title) => `Working: ${title}`),
   ].filter(Boolean).join("\n");
-  const ended = state === "crashed" || state === "failed" || state === "stopped";
   return <span className="flex items-center gap-1">
     <button type="button" onClick={showLspOutput} title={detail} className={`${colour} hover:text-zinc-200`}>
       {info.alias ? `${name}: alias` : chipLabel(state, name)}{view.status.readyFallback ? " (no status)" : ""}{warn || watcher ? " ⚠" : ""}
     </button>
-    {(ended || state === "unresponsive") && <button type="button" title={`Restart ${name}`} aria-label={`Restart ${name}`}
+    {restartOffered(state, health?.health) && <button type="button" title={`Restart ${name}`} aria-label={`Restart ${name}`}
       onClick={() => void restartSession(info.session).catch((error) => console.warn("[lsp] restart failed:", error))}
       className="text-zinc-400 hover:text-zinc-100">↻ Restart</button>}
   </span>;
