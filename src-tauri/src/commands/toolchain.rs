@@ -25,6 +25,9 @@ pub struct ToolchainSnapshot {
     pub defaults: BTreeMap<String, String>,
     pub preferences_path: String,
     pub download_debug_symbols: bool,
+    /// True when `tools` includes a re-probe result that differs from the
+    /// stored scan. It is shown, not saved; Rescan saves it.
+    pub differs_from_stored: bool,
 }
 
 #[derive(Serialize)]
@@ -152,6 +155,40 @@ fn discover(language: &str, role: &str, name: &str) -> Option<ToolEntry> {
     if USABLE_CHECK_ROLES.contains(&role) { probe_usable(language, role, name, &path).ok() } else { Some(probe(role, name, &path)) }
 }
 
+/// Re-probe on read (DA-8): every catalog tool the stored scan lacks, or
+/// whose stored file is gone, is looked for again. The result is shown but
+/// never written; only the user's Rescan or Save persists anything.
+fn with_reprobed(language: &str, mut tools: Vec<ToolEntry>, find: impl Fn(&str, &str, &str) -> Option<ToolEntry>) -> (Vec<ToolEntry>, bool) {
+    let Ok(definitions) = catalog(language) else { return (tools, false) };
+    let mut changed = false;
+    for (role, name) in definitions {
+        let present = tools.iter().any(|t| t.role == *role && t.name == *name && Path::new(&t.path).is_file());
+        if present { continue; }
+        if let Some(found) = find(language, role, name) {
+            tools.retain(|t| !(t.role == *role && t.name == *name));
+            tools.push(found);
+            changed = true;
+        }
+    }
+    (tools, changed)
+}
+
+/// One re-probe result per (language, role, name) for the life of the app,
+/// found or not, so a read never spawns a process twice. Rescan clears it.
+static REPROBE_CACHE: Mutex<BTreeMap<(String, String, String), Option<ToolEntry>>> = Mutex::new(BTreeMap::new());
+
+fn cached_discover(language: &str, role: &str, name: &str) -> Option<ToolEntry> {
+    let key = (language.to_string(), role.to_string(), name.to_string());
+    if let Some(hit) = REPROBE_CACHE.lock().ok().and_then(|c| c.get(&key).cloned()) { return hit; }
+    let found = discover(language, role, name);
+    if let Ok(mut cache) = REPROBE_CACHE.lock() { cache.insert(key, found.clone()); }
+    found
+}
+
+fn clear_reprobe_cache(language: &str) {
+    if let Ok(mut cache) = REPROBE_CACHE.lock() { cache.retain(|(l, _, _), _| l != language); }
+}
+
 fn snapshot(language: &str, prefs: &toml::Value, path: &Path) -> ToolchainSnapshot {
     let table = language_table(prefs, language);
     let tools = table.and_then(|t| t.get("tools")).and_then(toml::Value::as_array)
@@ -172,6 +209,7 @@ fn snapshot(language: &str, prefs: &toml::Value, path: &Path) -> ToolchainSnapsh
         tools, defaults, preferences_path: path.to_string_lossy().into_owned(),
         download_debug_symbols: table.and_then(|t| t.get("download_debug_symbols"))
             .and_then(toml::Value::as_bool).unwrap_or(false),
+        differs_from_stored: false,
     }
 }
 
@@ -180,12 +218,20 @@ pub fn get_toolchain(language: String) -> Result<ToolchainSnapshot, String> {
     catalog(&language)?;
     let _guard = PREFS_LOCK.lock().map_err(|e| e.to_string())?;
     let path = prefs_path()?;
-    Ok(snapshot(&language, &read_prefs(&path)?, &path))
+    let mut shown = snapshot(&language, &read_prefs(&path)?, &path);
+    // A table never scanned stays empty: the first scan is the existing trigger.
+    if shown.scanned {
+        let (tools, changed) = with_reprobed(&language, shown.tools, cached_discover);
+        shown.tools = tools;
+        shown.differs_from_stored = changed;
+    }
+    Ok(shown)
 }
 
 #[tauri::command]
 pub fn scan_toolchain(language: String) -> Result<ToolchainSnapshot, String> {
     let definitions = catalog(&language)?;
+    clear_reprobe_cache(&language);
     let found: Vec<ToolEntry> = definitions.iter().filter_map(|(role, name)| discover(&language, role, name)).collect();
     let _guard = PREFS_LOCK.lock().map_err(|e| e.to_string())?;
     let path = prefs_path()?;
@@ -282,9 +328,14 @@ pub fn resolve_tool(language: &str, role: &str) -> Result<PathBuf, String> {
     if let Some(tool) = snapshot.tools.iter().find(|tool| tool.role == role && Path::new(&tool.path).is_file()) {
         return Ok(PathBuf::from(&tool.path));
     }
-    // First use is a discovery trigger; a stale cache is retried once.
-    let fresh = scan_toolchain(language.into())?;
-    fresh.tools.iter().find(|tool| tool.role == role).map(|tool| PathBuf::from(&tool.path))
+    if !snapshot.scanned {
+        // Never scanned at all: first use is the discovery trigger.
+        let fresh = scan_toolchain(language.into())?;
+        return fresh.tools.iter().find(|tool| tool.role == role).map(|tool| PathBuf::from(&tool.path))
+            .ok_or_else(|| format!("No {role} tool found for {language}. Install it or choose a path in Preferences."));
+    }
+    // get_toolchain already re-probed what the stored scan lacked, without writing it.
+    snapshot.tools.iter().find(|tool| tool.role == role).map(|tool| PathBuf::from(&tool.path))
         .ok_or_else(|| format!("No {role} tool found for {language}. Install it or choose a path in Preferences."))
 }
 
@@ -553,6 +604,39 @@ mod tests {
         fs::remove_dir_all(other.parent().unwrap()).unwrap();
     }
 
+    fn entry(role: &str, name: &str, path: &str) -> ToolEntry {
+        ToolEntry { role: role.into(), name: name.into(), path: path.into(), version: "v".into() }
+    }
+
+    #[test]
+    fn a_missing_role_binary_is_reprobed_on_read_without_touching_stored_entries() {
+        let present = script("present", "echo x");
+        let stored = vec![entry("build", "cargo", present.to_str().unwrap())];
+        let finder = |_: &str, role: &str, name: &str| (name == "rust-analyzer").then(|| entry(role, name, "/found/rust-analyzer"));
+        let (shown, changed) = with_reprobed("rust", stored, finder);
+        assert!(changed);
+        assert!(shown.iter().any(|t| t.name == "rust-analyzer" && t.path == "/found/rust-analyzer"), "stale scan gains the new binary");
+        assert!(shown.iter().any(|t| t.name == "cargo" && t.path == present.to_str().unwrap()), "existing entry kept");
+        fs::remove_dir_all(present.parent().unwrap()).unwrap();
+    }
+
+    #[test]
+    fn a_stored_entry_whose_file_is_gone_is_replaced_or_left_alone() {
+        let gone = vec![entry("language_server", "rust-analyzer", "/no/such/rust-analyzer")];
+        let (replaced, _) = with_reprobed("rust", gone.clone(), |_, role, name| (name == "rust-analyzer").then(|| entry(role, name, "/new/rust-analyzer")));
+        assert_eq!(replaced.iter().filter(|t| t.name == "rust-analyzer").count(), 1);
+        assert!(replaced.iter().any(|t| t.path == "/new/rust-analyzer"));
+        let (unchanged, changed) = with_reprobed("rust", gone, |_, _, _| None);
+        assert!(!changed, "nothing found: the display does not differ from the stored scan");
+        assert!(unchanged.iter().any(|t| t.path == "/no/such/rust-analyzer"), "nothing found: stored entry unchanged");
+    }
+
+    #[test]
+    fn reprobing_is_a_pure_view_and_an_unknown_language_is_returned_as_is() {
+        let tools = vec![entry("x", "y", "/z")];
+        assert_eq!(with_reprobed("nonsense", tools, |_, _, _| panic!("must not probe")).0.len(), 1);
+    }
+
     #[test]
     fn a_rustup_proxy_that_forwards_to_the_real_server_is_accepted() {
         // No rustup is installed on the development machine, so this is a
@@ -572,6 +656,16 @@ mod tests {
         if let Ok(tool) = probe_usable("rust", "language_server", "rust-analyzer", &path) {
             assert!(tool.version.starts_with("rust-analyzer"), "{}", tool.version);
         }
+    }
+
+    #[test]
+    fn a_reprobe_result_is_cached_for_the_app_session_until_rescan() {
+        // A miss is remembered too, and Rescan's clear forgets it.
+        clear_reprobe_cache("zz-test");
+        REPROBE_CACHE.lock().unwrap().insert(("zz-test".into(), "r".into(), "n".into()), None);
+        assert!(cached_discover("zz-test", "r", "n").is_none(), "answered from the cache without a probe");
+        clear_reprobe_cache("zz-test");
+        assert!(!REPROBE_CACHE.lock().unwrap().keys().any(|(l, _, _)| l == "zz-test"));
     }
 
     #[test]
