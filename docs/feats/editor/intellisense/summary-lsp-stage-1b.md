@@ -6,7 +6,7 @@
 
 **Status:** Record. A one-page comparison for the architect, kept current by the lead. It summarises; the [results record](results-lsp-stage-1.md) is the evidence and is authoritative. **Stage 1b is not accepted.** Every result from the Verification lane is **harness-observed, pending user review** unless this page says otherwise.
 
-**State shown:** the results record on `refs/heads/feat/lsp-stage-1b` at `7bc8d2a` (plus the findings 13–19 commit, `1b1791f`, on `docs/lsp-1b-findings-2`), and the approvals file on `feat/intellisense-ws` at `32e7372`. Where the results record's own gate and verification tables lag the batch records beneath them, this page uses the table's word and says what the batches add.
+**State shown:** the results record on `refs/heads/feat/lsp-stage-1b` at `7bc8d2a` plus findings 13–19 (`1ab81d5` in `lead/lsp-1b-candidate`) and the updates to findings 14, 15, 16 and 18 (`dbe2d64`, `docs/lsp-1b-findings-3`), and the approvals file and Stage 1c monaco probe on `feat/intellisense-ws` at `6d27964`. Where the results record's own gate and verification tables lag the batch records beneath them, this page uses the table's word and says what the batches add.
 
 **Verdict words (used strictly).** Gates: **Pass**, **Fail**, **Blocked**, **Unmeasured**. Checks: **Verified**, **Failed**, **Unverified**. A result a harness saw but the user has not looked at is "harness-observed, pending user review", and is never a gate Pass on the harness alone. "Partly" is the record's own qualifier, kept as written.
 
@@ -41,7 +41,9 @@ Words as in the results record's verification table. The "Job B adds" column nam
 | V7 | rustup shim | **Partly verified**; shim case **Unverified** | A release qualification |
 | V8 | `cargo metadata` and `Cargo.lock` | **Verified** | — |
 | V9 | Monaco model URI and lifetime | **Unverified** (table) | Batch 8 (U11) recorded one run; models are not disposed on tab close (finding 17); split view **Unverified** |
-| V10, V11, V12, V18 | Completion verifications | **Unverified** | Belong to Stage 1c |
+| V10 | Monaco: does accept wait for a pending resolve | **Failed** | Stage 1c, headless probe (`experiments/lsp-1c-monaco`, merge `5975ef1`): Monaco does not wait for the resolve, so F1 cannot be atomic. Not a Stage 1b item |
+| V11, V12 | Incomplete-list flag and context; one undo step | **Verified** | Stage 1c, headless probes (`experiments/lsp-1c-monaco`). Not a UI run |
+| V18 | Server sends additional edits when not declared lazy | **Unverified** | Stage 1c; Implementation is testing it against the real server |
 | V13 | `showMessageRequest` | **Unverified** against the real server | Fake-server test passes; 1 of 4 edge cases built |
 | V14 | Server child processes | **Verified** | — |
 | V15 | Republish on open | **Verified**: no republish on open | Batch 4/10: whether an evicted file's rows return was examined; decision 22 stays open |
@@ -65,6 +67,8 @@ Words as in the results record's verification table. The "Job B adds" column nam
 | Window crash on first attach (partial session view); `ChipBoundary` added | `ead1a68`, tests `39f4e89` | "Chip-crash fix `ead1a68` + `39f4e89`, verified" and "Second independent reproduction" (10 cold starts, no crash, partial-view fault contained) | **Verified**, pending user review. One unexplained harness disconnect is noted in the record |
 | `lsp_open` failed: missing `languageId` (attach reply keys) | `ab52d83` (`rename_all_fields = "camelCase"` on `AttachReply`, plus a key-pinning test) | "`lsp_open` fix `ab52d83`, independent re-check": 3 of 3 runs, no `document operation failed`, markers appear | **Verified**, pending user review |
 | Finding 9 (usable check accepts any binary), finding 10 (no rescan), chip hover while spawning | `fix/lsp-1b-toolchain-2`: `6cfcf7a`, `3346a72`, `345eb37`; merged as `e62474d` | "Toolchain fixes for findings 9 and 10 and the chip hover, independent re-check" (record commit `7a18133`) | Items 1–3 **Verified** as far as stated; chip hover **Unverified** for the targeted window (no failure seen). Native file dialog (Choose Path…) not driven |
+| Finding 14: `↻ Restart` not offered for a ready session with error health | `51ad0d9` (`restartOffered`) | Not yet re-checked | Pending Verification's independent re-check; no verdict |
+| Finding 15: `didChange` stuck (`DocumentTracker`'s default scheduler was `queueMicrotask` assigned as a field, `documents.ts:78`, so the browser threw "Illegal invocation" and `flushQueued` stuck) | `a203c10` | Not yet re-checked | Pending Verification's re-check; no verdict |
 
 Decisions: 39 records the first two fixes (DA-5). Findings 9 and 10 carried DA-8 proposals.
 
@@ -72,11 +76,11 @@ Decisions: 39 records the first two fixes (DA-5). Findings 9 and 10 carried DA-8
 
 | Item | State | Route |
 |---|---|---|
-| Finding 14: `↻ Restart` not offered for a ready session with error health (`StatusBar.tsx:47`); decision 38's recovery unreachable from the status bar | Fix queued | DA-7 |
-| Finding 15: `didChange` held back during continuous typing (36 s with no `didChange`, then one with 663 changes) | Cause under investigation; fix approved if confirmed | DA-7 |
-| Finding 16: about 620–690 MB extra webview memory for about 21k diagnostics on `fx-big` | Cause under investigation | Bears on decision 22's budget question, the architect's |
+| Finding 14: `↻ Restart` not offered for a ready session with error health (`StatusBar.tsx:47`); decision 38's recovery unreachable from the status bar | Fixed in `51ad0d9`; pending Verification's re-check | DA-7 |
+| Finding 15: `didChange` held back during continuous typing (36 s with no `didChange`, then one with 663 changes) | Cause found (`documents.ts:78`); fixed in `a203c10`, pending re-check. The 0.31 s marker lag is separate: the designed 300 ms pull debounce | DA-7 |
+| Finding 16: about 620–690 MB extra webview memory for about 21k diagnostics on `fx-big` | Code reading, not profiling: retained data about 100 MB (stored items 30–60 MB, rows about 9 MB, two panel copies about 18 MB, `BottomPanel.tsx:32,58,61,64`); the rest is likely allocation churn from about 194 frame writes rebuilding all rows and both arrays even with the Problems tab closed, with WebKit keeping the high-water mark. No unintended retention found. Churn explanation unmeasured | Cheaper shapes are the architect's under decision 22 |
 | Finding 17: Monaco models never disposed on tab close | Recorded, no verdict | Open; split view untested |
-| Finding 18 / V16 (U10): only the canonical path is registered; symlinked tab shows no chip or alias note | Cause under investigation | V16 stays open (decision 37, DA-13); decision 52 for the architect |
+| Finding 18 / V16 (U10): only the canonical path is registered; symlinked tab shows no chip or alias note | Cause found: ownership rejects any path through a symlinked folder or file (`ownership.rs:107,111`; header `ownership.rs:6`), so the symlinked tab is `NotRouted` and renders no chip (`StatusBar.tsx:16`). Decision 12's symlinked alias is unreachable while that holds: a design conflict. Also a UX gap: a `NotRouted` tab shows no reason | V16 stays open (decision 37, DA-13); decisions 12 and 52 for the architect |
 | Finding 13: "File > Get Started" does not close the solution | Recorded | No harness-reachable close short of closing the window |
 | Finding 8: progress before a view exists is dropped | Implementation to check the backend's first batch | DA-6, DA-7 |
 | U9 step 9: edit on disk while the model is disposed — model returned with old content | **Unverified** | Open |
@@ -101,12 +105,13 @@ From the [approvals file](delegated-approvals-lsp-stage-1.md) and the findings:
 - **A6, A7 and the stage 6 "keep flowing" sentence** (DA-9).
 - **Stage 1b acceptance, and Stage 1 acceptance** (every gate G1–G7 Pass).
 - **Review of the most consequential stand-ins:** DA-4 (philosophy A2 wording), DA-11 (starting Stage 1c), DA-14 (decisions 49 and 54).
-- **Decision 52:** the symlinked-vendor holder rule (changes file-identity rules 2 and 3); step 7 of the 1c plan waits.
+- **Decision 52 and the ownership conflict:** the symlinked-vendor holder rule (changes file-identity rules 2 and 3), now with finding 18's cause: ownership rejects symlinks, so decision 12's alias is unreachable. Whether ownership or the design changes is the architect's; step 7 of the 1c plan waits.
+- **Stage 1c route after V10 Failed:** per the design's order, step 9 goes to F2 (eager mode), which depends on V18. If V18 also fails, completion cannot ship and that goes to the architect.
 - **Decision 22's memory budget**, now with finding 16's numbers.
 - **V16 wording** (decision 37) from the U10 facts.
 - **V7's rustup shim** as a release qualification.
 - **Whether G1 moves**, given the unrun parked-window case.
-- **Merge of `feat/lsp-stage-1b` into `feat/intellisense-ws`:** permitted locally by DA-10 once the harness-measurable 1b gates are settled and no 1b defect is open. As of this page, findings 14 and 15 are open fixes, so DA-10's condition is not yet met.
+- **Merge of `feat/lsp-stage-1b` into `feat/intellisense-ws`:** permitted locally by DA-10 once the harness-measurable 1b gates are settled and no 1b defect is open. As of this page, the fixes for findings 14 (`51ad0d9`) and 15 (`a203c10`) are pending Verification's re-check, so DA-10's condition is not yet shown to be met.
 
 ## Roster
 
