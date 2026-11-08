@@ -998,6 +998,25 @@ Wire: no `didChange` version errors, `max_in_flight` 1, no cancelled requests, 2
 
 G7 stays **Unmeasured**: the case above is a recorded difference, steps 8 and 9 are not run, and forced overflow comes from the fake-server tests.
 
+#### Job B, batch 6: U5 steps 3, 6a and 6b (V27, decision 33) (2026-11-08, DA-3, DA-12). Harness-observed, pending user review.
+
+Build: the tip of `feat/lsp-stage-1b` at `dd02020`, own run checkout, isolated `HOME`, tap as the language server, Xvfb `:98`. Script `scripts/jobb_u5b.py`; evidence `/mnt/ext_drives/Development/Development/Desktop Development/Craidd-Studio/.claude/worktrees/intellisense-verify-0b263b/verification/lsp-1b/runs/jobb/u5-6a/` and `/mnt/ext_drives/Development/Development/Desktop Development/Craidd-Studio/.claude/worktrees/intellisense-verify-0b263b/verification/lsp-1b/runs/jobb/u5-6b/` (`result.json`, `tap.jsonl`, screenshots). Health is read from the store, and the chip's own text and hover were read where a Rust tab was active. Edits go through Monaco's API and are saved with `Ctrl+S`.
+
+**Step 3 expectation (lead ruling).** The lead ruled under DA-12 (a test-method choice, not a design change; the architect may revise it) that one `reloadWorkspace` at the restoring save is the expected behaviour, per decision 21, and that the guide text expecting none came from a headless measurement and does not describe the IDE path. `UI-STEPS.md` U5 step 3 is corrected accordingly. With that, the three U5 runs recorded above (one reload at the restoring save, none further for the burst, total 1 against a bound of 2, recovery 0.3 s) **match the design**.
+
+| Case | Result |
+|---|---|
+| **6a**, `fx-nested` root `Cargo.toml` broken from the start, `src/main.rs` open | Chip `rust-analyzer: indexing ⚠`; hover `Server error: Failed to load workspaces.` and `Cargo workspace discovery failed; using the project folder (cargo metadata failed: error: unclosed table, expected `]`)`; health `error` |
+| 6a: save `tools/gen/Cargo.toml` (a separate crate, not a member) | 0 `reloadWorkspace` on the wire; the warning stays |
+| 6a: restore `]` in the root `Cargo.toml` and save | **Exactly one** `reloadWorkspace`; health back to `ok` **0.2 s** after the save. Matches the expectation |
+| **6b**, `fx-ws` with `[workspace` broken, `alpha/src/main.rs` open | Chip `rust-analyzer: indexing ⚠` with `Failed to load workspaces.` |
+| 6b: restore `]` in `fx-ws/Cargo.toml` and save, wait 30 s | **0** `reloadWorkspace`; the warning stays (the known limitation, decision 38). As the step describes |
+| 6b: click `↻ Restart` | **Not possible: no such control exists in this state.** `StatusBar.tsx` shows `↻ Restart` only when the session has ended or is `unresponsive`. A session that is `ready` with an error health shows only the chip, and clicking the chip opens nothing. The warning therefore **cannot be cleared from the status bar** here, and the 6b guide text "`↻ Restart` clears it" does not hold for this build |
+
+**Finding for the lead (recorded, not fixed).** Decision 33's residual limitation says recovery from a broken workspace root with a member project is "by manual restart". In the IDE as built there is no restart control while the server is alive and reports an error. Restart exists for ended or unresponsive sessions only, so the documented recovery is not reachable from the UI; closing and reopening the solution would do it. The same applies to U5 step 5 (restart still works), which stays **Unverified**. Whether this is a defect (a restart should be offered for error health) or a wording error in the guide is for the architect; no code was changed.
+
+V27 steps 2 to 4, 6a and the 6b limitation are **Verified** as far as these limits go (harness-observed, pending user review); step 5 and the 6b restart are **Unverified**.
+
 #### Other findings recorded during U1 (not 1b verdicts)
 
 1. **The language-server usable check accepts any binary that exits 0.** `lldb-dap` was accepted as Rust's language server. That is consistent with the designed check (V7), which proves only that a binary runs. What the chip showed for that session was not observed.
