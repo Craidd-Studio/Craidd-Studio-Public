@@ -30,13 +30,14 @@ function LanguageServerChip({ fileId }: { fileId: string | null }) {
     : state === "unresponsive" || warn || watcher || view.pullDegraded ? "text-amber-400"
     : state === "ready" ? "text-zinc-400" : "text-blue-400";
   const detail = [
-    `${view.server} (${view.version})`, `Root: ${view.root}`,
+    // Absent until the attach reply is merged (see `viewWithStatus`): show the phase only.
+    view.server ? `${view.server} (${view.version})` : `Phase: ${view.status.phase}`, view.root ? `Root: ${view.root}` : null,
     view.status.phase === "ready" ? (watcher ? `File watching failed (changes on disk may be missed): ${watcher}` : "File watching: server-side") : null,
     view.status.terminalReason ? `Ended: ${view.status.terminalReason}` : null,
     view.status.readyFallback ? "The server reports no workspace status; diagnostics are pulled without waiting for it" : null,
     warn ? `Server ${warn.health}: ${warn.message ?? ""}` : null,
     view.pullDegraded, info.alias ? `Also open as ${info.alias}: language features are off in this tab` : null,
-    ...view.notes, ...Object.values(view.progress).map((title) => `Working: ${title}`),
+    ...(view.notes ?? []), ...Object.values(view.progress).map((title) => `Working: ${title}`),
   ].filter(Boolean).join("\n");
   const ended = state === "crashed" || state === "failed" || state === "stopped";
   return <span className="flex items-center gap-1">

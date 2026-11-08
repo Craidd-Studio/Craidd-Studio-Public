@@ -109,6 +109,12 @@ test("status before registration: the reply's description is merged, the newer C
   assert.equal(early.server, undefined, "no description before the reply");
   assert.ok(env.calls.includes("lsp_ack"), "the early batch is still acknowledged");
   assert.equal(env.lsp.useLsp.getState().output.at(-1).text, "[lsp:language server] hello");
+  // A document bound to the session while the view still has no description.
+  const fileId = FILE;
+  env.lsp.useLsp.setState((st) => ({ docs: { ...st.docs, [fileId]: { kind: "bound", session: 1, alias: null, state: "pending" } } }));
+  const earlyMarkup = renderToStaticMarkup(createElement(env.StatusBar));
+  assert.doesNotMatch(earlyMarkup, /undefined/, "the hover never prints an undefined server, version or root");
+  assert.match(earlyMarkup, /Phase: initializing/);
   env.release(reply(status("spawning", 1)));
   await settle();
   const view = env.lsp.useLsp.getState().sessions[1];
