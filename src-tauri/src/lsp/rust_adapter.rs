@@ -189,7 +189,6 @@ impl LanguageAdapter for RustAdapter {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::os::unix::fs::PermissionsExt;
 
     struct Dir(PathBuf);
     impl Drop for Dir { fn drop(&mut self) { let _ = std::fs::remove_dir_all(&self.0); } }
@@ -276,8 +275,7 @@ mod tests {
         krate(&krate_dir.0, "flight");
         let slow = krate_dir.0.join("slow-cargo");
         // A cargo stand-in that is slow enough for the callers to overlap.
-        write(slow.clone(), &format!("#!/bin/sh\nsleep 0.3\nexec '{}' \"$@\"\n", cargo().unwrap().display()));
-        std::fs::set_permissions(&slow, std::fs::Permissions::from_mode(0o755)).unwrap();
+        crate::test_exec::install_script(&slow, &format!("#!/bin/sh\nsleep 0.3\nexec '{}' \"$@\"\n", cargo().unwrap().display()));
         let adapter = Arc::new(RustAdapter::with(|| Ok(ToolRef { path: "/x".into(), version: "t".into() }),
             move || Ok(slow.clone()), METADATA_TIMEOUT));
         let roots: Vec<_> = (0..8).map(|_| {
@@ -292,8 +290,7 @@ mod tests {
     fn a_hung_cargo_is_bounded_and_a_missing_server_is_a_note() {
         let hung = dir("hung");
         let fake = hung.0.join("cargo");
-        write(fake.clone(), "#!/bin/sh\nexec sleep 30\n");
-        std::fs::set_permissions(&fake, std::fs::Permissions::from_mode(0o755)).unwrap();
+        crate::test_exec::install_script(&fake, "#!/bin/sh\nexec sleep 30\n");
         let adapter = RustAdapter::with(|| Ok(ToolRef { path: "/x".into(), version: "t".into() }), move || Ok(fake.clone()), Duration::from_millis(200));
         let began = Instant::now();
         let context = adapter.resolve(&project(&hung.0)).unwrap();

@@ -568,14 +568,11 @@ fn find_cln_file(root: &Path) -> Result<PathBuf, String> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::os::unix::fs::PermissionsExt;
 
     fn script(name: &str, body: &str) -> PathBuf {
         let dir = std::env::temp_dir().join(format!("craidd-probe-{}-{name}", std::process::id()));
-        fs::create_dir_all(&dir).unwrap();
         let path = dir.join("rust-analyzer");
-        fs::write(&path, format!("#!/bin/sh\n{body}\n")).unwrap();
-        fs::set_permissions(&path, fs::Permissions::from_mode(0o755)).unwrap();
+        crate::test_exec::install_script(&path, &format!("#!/bin/sh\n{body}\n"));
         path
     }
 
