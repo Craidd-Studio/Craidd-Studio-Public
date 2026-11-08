@@ -75,7 +75,9 @@ export class DocumentTracker {
   private schedule: (flush: () => void) => void;
 
   constructor(transport: DocTransport, models: (fileId: string) => TextModel | null,
-    events: TrackerEvents, schedule: (flush: () => void) => void = queueMicrotask) {
+    events: TrackerEvents, schedule: (flush: () => void) => void = (run) => queueMicrotask(run)) {
+    // Not `= queueMicrotask`: it is called as `this.schedule(...)`, and a browser's
+    // `queueMicrotask` throws "Illegal invocation" when `this` is not the window.
     this.transport = transport;
     this.models = models;
     this.events = events;
@@ -184,7 +186,8 @@ export class DocumentTracker {
     this.events.edited(fileId, doc.binding);
     if (!doc.flushQueued) {
       doc.flushQueued = true;
-      this.schedule(() => { doc.flushQueued = false; void this.flush(fileId); });
+      try { this.schedule(() => { doc.flushQueued = false; void this.flush(fileId); }); }
+      catch (error) { doc.flushQueued = false; throw error; }
     }
   }
 
