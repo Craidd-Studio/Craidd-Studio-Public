@@ -976,6 +976,28 @@ Reading:
 
 No gate moves: G5 Unmeasured, and V15, V20 and decision 22 are Unverified for eviction.
 
+#### Job B, batch 5: U9 (G7 synchronisation) on the final 1b code (2026-11-08, DA-3). Harness-observed, pending user review.
+
+Build: the tip of `feat/lsp-stage-1b` at `dd02020`, own run checkout, isolated `HOME`, the tap as the language server, Xvfb `:98`. Script `scripts/jobb_u9.py`; evidence `/mnt/ext_drives/Development/Development/Desktop Development/Craidd-Studio/.claude/worktrees/intellisense-verify-0b263b/verification/lsp-1b/runs/jobb/u9/` (first run) and `/mnt/ext_drives/Development/Development/Desktop Development/Craidd-Studio/.claude/worktrees/intellisense-verify-0b263b/verification/lsp-1b/runs/jobb/u9b/` (second run, with the extra CRLF edit and the EOL-insensitive comparison). **Method limits:** edits are made through Monaco's API (`executeEdits`, `undo`, `redo`, `setSelections`, `setEOL`), not keystrokes or the clipboard, so a real paste and the status bar's EOL control are not exercised; steps 8 (dispose and recreate the model view while the tab stays open) and 9 (edit on disk while the model is disposed) were **not run**. After each step the server's text was rebuilt from the tap log with `tap_report.py --texts` and compared byte for byte with the model (`result.json` per step).
+
+| Step | Server text equals the model |
+|---|---|
+| 0 open | Yes (92 characters) |
+| 1 type a line, 2 undo, 2 redo | Yes, each |
+| 3 multi-cursor edit on three lines | Yes |
+| 4 insert 2000 lines (45 006 characters, with non-ASCII) | Yes |
+| **5a set the model's EOL to CRLF** | **No.** The model has 2008 `\r\n`; the server's text has none and keeps LF. First difference at offset 19 (the first line end). Equal if line endings are ignored |
+| **5c edit a line while the model is CRLF** | **No**, the same difference (model 2009 `\r\n`, server 0); the edit itself is applied correctly |
+| 5b set the EOL back to LF | Yes |
+| 6a insert a non-BMP character (U+1F600), 6b edit after it | Yes, each (7 more characters, UTF-16 length counted) |
+| 7 switch to `util.rs` and back | Yes |
+
+Wire: no `didChange` version errors, `max_in_flight` 1, no cancelled requests, 23 pulls.
+
+**Finding (recorded, not fixed): an EOL change is not sent to the server.** Monaco's model changes its line endings and the saved file would use them, but no `didChange` follows, so the server keeps LF text until the EOL is set back. The difference is only in the line terminators; line and column positions are unaffected, so diagnostics were still placed correctly in this run (not separately checked for CRLF). G7's list names "EOL change" and its pass condition is that the server and Monaco agree after each, or that a desynchronisation is detected and repaired. The server's view differs here and the app does not notice. For the lead: a defect candidate inside Stage 1b's scope (DA-7 conditions to be judged by the lead). Evidence `/mnt/ext_drives/Development/Development/Desktop Development/Craidd-Studio/.claude/worktrees/intellisense-verify-0b263b/verification/lsp-1b/runs/jobb/u9b/result.json`, steps `5a` and `5c`.
+
+G7 stays **Unmeasured**: the case above is a recorded difference, steps 8 and 9 are not run, and forced overflow comes from the fake-server tests.
+
 #### Other findings recorded during U1 (not 1b verdicts)
 
 1. **The language-server usable check accepts any binary that exits 0.** `lldb-dap` was accepted as Rust's language server. That is consistent with the designed check (V7), which proves only that a binary runs. What the chip showed for that session was not observed.
