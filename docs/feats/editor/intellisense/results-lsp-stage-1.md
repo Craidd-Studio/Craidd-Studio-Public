@@ -829,6 +829,44 @@ Method: the WebDriver harness (`verification/lsp-1b/scripts/harness.py`, `f2b438
 - **Minor (cosmetic, not a defect for this pass):** until the reply is merged (1–2 ms here), the chip's hover would read `undefined (undefined)` for the server and version.
 - **Verdict:** the window-crash defect is **resolved**, harness-observed and pending user review. **G1 stays Fail.** Its gate measurements (U1, whose steps are being reworded because tab restore is not a product requirement) have not been run. U1–U13 acceptance testing has not started.
 
+#### Second independent reproduction of the chip-crash fix (2026-11-08, DA-2). Harness-observed, pending user review.
+
+A second Verification session, with its own run checkout, repeated the check above on `39f4e89`. It did not read the first run's results before running. Tooling is `verify/lsp-stage-1b-crashfix-tools` (`ed78cc0` and one commit after it: `coldstart_check.py` takes the run checkout from `CRAIDD_RUN_DIR`, and records `console.warn`). The run checkout is a detached `39f4e89` at `/mnt/ext_drives/Development/Development/Desktop Development/Craidd-Studio/.claude/worktrees/intellisense-verify-0b263b/verification/lsp-1b/runs/crashfix-39f4e89` (git-ignored). Server: `/usr/bin/rust-analyzer`, `rust-analyzer 1 (9074e9b4c6 2026-09-06)`. Vite on port 1440 and Xvfb `:97`, both started and stopped by this session by pid.
+
+- **Suites, re-run on `39f4e89` (all match Implementation's claim):**
+
+  | Claimed | Reproduced | Log |
+  |---|---|---|
+  | `node --test` 120 | 120 passed, 0 failed (`tests/*.test.mjs`) | `crashfix-node.log` |
+  | `tsc` clean | `tsc --noEmit` exit 0 | `crashfix-tsc.log` |
+  | `vite build` ok | exit 0 | `crashfix-vite.log` |
+  | `cargo test --lib` 228 passed, 9 ignored | 228 passed, 0 failed, 9 ignored | `crashfix-cargo-lib.log` |
+  | `process_cleanup` 7 passed, 1 ignored | 7 passed, 1 ignored | `crashfix-cargo-pc.log` |
+  | DAP 26 unchanged | 26 `commands::debug*` tests ok; `git diff 0d110f1 39f4e89 -- src-tauri/src/commands/debug*` is empty | `crashfix-cargo-lib.log` |
+
+  (Logs are under `/mnt/ext_drives/Development/Development/Desktop Development/Craidd-Studio/.claude/worktrees/intellisense-verify-0b263b/verification/lsp-1b/runs/`.) Each lib run also leaves a `SIGSEGV` core dump from the test binary at exit; the suites pass, and the same dumps appear for other worktrees' test runs at the same hour. This pass did not investigate them.
+- **Cold starts, two batches (10 starts):** evidence `crashfix-coldstart-1/` (`--runs 5 --contain`) and `crashfix-coldstart-2/` (`--runs 5`), each with `summary.json` and per run `steps.jsonl`, `proc.jsonl`, `out/ready.png`.
+
+  | | Result |
+  |---|---|
+  | Window crash (`could not render`) | None in any run |
+  | Chip | Reached `rust-analyzer` (ready) in 9 runs: 3.0 s after the click in 8 runs, 4.5 s in batch 1 run 2. Hover shows the `/usr/bin/rust-analyzer` path, version, fixture root and `File watching: server-side` |
+  | Status before reply | The first session write had no `server` in every run (keys `generation`, `progress`, `pullDegraded`, `status`; phase `spawning`). The chip did not crash. The reply was merged afterwards |
+  | Containment (batch 1 runs 3 to 5) | Setting the bound session to a partial view (only `status`) made the chip fail. `ChipBoundary` logged `[lsp] Status chip rendering failed`; the window kept its Solution Explorer and editor; the chip showed the muted `language server` fallback. Screenshot: `crashfix-coldstart-1/run3/out/contain.png` |
+  | Leftover processes after close | None, all runs |
+
+- **Harness incidents (recorded, not product verdicts):**
+  - Batch 1 run 1 reported "the page is not Craidd's welcome screen". It was the first page load while Vite was still bundling dependencies. Rig warm-up; not repeated.
+  - Batch 1 run 2 reached `rust-analyzer` ready at 4.5 s and took its screenshot, then the next WebDriver call returned `RemoteDisconnected`. The run's driver log shows a connection reset. No core dump exists for the app binary at that time and no other error was logged. **Cause unknown.** It did not recur in the nine later runs. It is not counted as a crash, and it is not explained.
+  - In batch 1 run 3, after the injected partial view, a Channel progress event threw an unhandled `TypeError: view.progress is not an Object` (`bridge.ts` `onBatch`, `event.token in view.progress`). It follows from the injected view having no `progress`; the production path always writes `progress` through `viewWithStatus`. Recorded as a related note to finding 8, not as a defect of this fix.
+- **New defect (not part of the crash fix; found by this run): `lsp_open` fails on every document.**
+  - **Observed:** in all five runs of batch 2 and in batch 1 runs 2 and 3, the page logged `[lsp] document operation failed: …/src/main.rs invalid args `languageId` for command `lsp_open`: command lsp_open missing required key languageId`. Store metrics after ready: `markerCalls` 0, `stored` 0 for both routes.
+  - **Probable cause (read from the source, and reproduced in a scratch crate; not yet confirmed inside the IDE):** `AttachReply` in `src-tauri/src/lsp/commands.rs` is `#[serde(rename_all = "camelCase", tag = "kind")]` on an enum. That renames the variants only. The fields of `Routed` stay `language_id`, `project_id`, `project_name`, while `bridge.ts` (`reply.languageId`) expects camelCase. A scratch `serde` enum of the same shape serialises as `{"kind":"routed","session":1,"language_id":"rust","project_name":"x"}`. `binding.languageId` is therefore `undefined`, and Tauri drops it from `lsp_open`'s arguments.
+  - **Origin:** `AttachReply` has this shape since `43bc86b` (the Stage 1b Tauri surface), so it is not caused by `ead1a68` or `39f4e89`. It stayed hidden because no attach had happened in the IDE until `700b59d`.
+  - **Consequence:** the document is never opened on the server from the IDE (no `didOpen`), so no sync, diagnostics or markers can be exercised through the UI. U2 to U13 and G5/G7 UI evidence cannot be gathered until it is fixed. It is inside Stage 1b's scope.
+  - **Not fixed here.** For the lead: this is a DA-7 candidate (a regression test that serialises `AttachReply` and checks the camelCase keys, plus independent re-check). A candidate fix is `rename_all_fields = "camelCase"` on the enum, but that is Implementation's call.
+- **Verdict (check: crash-fix verification):** **Verified**, harness-observed, pending user review. Suites reproduced; no window crash in 10 cold starts; the partial-view fault is contained. Two qualifications: one unexplained harness disconnect (batch 1 run 2), and the `lsp_open` defect above, which this fix does not touch. **G1 stays Fail**; no gate is moved.
+
 #### Other findings recorded during U1 (not 1b verdicts)
 
 1. **The language-server usable check accepts any binary that exits 0.** `lldb-dap` was accepted as Rust's language server. That is consistent with the designed check (V7), which proves only that a binary runs. What the chip showed for that session was not observed.
