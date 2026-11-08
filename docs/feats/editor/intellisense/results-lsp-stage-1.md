@@ -867,6 +867,22 @@ A second Verification session, with its own run checkout, repeated the check abo
   - **Not fixed here.** For the lead: this is a DA-7 candidate (a regression test that serialises `AttachReply` and checks the camelCase keys, plus independent re-check). A candidate fix is `rename_all_fields = "camelCase"` on the enum, but that is Implementation's call.
 - **Verdict (check: crash-fix verification):** **Verified**, harness-observed, pending user review. Suites reproduced; no window crash in 10 cold starts; the partial-view fault is contained. Two qualifications: one unexplained harness disconnect (batch 1 run 2), and the `lsp_open` defect above, which this fix does not touch. **G1 stays Fail**; no gate is moved.
 
+#### `lsp_open` fix `ab52d83`, independent re-check (2026-11-08, DA-7). Harness-observed, pending user review.
+
+Fix under test: `fix/lsp-1b-attach-keys` at `ab52d83` (one commit on `2631cac`: `rename_all_fields = "camelCase"` on `AttachReply`, plus a test pinning the JSON keys of every variant). The diff touches only `src-tauri/src/lsp/commands.rs`. Run checkout: detached `ab52d83` at `/mnt/ext_drives/Development/Development/Desktop Development/Craidd-Studio/.claude/worktrees/intellisense-verify-0b263b/verification/lsp-1b/runs/fix-ab52d83` (git-ignored); dev binary built with `devUrl` 1440; Vite on 1440 and Xvfb `:98`, both started and stopped by this session.
+
+- **Suites (own run, `ab52d83`):** `node --test` 120 passed; `tsc` exit 0; `vite build` exit 0; `cargo test --lib` 229 passed, 9 ignored (the one new test is `lsp::commands::tests::attach_reply_keys_are_the_ones_the_frontend_reads`, ok); `process_cleanup` 7 passed, 1 ignored; 26 `commands::debug*` tests ok. Logs `fix-*.log` under `/mnt/ext_drives/Development/Development/Desktop Development/Craidd-Studio/.claude/worktrees/intellisense-verify-0b263b/verification/lsp-1b/runs/`.
+- **didOpen check:** `scripts/jobb_didopen.py`, 3 runs, evidence `/mnt/ext_drives/Development/Development/Desktop Development/Craidd-Studio/.claude/worktrees/intellisense-verify-0b263b/verification/lsp-1b/runs/jobb/didopen-ab52d83/`. Each run opened `main.rs`, waited for the chip to read `rust-analyzer`, appended `fn broken( {` and read the store.
+
+  | | At `39f4e89` (before) | At `ab52d83` (3 of 3 runs) |
+  |---|---|---|
+  | `[lsp] document operation failed … missing required key languageId` | Every run | None |
+  | `markerCalls` | 0 | 1 |
+  | `stored` (pull / push) | 0 / 0 | 3 / 0 |
+
+- **Cold start and containment on `ab52d83`:** `coldstart_check.py --runs 3 --contain`: no crash, ready at 3.0 s, containment held, no leftover processes, and the only page errors were the injected fault's own. Evidence `/mnt/ext_drives/Development/Development/Desktop Development/Craidd-Studio/.claude/worktrees/intellisense-verify-0b263b/verification/lsp-1b/runs/fix-coldstart/`.
+- **Verdict (check: `lsp_open` fix):** **Verified**, harness-observed, pending user review. The defect recorded above is resolved at `ab52d83`: a document opened in the IDE now reaches the server and produces markers. No gate moves. U3, U4, U5, U7, U9, U10, U11, G5, G7 and V3, V20, V25, V26 are unblocked and will be run against `ab52d83`.
+
 #### Other findings recorded during U1 (not 1b verdicts)
 
 1. **The language-server usable check accepts any binary that exits 0.** `lldb-dap` was accepted as Rust's language server. That is consistent with the designed check (V7), which proves only that a binary runs. What the chip showed for that session was not observed.
