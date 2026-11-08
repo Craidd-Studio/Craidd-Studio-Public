@@ -1125,6 +1125,25 @@ Build: the tip of `feat/lsp-stage-1b` at the time (`fcb891a`'s code), own run ch
 
 In both orders the server's open document is the canonical path and the tab opened through the symlinked path is never sent to the server and shows no chip. The guide expected the first-opened tab to be the holder and the second an `alias` tab with the chip `rust-analyzer: alias`; that was **not** observed. Two limits apply: the tabs were opened through the store action and not the tree, and no typo-and-undo check on the holder was made (the marker count of 1 on the canonical tab was not traced to a cause). Steps 3 and 5 (close both, promote the alias) were not run. **Proposed V16 wording (for the architect, not a decision):** "In the IDE as built, a file opened through a symlinked folder is not synchronised with the server and shows no chip, whichever path is opened first; the canonical path's tab is the one the server sees. The alias chip and promotion were not observed. Reconfirm with the explorer's real path, after the symlinked-folder case is settled." V16 stays **Open**.
 
+#### Job B, batch 12: U4 step 3 (status-less server, decision 31) and U3 steps 5 and 6 (2026-11-08, DA-3). Harness-observed, pending user review.
+
+Build: the code of `fcb891a`, own run checkout, isolated `HOME`, Xvfb `:98`. Scripts `scripts/jobb_u45.py --drop-status` and `scripts/jobb_u3b.py`; evidence `/mnt/ext_drives/Development/Development/Desktop Development/Craidd-Studio/.claude/worktrees/intellisense-verify-0b263b/verification/lsp-1b/runs/jobb/u4-nostatus/` and `u3b56/`.
+
+**U4 step 3, a server that never sends a status.** The tap wrapper withheld `experimental/serverStatus` from the client (`CRAIDD_LSP_TAP_DROP_STATUS=1`; the tap logs what it dropped). The copy of `fx-small` has the argument break on disk; `util.rs` then `main.rs` were opened at once.
+
+| Time (s after open) | Chip | `No problems…` text in Problems | Markers on `main.rs` |
+|---|---|---|---|
+| 0.14 | no server yet | shown (no server exists yet) | 0 |
+| 1.7 | `rust-analyzer: indexing` | not shown | 0 |
+| 3.1 | `rust-analyzer: indexing` | not shown | 6 |
+| 31.7 | `rust-analyzer (no status)` | not shown | 6 |
+
+The first `textDocument/diagnostic` pull went out at **30.03 s** (tap clock), which is the 30 s readiness fallback of decision 31; the chip read `rust-analyzer (no status)` at 31.7 s (polling resolution 0.1 s plus the render). So no pull preceded the fallback, as decision 31 and decision 19 require. The 6 markers at 3.1 s are not from a pull (none had been sent); they are the push-route `rustc` rows from the check the server runs on start-up. The Output line `the server sent no workspace status within 30 s of starting` was **not found** by the script's filter (it returned no lines), so that line is **Unverified** here. The guide's "about 30 s" and the 30.2 s headless figure agree with 30.0 s.
+
+**U3 step 5 (external edit on disk and focus return).** Method limit: Xvfb has no window focus change, so a synthetic `blur`, `focus` and `visibilitychange` event was dispatched on the page; the app's real focus trigger is therefore not shown to have fired. `util.rs` (the closed tab) was edited on disk (`pub fn ok(x: u32)`). The `main.rs` markers (2 pull markers) were already present 1.5 s after the disk edit, **before** the synthetic focus event; the revert on disk cleared them within 0.4 s with no focus event. So in this build a disk change is picked up without a focus event, through the server's own file watching (the chip's hover says `File watching: server-side`) and its diagnostics refresh. This shows the case the design calls "not covered" for focus is covered here by the server watcher; it does **not** show the focus seed itself.
+
+**U3 step 6 (close and reopen) Unverified.** There was no `rustc` (push) set in this run, so the "pull rows clear, push rows stay" part could not be read; after `main.rs` was closed its model was gone from Monaco's model list, and on reopen the 2 pull markers were present at once. The state while the tab was closed was not read.
+
 #### Other findings recorded during U1 (not 1b verdicts)
 
 1. **The language-server usable check accepts any binary that exits 0.** `lldb-dap` was accepted as Rust's language server. That is consistent with the designed check (V7), which proves only that a binary runs. What the chip showed for that session was not observed.
