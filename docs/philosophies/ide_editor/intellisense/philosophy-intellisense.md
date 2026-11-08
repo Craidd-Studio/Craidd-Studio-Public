@@ -123,12 +123,14 @@ as `docs/philosophies/ide_editor/tool-discovery/philosophy-tool-discovery.md`.
 
 **Launch on demand.** A language server starts when a file of that
 language is first opened in the editor. "Opened" means the document
-becomes the visible, active editor model, after startup and session
+becomes the visible, active editor model, after startup and any parked-window
 restore have completed. It does not start when a solution opens. It
 does not start at app launch, and restored background tabs do not
 start a server. The launch is deferred to idle with a bounded maximum
 wait and revalidated before it executes. Startup never waits for
 server initialization.
+
+*Wording of "restore" changed from "session restore" to "parked-window restore" under stand-in approval DA-4 (see [delegated approvals](../../../feats/editor/intellisense/delegated-approvals-lsp-stage-1.md)), while the architect is away. The architect may revise it.*
 
 A failure to start (missing tool, bad version, handshake timeout) or to
 load the workspace is visible to the user, through the server's own
