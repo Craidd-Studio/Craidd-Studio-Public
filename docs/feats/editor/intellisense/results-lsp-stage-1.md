@@ -986,17 +986,17 @@ Build: the tip of `feat/lsp-stage-1b` at `dd02020`, own run checkout, isolated `
 | 1 type a line, 2 undo, 2 redo | Yes, each |
 | 3 multi-cursor edit on three lines | Yes |
 | 4 insert 2000 lines (45 006 characters, with non-ASCII) | Yes |
-| **5a set the model's EOL to CRLF** | **No.** The model has 2008 `\r\n`; the server's text has none and keeps LF. First difference at offset 19 (the first line end). Equal if line endings are ignored |
-| **5c edit a line while the model is CRLF** | **No**, the same difference (model 2009 `\r\n`, server 0); the edit itself is applied correctly |
+| 5a set the model's EOL to CRLF | Yes, once the tool was corrected (see the correction below): the app sends `didClose` and `didOpen` with the full CRLF text (2008 `\r\n`), and the rebuilt server text equals the model |
+| 5c edit a line while the model is CRLF | Yes (2009 `\r\n` on both sides) |
 | 5b set the EOL back to LF | Yes |
 | 6a insert a non-BMP character (U+1F600), 6b edit after it | Yes, each (7 more characters, UTF-16 length counted) |
 | 7 switch to `util.rs` and back | Yes |
 
 Wire: no `didChange` version errors, `max_in_flight` 1, no cancelled requests, 23 pulls.
 
-**Finding (recorded, not fixed): an EOL change is not sent to the server.** Monaco's model changes its line endings and the saved file would use them, but no `didChange` follows, so the server keeps LF text until the EOL is set back. The difference is only in the line terminators; line and column positions are unaffected, so diagnostics were still placed correctly in this run (not separately checked for CRLF). G7's list names "EOL change" and its pass condition is that the server and Monaco agree after each, or that a desynchronisation is detected and repaired. The server's view differs here and the app does not notice. For the lead: a defect candidate inside Stage 1b's scope (DA-7 conditions to be judged by the lead). Evidence `/mnt/ext_drives/Development/Development/Desktop Development/Craidd-Studio/.claude/worktrees/intellisense-verify-0b263b/verification/lsp-1b/runs/jobb/u9b/result.json`, steps `5a` and `5c`.
+**Correction (retracted finding, 8 November 2026, later that day).** An earlier version of this record reported that an EOL change is not sent to the server. That was wrong. The comparison script read the rebuilt server text with Python's `Path.read_text()`, which turns `\r\n` into `\n`, so the server's text looked like LF. The tap log shows the app sending `didClose` and `didOpen` with the CRLF text at the EOL change (the "EOL changed" full resync in `documents.ts`), and re-run with the bytes read as they are (`/mnt/ext_drives/Development/Development/Desktop Development/Craidd-Studio/.claude/worktrees/intellisense-verify-0b263b/verification/lsp-1b/runs/jobb/u9d/`) the server's text equals the model byte for byte at 5a, 5c and 5b. The defect report and any fix request built on it are withdrawn. The script (`scripts/jobb_u9.py`) is corrected; polling up to 8 s for equality also records the resync latency (0.0 to 0.3 s in the corrected run).
 
-G7 stays **Unmeasured**: the case above is a recorded difference, steps 8 and 9 are not run, and forced overflow comes from the fake-server tests.
+G7 stays **Unmeasured**: steps 8 and 9 are not run, forced overflow comes from the fake-server tests, and the edits were made through Monaco's API. For the steps that were run, the server's text equalled the model byte for byte after every one.
 
 #### Job B, batch 6: U5 steps 3, 6a and 6b (V27, decision 33) (2026-11-08, DA-3, DA-12). Harness-observed, pending user review.
 
@@ -1077,6 +1077,21 @@ Build: the tip of `feat/lsp-stage-1b` at `21c926d`, own run checkout, isolated `
 | `rust-analyzer` VmRSS | 929 MB |
 
 So the retention limits do engage: the stored set is capped at about 20 000 rows, files are evicted, and the header says the counts are "at least" and names both the evicted files and the diagnostics not retained (the wording the design asks for). The per-file cap's own wording (a single file above 500) is inside that "not retained" count and was not separated. Whether an evicted set comes back on reopening was not tested on this fixture. **G5's memory figure** is recorded above; the gate's other missing conditions (store writes per frame, the `unchanged` ratio, the save-triggered check) are unchanged from batch 4, so **G5 stays Unmeasured**. **V15 and V20** (retention and eviction behaviour) are **Verified** for the cap and the wording, harness-observed, pending user review; the eviction order was not examined.
+
+#### Job B, batch 9: G3 leftovers (wire sizes, pull rate, first check, Build against the check) on the final 1b code (2026-11-08, DA-3). Harness-observed, pending user review.
+
+Build: the tip of `feat/lsp-stage-1b` at `63f2390`, own run checkout, isolated `HOME`, Xvfb `:98`, scratch copy of `src-tauri`. Scripts `scripts/jobb_g3a.py` (tap, typing) and `scripts/jobb_g3b.py` (Build); evidence `/mnt/ext_drives/Development/Development/Desktop Development/Craidd-Studio/.claude/worktrees/intellisense-verify-0b263b/verification/lsp-1b/runs/jobb/g3a/`, `g3a-cold/`, `afterindex/`, `g3b/`, `g3b2/`.
+
+| Item | Result |
+|---|---|
+| Message size (server to client, **wire** sizes from the tap; the Channel hook exposes counts, not bytes, so this is a proxy) | 960 messages over 41 s, p50 186 B, p95 208 B, max 2786 B, total 182 635 B (about 4.5 KB/s). 935 of them are `$/progress` (p50 186 B). A second, cold-cache run: 1133 messages, p95 196 B, max 2786 B, 210 219 B |
+| First check time | On a warm `target/rust-analyzer` the check began at 4.25 s and ended at 4.37 s (0.1 s). With the directory deleted first (cold), the check began 12.6 s after the tap started and had not ended 9 s later when the run closed; its duration was **not obtained** (not longer observed than about 9 s). The server's target directory reached 848 to 961 MB |
+| **Build against the check (G3b)** | A Build clicked about 10 s after ready, while the cold first check was running (`cargo`, `rustc` and the proc-macro server under the server): **3.5 s** with LSP on in run 1, **6.5 s** in run 2 (only the proc-macro server was running, so that check had finished); **7.5 s and 7.5 s** with `CRAIDD_LSP=0` (the same forced recompile, `lib.rs` touched). **No wait on the server's check was seen.** n 2 each, one of the two LSP-on runs was truly concurrent with the check. An earlier pair (8.0 s on, 0.5 s off) was an order artefact: the first run compiled the crate and the second found it current, and is not used |
+| V26: pulls per keystroke | 2 pulls for 744 keystrokes in 40 s (0.003) |
+
+**Observation (cause not established, not a verdict): `didChange` is withheld while typing continues.** In the same typing runs the client sent `didChange` at 0.8 s (13 changes), 4.2 s (60) and 4.4 s (6), then **nothing for 36 s** while 744 keystrokes were typed 150 ms apart, then one `didChange` with **663 changes** at 40.3 s when the typing stopped. A second run with indexing already finished (15 s of typing): one `didChange` with 782 changes at the end (`/mnt/ext_drives/Development/Development/Desktop Development/Craidd-Studio/.claude/worktrees/intellisense-verify-0b263b/verification/lsp-1b/runs/jobb/g3a/tap.jsonl`, `/mnt/ext_drives/Development/Development/Desktop Development/Craidd-Studio/.claude/worktrees/intellisense-verify-0b263b/verification/lsp-1b/runs/jobb/afterindex/tap.jsonl`). The design says `didChange` is flushed at the end of each event-loop turn and is not debounced by time. A hypothesis (not checked): the flush is chained behind a pending debounced pull in the per-document chain, so continuous typing never flushes. WebDriver key events at 150 ms intervals may differ from a person typing. The effect, if real, is that the server's text lags the editor by the length of an unbroken typing burst. Implementation can confirm from the code.
+
+G3 and G3b remain **Unmeasured** as gates: the numbers above are recorded against the baseline; the first-check duration is missing, the Channel size is a wire proxy, and the gate wants the user's look.
 
 #### Other findings recorded during U1 (not 1b verdicts)
 
