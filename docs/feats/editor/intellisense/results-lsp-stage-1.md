@@ -980,7 +980,7 @@ No gate moves: G5 Unmeasured, and V15, V20 and decision 22 are Unverified for ev
 
 Build: the tip of `feat/lsp-stage-1b` at `dd02020`, own run checkout, isolated `HOME`, the tap as the language server, Xvfb `:98`. Script `scripts/jobb_u9.py`; evidence `/mnt/ext_drives/Development/Development/Desktop Development/Craidd-Studio/.claude/worktrees/intellisense-verify-0b263b/verification/lsp-1b/runs/jobb/u9/` (first run) and `/mnt/ext_drives/Development/Development/Desktop Development/Craidd-Studio/.claude/worktrees/intellisense-verify-0b263b/verification/lsp-1b/runs/jobb/u9b/` (second run, with the extra CRLF edit and the EOL-insensitive comparison). **Method limits:** edits are made through Monaco's API (`executeEdits`, `undo`, `redo`, `setSelections`, `setEOL`), not keystrokes or the clipboard, so a real paste and the status bar's EOL control are not exercised; steps 8 (dispose and recreate the model view while the tab stays open) and 9 (edit on disk while the model is disposed) were **not run**. After each step the server's text was rebuilt from the tap log with `tap_report.py --texts` and compared byte for byte with the model (`result.json` per step).
 
-| Step | Server text equals the model |
+| Step | Server text equals the model (byte for byte, after the tool correction) |
 |---|---|
 | 0 open | Yes (92 characters) |
 | 1 type a line, 2 undo, 2 redo | Yes, each |
@@ -996,7 +996,7 @@ Wire: no `didChange` version errors, `max_in_flight` 1, no cancelled requests, 2
 
 **Correction (retracted finding, 8 November 2026, later that day).** An earlier version of this record reported that an EOL change is not sent to the server. That was wrong. The comparison script read the rebuilt server text with Python's `Path.read_text()`, which turns `\r\n` into `\n`, so the server's text looked like LF. The tap log shows the app sending `didClose` and `didOpen` with the CRLF text at the EOL change (the "EOL changed" full resync in `documents.ts`), and re-run with the bytes read as they are (`/mnt/ext_drives/Development/Development/Desktop Development/Craidd-Studio/.claude/worktrees/intellisense-verify-0b263b/verification/lsp-1b/runs/jobb/u9d/`) the server's text equals the model byte for byte at 5a, 5c and 5b. The defect report and any fix request built on it are withdrawn. The script (`scripts/jobb_u9.py`) is corrected; polling up to 8 s for equality also records the resync latency (0.0 to 0.3 s in the corrected run).
 
-G7 stays **Unmeasured**: steps 8 and 9 are not run, forced overflow comes from the fake-server tests, and the edits were made through Monaco's API. For the steps that were run, the server's text equalled the model byte for byte after every one.
+G7 stays **Unmeasured**: steps 8 and 9 are not run, forced overflow comes from the fake-server tests, and the edits were made through Monaco's API. For the steps that were run, the server's text equalled the model byte for byte after every one (after the tool correction).
 
 #### Job B, batch 6: U5 steps 3, 6a and 6b (V27, decision 33) (2026-11-08, DA-3, DA-12). Harness-observed, pending user review.
 
@@ -1092,6 +1092,21 @@ Build: the tip of `feat/lsp-stage-1b` at `63f2390`, own run checkout, isolated `
 **Observation (cause not established, not a verdict): `didChange` is withheld while typing continues.** In the same typing runs the client sent `didChange` at 0.8 s (13 changes), 4.2 s (60) and 4.4 s (6), then **nothing for 36 s** while 744 keystrokes were typed 150 ms apart, then one `didChange` with **663 changes** at 40.3 s when the typing stopped. A second run with indexing already finished (15 s of typing): one `didChange` with 782 changes at the end (`/mnt/ext_drives/Development/Development/Desktop Development/Craidd-Studio/.claude/worktrees/intellisense-verify-0b263b/verification/lsp-1b/runs/jobb/g3a/tap.jsonl`, `/mnt/ext_drives/Development/Development/Desktop Development/Craidd-Studio/.claude/worktrees/intellisense-verify-0b263b/verification/lsp-1b/runs/jobb/afterindex/tap.jsonl`). The design says `didChange` is flushed at the end of each event-loop turn and is not debounced by time. A hypothesis (not checked): the flush is chained behind a pending debounced pull in the per-document chain, so continuous typing never flushes. WebDriver key events at 150 ms intervals may differ from a person typing. The effect, if real, is that the server's text lags the editor by the length of an unbroken typing burst. Implementation can confirm from the code.
 
 G3 and G3b remain **Unmeasured** as gates: the numbers above are recorded against the baseline; the first-check duration is missing, the Channel size is a wire proxy, and the gate wants the user's look.
+
+#### Job B, batch 10: where the webview's memory goes, and whether an evicted file's rows return (fx-big) (2026-11-08, DA-3). Harness-observed, pending user review.
+
+Build: the tip of `feat/lsp-stage-1b` (`fcb891a`), own run checkout, isolated `HOME`, Xvfb `:98`, the generated `fx-big` fixture. Script `scripts/jobb_u7big.py` (`--lsp-off` for the baseline); evidence `/mnt/ext_drives/Development/Development/Desktop Development/Craidd-Studio/.claude/worktrees/intellisense-verify-0b263b/verification/lsp-1b/runs/jobb/u7big-off/`, `u7big2/`, `u7big3/`. VmRSS of the app's `WebKitWebProcess` child from `/proc/<pid>/status`. One run each; the figures vary by tens of MB between runs.
+
+| Stage | LSP on (`u7big2`) | `CRAIDD_LSP=0` (`u7big-off`) |
+|---|---|---|
+| Solution open | 560 MB | 557 MB |
+| `huge.rs` open (and, with LSP on, the chip ready) | 1122 MB | 773 MB |
+| 60 s later (off) / after the start-up check, Problems tab never opened (on) | 1391 MB | 701 MB |
+| After opening the Problems tab (on) | 1464 MB | n/a |
+
+So Monaco with the file accounts for about 700 to 770 MB, and the language-server path adds about 350 MB by the time the server is ready and about 620 to 690 MB once the check's diagnostics (about 21 000 rows, 20 495 stored push) have arrived; showing them in the Problems panel adds a further 70 MB. The Problems panel was never "collapsed" (it shows its Output tab by default); the "Problems not opened" row is the nearest available split. For decision 22's question, the cost of the capped store is roughly 0.6 GB of webview memory on this fixture, with the store plus markers not separated further here.
+
+**Does an evicted file's set return on reopen?** `evictedFiles` is only a count (1440 to 1446), so files could not be named; three files were opened after the check and their Monaco markers read (`u7big3`): `m0100.rs` and `m1000.rs` (very likely evicted) each showed **10 markers, all from the pull route** (`lsp:1:pull`), none from the push route; `m2050.rs` (kept) showed **41, 10 pull and 31 push**. So reopening an evicted file brings back its live (pull) diagnostics, and the push (`rustc`) set stays gone, which is what V15 and decision 22 describe. Which files were evicted was inferred from their having no push rows, not read from the store.
 
 #### Other findings recorded during U1 (not 1b verdicts)
 
