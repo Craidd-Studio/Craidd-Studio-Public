@@ -1,6 +1,6 @@
 # Summary: LSP Stage 1b
 
-[Design](design-lsp-stage-1-rust.md) · [Results](results-lsp-stage-1.md) · [Delegated approvals](delegated-approvals-lsp-stage-1.md) · [Stage 1c plan](plan-lsp-stage-1c-providers.md)
+[Design](design-lsp-stage-1-rust.md) · [Results](results-lsp-stage-1.md) · [Delegated approvals](delegated-approvals-lsp-stage-1.md) · [Stage 1c plan](plan-lsp-stage-1c-providers.md) · [Stage 1c summary](summary-lsp-stage-1c.md)
 
 **Roadmap track:** Phase 3 language intelligence, Stage 1. See the [current roadmap](../../../roadmaps/Roadmap-v0.0.4A.md).
 
