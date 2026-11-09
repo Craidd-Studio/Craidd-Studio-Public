@@ -1192,6 +1192,30 @@ Build: `feat/lsp-stage-1b` at `9083915` (own run checkout `/mnt/ext_drives/Devel
 - **V12:** eager `additionalTextEdits` plus the primary edit undo as one step and redo as one step; a prior user edit survives.
 This reproduces the facts independently on the same code and shows nothing different. It is plain Monaco with a test provider, so it says nothing about Craidd's provider or V18.
 
+#### Re-check of the Restart-on-watcher fix `872e94d` (by injection) and the U7 save seed with the wire tap (2026-11-09, DA-7). Harness-observed, pending user review.
+
+**1. Restart on a recorded watcher failure.** Fix under test: `fix/lsp-1b-restart-on-watcher` at `872e94d` (on `ce2a801`), own run checkout, dev binary on port 1440, Xvfb `:98`, isolated `HOME`. **Method: injected the server's warning line; no system watch limit was held.** The tap wrapper (`scripts/lsp_tap.py`, new options `CRAIDD_LSP_TAP_INJECT_STDERR`, `_AFTER`, `_ONCE_FLAG`) wrote, once and 4 s after start, the exact line rust-analyzer printed during U6 (`… WARN notify error: OS file watch limit reached. about ["…/src"]`) to the server's stderr, which the app reads as it reads rust-analyzer's own. Script `scripts/jobb_inject.py`; evidence `/mnt/ext_drives/Development/Development/Desktop Development/Craidd-Studio/.claude/worktrees/intellisense-verify-0b263b/verification/lsp-1b/runs/jobb/inject/` (`result.json`, `injected.png`, `after-restart.png`).
+
+| Step | Result |
+|---|---|
+| Suites | `node --test` 125 passed; `tsc` 0; `vite build` 0; `cargo test --lib` 236 passed, 9 ignored; `process_cleanup` 7 passed, 1 ignored |
+| Before the injection | chip `rust-analyzer`, hover `File watching: server-side`, no `↻ Restart`, 1 server |
+| After the injection | chip `rust-analyzer ⚠`, hover `File watching failed (changes on disk may be missed): … OS file watch limit reached. about …` (the same text as the real U6 run), **`↻ Restart` offered** |
+| Click `↻ Restart` | a new `rust-analyzer` process (new pid), chip `rust-analyzer` with `File watching: server-side`, **no ⚠ and no Restart**; the injection fired once only (the flag stopped a second one) |
+
+The injected line reaches the same code path as the real one (the same ⚠ text and the same chip state as U6). It does not exercise the kernel limit itself. **Verified** for the fix, harness-observed, pending user review; no second hold was taken.
+
+**2. The U7 save seed, with the tap on.** Build `872e94d`; `scripts/jobb_saveseed.py`; evidence `/mnt/ext_drives/Development/Development/Desktop Development/Craidd-Studio/.claude/worktrees/intellisense-verify-0b263b/verification/lsp-1b/runs/jobb/saveseed/` (small fixture) and `saveseed-many/` (`fx-many`). The edit adds a **new error** (`fn added_error() -> u32 { "not a number" }`), so an identical-set skip cannot hide it, then `Ctrl+S`.
+
+| Item | `fx-small` (`main.rs`) | `fx-many` (`m000.rs`, start-up check finished first) |
+|---|---|---|
+| `textDocument/didSave` sent | **Yes**, +0.17 s after the save | **Yes**, +0.36 s |
+| Check progress | `rust-analyzer/flycheck/0` `begin` (title `cargo check`) +0.23 s, `end` +0.28 s | `begin` +0.43 s, `end` +0.67 s |
+| `publishDiagnostics` on the wire after the save | 1 (2 diagnostics, `main.rs`), +0.28 s | 1044 (mostly empty sets that clear files, then the new sets) |
+| Delivered to the app | yes: push markers 2 appeared on `main.rs`; `arrivals.push` 1 | the store's push arrivals rose to 701 (cumulative with the start-up check; not separated); the script's marker filter looked for `main.rs` and so read nothing for `m000.rs`, so no marker count is claimed for it |
+
+So with an edit that changes the check's result, the save **is** wired end to end on the wire: `didSave`, a check, `publishDiagnostics`, and delivery to the store. The earlier "no push arrival in 75 s" runs (batches 4 and the `9083915` re-run) used an edit that added only a comment line, and their cause is **not established** here (the check on `fx-many` finished within 0.7 s of the save, so it was not a slow first check). The coalescer's identical-set skip is not shown to be responsible; the comment edit did shift line numbers and a changed set would be expected, so that earlier non-arrival remains unexplained.
+
 #### Other findings recorded during U1 (not 1b verdicts)
 
 1. **The language-server usable check accepts any binary that exits 0.** `lldb-dap` was accepted as Rust's language server. That is consistent with the designed check (V7), which proves only that a binary runs. What the chip showed for that session was not observed.
