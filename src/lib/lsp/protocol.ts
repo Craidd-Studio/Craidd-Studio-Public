@@ -12,10 +12,18 @@ export type Phase = "spawning" | "initializing" | "ready" | "shuttingDown" | "ex
 export const isTerminal = (phase: Phase) => phase === "exited" || phase === "failed" || phase === "crashed";
 
 export interface PullCaps { identifier: string | null; interFileDependencies: boolean; workspaceDiagnostics: boolean }
+/** Validated `completionProvider`: the trigger characters come from the server, never from the client. */
+export interface CompletionCaps { triggerCharacters: string[]; resolve: boolean }
 export interface NegotiatedCaps {
   sync: "none" | "full" | "incremental";
   syncUnusable: string | null;
   save: "none" | "plain" | "includeText";
+  /** The validated provider summary (booleans and the trigger-character list), never the raw `initialize` result. */
+  completion: CompletionCaps | null;
+  hover: boolean;
+  definition: boolean;
+  references: boolean;
+  documentSymbol: boolean;
   pull: PullCaps | null;
   serverName: string | null;
   serverVersion: string | null;
