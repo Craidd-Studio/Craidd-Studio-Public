@@ -11,7 +11,7 @@ use super::caps::NegotiatedCaps;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub(crate) enum ProviderKind { Hover, Definition, References, DocumentSymbol }
+pub(crate) enum ProviderKind { Hover, Definition, References, DocumentSymbol, Completion, CompletionResolve }
 
 impl ProviderKind {
     pub(crate) fn method(self) -> &'static str {
@@ -20,8 +20,13 @@ impl ProviderKind {
             ProviderKind::Definition => "textDocument/definition",
             ProviderKind::References => "textDocument/references",
             ProviderKind::DocumentSymbol => "textDocument/documentSymbol",
+            ProviderKind::Completion => "textDocument/completion",
+            ProviderKind::CompletionResolve => "completionItem/resolve",
         }
     }
+
+    /// `completionItem/resolve` carries the item itself; every other kind names a document.
+    pub(crate) fn names_document(self) -> bool { self != ProviderKind::CompletionResolve }
 
     /// Whether the validated capabilities allow asking for this kind.
     pub(crate) fn enabled(self, caps: &NegotiatedCaps) -> bool {
@@ -30,13 +35,16 @@ impl ProviderKind {
             ProviderKind::Definition => caps.definition,
             ProviderKind::References => caps.references,
             ProviderKind::DocumentSymbol => caps.document_symbol,
+            ProviderKind::Completion => caps.completion.is_some(),
+            ProviderKind::CompletionResolve => caps.completion.as_ref().is_some_and(|c| c.resolve),
         }
     }
 
     /// ◇ A timeout is "no result" and cancels the request.
     pub(crate) fn timeout(self) -> Duration {
         Duration::from_secs(match self {
-            ProviderKind::Hover => 5,
+            ProviderKind::Hover | ProviderKind::Completion => 5,
+            ProviderKind::CompletionResolve => 3,
             ProviderKind::Definition | ProviderKind::DocumentSymbol => 10,
             ProviderKind::References => 30,
         })

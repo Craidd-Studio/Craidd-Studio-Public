@@ -103,7 +103,8 @@ impl ServerContext {
             workspace_name: self.root.file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_default(),
             configuration: serde_json::json!({ section: self.init_options }),
             init_options: self.init_options.clone(),
-            lazy_additional_edits: false,
+            // F3 (DA-15): Craidd owns completion acceptance, so lazy additionalTextEdits are declared and resolved by Craidd.
+            lazy_additional_edits: true,
             experimental: self.experimental.clone(),
             reload_method: self.reload_method.map(String::from),
         }

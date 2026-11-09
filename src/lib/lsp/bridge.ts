@@ -1,5 +1,7 @@
 import { ProviderRequests, type ProviderReply } from "./requests.ts";
-import { ProviderRegistrations, providerAvailable } from "./providers.ts";
+import { ProviderRegistrations, providerAvailable, triggerCharacters } from "./providers.ts";
+import { ACCEPT_COMMAND, registerAcceptCommand, type Entry } from "./completionAccept.ts";
+import { contextToLsp, listToMonaco, type LspItem } from "./completion.ts";
 import { hoverToMonaco } from "./hover.ts";
 import { symbolsToMonaco } from "./symbols.ts";
 import { locationsToTargets, openTarget, referencesToTargets, type NavigationDeps, type Selection, type Target } from "./navigation.ts";
@@ -13,7 +15,7 @@ import { LANGUAGES } from "../languages";
 import { DocumentTracker, type Binding, type DocTransport } from "./documents";
 import { DiagnosticsModel, gateOpen, isAuthoritative, type Attribution, type Route } from "./diagnostics";
 import { gateOpened, PullScheduler, type PullReply, type PullReport } from "./pulls";
-import { fileUri, isTerminal, uriToPath, toMonacoRange, toLspPosition, type Batch, type ContentChange, type DocView, type LspDiagnostic, type StatusRecord } from "./protocol";
+import { fileUri, isTerminal, uriToPath, toMonacoRange, toLspPosition, type Batch, type ContentChange, type DocView, type LspDiagnostic, type NegotiatedCaps, type StatusRecord } from "./protocol";
 import { metrics } from "./metrics";
 import { LaunchGate } from "./launch";
 
@@ -451,6 +453,61 @@ function navigationDeps(): NavigationDeps {
   };
 }
 
+// ---- Completion (F3: Craidd-owned acceptance, DA-15) ----
+
+const completionEntries = new Map<string, Entry>();
+let acceptRegistered = false;
+
+/** A rejection or failure on existing surfaces only (decision 44): an Output line and the chip's detail. */
+function completionNotice(fileId: string, text: string): void {
+  const session = tracker.binding(fileId)?.session;
+  appendLspOutput([{ session: session ?? 0, severity: 2, text: `[lsp] ${text}` }]);
+  const view = session === undefined ? undefined : useLsp.getState().sessions[session];
+  if (session !== undefined && view) updateSession(session, { notes: [...(view.notes ?? []).filter((n) => !n.startsWith("Completion ")), text] });
+}
+
+/**
+ * Registered once per language when its first ready session reports the trigger characters (never hardcoded);
+ * re-registered only if a later session reports different ones.
+ */
+function ensureCompletion(monaco: Monaco, languageId: string, caps: NegotiatedCaps | null): void {
+  if (!providerAvailable(caps, "completion")) return;
+  if (!acceptRegistered) {
+    acceptRegistered = true;
+    registerAcceptCommand(monaco, {
+      entry: (id) => completionEntries.get(id),
+      resolve: async (id) => {
+        const entry = completionEntries.get(id);
+        if (!entry) return null;
+        return await providerRequests.request("completionResolve", entry.fileId, { item: entry.item }) as LspItem | null;
+      },
+      notice: completionNotice,
+    });
+  }
+  const chars = triggerCharacters(caps);
+  registrations.ensure(languageId, "completion", chars.join("\u0000"), () => monaco.languages.registerCompletionItemProvider(languageId, {
+    triggerCharacters: chars,
+    async provideCompletionItems(model: editor.ITextModel, position: Position, context: languages.CompletionContext, token: CancellationToken) {
+      const fileId = fileIdOf(model);
+      const live = fileId ? sessionCaps(fileId) : null;
+      if (!fileId || !providerAvailable(live, "completion")) return { suggestions: [] };
+      const { line, character } = toLspPosition(position.lineNumber, position.column);
+      const { triggerKind, triggerCharacter } = contextToLsp(context);
+      const result = await providerRequests.request("completion", fileId, { line, character, triggerKind, triggerCharacter }, token);
+      for (const key of [...completionEntries.keys()]) if (completionEntries.get(key)!.fileId === fileId) completionEntries.delete(key);
+      const word = model.getWordUntilPosition(position);
+      const focused = monaco.editor.getEditors().find((e: editor.ICodeEditor) => e.getModel() === model);
+      const mode = focused?.getOption(monaco.editor.EditorOption.suggest).insertMode === "replace" ? "replace" : "insert";
+      return listToMonaco(result, {
+        word: { lineNumber: position.lineNumber, startColumn: word.startColumn, endColumn: word.endColumn,
+          text: model.getValueInRange({ startLineNumber: position.lineNumber, startColumn: word.startColumn, endLineNumber: position.lineNumber, endColumn: word.endColumn }) },
+        resolveProvider: live?.completion?.resolve === true, mode, ownedCommand: ACCEPT_COMMAND,
+        register: (id, item) => { const key = `${fileId}\u0000${id}`; completionEntries.set(key, { item, fileId, position: { line: line, character } }); return key; },
+      }) as unknown as languages.CompletionList;
+    },
+  }));
+}
+
 // ---- Documents and the deferred launch ----
 
 function refreshDocInfo(fileId: string): void {
@@ -467,6 +524,7 @@ async function activateBound(fileId: string): Promise<void> {
   if (caps?.syncUnusable) return;
   binding.syncKind = caps?.sync === "full" ? "full" : "incremental";
   await tracker.activate(fileId);
+  if (monacoRef) ensureCompletion(monacoRef, binding.languageId, caps ?? null);
   refreshDocInfo(fileId);
   for (const scheduler of schedulers.values()) scheduler.activated(fileId);
 }

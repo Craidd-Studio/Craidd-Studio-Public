@@ -57,13 +57,15 @@ async function fresh() {
   const providersMod = await load("../src/lib/lsp/providers.ts", {});
   const symbols = await load("../src/lib/lsp/symbols.ts", { "./protocol.ts": protocol });
   const navigation = await load("../src/lib/lsp/navigation.ts", { "./protocol.ts": protocol });
+  const completion = await load("../src/lib/lsp/completion.ts", { "./protocol.ts": protocol });
+  const completionAccept = await load("../src/lib/lsp/completionAccept.ts", { "./completion.ts": completion });
   const hover = await load("../src/lib/lsp/hover.ts", { "./protocol.ts": protocol });
   const languages = await load("../src/lib/languages.ts", {});
   const store = await load("../src/store/lspStore.ts", { zustand: liveZustand });
   const bridge = await load("../src/lib/lsp/bridge.ts", {
     "@tauri-apps/api/core": core, "../../store/solutionStore": solution, "../../store/splitStore": split,
     "../../store/lspStore": store, "../languages": languages, "./documents": documents, "./diagnostics": diagnostics,
-    "./pulls": pulls, "./protocol": protocol, "./metrics": metrics, "./launch": launch, "./requests.ts": requests, "./providers.ts": providersMod, "./hover.ts": hover, "./symbols.ts": symbols, "./navigation.ts": navigation,
+    "./pulls": pulls, "./protocol": protocol, "./metrics": metrics, "./launch": launch, "./requests.ts": requests, "./providers.ts": providersMod, "./hover.ts": hover, "./symbols.ts": symbols, "./navigation.ts": navigation, "./completion.ts": completion, "./completionAccept.ts": completionAccept,
   });
   const boundary = await load("../src/components/layout/ChipBoundary.tsx", {});
   const statusBar = await load("../src/components/layout/StatusBar.tsx", {

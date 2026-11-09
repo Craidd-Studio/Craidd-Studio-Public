@@ -854,7 +854,7 @@ impl Session {
             let used = providers.keys().filter(|(_, k)| *k == kind).count();
             if used >= kind.share() && !providers.contains_key(&key) { return Err(ProviderError::Busy); }
         }
-        params["textDocument"] = json!({ "uri": uri });
+        if kind.names_document() { params["textDocument"] = json!({ "uri": uri }); }
         self.cancel_provider(uri, kind);
         let request = self.begin_request(kind.method(), params).map_err(|e| match e {
             RequestError::Busy => ProviderError::Busy,

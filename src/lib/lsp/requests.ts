@@ -27,7 +27,7 @@ export interface RequestHost {
 }
 
 export const COMMANDS: Record<ProviderKind, string> = {
-  hover: "lsp_hover", definition: "lsp_definition", references: "lsp_references", documentSymbol: "lsp_document_symbol", completion: "lsp_completion",
+  hover: "lsp_hover", definition: "lsp_definition", references: "lsp_references", documentSymbol: "lsp_document_symbol", completion: "lsp_completion", completionResolve: "lsp_completion_resolve",
 };
 
 export class ProviderRequests {

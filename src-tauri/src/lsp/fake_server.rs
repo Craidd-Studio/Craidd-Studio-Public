@@ -210,6 +210,18 @@ fn fake_lsp_server_entry() {
                     fake.reply(&id, json!({"kind": "full", "resultId": result_id, "items": items}));
                 }
             }
+            (Some("completionItem/resolve"), Some(id)) => {
+                // Echo the item back with edits added, plus a field a server must not change.
+                let mut item = message["params"].clone();
+                item["additionalTextEdits"] = json!([{"range": {"start": {"line": 0, "character": 0}, "end": {"line": 0, "character": 0}}, "newText": "use std::collections::HashMap;\n"}]);
+                item["detail"] = json!("resolved detail");
+                item["label"] = json!("CHANGED");
+                fake.reply(&id, item);
+            }
+            (Some("textDocument/completion"), Some(id)) => {
+                let ctx = message["params"]["context"].clone();
+                fake.reply(&id, json!({"isIncomplete": true, "items": [{"label": "HashMap", "kind": 22, "data": {"opaque": [1, 2, 3]}, "context": ctx}]}));
+            }
             (Some(m @ ("textDocument/hover" | "textDocument/definition" | "textDocument/references" | "textDocument/documentSymbol")), Some(id)) => {
                 // Provider requests: echo method and params; flags script the failure modes.
                 if fake.has("provider_never") { continue; }

@@ -358,6 +358,7 @@ const SERVER_CANCELLED: i64 = -32802;
 async fn run_provider(window: WebviewWindow, state: State<'_, LspManager>, session: u64, uri: String, kind: ProviderKind, params: Value)
     -> Result<ProviderReply, String> {
     let session = state.session(window.label(), session)?;
+    let original = params.clone();
     let (request, epoch) = match session.begin_provider(kind, &uri, params) {
         Ok(started) => started,
         Err(ProviderError::Disabled) => return Ok(ProviderReply::Disabled),
@@ -377,6 +378,14 @@ async fn run_provider(window: WebviewWindow, state: State<'_, LspManager>, sessi
         canceller.finish_provider(&finished, kind, id);
         outcome
     }).await.map_err(|e| e.to_string())?;
+    // Resolve: only the lazily declared properties are taken; anything else the server changed is ignored and logged.
+    if kind == ProviderKind::CompletionResolve {
+        if let Outcome::Result(resolved) = &outcome {
+            let (merged, ignored) = super::caps::merge_resolved(&original, resolved, true);
+            if !ignored.is_empty() { session.note(&format!("[lsp] completion resolve changed {} (ignored)", ignored.join(", "))); }
+            return Ok(reply_for(Outcome::Result(merged), epoch, uri));
+        }
+    }
     Ok(reply_for(outcome, epoch, uri))
 }
 
@@ -410,6 +419,24 @@ pub(crate) async fn lsp_references(window: WebviewWindow, state: State<'_, LspMa
     let mut params = at(line, character);
     params["context"] = json!({ "includeDeclaration": include_declaration });
     run_provider(window, state, session, uri, ProviderKind::References, params).await
+}
+
+/// `trigger_kind` is the LSP value (1 invoked, 2 trigger character, 3 re-trigger for an incomplete list).
+#[tauri::command]
+pub(crate) async fn lsp_completion(window: WebviewWindow, state: State<'_, LspManager>, session: u64, uri: String, line: u32, character: u32,
+    trigger_kind: u8, trigger_character: Option<String>) -> Result<ProviderReply, String> {
+    let mut params = at(line, character);
+    params["context"] = json!({ "triggerKind": trigger_kind });
+    if let (2, Some(ch)) = (trigger_kind, trigger_character) { params["context"]["triggerCharacter"] = Value::String(ch); }
+    run_provider(window, state, session, uri, ProviderKind::Completion, params).await
+}
+
+/// Resolve one completion item. The original server item goes back untouched (its `data` byte-identical).
+#[tauri::command]
+pub(crate) async fn lsp_completion_resolve(window: WebviewWindow, state: State<'_, LspManager>, session: u64, uri: String, item: Value)
+    -> Result<ProviderReply, String> {
+    if !item.is_object() { return Ok(ProviderReply::NoResult { epoch: 0, uri }); }
+    run_provider(window, state, session, uri, ProviderKind::CompletionResolve, item).await
 }
 
 #[tauri::command]

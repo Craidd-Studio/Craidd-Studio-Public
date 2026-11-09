@@ -1,7 +1,7 @@
 import type { NegotiatedCaps } from "./protocol.ts";
 
 /** The provider kinds a session can serve (Stage 1c). */
-export type ProviderKind = "completion" | "hover" | "definition" | "references" | "documentSymbol";
+export type ProviderKind = "completion" | "completionResolve" | "hover" | "definition" | "references" | "documentSymbol";
 
 /**
  * Whether a session may be asked for `kind`: the server negotiated it and document
@@ -10,7 +10,9 @@ export type ProviderKind = "completion" | "hover" | "definition" | "references" 
  */
 export function providerAvailable(caps: NegotiatedCaps | null | undefined, kind: ProviderKind): boolean {
   if (!caps || caps.syncUnusable) return false;
-  return kind === "completion" ? caps.completion !== null : caps[kind] === true;
+  if (kind === "completion") return caps.completion !== null;
+  if (kind === "completionResolve") return caps.completion?.resolve === true;
+  return caps[kind] === true;
 }
 
 /** Trigger characters the first ready session negotiated; the client hardcodes none. */

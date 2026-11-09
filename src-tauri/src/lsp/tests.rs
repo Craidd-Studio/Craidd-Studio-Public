@@ -1023,6 +1023,46 @@ mod providers_1c {
     }
 
     #[test]
+    fn completion_carries_its_context_and_resolve_sends_the_item_unchanged() {
+        let (session, uri) = open("");
+        let params = json!({ "position": { "line": 0, "character": 3 }, "context": { "triggerKind": 2, "triggerCharacter": ":" } });
+        let (request, _) = session.begin_provider(ProviderKind::Completion, &uri, params).unwrap();
+        let Outcome::Result(list) = request.wait(WAIT) else { panic!() };
+        assert_eq!(list["isIncomplete"], true);
+        assert_eq!(list["items"][0]["context"], json!({ "triggerKind": 2, "triggerCharacter": ":" }));
+        let item = list["items"][0].clone();
+        let (resolve, _) = session.begin_provider(ProviderKind::CompletionResolve, &uri, item.clone()).unwrap();
+        let Outcome::Result(resolved) = resolve.wait(WAIT) else { panic!() };
+        assert_eq!(resolved["data"], item["data"], "the opaque data went out and came back byte-identical");
+        assert!(resolved.get("textDocument").is_none(), "resolve names no document: the item is the whole payload");
+        let (merged, ignored) = crate::lsp::caps::merge_resolved(&item, &resolved, true);
+        assert_eq!(merged["label"], "HashMap", "a label the server changed is ignored");
+        assert!(ignored.contains(&"label".to_string()));
+        assert_eq!(merged["detail"], "resolved detail");
+        assert_eq!(merged["additionalTextEdits"][0]["newText"], "use std::collections::HashMap;\n");
+        session.stop();
+    }
+
+    #[test]
+    fn completion_resolve_is_gated_on_the_servers_resolve_provider() {
+        use crate::lsp::caps::{Completion, NegotiatedCaps};
+        let (session, uri) = open("no_providers");
+        let _ = &session;
+        let mut caps = session.caps().unwrap();
+        for (completion, completion_ok, resolve_ok) in [
+            (None, false, false),
+            (Some(Completion { trigger_characters: vec![], resolve: false }), true, false),
+            (Some(Completion { trigger_characters: vec![], resolve: true }), true, true),
+        ] {
+            caps.completion = completion;
+            assert_eq!((ProviderKind::Completion.enabled(&caps), ProviderKind::CompletionResolve.enabled(&caps)), (completion_ok, resolve_ok));
+        }
+        let _: Option<NegotiatedCaps> = None;
+        let _ = uri;
+        session.stop();
+    }
+
+    #[test]
     fn reply_json_keys_are_the_ones_the_frontend_reads() {
         let v = serde_json::to_value(ProviderReply::Result { epoch: 2, uri: "u".into(), value: json!(1) }).unwrap();
         assert_eq!(v, json!({"kind": "result", "epoch": 2, "uri": "u", "value": 1}));
@@ -1031,4 +1071,63 @@ mod providers_1c {
             assert_eq!(serde_json::to_value(reply).unwrap(), json!({ "kind": kind }));
         }
     }
+}
+
+/// Stage 1c end to end through the backend (opt-in, real rust-analyzer): the adapter's own launch spec
+/// (lazy additional edits declared, F3), `begin_provider` for completion and for resolve, and the merge rule.
+/// The HashMap auto-import must arrive without its `use` edit and gain it from the resolve; `data` must come back byte-identical.
+#[test]
+#[ignore]
+fn real_rust_analyzer_hashmap_completion_end_to_end() {
+    use super::adapter::{LanguageAdapter, ProjectRef};
+    use super::providers::ProviderKind;
+    use super::rust_adapter::RustAdapter;
+    let which = |name: &str| std::process::Command::new("which").arg(name).output().ok()
+        .filter(|o| o.status.success()).map(|o| PathBuf::from(String::from_utf8_lossy(&o.stdout).trim()));
+    let (Some(server), Some(cargo)) = (which("rust-analyzer"), which("cargo")) else { eprintln!("rust-analyzer or cargo absent: skipped"); return; };
+    let version = String::from_utf8_lossy(&std::process::Command::new(&server).arg("--version").output().unwrap().stdout).trim().to_string();
+    let dir = std::env::temp_dir().join(format!("craidd-ra-1c-{}", std::process::id()));
+    let _ = std::fs::remove_dir_all(&dir);
+    std::fs::create_dir_all(dir.join("src")).unwrap();
+    std::fs::write(dir.join("Cargo.toml"), "[package]\nname = \"e2e\"\nversion = \"0.1.0\"\nedition = \"2021\"\n").unwrap();
+    let main = "fn main() {\n    let _m = HashMap\n}\n";
+    std::fs::write(dir.join("src/main.rs"), main).unwrap();
+    let uri = super::adapter::file_uri(&dir.join("src/main.rs"));
+    let tool = (server.clone(), version.clone());
+    let adapter = RustAdapter::with(move || Ok(ToolRef { path: tool.0.clone(), version: tool.1.clone() }), move || Ok(cargo.clone()), Duration::from_secs(10));
+    let project = ProjectRef { id: "e2e".into(), name: "e2e".into(), language: "rust".into(), folder: dir.clone() };
+    let context = adapter.resolve(&project).unwrap();
+    let spec = context.launch_spec(adapter.configuration_section());
+    assert!(spec.lazy_additional_edits, "the adapter declares lazy additionalTextEdits (F3)");
+    let long = Duration::from_secs(120);
+    let session = Session::start(spec, Limits::default(), 1);
+    assert!(session.wait_until(long, |s| s.phase == Phase::Ready || s.phase.is_terminal()));
+    session.open_document(&uri, "rust", main).unwrap();
+    assert!(session.wait_until(long, |s| s.workspace_ready == Some(true) || s.ready_fallback));
+    let negotiated = session.caps().unwrap().completion.unwrap();
+    eprintln!("[1c-e2e] negotiated: resolve={} trigger characters={:?}", negotiated.resolve, negotiated.trigger_characters);
+    assert!(negotiated.resolve);
+    let params = json!({ "position": { "line": 1, "character": 20 }, "context": { "triggerKind": 1 } });
+    let started = Instant::now();
+    let mut found = None;
+    while found.is_none() && started.elapsed() < Duration::from_secs(60) {
+        let (request, epoch) = session.begin_provider(ProviderKind::Completion, &uri, params.clone()).unwrap();
+        if let Outcome::Result(list) = request.wait(long) {
+            found = list["items"].as_array().and_then(|items| items.iter().find(|i| i["label"].as_str().is_some_and(|l| l.starts_with("HashMap"))).cloned()).map(|i| (i, epoch));
+        }
+        if found.is_none() { std::thread::sleep(Duration::from_millis(300)); }
+    }
+    let (item, epoch) = found.expect("no HashMap completion");
+    assert_eq!(epoch, 1);
+    assert!(item.get("additionalTextEdits").is_none(), "lazy declared: the list carries no edits");
+    assert!(item.get("data").is_some(), "the opaque data is present, so the item is resolvable (the F3 rule)");
+    let (resolve, _) = session.begin_provider(ProviderKind::CompletionResolve, &uri, item.clone()).unwrap();
+    let Outcome::Result(resolved) = resolve.wait(long) else { panic!("resolve gave no result") };
+    let (merged, ignored) = super::caps::merge_resolved(&item, &resolved, true);
+    eprintln!("[1c-e2e] resolve ignored fields: {ignored:?}; edits: {}", merged["additionalTextEdits"]);
+    assert_eq!(merged["data"], item["data"], "data is byte-identical");
+    assert_eq!(merged["label"], item["label"]);
+    assert!(merged["additionalTextEdits"][0]["newText"].as_str().unwrap().contains("use std::collections::HashMap;"));
+    session.stop();
+    let _ = std::fs::remove_dir_all(&dir);
 }
