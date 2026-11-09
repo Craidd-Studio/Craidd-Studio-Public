@@ -195,6 +195,12 @@ test("↻ Restart is offered when a live session's health is error, not for a wa
   assert.equal(restart(), true, "an error offers the manual restart");
   env.deliver(batch(ready({ health: "ok", quiescent: true, message: null }, 5)));
   assert.equal(restart(), false, "it goes away when the server recovers");
+  env.deliver(batch({ ...ready(null, 6), watcherWarning: "OS file watch limit reached" }));
+  assert.equal(restart(), true, "a recorded watcher failure offers the restart (decision 28)");
+  env.deliver(batch(ready(null, 7)));
+  assert.equal(restart(), false, "and it goes away when the watcher failure clears");
+  assert.equal(env.lsp.restartOffered("ready", "warning", null), false);
+  assert.equal(env.lsp.restartOffered("ready", "ok", "limit"), true);
   assert.equal(env.lsp.restartOffered("crashed", null), true);
   assert.equal(env.lsp.restartOffered("unresponsive", null), true);
   assert.equal(env.lsp.restartOffered("ready", "ok"), false);
