@@ -96,3 +96,18 @@ test("providers register once per language, not per session, and re-register onl
   registrations.disposeAll();
   assert.deepEqual(log.slice(-2).sort(), ["dispose a", "dispose e"]);
 });
+
+import { withNotice } from "../src/lib/lsp/providers.ts";
+
+test("chip notices: one note per prefix, replaced when it changes and cleared when the result is complete", () => {
+  let notes = ["server note"];
+  notes = withNotice(notes, "References ", "References limited to 500; +105 more not shown");
+  assert.deepEqual(notes, ["server note", "References limited to 500; +105 more not shown"]);
+  notes = withNotice(notes, "References ", "References limited to 500; +7 more not shown");
+  assert.equal(notes.length, 2, "replaced, not appended");
+  notes = withNotice(notes, "Outline ", "Outline limited to 5000 symbols; +3 more not shown");
+  assert.equal(notes.length, 3, "another prefix is independent");
+  notes = withNotice(notes, "References ", null);
+  assert.deepEqual(notes, ["server note", "Outline limited to 5000 symbols; +3 more not shown"], "a complete result clears its note");
+  assert.deepEqual(withNotice(undefined, "References ", null), []);
+});

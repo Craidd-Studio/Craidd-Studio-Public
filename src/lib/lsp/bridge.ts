@@ -1,5 +1,5 @@
 import { ProviderRequests, type ProviderReply } from "./requests.ts";
-import { ProviderRegistrations, providerAvailable, triggerCharacters } from "./providers.ts";
+import { ProviderRegistrations, providerAvailable, triggerCharacters, withNotice } from "./providers.ts";
 import { ACCEPT_COMMAND, registerAcceptCommand, type Entry } from "./completionAccept.ts";
 import { contextToLsp, listToMonaco, type LspItem } from "./completion.ts";
 import { hoverToMonaco } from "./hover.ts";
@@ -379,8 +379,8 @@ function registerProviders(monaco: Monaco): void {
         const fileId = fileIdOf(model);
         if (!fileId || !providerAvailable(sessionCaps(fileId), "documentSymbol")) return null;
         const { symbols, dropped } = symbolsToMonaco(await providerRequests.request("documentSymbol", fileId, {}, token));
-        if (dropped > 0) appendLspOutput([{ session: tracker.binding(fileId)?.session ?? 0, severity: 2,
-          text: `[lsp] outline limited to ${symbols.length} symbols; ${dropped} more not shown` }]);
+        // Visible beyond the Output tab: the chip detail names the truncation until a complete result replaces it.
+        chipNotice(fileId, "Outline ", dropped > 0 ? `Outline limited to ${symbols.length} symbols; +${dropped} more not shown` : null);
         return symbols as unknown as languages.DocumentSymbol[];
       },
     }));
@@ -399,8 +399,7 @@ function registerProviders(monaco: Monaco): void {
         const { line, character } = toLspPosition(position.lineNumber, position.column);
         const { targets, dropped } = referencesToTargets(await providerRequests.request("references", fileId,
           { line, character, includeDeclaration: context.includeDeclaration }, token));
-        if (dropped > 0) appendLspOutput([{ session: tracker.binding(fileId)?.session ?? 0, severity: 2,
-          text: `[lsp] references limited to ${targets.length}; +${dropped} more not shown` }]);
+        chipNotice(fileId, "References ", dropped > 0 ? `References limited to ${targets.length}; +${dropped} more not shown` : null);
         return asLocations(monaco, targets);
       },
     }));
@@ -458,13 +457,17 @@ function navigationDeps(): NavigationDeps {
 const completionEntries = new Map<string, Entry>();
 let acceptRegistered = false;
 
-/** A rejection or failure on existing surfaces only (decision 44): an Output line and the chip's detail. */
-function completionNotice(fileId: string, text: string): void {
+/** A notice on existing surfaces only (decision 44): an Output line (when `text` is set) and the chip's detail. */
+function chipNotice(fileId: string, prefix: string, text: string | null, output = true): void {
   const session = tracker.binding(fileId)?.session;
-  appendLspOutput([{ session: session ?? 0, severity: 2, text: `[lsp] ${text}` }]);
+  if (text !== null && output) appendLspOutput([{ session: session ?? 0, severity: 2, text: `[lsp] ${text}` }]);
   const view = session === undefined ? undefined : useLsp.getState().sessions[session];
-  if (session !== undefined && view) updateSession(session, { notes: [...(view.notes ?? []).filter((n) => !n.startsWith("Completion ")), text] });
+  if (session !== undefined && view) {
+    const notes = withNotice(view.notes, prefix, text);
+    if (notes.length !== (view.notes ?? []).length || notes.some((n, i) => n !== view.notes?.[i])) updateSession(session, { notes });
+  }
 }
+const completionNotice = (fileId: string, text: string) => chipNotice(fileId, "Completion ", text);
 
 /**
  * Registered once per language when its first ready session reports the trigger characters (never hardcoded);

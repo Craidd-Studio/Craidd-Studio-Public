@@ -45,3 +45,12 @@ export class ProviderRegistrations {
 
   disposeAll(): void { for (const { handle } of this.entries.values()) handle.dispose(); this.entries.clear(); }
 }
+
+/**
+ * Chip-detail notes (decision 44: existing surfaces only). One note per `prefix`; `text` null clears it.
+ * Used for truncation and rejection notices that must be visible beyond the Output tab (decision 47).
+ */
+export function withNotice(notes: string[] | undefined, prefix: string, text: string | null): string[] {
+  const rest = (notes ?? []).filter((note) => !note.startsWith(prefix));
+  return text === null ? rest : [...rest, text];
+}

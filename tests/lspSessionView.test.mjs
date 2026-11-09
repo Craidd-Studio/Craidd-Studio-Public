@@ -212,3 +212,12 @@ test("↻ Restart is offered when a live session's health is error, not for a wa
   assert.equal(env.lsp.restartOffered("unresponsive", null), true);
   assert.equal(env.lsp.restartOffered("ready", "ok"), false);
 });
+
+test("a truncation note on the session view is shown in the chip's detail (decisions 44 and 47)", async () => {
+  const env = await started();
+  env.release(reply(status("ready", 1)));
+  await settle();
+  const note = "References limited to 500; +105 more not shown";
+  env.lsp.useLsp.setState((state) => ({ sessions: { ...state.sessions, 1: { ...state.sessions[1], notes: [...state.sessions[1].notes, note] } } }));
+  assert.match(renderToStaticMarkup(createElement(env.StatusBar)), /\+105 more not shown/);
+});
