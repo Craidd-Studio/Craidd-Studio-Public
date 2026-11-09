@@ -1,6 +1,8 @@
 import { ProviderRequests, type ProviderReply } from "./requests.ts";
+import { ProviderRegistrations, providerAvailable } from "./providers.ts";
+import { hoverToMonaco } from "./hover.ts";
 import type { Monaco } from "@monaco-editor/react";
-import type { editor } from "monaco-editor";
+import type { editor, languages, Position, CancellationToken } from "monaco-editor";
 import { Channel, invoke } from "@tauri-apps/api/core";
 import { useSolution } from "../../store/solutionStore";
 import { useSplit } from "../../store/splitStore";
@@ -9,7 +11,7 @@ import { LANGUAGES } from "../languages";
 import { DocumentTracker, type Binding, type DocTransport } from "./documents";
 import { DiagnosticsModel, gateOpen, isAuthoritative, type Attribution, type Route } from "./diagnostics";
 import { gateOpened, PullScheduler, type PullReply, type PullReport } from "./pulls";
-import { fileUri, isTerminal, uriToPath, toMonacoRange, type Batch, type ContentChange, type DocView, type LspDiagnostic, type StatusRecord } from "./protocol";
+import { fileUri, isTerminal, uriToPath, toMonacoRange, toLspPosition, type Batch, type ContentChange, type DocView, type LspDiagnostic, type StatusRecord } from "./protocol";
 import { metrics } from "./metrics";
 import { LaunchGate } from "./launch";
 
@@ -349,6 +351,28 @@ export const providerRequests = new ProviderRequests({
   cancel: (session, uri, kind) => invoke<void>("lsp_cancel_provider", { session, uri, kind }),
 });
 
+// ---- Monaco providers (once per language; capability-checked per call) ----
+
+const registrations = new ProviderRegistrations();
+
+function sessionCaps(fileId: string) {
+  const binding = tracker.binding(fileId);
+  return binding && tracker.state(fileId) === "open" ? lastStatus.get(binding.session)?.caps ?? null : null;
+}
+
+function registerProviders(monaco: Monaco): void {
+  for (const language of LANGUAGES) {
+    registrations.ensure(language.id, "hover", "", () => monaco.languages.registerHoverProvider(language.id, {
+      async provideHover(model: editor.ITextModel, position: Position, token: CancellationToken) {
+        const fileId = fileIdOf(model);
+        if (!fileId || !providerAvailable(sessionCaps(fileId), "hover")) return null;
+        const { line, character } = toLspPosition(position.lineNumber, position.column);
+        return hoverToMonaco(await providerRequests.request("hover", fileId, { line, character }, token)) as languages.Hover | null;
+      },
+    }));
+  }
+}
+
 // ---- Documents and the deferred launch ----
 
 function refreshDocInfo(fileId: string): void {
@@ -446,6 +470,7 @@ let wired = false;
 export function attachMonaco(monaco: Monaco): void {
   if (monacoRef) return;
   monacoRef = monaco;
+  registerProviders(monaco);
   const watch = (model: editor.ITextModel) => {
     const fileId = fileIdOf(model);
     if (fileId) {
