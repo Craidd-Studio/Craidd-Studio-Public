@@ -2,8 +2,9 @@ import { ProviderRequests, type ProviderReply } from "./requests.ts";
 import { ProviderRegistrations, providerAvailable } from "./providers.ts";
 import { hoverToMonaco } from "./hover.ts";
 import { symbolsToMonaco } from "./symbols.ts";
+import { locationsToTargets, openTarget, type NavigationDeps, type Selection, type Target } from "./navigation.ts";
 import type { Monaco } from "@monaco-editor/react";
-import type { editor, languages, Position, CancellationToken } from "monaco-editor";
+import type { editor, languages, Position, CancellationToken, Uri, IRange, IPosition } from "monaco-editor";
 import { Channel, invoke } from "@tauri-apps/api/core";
 import { useSolution } from "../../store/solutionStore";
 import { useSplit } from "../../store/splitStore";
@@ -381,7 +382,43 @@ function registerProviders(monaco: Monaco): void {
         return symbols as unknown as languages.DocumentSymbol[];
       },
     }));
+    registrations.ensure(language.id, "definition", "", () => monaco.languages.registerDefinitionProvider(language.id, {
+      async provideDefinition(model: editor.ITextModel, position: Position, token: CancellationToken) {
+        const fileId = fileIdOf(model);
+        if (!fileId || !providerAvailable(sessionCaps(fileId), "definition")) return null;
+        const { line, character } = toLspPosition(position.lineNumber, position.column);
+        return asLocations(monaco, locationsToTargets(await providerRequests.request("definition", fileId, { line, character }, token)));
+      },
+    }));
   }
+  // Decision 46: Monaco never creates a model for a navigation target itself; Craidd's tab logic opens it.
+  // attachMonaco runs once, so this registers once.
+  monaco.editor.registerEditorOpener({
+    async openCodeEditor(_source: editor.ICodeEditor, resource: Uri, selectionOrPosition?: IRange | IPosition) {
+      const result = await openTarget(navigationDeps(), resource.scheme, resource.path, selectionOrPosition as Selection | undefined);
+      return result !== "ignored";
+    },
+  });
+}
+
+function asLocations(monaco: Monaco, targets: Target[]): languages.Location[] {
+  return targets.map((target) => ({ uri: monaco.Uri.file(target.path), range: target.range }));
+}
+
+/** Ownership comes from the single backend resolver (`lsp_attribute`); the store opens or focuses the tab. */
+function navigationDeps(): NavigationDeps {
+  return {
+    isOpen: (path) => useSolution.getState().tabs.some((tab) => tab.fileId === path),
+    owner: async (path) => {
+      const solution = useSolution.getState().solution;
+      if (!solution) return null;
+      const [who] = await invoke<{ projectId: string | null; ambiguous: string[] }[]>("lsp_attribute", { paths: [path], solution, languages: languageTable() });
+      return who && !who.ambiguous?.length ? { projectId: who.projectId } : null;
+    },
+    reveal: (path, line, column) => useSolution.getState().revealFile(path, line, column),
+    // Step 5 makes this a read-only tab; until then the target is reported, never opened as an editable file.
+    unowned: async (path) => { appendLspOutput([{ session: 0, severity: 3, text: `[lsp] ${path} is outside the solution's projects; read-only navigation is not available yet` }]); },
+  };
 }
 
 // ---- Documents and the deferred launch ----
