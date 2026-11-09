@@ -1257,6 +1257,35 @@ Four `textDocument/definition` requests reached the server. **Verified** for (a)
 
 **Verdict:** steps 3 and 4 are **Verified** for U16 and U17 (a to c and the std case), plus hover and the 1b smoke; no gate moves.
 
+#### Stage 1c steps 5 and 6 (read-only navigation tabs, references with a cap), `feat/lsp-1c-step6` at `867ba5c` (2026-11-09, DA-11). Harness-observed, pending user review.
+
+Package: `e0538ca` (step 5: `lsp_read_target`, a read-only tab with a lock glyph, decisions 49 to 51) and `867ba5c` (step 6: references with a visible "+N" cap, decision 47). Own run checkout, dev binary on port 1440, Xvfb `:98`, isolated `HOME`, the tap, fixture `fixtures/fx-1c` (a generated 600-reference module for the cap). Script `scripts/jobb_s6.py`; evidence `/mnt/ext_drives/Development/Development/Desktop Development/Craidd-Studio/.claude/worktrees/intellisense-verify-0b263b/verification/lsp-1b/runs/jobb/s6-*`. Implementation had not re-run the suites after its rebase.
+
+**1. Suites.** `node --test` 158 passed; `tsc` 0; `vite build` 0; `cargo test --lib` run **3 times**: 253 passed, 0 failed, 9 ignored each time; `process_cleanup` 7 passed, 1 ignored; 26 `commands::debug*` tests ok.
+
+**U18, definition to the standard library and to a registry crate.** Definition on `HashMap` and on `adler2::Adler32` each opened a **read-only tab** (`map.rs` under `/usr/lib/rustlib/src/rust/library/std/src/collections/hash/`, `lib.rs` under `~/.cargo/registry/src/…/adler2-2.0.1/src/`). Each tab shows an SVG lock with `aria-label="Read-only"` and the hover reason `Read-only: opened by navigation from a language server. Craidd never saves it.`; the editor's `readOnly` option is true; typing `zzz` and `Ctrl+S` changed nothing (model length 95 115 before and after for `map.rs`); the target file's sha256 is identical before and after; **hover works inside the read-only tab** (bound session): `std::collections::hash::map pub struct HashMap<K, V, S = RandomState, A = Global> …` and `adler2 pub struct Adler32 { a: u16, b: u16 } …`. **Verified**, harness-observed; the glyph's look is for the user.
+
+**U19, restart with the unowned tab open.** `restartSession` was called for the session while the `map.rs` tab was open: the tab **stayed**, the lock glyph stayed, no crash (`could not render` absent), and a hover inside the tab still answered afterwards. **Not observed:** the "unbound, with a note" state the plan describes; the Output source showed no line and the hover kept working, so after a restart the tab either re-binds to the new session or the old binding still answers, and which was not examined. **Unverified** for the unbound note; the no-crash part is **Verified**.
+
+**U20, references.** Shift+F12 on `shared_value` in `shared.rs` opened the peek with **References (5)**: `shared.rs` (the declaration), `a.rs` (2), `b.rs` (1), `main.rs` (1). One `textDocument/references` request. Note for the lead: the standard `editor.action.goToReferences` and `referenceSearch.trigger` actions did not run through `editor.trigger` in this build (no request was sent), whereas the keyboard shortcut works; so references are reachable from the keyboard, and the script uses Shift+F12. **Verified.**
+
+**U20, the cap.** A generated module with 600 calls of `shared_value()` (605 results): the peek shows **References (500)** and the Output source carries `[lsp] references limited to 500; +105 more not shown`. So the "+N" is visible in Output (not in the peek). **Verified**, harness-observed.
+
+**Security of `lsp_read_target` (decisions 49 to 51).** Invoked from the webview with the real session id:
+
+| Call | Result |
+|---|---|
+| a scratch file the server never returned (created by the script; content not printed) | refused: `… was not returned by this language server` |
+| a project file (`src/b.rs`) never returned by a navigation reply | refused with the same message |
+| a relative path (`../../../../etc/hostname`) | refused: `cannot open …: No such file or directory`; no content returned |
+| a session id that does not exist | refused: `language-server session 999999 is gone` |
+
+No real user file's content was read or recorded. **Verified.**
+
+**Hover, definition and 1b smoke.** Covered by the same runs: cold start ready in 4 s, `didOpen` reached the server, hover and definition behaved as before (U18's hover inside the tabs, U20's single references request).
+
+**Verdict:** steps 5 and 6 are **Verified** for U18, U20, the cap and the security refusals; U19's unbound note is **Unverified**; no gate moves.
+
 #### Other findings recorded during U1 (not 1b verdicts)
 
 1. **The language-server usable check accepts any binary that exits 0.** `lldb-dap` was accepted as Rust's language server. That is consistent with the designed check (V7), which proves only that a binary runs. What the chip showed for that session was not observed.
