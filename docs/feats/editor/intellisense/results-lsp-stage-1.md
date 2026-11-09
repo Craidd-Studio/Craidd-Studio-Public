@@ -1232,6 +1232,31 @@ Package: `410750e` (step 0), `ee2766d` (step 1: request plumbing, decisions 40 a
 
 **Verdict:** step 2 (hover) with steps 0 and 1 is **Verified** for U14, the security check and the 1b smoke; the stale-hover counter (U15) is **Unverified** in the IDE and rests on the node tests. No gate moves.
 
+#### Stage 1c steps 3 and 4 (document symbols, definition and the editor opener), `feat/lsp-1c-step4` at `97cc915` (2026-11-09, DA-11). Harness-observed, pending user review.
+
+Package: `2be3b90` (step 3, document symbols, plus the hover hardening: every `command:` URI dropped) and `97cc915` (step 4, definition with Monaco's editor opener routed through Craidd's tabs, decision 46). Own run checkout (detached `97cc915`), dev binary on port 1440, Xvfb `:98`, isolated `HOME`, the tap, fixture `fixtures/fx-1c`. Scripts `scripts/jobb_1c.py` (`u16`, `u17`) and `jobb_s2.py` (smoke, `u14`); evidence `/mnt/ext_drives/Development/Development/Desktop Development/Craidd-Studio/.claude/worktrees/intellisense-verify-0b263b/verification/lsp-1b/runs/jobb/s4-*`. Implementation had not re-run the suites after its rebase, so these runs are the first.
+
+**1. Suites.** `node --test` 152 passed; `tsc` 0; `vite build` 0; `cargo test --lib` run **3 times**: 246 passed, 0 failed, 9 ignored each time; `process_cleanup` 7 passed, 1 ignored; 26 `commands::debug*` tests ok.
+
+**U16, the outline (`editor.action.quickOutline`, `shapes.rs`).** One `textDocument/documentSymbol` request. The quick-pick listed 9 symbols, in the file's nesting: `geometry` (module), `Area` (trait) with `area`, `Circle` (struct) with `radius`, `impl geometry::Area for Circle` with `area`, and `impl Circle` (with `circumference`; the script printed the first eight rows). That matches the file: 1 module, 1 trait with 1 method, 1 struct with 1 field, 2 impls with 1 method each. **Verified**, harness-observed; the rows are text, so the visual look of the outline and breadcrumbs is for the user.
+
+**U17, definition (`editor.action.revealDefinition` from `main.rs`).** Tab bar read from the page (tabs only):
+
+| Case | Tabs before | Tabs after | Active and cursor after |
+|---|---|---|---|
+| (a) same file, `counts` | `main.rs` | `main.rs` | `main.rs`, cursor 10:6 to 9:13 (the `let mut counts` line) |
+| (b) another project file, not open, `shapes::Circle` | `main.rs` | `main.rs`, `shapes.rs` | `shapes.rs`, cursor 7:12 (the struct's name): a new editable tab in the project's own path form |
+| (c) a file already open, `shared_value` | `main.rs`, `shapes.rs`, `shared.rs` | the same three | `shared.rs` focused, cursor 1:8; **no second tab** |
+| (d) std symbol, `HashMap` | the same three | the same three | `main.rs`, cursor unchanged (9:23): **nothing was opened** |
+
+Four `textDocument/definition` requests reached the server. **Verified** for (a) to (c), harness-observed.
+
+**Definition to `HashMap` (std), the step 4 behaviour.** No tab was opened (above). The Output source `Language Server` carries `[lsp] /usr/lib/rustlib/src/rust/library/std/src/collections/hash/map.rs is outside the solution's projects; read-only navigation is not available yet`, as step 4 intends (step 5 changes this). **Verified.**
+
+**Hover and 1b smoke (re-run).** Hover on `HashMap` still shows `pub struct HashMap<K, V, S = RandomState, A = Global>` with the std docs; stats `sent 1, applied 1`. Cold start ready in 3.5 s, `didOpen` reached the server, pull markers appeared (3) after an error was typed.
+
+**Verdict:** steps 3 and 4 are **Verified** for U16 and U17 (a to c and the std case), plus hover and the 1b smoke; no gate moves.
+
 #### Other findings recorded during U1 (not 1b verdicts)
 
 1. **The language-server usable check accepts any binary that exits 0.** `lldb-dap` was accepted as Rust's language server. That is consistent with the designed check (V7), which proves only that a binary runs. What the chip showed for that session was not observed.
