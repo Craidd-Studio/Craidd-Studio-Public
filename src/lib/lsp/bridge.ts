@@ -2,7 +2,7 @@ import { ProviderRequests, type ProviderReply } from "./requests.ts";
 import { ProviderRegistrations, providerAvailable } from "./providers.ts";
 import { hoverToMonaco } from "./hover.ts";
 import { symbolsToMonaco } from "./symbols.ts";
-import { locationsToTargets, openTarget, type NavigationDeps, type Selection, type Target } from "./navigation.ts";
+import { locationsToTargets, openTarget, referencesToTargets, type NavigationDeps, type Selection, type Target } from "./navigation.ts";
 import type { Monaco } from "@monaco-editor/react";
 import type { editor, languages, Position, CancellationToken, Uri, IRange, IPosition } from "monaco-editor";
 import { Channel, invoke } from "@tauri-apps/api/core";
@@ -388,6 +388,18 @@ function registerProviders(monaco: Monaco): void {
         if (!fileId || !providerAvailable(sessionCaps(fileId), "definition")) return null;
         const { line, character } = toLspPosition(position.lineNumber, position.column);
         return asLocations(monaco, locationsToTargets(await providerRequests.request("definition", fileId, { line, character }, token)));
+      },
+    }));
+    registrations.ensure(language.id, "references", "", () => monaco.languages.registerReferenceProvider(language.id, {
+      async provideReferences(model: editor.ITextModel, position: Position, context: languages.ReferenceContext, token: CancellationToken) {
+        const fileId = fileIdOf(model);
+        if (!fileId || !providerAvailable(sessionCaps(fileId), "references")) return null;
+        const { line, character } = toLspPosition(position.lineNumber, position.column);
+        const { targets, dropped } = referencesToTargets(await providerRequests.request("references", fileId,
+          { line, character, includeDeclaration: context.includeDeclaration }, token));
+        if (dropped > 0) appendLspOutput([{ session: tracker.binding(fileId)?.session ?? 0, severity: 2,
+          text: `[lsp] references limited to ${targets.length}; +${dropped} more not shown` }]);
+        return asLocations(monaco, targets);
       },
     }));
   }

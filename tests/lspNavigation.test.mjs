@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { locationsToTargets, openTarget } from "../src/lib/lsp/navigation.ts";
+import { locationsToTargets, openTarget, referencesToTargets, REFERENCES_CAP } from "../src/lib/lsp/navigation.ts";
 
 const range = { start: { line: 4, character: 1 }, end: { line: 4, character: 6 } };
 
@@ -61,4 +61,22 @@ test("a non-file resource is left to Monaco, and a bad position falls back to 1:
   const e = deps({ open: ["/a.rs"] });
   await openTarget(e.deps, "file", "/a.rs", { lineNumber: 0, column: -4 });
   assert.deepEqual(e.log[0], ["reveal", "/a.rs", 1, 1]);
+});
+
+test("references across several files keep every location, owned or not; the opener decides later", () => {
+  const refs = [
+    { uri: "file:///ws/a.rs", range }, { uri: "file:///ws/b.rs", range }, { uri: "file:///home/u/.cargo/registry/x.rs", range },
+  ];
+  const { targets, dropped } = referencesToTargets(refs);
+  assert.deepEqual(targets.map((t) => t.path), ["/ws/a.rs", "/ws/b.rs", "/home/u/.cargo/registry/x.rs"]);
+  assert.equal(dropped, 0);
+});
+
+test("a large reference list is capped with the remainder counted, never silently lost", () => {
+  const many = Array.from({ length: REFERENCES_CAP + 37 }, (_, i) => ({ uri: `file:///ws/f${i}.rs`, range }));
+  const { targets, dropped } = referencesToTargets(many);
+  assert.equal(targets.length, REFERENCES_CAP);
+  assert.equal(dropped, 37);
+  assert.equal(referencesToTargets(many, 5).dropped, REFERENCES_CAP + 32);
+  assert.deepEqual(referencesToTargets(null), { targets: [], dropped: 0 });
 });

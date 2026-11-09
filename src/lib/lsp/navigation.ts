@@ -56,3 +56,11 @@ export async function openTarget(deps: NavigationDeps, scheme: string, path: str
   await deps.unowned(path, line, column, origin);
   return "unowned";
 }
+
+/** ◇ References handed to Monaco per request; the rest are counted and reported, never silently lost (decision 47). */
+export const REFERENCES_CAP = 500;
+
+export function referencesToTargets(result: unknown, cap = REFERENCES_CAP): { targets: Target[]; dropped: number } {
+  const all = locationsToTargets(result);
+  return { targets: all.slice(0, cap), dropped: Math.max(0, all.length - cap) };
+}
