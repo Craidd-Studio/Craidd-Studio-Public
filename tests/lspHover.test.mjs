@@ -45,3 +45,13 @@ test("a code fence grows past any backtick run inside the code", () => {
   const out = hoverToMonaco({ contents: { language: "rust", value: "let s = \"```\";" } });
   assert.match(out.contents[0].value, /^````rust\n/);
 });
+
+test("reference-style links, autolinks and bare command URIs are dropped as well", () => {
+  const text = "see [x][1] and <command:evil.run> and command:bare.thing and [y][z]\n\n[1]: command:workbench.action.reload\n[z]: <command:other>\n[ok]: https://example.com";
+  const out = neutraliseCommandLinks(text);
+  assert.doesNotMatch(out, /command:/i);
+  assert.match(out, /\[ok\]: https:\/\/example\.com/);
+  assert.match(out, /see \[x\]\[1\]/, "the text around them stays");
+  const hover = hoverToMonaco({ contents: { kind: "markdown", value: text } });
+  assert.doesNotMatch(hover.contents[0].value, /command:/i);
+});

@@ -17,9 +17,17 @@ const fence = (language: string, value: string) => {
   return `${ticks}${language.replace(/[^\w+#.-]/g, "")}\n${value}\n${ticks}`;
 };
 
-/** Markdown links whose target is a `command:` URI are turned into plain text; they must never be live. */
+/**
+ * No `command:` URI survives anywhere in the text: inline links keep their label, reference
+ * definitions and autolinks are removed, and any remaining `command:` token is dropped.
+ */
 export function neutraliseCommandLinks(markdown: string): string {
-  return markdown.replace(/\[([^\]]*)\]\(\s*command:[^)]*\)/gi, "$1").replace(/<\s*a\b[^>]*href\s*=\s*["']?\s*command:[^>]*>/gi, "");
+  return markdown
+    .replace(/\[([^\]]*)\]\(\s*command:[^)]*\)/gi, "$1")          // [label](command:x)
+    .replace(/^[ \t]*\[[^\]]+\]:[ \t]*<?command:[^\n]*$/gim, "")   // [1]: command:x   (reference definition)
+    .replace(/<\s*command:[^>]*>/gi, "")                              // <command:x>      (autolink)
+    .replace(/<\s*a\b[^>]*href\s*=\s*["']?\s*command:[^>]*>/gi, "")
+    .replace(/\bcommand:[^\s)>\]"']*/gi, "");                        // anything left
 }
 
 /** Plain text shown literally: every Markdown-significant character is escaped. */
