@@ -1162,6 +1162,26 @@ One harness incident, unexplained: the first `g3a` run on the candidate ended wi
 
 **Verdict:** the `didChange` fix and the Restart fix are **Verified**, harness-observed, pending user review. Not re-run in this pass: the U7 save seed and the WebKitGTK check of the "Illegal invocation" cause itself (the behaviour change above is the evidence).
 
+#### Suites at `9083915`, U6 (V2) and the save seed again (2026-11-09, DA-3, DA-7). Harness-observed, pending user review.
+
+Build: `feat/lsp-stage-1b` at `9083915` (own run checkout `/mnt/ext_drives/Development/Development/Desktop Development/Craidd-Studio/.claude/worktrees/intellisense-verify-0b263b/verification/lsp-1b/runs/fin-9083915`; dev binary on port 1440, Xvfb `:98`, isolated `HOME`). Scripts `scripts/jobb_u6.py`, `jobb_u7.py`; evidence `/mnt/ext_drives/Development/Development/Desktop Development/Craidd-Studio/.claude/worktrees/intellisense-verify-0b263b/verification/lsp-1b/runs/jobb/u6/` and `/mnt/ext_drives/Development/Development/Desktop Development/Craidd-Studio/.claude/worktrees/intellisense-verify-0b263b/verification/lsp-1b/runs/jobb/f-u7/`.
+
+**Suites (covers the test-only ETXTBSY merge).** `node --test` 125 passed; `tsc` 0; `vite build` 0; `cargo test --lib` run **3 times**: 236 passed, 0 failed, 9 ignored each time, **no flaky test seen** (back to back, a quiet machine; the timing flakes Implementation reported in `lsp::tests` did not occur); `process_cleanup` 7 passed, 1 ignored; 26 `commands::debug*` tests ok.
+
+**U6, V2: the file-watch limit (one 120 s hold; the user's answer, relayed by the lead: "Yes, run U6").** Method A5: `inotify_hog.py --hold 120`, one process in its own session, no sudo, no setting changed. Watches in use by the user before: 8140 (limit 524 288). The helper reported `holding` (`hit_enospc: true`, 131 watches free) 10 s after it started.
+
+| Observation | Result |
+|---|---|
+| Chip during the hold (about 6 s after `main.rs` opened) | `rust-analyzer ⚠`; hover `File watching failed (changes on disk may be missed): … WARN notify error: OS file watch limit reached. about […/fx-small/src]` |
+| Output, `Language Server` source | the raw server lines `WARN notify error: OS file watch limit reached` for the project folder and `src` (four lines) |
+| After the helper released | The chip **kept** the ⚠ (the server sends no all-clear, decision 28) |
+| `↻ Restart` | **Not offered**, during the hold or afterwards: the status is a warning, not an error and not an ended session (the Restart fix covers error health only). The guide's "click `↻ Restart` and the ⚠ clears" cannot be followed from the status bar, as with U5 step 5 before the Restart fix. A new session (closing and reopening the solution) was not tried |
+| **Release** | The helper exited by itself 131.5 s after the run started, **exit code 0**, `reason: hold expired`; its pid is gone; watches in use afterwards **8126** (before: 8140), so the quota is back to baseline; no helper process remained. One hold only |
+
+**Verdict (V2):** the watch-limit warning shows on the chip and in Output as the repair R1 describes, and it persists until a new session; verified harness-observed, pending user review. The clearing step is **Unverified** because no restart control exists for this state. Whether a restart should be offered for a warning is for the architect.
+
+**U7 save seed on `9083915`.** The same `fx-many` run as before (edit one line of `m000.rs`, `Ctrl+S`): after 75 s the push set was unchanged (`arrivals.push` 137, `storeWrites.push` 137, `stored.push` 7278, markers 16 to 17 from the pull route), so **no new push diagnostics arrived after the save**, as before the fixes. The harness lost its connection (`RemoteDisconnected`) after this measurement, during the later steps of the script (fourth sighting; no cause found), so the closed-tab part was not read in this run. Implementation is checking the `didSave` and check-on-save wiring.
+
 #### Other findings recorded during U1 (not 1b verdicts)
 
 1. **The language-server usable check accepts any binary that exits 0.** `lldb-dap` was accepted as Rust's language server. That is consistent with the designed check (V7), which proves only that a binary runs. What the chip showed for that session was not observed.
