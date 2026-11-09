@@ -55,20 +55,36 @@ export function createMetrics(dev: boolean, hostFactory: () => MetricsHost = bro
     reports: { full: 0, unchanged: 0 },
     launches: { idle: 0, timeout: 0 },
     launchScheduledMs: 0,
+    /** Provider requests (Stage 1c, decision 53): outcomes per kind; `busy` is the backend's typed server-busy reply. */
+    providers: {} as Record<string, { sent: number; applied: number; stale: number; busy: number; empty: number; cancelled: number }>,
+    channelBytes: 0,
     startupInteractiveMs: null as number | null,
   };
   let frameGaps: number[] = [];
   let inputToPaint: number[] = [];
+  let providerLatency: Record<string, number[]> = {};
   let lastChannelCount = 0;
   let lastLine = "";
   let extra: () => Record<string, unknown> = () => ({});
   let emit: ((line: string) => void) | null = null;
 
   const snapshot = (): Record<string, unknown> => ({ t: Math.round(now()), ...state, channelRatePerS: state.channelMessages - lastChannelCount,
-    frameGap: summarise(frameGaps), inputToPaint: summarise(inputToPaint), ...extra() });
+    frameGap: summarise(frameGaps), inputToPaint: summarise(inputToPaint),
+    providerLatencyMs: Object.fromEntries(Object.entries(providerLatency).map(([kind, samples]) => [kind, summarise(samples)])), ...extra() });
 
   return {
+    /** Whether the hooks are on, so callers can skip work that only feeds them (a batch's size). */
+    get enabled(): boolean { return dev; },
     channelMessage(): void { if (dev) state.channelMessages++; },
+    channelBytes(bytes: number): void { if (dev) state.channelBytes += bytes; },
+    /** One finished provider request: counted per kind and outcome, latency kept for the current window. */
+    provider(kind: string, outcome: "applied" | "stale" | "busy" | "empty" | "cancelled", ms: number): void {
+      if (!dev) return;
+      const row = (state.providers[kind] ??= { sent: 0, applied: 0, stale: 0, busy: 0, empty: 0, cancelled: 0 });
+      row.sent++;
+      row[outcome]++;
+      (providerLatency[kind] ??= []).push(ms);
+    },
     arrival(route: "push" | "pull"): void { if (dev) { state.arrivals[route]++; state.lastArrivalMs[route] = Math.round(now()); } },
     storeWrite(route: "push" | "pull"): void { if (dev) state.storeWrites[route]++; },
     frameWrite(): void { if (dev) state.frameWrites++; },
@@ -109,7 +125,7 @@ export function createMetrics(dev: boolean, hostFactory: () => MetricsHost = bro
       page.frame(frame);
       page.every(1000, () => {
         const current = snapshot();
-        const { t: _t, frameGap, inputToPaint: typing, channelRatePerS: _rate, ...counters } = current as Record<string, unknown> & { frameGap: Window; inputToPaint: Window };
+        const { t: _t, frameGap, inputToPaint: typing, channelRatePerS: _rate, providerLatencyMs: _latency, ...counters } = current as Record<string, unknown> & { frameGap: Window; inputToPaint: Window };
         const comparable = JSON.stringify(counters);
         // Frame statistics alone are reported only while typing or when a frame stalled (◇ 50 ms).
         if (comparable !== lastLine || typing.count > 0 || frameGap.max > 50) {
@@ -119,6 +135,7 @@ export function createMetrics(dev: boolean, hostFactory: () => MetricsHost = bro
         lastChannelCount = state.channelMessages;
         frameGaps = [];
         inputToPaint = [];
+        providerLatency = {};
       });
     },
   };

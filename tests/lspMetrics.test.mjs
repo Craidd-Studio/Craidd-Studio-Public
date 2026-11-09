@@ -105,3 +105,38 @@ test("metrics on and off produce identical wire traffic and outcomes", async () 
   assert.deepEqual(on.stored, off.stored);
   assert.deepEqual(on.stats, off.stats);
 });
+
+import { ProviderRequests } from "../src/lib/lsp/requests.ts";
+
+test("provider requests are counted per kind and outcome with a latency window; nothing is installed when the hooks are off", async () => {
+  const on = createMetrics(true, scriptedHost().factory);
+  assert.equal(on.enabled, true);
+  on.provider("hover", "applied", 12); on.provider("hover", "stale", 40); on.provider("references", "busy", 3); on.channelBytes(1000); on.channelBytes(500);
+  const snap = on.snapshot();
+  assert.deepEqual(snap.providers.hover, { sent: 2, applied: 1, stale: 1, busy: 0, empty: 0, cancelled: 0 });
+  assert.equal(snap.providers.references.busy, 1);
+  assert.deepEqual(snap.providerLatencyMs.hover, { max: 40, p95: 40, count: 2 });
+  assert.equal(snap.channelBytes, 1500);
+  const off = createMetrics(false, scriptedHost().factory);
+  off.provider("hover", "applied", 1); off.channelBytes(9);
+  assert.equal(off.snapshot(), null);
+  assert.equal(off.enabled, false);
+});
+
+test("the hooks only count: ProviderRequests behaves the same with and without an observer", async () => {
+  const mk = (onSettle) => {
+    const state = { versionId: 1 };
+    const host = { binding: () => ({ session: 1, uri: "u" }), stamp: () => ({ epoch: 1, versionId: state.versionId }), flush: async () => {},
+      call: async (c) => (c === "lsp_hover" ? { kind: "result", epoch: 1, uri: "u", value: 7 } : { kind: "busy" }), cancel: async () => {} };
+    return new ProviderRequests(host, onSettle);
+  };
+  const seen = [];
+  const observed = mk((kind, outcome, ms) => seen.push([kind, outcome, typeof ms]));
+  const plain = mk();
+  for (const requests of [observed, plain]) {
+    assert.equal(await requests.request("hover", "f", {}), 7);
+    assert.equal(await requests.request("references", "f", {}), null);
+  }
+  assert.deepEqual(seen, [["hover", "applied", "number"], ["references", "busy", "number"]]);
+  assert.deepEqual(observed.stats, plain.stats, "identical behaviour either way");
+});

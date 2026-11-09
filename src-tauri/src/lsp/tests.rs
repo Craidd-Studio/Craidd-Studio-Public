@@ -1062,6 +1062,37 @@ mod providers_1c {
         session.stop();
     }
 
+    /// U26 (G4 with providers active): the consumer is stalled while a flood of replaceable state arrives AND provider
+    /// requests are in flight. Provider replies are class R, delivered to the awaiting command and never to the stalled
+    /// Channel, so they must all complete; the server must not stall; memory stays bounded; the stalled consumer then
+    /// drains in bounded batches and the final clearing set still arrives.
+    #[test]
+    fn a_stalled_consumer_with_providers_active_loses_no_reply_and_stalls_nothing() {
+        let session = ready("flood=3000");
+        let uri = "file:///fx/a.rs".to_string();
+        session.open_document(&uri, "rust", "fn a() {}\n").unwrap();
+        assert!(eventually(|| session.snapshot_keys() > 0), "the flood is undelivered: the consumer really is stalled");
+        let started = Instant::now();
+        let mut answered = 0;
+        for round in 0..20 {
+            for kind in KINDS {
+                let (request, _) = session.begin_provider(kind, &uri, params(kind)).unwrap();
+                match request.wait(WAIT) {
+                    Outcome::Result(value) => { assert_eq!(value["method"], kind.method(), "round {round}"); answered += 1; }
+                    other => panic!("a provider reply was lost while the consumer was stalled: {other:?}"),
+                }
+            }
+        }
+        assert_eq!(answered, 80, "every provider reply reached its awaiting command");
+        assert!(started.elapsed() < Duration::from_secs(10), "the server was never stalled by the missing consumer");
+        assert!(session.snapshot_keys() <= 800, "undelivered state stays bounded by the distinct keys, however many provider calls ran");
+        let mut drained = 0;
+        while let Some(batch) = session.next_batch(256, 1 << 20, 1000) { assert!(batch.events.len() <= 256, "bounded batches"); drained += batch.events.len(); session.ack_batch(); }
+        assert!(drained > 0);
+        assert_eq!(session.snapshot_keys(), 0, "everything replaceable was delivered once");
+        session.stop();
+    }
+
     #[test]
     fn reply_json_keys_are_the_ones_the_frontend_reads() {
         let v = serde_json::to_value(ProviderReply::Result { epoch: 2, uri: "u".into(), value: json!(1) }).unwrap();

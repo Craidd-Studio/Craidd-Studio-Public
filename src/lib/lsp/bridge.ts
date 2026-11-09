@@ -285,6 +285,7 @@ function onStatus(generation: number, status: StatusRecord): void {
 
 function onBatch(generation: number, batch: Batch): void {
   metrics.channelMessage();
+  if (metrics.enabled) metrics.channelBytes(JSON.stringify(batch).length);
   if (batch.status) onStatus(generation, batch.status);
   for (const event of batch.events) {
     if (event.kind === "diagnostics") queueDiagnostics(generation, event.uri, "push", event.diagnostics);
@@ -360,7 +361,7 @@ export const providerRequests = new ProviderRequests({
   flush: (fileId) => tracker.flush(fileId),
   call: (command, args) => invoke<ProviderReply>(command, args),
   cancel: (session, uri, kind) => invoke<void>("lsp_cancel_provider", { session, uri, kind }),
-});
+}, (kind, outcome, ms) => metrics.provider(kind, outcome, ms));
 
 // ---- Monaco providers (once per language; capability-checked per call) ----
 
