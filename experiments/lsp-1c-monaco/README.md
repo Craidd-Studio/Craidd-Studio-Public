@@ -62,6 +62,29 @@ Source explanation: in `_insertSuggestion`, an item that already has `additional
 - The suggest widget is driven by commands, not by real key presses or a visible display.
 - This is plain Monaco with a test provider, not Craidd's provider: it says nothing about V18 or the real server.
 
+## F3 probe: Craidd-owned completion acceptance (DA-15)
+
+`f3.html` / `f3.ts`; run `experiments/lsp-1c-monaco/run.sh f3`. Plain Monaco 0.56.0 and a test provider; nothing under `src/`.
+
+**Mechanism probed.** Monaco never sees the real edits. The item carries a no-op primary edit and a Monaco-local `command` (`f3.accept`). The provider has *no* `resolveCompletionItem` (a resolve returning `additionalTextEdits` would make Monaco apply them itself). The command reads the typed prefix at accept time, awaits Craidd's own resolve with a 1000 ms bound, then rejects the whole item (notice hook called, document untouched) if the model's `versionId` moved, the resolve failed or timed out, or any two edits overlap or share an insertion point. Otherwise it applies the primary edit (replace the prefix with `HashMap`) plus the `use` line as one `pushEditOperations` between two `pushStackElement()` undo stops.
+
+Two no-op variants were run through every case: **prefixRange** (range covers the typed prefix, text = that prefix) and **emptyRange** (empty range at the cursor, empty text).
+
+| # | Case | prefixRange | emptyRange |
+| --- | --- | --- | --- |
+| 1 | Idle accept, resolve 10 ms and 800 ms: final text `use` line + `HashMap`; one undo restores the original exactly | **Verified** | **Verified** |
+| 2 | User types `Z` during an 800 ms resolve: item rejected, document = original + `Z` only, one notice | **Verified** | **Verified** |
+| 3a | Resolve rejects: no change, notice called | **Verified** | **Verified** |
+| 3b | Resolve never settles: no change after the 1000 ms bound, notice called | **Verified** | **Verified** |
+| 4 | Overlap (edit inside the prefix; insertion at the primary start; two additional edits at one point): whole item rejected, no change | **Verified** | **Verified** |
+| 5 | Monaco never applies a partial edit: text right after accept (before the command's resolve) equals the original, and across both idle cases only two document states ever existed (original, final) | **Verified** | **Verified** |
+| 6 | Suggest list still filters on the typed prefix with the no-op edit | **Verified**: with prefix `HashM`, only `HashMap` is listed (of HashMap, HashSet, Hello, Zebra) and it stays listed after typing `a`; no re-request (1 provider call) | **Failed**: all four items listed unfiltered, before and after typing |
+| 7 | User keeps typing after the list opened (`a`), then accepts: the prefix in effect at accept (`HashMa`) is replaced, result `HashMap`, no leftover | **Verified** | **Verified** |
+
+**What works:** the **prefixRange** variant. The empty range gives Monaco no leading word, so it stops filtering; a range over the prefix with `insertText` equal to the prefix keeps filtering and applies no text change (Monaco's own no-op edit produced no distinct document state). The command must take the prefix from the cursor at accept time (case 7), not from when the list was built.
+
+**Verdict: F3 passes every case in this probe.** Limits: plain Monaco with a test provider, synthetic timing (resolve 10/800 ms), commands driving the widget rather than real key presses, and one item shape. It does not test the real server's items (`InsertReplaceEdit`, snippets), cursor placement after the edit beyond the simple case, multiple cursors, or an accept while a second completion is open. The notice hook is a stub; the user-visible notice is product work.
+
 ---
 
 *Last updated: Phase 3 (Stage 1c prep, V10-V12 probes). Author(s): ShinkuKira21.*
