@@ -1216,6 +1216,31 @@ The injected line reaches the same code path as the real one (the same ⚠ text 
 
 So with an edit that changes the check's result, the save **is** wired end to end on the wire: `didSave`, a check, `publishDiagnostics`, and delivery to the store. The earlier "no push arrival in 75 s" runs (batches 4 and the `9083915` re-run) used an edit that added only a comment line, and their cause is **not established** here (the check on `fx-many` finished within 0.7 s of the save, so it was not a slow first check). The coalescer's identical-set skip is not shown to be responsible; the comment edit did shift line numbers and a changed set would be expected, so that earlier non-arrival remains unexplained.
 
+#### Independent reproduction of the F3 completion-acceptance probe (DA-15) (2026-11-09). Harness-observed, pending user review.
+
+Ran `experiments/lsp-1c-monaco/run.sh f3` from `feat/intellisense-ws` at `3f7e4e5`, in a detached run checkout (`/mnt/ext_drives/Development/Development/Desktop Development/Craidd-Studio/.claude/worktrees/intellisense-verify-0b263b/verification/lsp-1b/runs/exp-f3`), the repository's Monaco 0.56.0, headless Chrome 157, port 1461 (1420 and 1440 untouched, the server stopped by the script's trap), **twice**; the outputs are byte-identical (`/mnt/ext_drives/Development/Development/Desktop Development/Craidd-Studio/.claude/worktrees/intellisense-verify-0b263b/verification/lsp-1b/runs/f3-run1.txt`, `f3-run2.txt`). Plain Monaco and a test provider; nothing under `src/`. Each case below is **Verified** or **Failed** from the output line, per variant.
+
+| # | Case | prefixRange | emptyRange |
+|---|---|---|---|
+| 1 | Idle accept, resolve 10 ms and 800 ms: final text `use` line plus `HashMap`; one undo restores the original exactly | **Verified** (both delays) | **Verified** |
+| 2 | `Z` typed during an 800 ms resolve: item rejected, text = original + `Z`, notice `document changed since accept` | **Verified** | **Verified** |
+| 3a | Resolve rejects: no change, notice `resolve failed: server said no` | **Verified** | **Verified** |
+| 3b | Resolve never settles: no change after the 1000 ms bound, notice `resolve failed: resolve timed out` | **Verified** | **Verified** |
+| 4 | Overlap (inside the prefix; insertion at the primary start; two additional edits at one point): whole item rejected, notice `edits overlap` | **Verified** (all three) | **Verified** |
+| 5 | Monaco never applies a partial edit: right after accept the text is unchanged, and across both idle cases only 2 document states existed (original, final), no partial state | **Verified** | **Verified** |
+| 6 | The suggest list still filters on the typed prefix with the no-op edit | **Verified**: prefix `HashM` lists only `HashMap`, and it stays after typing `a`; 1 provider call | **Failed**: all four items (`HashMap`, `HashSet`, `Hello`, `Zebra`) listed unfiltered before and after typing |
+| 7 | Typing `a` after the list opened, then accept: the prefix at accept (`HashMa`) is replaced, result `HashMap`, no leftover | **Verified** | **Verified** |
+
+This matches Implementation's report: prefixRange passes every case; emptyRange fails case 6 only.
+
+**What `f3.ts` does (read, 175 lines), against the README's claims:**
+- **No `resolveCompletionItem` on the provider: confirmed.** The file registers providers with `provideCompletionItems` only (the string `resolveCompletionItem` occurs 0 times); the resolve is Craidd's own (`pending.resolve()` inside the command), so Monaco never applies `additionalTextEdits` itself.
+- **The `versionId` check at command time: confirmed, with a nuance.** `versionAtAccept = model.getVersionId()` is read at the start of the command `f3.accept`, and compared after the awaited resolve (`if (model.getVersionId() !== versionAtAccept) return reject(...)`). Edits made between the accept key and the command's start (a few microtasks) are not covered; case 2 types during the resolve, which is covered.
+- **One `pushEditOperations` between two `pushStackElement()` calls: confirmed** (lines 49 to 51): stack element, one `pushEditOperations` with the primary and all additional edits, stack element.
+- **The prefix is taken at accept time: confirmed.** `model.getWordUntilPosition(cursor)` and the cursor are read inside the command; the primary edit's range is that, not the range built when the list was built. One detail: the final cursor position is computed from `pending.prefixRange` (the build-time start) and the fixed text `HashMap`, not from the accept-time prefix, which is the same here and could differ if the start of the word moved.
+
+Limits (as the README says): plain Monaco, test provider, synthetic timing, commands drive the widget rather than real keys, one item shape; it says nothing about the real server's items (`InsertReplaceEdit`, snippets) or the cursor placement beyond case 7. **Verdict:** F3 with the `prefixRange` variant **Verified** for cases 1 to 7; the `emptyRange` variant **Failed** case 6 and is not usable.
+
 #### Other findings recorded during U1 (not 1b verdicts)
 
 1. **The language-server usable check accepts any binary that exits 0.** `lldb-dap` was accepted as Rust's language server. That is consistent with the designed check (V7), which proves only that a binary runs. What the chip showed for that session was not observed.
