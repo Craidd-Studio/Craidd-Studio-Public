@@ -5,6 +5,10 @@
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicU64, Ordering};
+
+/// Session generations are unique for the whole process, so a key the
+/// frontend holds can never name a session from an earlier solution.
+static GENERATION: AtomicU64 = AtomicU64::new(0);
 use std::sync::Mutex;
 
 use super::adapter::{ResolveNote, ServerContext, ServerIdentity};
@@ -23,7 +27,6 @@ pub(crate) struct LspRegistry {
     state: Mutex<State>,
     limits: Limits,
     section: &'static str,
-    generation: AtomicU64,
 }
 
 pub(crate) enum LaunchDecision {
@@ -35,7 +38,7 @@ pub(crate) enum LaunchDecision {
 
 impl LspRegistry {
     pub(crate) fn new(limits: Limits, section: &'static str) -> Self {
-        Self { state: Mutex::new(State::default()), limits, section, generation: AtomicU64::new(0) }
+        Self { state: Mutex::new(State::default()), limits, section }
     }
 
     fn state(&self) -> std::sync::MutexGuard<'_, State> { self.state.lock().unwrap_or_else(|p| p.into_inner()) }
@@ -49,13 +52,16 @@ impl LspRegistry {
         let Ok(context) = current else { return LaunchDecision::Skip("project no longer resolves"); };
         let identity = context.identity();
         if let Some(session) = state.sessions.get(&identity) { return LaunchDecision::Attach(session.clone()); }
-        let generation = self.generation.fetch_add(1, Ordering::Relaxed) + 1;
+        let generation = GENERATION.fetch_add(1, Ordering::Relaxed) + 1;
         let session = Session::start(context.launch_spec(self.section), self.limits.clone(), generation);
         state.sessions.insert(identity, session.clone());
         LaunchDecision::Launch(session)
     }
 
     pub(crate) fn session(&self, identity: &ServerIdentity) -> Option<Session> { self.state().sessions.get(identity).cloned() }
+    pub(crate) fn by_generation(&self, generation: u64) -> Option<(ServerIdentity, Session)> {
+        self.state().sessions.iter().find(|(_, s)| s.status().generation == generation).map(|(i, s)| (i.clone(), s.clone()))
+    }
     pub(crate) fn len(&self) -> usize { self.state().sessions.len() }
 
     /// User-initiated restart of one identity (the status action).

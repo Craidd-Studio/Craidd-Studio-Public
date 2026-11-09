@@ -7,11 +7,12 @@ use serde_json::{json, Map, Value};
 
 /// Client capabilities for Stage 1 (design: "Client capabilities").
 /// `lazy_additional_edits` stays false until lazy resolution is verified
-/// safe (V10); eager mode (F2) is then the default.
-pub(crate) fn client_capabilities(lazy_additional_edits: bool) -> Value {
+/// safe (V10); eager mode (F2) is then the default. `experimental` is
+/// declared by the adapter, never by the core.
+pub(crate) fn client_capabilities(lazy_additional_edits: bool, experimental: &Value) -> Value {
     let mut resolve = vec!["documentation", "detail"];
     if lazy_additional_edits { resolve.push("additionalTextEdits"); }
-    json!({
+    let mut caps = json!({
         "general": {
             "positionEncodings": ["utf-16"],
             "staleRequestSupport": { "cancel": true, "retryOnContentModified": [] },
@@ -33,10 +34,15 @@ pub(crate) fn client_capabilities(lazy_additional_edits: bool) -> Value {
             "references": { "dynamicRegistration": false },
             "documentSymbol": { "dynamicRegistration": false, "hierarchicalDocumentSymbolSupport": true },
             "publishDiagnostics": { "relatedInformation": true, "versionSupport": true, "tagSupport": { "valueSet": [1, 2] } },
+            "diagnostic": { "dynamicRegistration": false, "relatedDocumentSupport": false,
+                "relatedInformation": true, "tagSupport": { "valueSet": [1, 2] } },
         },
         "window": { "workDoneProgress": true },
-        "workspace": { "workspaceFolders": true, "configuration": true },
-    })
+        // Advertising refresh commits Craidd to answering it (class Q) and re-pulling.
+        "workspace": { "workspaceFolders": true, "configuration": true, "diagnostics": { "refreshSupport": true } },
+    });
+    if experimental.as_object().is_some_and(|e| !e.is_empty()) { caps["experimental"] = experimental.clone(); }
+    caps
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize)]
@@ -46,6 +52,18 @@ pub(crate) enum SyncKind { None, Full, Incremental }
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub(crate) enum SaveMode { None, Plain, IncludeText }
+
+/// Validated `diagnosticProvider`: pull is enabled for the session only
+/// when this is present.
+#[derive(Clone, Debug, PartialEq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub(crate) struct Pull {
+    /// Echoed in every pull when the server gave one.
+    pub identifier: Option<String>,
+    pub inter_file_dependencies: bool,
+    /// Recorded, never used: there is no workspace-wide pull.
+    pub workspace_diagnostics: bool,
+}
 
 #[derive(Clone, Debug, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -66,6 +84,7 @@ pub(crate) struct NegotiatedCaps {
     pub definition: bool,
     pub references: bool,
     pub document_symbol: bool,
+    pub pull: Option<Pull>,
     pub server_name: Option<String>,
     pub server_version: Option<String>,
     pub notes: Vec<String>,
@@ -79,7 +98,11 @@ impl NegotiatedCaps {
             None => "off".to_string(),
             Some(c) => format!("on (resolve {}, {} trigger characters)", on(c.resolve), c.trigger_characters.len()),
         };
-        format!("sync {:?}{}, save {:?}, completion {completion}, hover {}, definition {}, references {}, symbols {}",
+        let pull = match &self.pull {
+            None => "off".to_string(),
+            Some(p) => format!("on (inter-file {})", on(p.inter_file_dependencies)),
+        };
+        format!("sync {:?}{}, save {:?}, completion {completion}, hover {}, definition {}, references {}, symbols {}, pull diagnostics {pull}",
             self.sync, self.sync_unusable.as_ref().map(|r| format!(" (unusable: {r})")).unwrap_or_default(),
             self.save, on(self.hover), on(self.definition), on(self.references), on(self.document_symbol))
     }
@@ -158,7 +181,25 @@ pub(crate) fn validate(result: &Value) -> Result<NegotiatedCaps, String> {
     let definition = provider(caps, "definitionProvider", &mut notes);
     let references = provider(caps, "referencesProvider", &mut notes);
     let document_symbol = provider(caps, "documentSymbolProvider", &mut notes);
-    if caps.contains_key("diagnosticProvider") { notes.push("pull diagnostics offered; not used in Stage 1".into()); }
+    let pull = match caps.get("diagnosticProvider") {
+        None => { notes.push("server offers no pull diagnostics; push only".into()); None }
+        Some(Value::Object(options)) => {
+            let flag = |key: &str, notes: &mut Vec<String>| match options.get(key) {
+                Some(Value::Bool(value)) => *value,
+                None => false,
+                Some(other) => { notes.push(format!("diagnosticProvider.{key} is not a boolean ({other}); read as false")); false }
+            };
+            let identifier = match options.get("identifier") {
+                None => None,
+                Some(Value::String(id)) => Some(id.clone()),
+                Some(other) => { notes.push(format!("diagnosticProvider.identifier is not a string ({other}); dropped")); None }
+            };
+            let inter_file_dependencies = flag("interFileDependencies", &mut notes);
+            let workspace_diagnostics = flag("workspaceDiagnostics", &mut notes);
+            Some(Pull { identifier, inter_file_dependencies, workspace_diagnostics })
+        }
+        Some(other) => { notes.push(format!("diagnosticProvider has an invalid shape ({other}); pull disabled, push only")); None }
+    };
     let info = result.get("serverInfo");
     let server_name = info.and_then(|i| i.get("name")).and_then(Value::as_str).map(String::from);
     let server_version = info.and_then(|i| i.get("version")).and_then(Value::as_str).map(String::from);
@@ -168,6 +209,7 @@ pub(crate) fn validate(result: &Value) -> Result<NegotiatedCaps, String> {
         completion: completion.filter(|_| documents),
         hover: hover && documents, definition: definition && documents,
         references: references && documents, document_symbol: document_symbol && documents,
+        pull: pull.filter(|_| documents),
         server_name, server_version, notes,
     })
 }
@@ -254,9 +296,21 @@ mod tests {
             "referencesProvider": false, "documentSymbolProvider": "yes", "diagnosticProvider": {}, "unknownThing": 1}));
         assert!(caps.hover && caps.definition && !caps.references && !caps.document_symbol);
         assert!(caps.notes.iter().any(|n| n.contains("documentSymbolProvider")));
-        assert!(caps.notes.iter().any(|n| n.contains("pull diagnostics")));
+        assert!(caps.pull.is_some());
         let named = validate(&json!({"capabilities": {"textDocumentSync": 2}, "serverInfo": {"name": "rust-analyzer", "version": "1.2"}})).unwrap();
         assert_eq!((named.server_name.as_deref(), named.server_version.as_deref()), (Some("rust-analyzer"), Some("1.2")));
+    }
+
+    #[test]
+    fn diagnostic_provider_shapes() {
+        let pull = |value: Value| ok(json!({"textDocumentSync": 2, "diagnosticProvider": value})).pull;
+        assert_eq!(pull(json!({"identifier": "ra", "interFileDependencies": true, "workspaceDiagnostics": false})),
+            Some(Pull { identifier: Some("ra".into()), inter_file_dependencies: true, workspace_diagnostics: false }));
+        assert_eq!(pull(json!({"interFileDependencies": "yes", "identifier": 4, "documentSelector": null, "id": "x"})),
+            Some(Pull { identifier: None, inter_file_dependencies: false, workspace_diagnostics: false }));
+        for disabled in [json!(true), json!(false), json!("pull"), json!(null)] { assert_eq!(pull(disabled.clone()), None, "{disabled}"); }
+        assert_eq!(ok(json!({"textDocumentSync": 2})).pull, None);
+        assert_eq!(ok(json!({"diagnosticProvider": {}})).pull, None, "no documents, no pull");
     }
 
     #[test]
@@ -277,11 +331,15 @@ mod tests {
 
     #[test]
     fn advertises_utf16_only_and_no_dynamic_registration_or_watchers() {
-        let caps = client_capabilities(false);
+        let caps = client_capabilities(false, &json!({}));
         assert_eq!(caps["general"]["positionEncodings"], json!(["utf-16"]));
+        assert!(caps.get("experimental").is_none(), "the core declares nothing experimental");
+        assert_eq!(caps["workspace"]["diagnostics"]["refreshSupport"], true);
+        assert_eq!(caps["textDocument"]["diagnostic"]["relatedDocumentSupport"], false);
+        assert_eq!(client_capabilities(false, &json!({"serverStatusNotification": true}))["experimental"]["serverStatusNotification"], true);
         assert!(caps["workspace"].get("didChangeWatchedFiles").is_none());
         assert!(caps["workspace"].get("applyEdit").is_none());
         assert_eq!(caps["textDocument"]["completion"]["completionItem"]["resolveSupport"]["properties"], json!(["documentation", "detail"]));
-        assert_eq!(client_capabilities(true)["textDocument"]["completion"]["completionItem"]["resolveSupport"]["properties"][2], "additionalTextEdits");
+        assert_eq!(client_capabilities(true, &json!({}))["textDocument"]["completion"]["completionItem"]["resolveSupport"]["properties"][2], "additionalTextEdits");
     }
 }

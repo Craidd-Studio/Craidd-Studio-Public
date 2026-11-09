@@ -23,6 +23,13 @@ pub(crate) struct ServerContext {
     pub init_options: Value,
     pub env: Vec<(String, String)>,
     pub lsp_language_id: &'static str,
+    /// Client `experimental` capabilities this adapter's server understands.
+    pub experimental: Value,
+    /// A request asking the server to reload its workspace, if it has one.
+    pub reload_method: Option<&'static str>,
+    /// Manifests that belong to the resolved workspace; `None` when they
+    /// could not be resolved (for example a broken manifest).
+    pub manifests: Option<Vec<PathBuf>>,
     /// Non-fatal notes, for example a fallback root.
     pub notes: Vec<String>,
 }
@@ -39,6 +46,11 @@ pub(crate) trait LanguageAdapter: Send + Sync {
     /// as `Cargo.toml` and explicitly included non-source files out.
     fn document_extensions(&self) -> &'static [&'static str];
     fn resolve(&self, project: &ProjectRef) -> Result<ServerContext, ResolveNote>;
+    /// The `workspace/configuration` section the server asks for.
+    fn configuration_section(&self) -> &'static str;
+    /// The workspace root and its manifests as resolved now (cached by the
+    /// adapter); `None` when they cannot be resolved (a broken manifest).
+    fn workspace_layout(&self, _project: &ProjectRef) -> Option<(PathBuf, Vec<PathBuf>)> { None }
 }
 
 /// `( implementation id, resolved root, configuration identity )`.
@@ -92,6 +104,8 @@ impl ServerContext {
             configuration: serde_json::json!({ section: self.init_options }),
             init_options: self.init_options.clone(),
             lazy_additional_edits: false,
+            experimental: self.experimental.clone(),
+            reload_method: self.reload_method.map(String::from),
         }
     }
 }
@@ -103,7 +117,7 @@ mod tests {
 
     fn context(path: &str, version: &str, root: &str, options: Value) -> ServerContext {
         ServerContext { implementation: ToolRef { path: path.into(), version: version.into() }, args: vec![], root: root.into(),
-            projects: vec![], init_options: options, env: vec![], lsp_language_id: "rust", notes: vec![] }
+            projects: vec![], init_options: options, env: vec![], lsp_language_id: "rust", experimental: Value::Null, reload_method: None, manifests: None, notes: vec![] }
     }
 
     #[test]

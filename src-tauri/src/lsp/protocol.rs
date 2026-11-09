@@ -16,12 +16,17 @@ pub(crate) enum Outcome {
     Error { code: i64, message: String },
     /// Cancelled, superseded, content modified, timed out or session ended.
     NoResult,
+    /// `ServerCancelled` whose data asks the client to send the request
+    /// again later (`retriggerRequest`, defined for diagnostic requests).
+    /// No result now; the caller may re-arm, bounded.
+    Retrigger,
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
 pub(crate) enum LogSource { Log, Show, Stderr }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, serde::Serialize)]
 pub(crate) struct LogLine {
     pub source: LogSource,
     /// LSP `MessageType`: 1 error, 2 warning, 3 info, 4 log. Stderr is 4.
@@ -38,6 +43,25 @@ pub(crate) enum Snapshot {
     Progress { token: String, kind: ProgressKind, value: Value },
 }
 
+/// V2: does a server line report that file watching failed? Best-effort
+/// text matching on what servers print, never on anything Craidd infers.
+/// Verified against rust-analyzer 2026-09-06 at its default log level:
+/// `WARN notify error: OS file watch limit reached.` Other `notify error`
+/// lines (for example `No path was found.`) do not stop watching and do not match.
+pub(crate) fn is_watcher_failure(line: &str) -> bool {
+    // Decision 28: the stable fragment, case-insensitively; not the severity word.
+    line.to_ascii_lowercase().contains("os file watch limit reached")
+}
+
+/// `experimental/serverStatus` (rust-analyzer), parsed by shape. Health is
+/// separate from the session phase: a Ready session can report `error`.
+#[derive(Clone, Debug, PartialEq, Eq, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+pub(crate) struct Health { pub health: String, pub quiescent: Option<bool>, pub message: Option<String> }
+
+/// ◇ Longest server health message kept in the status record.
+pub(crate) const HEALTH_MESSAGE_BYTES: usize = 2048;
+
 #[derive(Debug, PartialEq)]
 pub(crate) enum Inbound {
     /// Class R. `id` is `None` for an id we could never have issued.
@@ -48,6 +72,8 @@ pub(crate) enum Inbound {
     Snapshot(Snapshot),
     /// Class L.
     Log(LogLine),
+    /// Class T: the latest server health. `Err` is a malformed body, logged and ignored.
+    Health(Result<Health, String>),
     /// A notification Stage 1 does not consume. Counted, never fatal.
     Ignored { method: String },
 }
@@ -74,7 +100,9 @@ pub(crate) fn classify(body: &[u8]) -> Result<Inbound, BadBody> {
         (None, id) => {
             let outcome = if let Some(error) = object.get("error") {
                 let code = error.get("code").and_then(Value::as_i64).ok_or_else(|| BadBody("error has no integer code".into()))?;
-                if matches!(code, REQUEST_CANCELLED | CONTENT_MODIFIED | SERVER_CANCELLED) { Outcome::NoResult }
+                let retrigger = error.get("data").and_then(|d| d.get("retriggerRequest")) == Some(&Value::Bool(true));
+                if code == SERVER_CANCELLED && retrigger { Outcome::Retrigger }
+                else if matches!(code, REQUEST_CANCELLED | CONTENT_MODIFIED | SERVER_CANCELLED) { Outcome::NoResult }
                 else { Outcome::Error { code, message: error.get("message").and_then(Value::as_str).unwrap_or("").into() } }
             } else if let Some(result) = object.get("result") {
                 Outcome::Result(result.clone())
@@ -117,8 +145,25 @@ fn notification(method: &str, params: &Value) -> Result<Inbound, BadBody> {
             severity: params.get("type").and_then(Value::as_u64).filter(|t| (1..=4).contains(t)).unwrap_or(4) as u8,
             text: params.get("message").and_then(Value::as_str).unwrap_or("").into(),
         })),
+        "experimental/serverStatus" => Ok(Inbound::Health(health(params))),
         _ => Ok(Inbound::Ignored { method: method.into() }),
     }
+}
+
+fn health(params: &Value) -> Result<Health, String> {
+    let health = params.get("health").and_then(Value::as_str).ok_or_else(|| format!("serverStatus without health: {params}"))?;
+    if !matches!(health, "ok" | "warning" | "error") { return Err(format!("serverStatus with unknown health {health:?}")); }
+    let quiescent = match params.get("quiescent") { None => None, Some(Value::Bool(q)) => Some(*q), Some(other) => return Err(format!("serverStatus quiescent is not a boolean ({other})")) };
+    let message = match params.get("message") {
+        None | Some(Value::Null) => None,
+        Some(Value::String(text)) => {
+            let mut end = text.len().min(HEALTH_MESSAGE_BYTES);
+            while !text.is_char_boundary(end) { end -= 1; }
+            Some(if end < text.len() { format!("{}…", &text[..end]) } else { text.clone() })
+        }
+        Some(other) => return Err(format!("serverStatus message is not a string ({other})")),
+    };
+    Ok(Health { health: health.into(), quiescent, message })
 }
 
 pub(crate) fn request(id: i64, method: &str, params: Value) -> String {
@@ -163,7 +208,35 @@ mod tests {
             Inbound::Snapshot(Snapshot::Progress { ref token, kind: ProgressKind::End, .. }) if token == "n:7"));
         assert!(matches!(of(json!({"jsonrpc":"2.0","method":"window/logMessage","params":{"type":1,"message":"x"}})).unwrap(),
             Inbound::Log(LogLine { severity: 1, source: LogSource::Log, .. })));
-        assert!(matches!(of(json!({"jsonrpc":"2.0","method":"experimental/serverStatus","params":{}})).unwrap(), Inbound::Ignored { .. }));
+        assert!(matches!(of(json!({"jsonrpc":"2.0","method":"experimental/unknownThing","params":{}})).unwrap(), Inbound::Ignored { .. }));
+        assert_eq!(of(json!({"jsonrpc":"2.0","id":2,"error":{"code":SERVER_CANCELLED,"message":"m","data":{"retriggerRequest":true}}})).unwrap(),
+            Inbound::Response { id: Some(2), outcome: Outcome::Retrigger });
+        assert_eq!(of(json!({"jsonrpc":"2.0","id":2,"error":{"code":SERVER_CANCELLED,"message":"m","data":{"retriggerRequest":false}}})).unwrap(),
+            Inbound::Response { id: Some(2), outcome: Outcome::NoResult });
+    }
+
+    #[test]
+    fn watcher_failures_are_recognised_by_text() {
+        assert!(is_watcher_failure("2026-10-29T10:00:00Z  WARN notify error: OS file watch limit reached."));
+        assert!(is_watcher_failure("WARN notify error: OS file watch limit reached."));
+        assert!(is_watcher_failure("ERROR notify: os FILE WATCH LIMIT REACHED"), "the severity word does not matter");
+        assert!(!is_watcher_failure("WARN notify error: No path was found."));
+        assert!(!is_watcher_failure("INFO did change watched files"));
+    }
+
+    #[test]
+    fn server_status_is_parsed_by_shape_and_bounded() {
+        let status = |params: Value| match of(json!({"jsonrpc":"2.0","method":"experimental/serverStatus","params":params})).unwrap() {
+            Inbound::Health(health) => health, other => panic!("{other:?}"),
+        };
+        assert_eq!(status(json!({"health":"error","quiescent":true,"message":"Failed to load workspaces."})).unwrap(),
+            Health { health: "error".into(), quiescent: Some(true), message: Some("Failed to load workspaces.".into()) });
+        assert_eq!(status(json!({"health":"ok","quiescent":false})).unwrap().message, None);
+        for bad in [json!({}), json!({"health":"panic"}), json!({"health":"ok","quiescent":"no"}), json!({"health":"ok","message":3}), json!(null)] {
+            assert!(status(bad.clone()).is_err(), "{bad}");
+        }
+        let long = status(json!({"health":"warning","message":"é".repeat(HEALTH_MESSAGE_BYTES)})).unwrap().message.unwrap();
+        assert!(long.len() <= HEALTH_MESSAGE_BYTES + "…".len() && long.ends_with('…'));
     }
 
     #[test]

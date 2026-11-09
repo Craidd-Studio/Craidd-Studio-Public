@@ -62,6 +62,7 @@ mod tests {
         fn language(&self) -> &'static str { self.0 }
         fn document_extensions(&self) -> &'static [&'static str] { self.1 }
         fn resolve(&self, _: &ProjectRef) -> Result<ServerContext, ResolveNote> { Err(ResolveNote("unused".into())) }
+        fn configuration_section(&self) -> &'static str { "unused" }
     }
 
     fn outcome(file: &str, s: &CraiddSolution, adapters: &[Box<dyn LanguageAdapter>]) -> Result<String, NotRouted> {

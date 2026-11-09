@@ -4,6 +4,7 @@ import { emptyStartupState, type StartupState, type WorkspaceEntry } from "./typ
 import { listenToBuildEvents, selectConfiguration, useBuild } from "./store/buildStore";
 import { useDebug } from "./store/debugStore";
 import { setWindowInstanceId } from "./store/linkedWindowsStore";
+import { startupComplete } from "./lib/lsp/bridge";
 
 const AppShell = lazy(() => import("./components/layout/AppShell"));
 const GetStarted = lazy(() => import("./components/startup/GetStarted"));
@@ -119,6 +120,11 @@ export default function App() {
     });
     return () => { cancelled = true; window.cancelAnimationFrame(showFrame); window.clearTimeout(showTimer); };
   }, []);
+
+  // Language servers may start only once startup and session restore have finished.
+  useEffect(() => {
+    if (mode === "workspace") void startupComplete().catch((cause) => console.warn("[lsp] could not start:", cause));
+  }, [mode]);
 
   if (mode === "loading") return <div className="h-screen bg-zinc-950 flex items-center justify-center text-sm text-zinc-500">Opening Craidd Studio…</div>;
   if (mode === "workspace") return <Suspense fallback={<div className="h-screen bg-zinc-950" />}><AppShell startProjectDialog={startProjectDialog} onCloseStartProjectDialog={() => setStartProjectDialog(false)} /></Suspense>;

@@ -5,7 +5,7 @@
 //! end), LSP fails the session because the stream position is lost. The
 //! body size cap is a parameter, never a shared constant.
 use std::io::{BufRead, Write};
-use std::sync::atomic::{AtomicUsize, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 use std::sync::mpsc::{sync_channel, SyncSender, TrySendError};
 use std::sync::Arc;
 
@@ -85,6 +85,8 @@ pub(crate) enum QueueError { Full, Closed }
 pub(crate) struct FrameWriter {
     sender: SyncSender<Vec<u8>>,
     depth: Arc<AtomicUsize>,
+    /// Set when an admission was refused; cleared by the drain signal.
+    starved: Arc<AtomicBool>,
     capacity: usize,
     thread: std::thread::JoinHandle<()>,
 }
@@ -92,18 +94,28 @@ pub(crate) struct FrameWriter {
 impl FrameWriter {
     pub(crate) fn spawn(writer: impl Write + Send + 'static, capacity: usize,
         on_error: impl FnOnce(String) + Send + 'static) -> Self {
+        Self::spawn_with_drain(writer, capacity, 0, || {}, on_error)
+    }
+
+    /// As `spawn`, and after a refused admission `on_drain` runs once when
+    /// the depth falls to `low_water`, so callers retry on an event rather
+    /// than by polling.
+    pub(crate) fn spawn_with_drain(writer: impl Write + Send + 'static, capacity: usize, low_water: usize,
+        on_drain: impl Fn() + Send + 'static, on_error: impl FnOnce(String) + Send + 'static) -> Self {
         let (sender, receiver) = sync_channel::<Vec<u8>>(capacity);
         let depth = Arc::new(AtomicUsize::new(0));
-        let written = depth.clone();
+        let starved = Arc::new(AtomicBool::new(false));
+        let (written, hungry) = (depth.clone(), starved.clone());
         let thread = std::thread::spawn(move || {
             let mut writer = writer;
             while let Ok(packet) = receiver.recv() {
                 let result = writer.write_all(&packet).and_then(|_| writer.flush());
-                written.fetch_sub(1, Ordering::AcqRel);
+                let left = written.fetch_sub(1, Ordering::AcqRel) - 1;
                 if let Err(error) = result { on_error(error.to_string()); return; }
+                if left <= low_water && hungry.swap(false, Ordering::AcqRel) { on_drain(); }
             }
         });
-        Self { sender, depth, capacity, thread }
+        Self { sender, depth, starved, capacity, thread }
     }
 
     /// Close the queue; the thread ends after its current write. Join the
@@ -124,10 +136,33 @@ impl FrameWriter {
         let before = self.depth.fetch_add(1, Ordering::AcqRel);
         if before >= limit.min(self.capacity) {
             self.depth.fetch_sub(1, Ordering::AcqRel);
+            self.starved.store(true, Ordering::Release);
             return Err(QueueError::Full);
         }
         self.enqueue(packet)
     }
+
+    /// All packets or none: their slots are taken in one step. The channel
+    /// holds at most `depth` packets, so reserved slots always fit. Callers
+    /// that serialise their sends (the LSP session sends under one lock)
+    /// therefore get the packets contiguously.
+    pub(crate) fn try_send_all(&self, packets: Vec<Vec<u8>>, limit: usize) -> Result<(), QueueError> {
+        let count = packets.len();
+        let limit = limit.min(self.capacity);
+        if self.depth.try_update(Ordering::AcqRel, Ordering::Acquire, |depth| (depth + count <= limit).then_some(depth + count)).is_err() {
+            self.starved.store(true, Ordering::Release);
+            return Err(QueueError::Full);
+        }
+        for (index, packet) in packets.into_iter().enumerate() {
+            if let Err(error) = self.enqueue(packet) {
+                self.depth.fetch_sub(count - index - 1, Ordering::AcqRel);
+                return Err(error);
+            }
+        }
+        Ok(())
+    }
+
+    pub(crate) fn depth(&self) -> usize { self.depth.load(Ordering::Acquire) }
 
     fn enqueue(&self, packet: Vec<u8>) -> Result<(), QueueError> {
         self.sender.try_send(packet).map_err(|error| {
@@ -195,6 +230,31 @@ mod tests {
         let admitted = (0..10).filter(|_| writer.try_send_within(encode("{}"), 6).is_ok()).count();
         assert_eq!(admitted, 6);
         assert!(writer.try_send(encode("{}")).is_ok(), "reserve stays available");
+        assert!(writer.try_send_all(vec![encode("{}"), encode("{}")], 8).is_err(), "a pair needs two free slots");
+        assert_eq!(writer.depth(), 7);
+        assert!(writer.try_send_all(vec![encode("{}")], 8).is_ok());
         for _ in 0..16 { let _ = release.send(()); }
+    }
+
+    #[test]
+    fn a_refused_admission_signals_once_when_the_queue_drains() {
+        let (release, blocked) = std::sync::mpsc::channel::<()>();
+        struct Gate(std::sync::mpsc::Receiver<()>);
+        impl Write for Gate {
+            fn write(&mut self, bytes: &[u8]) -> std::io::Result<usize> { self.0.recv().ok(); Ok(bytes.len()) }
+            fn flush(&mut self) -> std::io::Result<()> { Ok(()) }
+        }
+        let (drained, signals) = std::sync::mpsc::channel();
+        let writer = FrameWriter::spawn_with_drain(Gate(blocked), 4, 1, move || { let _ = drained.send(()); }, |_| {});
+        for _ in 0..4 { assert!(writer.try_send(encode("{}")).is_ok()); }
+        assert!(writer.try_send_all(vec![encode("a"), encode("b")], 4).is_err());
+        for _ in 0..2 { release.send(()).unwrap(); }
+        assert!(signals.recv_timeout(std::time::Duration::from_millis(200)).is_err(), "depth 2 is above the low-water mark");
+        release.send(()).unwrap();
+        signals.recv_timeout(std::time::Duration::from_secs(2)).expect("drain signal");
+        release.send(()).unwrap();
+        assert!(signals.recv_timeout(std::time::Duration::from_millis(200)).is_err(), "one signal per refusal");
+        assert!(writer.try_send_all(vec![encode("a"), encode("b")], 4).is_ok());
+        for _ in 0..4 { let _ = release.send(()); }
     }
 }

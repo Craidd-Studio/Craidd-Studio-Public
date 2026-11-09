@@ -7,6 +7,7 @@ import { usePreferences } from "../../store/preferencesStore";
 import { useSplit } from "../../store/splitStore";
 import { setActiveEditor, getActiveEditor } from "../../lib/activeEditor";
 import { CRAIDD_DARK_THEME, defineCraiddDarkTheme } from "../../lib/editorThemes";
+import { attachMonaco } from "../../lib/lsp/bridge";
 
 /**
  * The side editor group. It edits the same Monaco model as the main editor,
@@ -60,6 +61,7 @@ export default function SideEditor() {
         onMount={(instance, monaco) => {
           instanceRef.current = instance;
           monacoRef.current = monaco;
+          attachMonaco(monaco);
           instance.onDidFocusEditorText(() => { useSplit.getState().setSideFocused(true); setActiveEditor(instance, () => fileId); });
           instance.onDidDispose(() => { if (getActiveEditor() === instance) setActiveEditor(null); });
         }}

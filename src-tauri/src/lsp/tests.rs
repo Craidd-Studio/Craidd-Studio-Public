@@ -22,7 +22,7 @@ fn spec(script: &str) -> LaunchSpec {
     let (program, args, env) = fake_server::command(script);
     LaunchSpec { program, args, env, cwd: std::env::temp_dir(), root_uri: "file:///ws".into(), workspace_name: "ws".into(),
         init_options: json!({"cargo": {"targetDir": true}}), configuration: json!({"rust-analyzer": {"cargo": {"targetDir": true}}}),
-        lazy_additional_edits: false }
+        lazy_additional_edits: false, experimental: json!({}), reload_method: Some("rust-analyzer/reloadWorkspace".into()) }
 }
 
 fn start(script: &str) -> Session { Session::start(spec(script), limits(), 1) }
@@ -255,7 +255,7 @@ fn every_terminal_cause_leaves_the_same_invariants() {
 fn context(script: &str, root: &str) -> ServerContext {
     let (program, args, env) = fake_server::command(script);
     ServerContext { implementation: ToolRef { path: program, version: "fake".into() }, args, root: root.into(),
-        projects: vec![], init_options: json!({}), env, lsp_language_id: "rust", notes: vec![] }
+        projects: vec![], init_options: json!({}), env, lsp_language_id: "rust", experimental: json!({}), reload_method: None, manifests: None, notes: vec![] }
 }
 
 #[test]
@@ -297,4 +297,590 @@ fn a_dead_session_is_not_restarted_automatically() {
     let LaunchDecision::Launch(fresh) = registry.restart(context("", &root)) else { panic!() };
     assert!(fresh.wait_until(WAIT, |s| s.phase == Phase::Ready));
     for session in registry.stop_all() { assert_clean_end(&session, Phase::Exited, "stop"); }
+}
+
+// ---- Stage 1b: documents, pull diagnostics, refresh, health, delivery ----
+
+fn replies(session: &Session) -> Vec<Value> {
+    session.logs().0.iter().filter_map(|l| l.text.strip_prefix("reply ")).map(|t| serde_json::from_str(t).unwrap()).collect()
+}
+
+fn server_text(session: &Session, uri: &str) -> Value {
+    match session.request("test/text", json!({"uri": uri}), WAIT) { Ok(Outcome::Result(value)) => value, other => panic!("{other:?}") }
+}
+
+fn drain(session: &Session) -> Vec<super::session::Batch> {
+    let mut batches = vec![];
+    while let Some(batch) = session.next_batch(256, 1 << 20, 1000) { batches.push(batch); session.ack_batch(); }
+    batches
+}
+
+const DOC: &str = "file:///ws/src/main.rs";
+
+#[test]
+fn f2_refresh_is_answered_null_once_each_and_moves_the_counter_only_with_pull() {
+    // Pull enabled; nobody consumes deliveries (stalled consumer).
+    let session = ready("pull,refresh=5");
+    assert!(eventually(|| replies(&session).len() == 5));
+    for (n, reply) in replies(&session).iter().enumerate() {
+        assert_eq!(reply["id"], json!(format!("r{n}")), "string ids are echoed verbatim");
+        assert_eq!(reply["result"], Value::Null);
+        assert!(reply.get("error").is_none(), "never an error");
+    }
+    assert!(session.wait_until(WAIT, |s| s.refresh == 5));
+    assert_eq!(session.counters().refreshes, 5);
+    session.stop();
+    // Pull disabled: still answered null, the counter never moves.
+    let session = ready("refresh=3");
+    assert!(eventually(|| replies(&session).len() == 3));
+    assert!(replies(&session).iter().all(|r| r["result"] == Value::Null && r.get("error").is_none()));
+    assert_eq!(session.status().refresh, 0);
+    assert!(session.begin_pull(DOC, None).is_err(), "no pull for a server without diagnosticProvider");
+    session.stop();
+}
+
+#[test]
+fn f3_show_message_request_before_initialize_reply_is_answered_once() {
+    let session = ready("early_ask");
+    assert!(eventually(|| replies(&session).iter().any(|r| r["id"] == "early")));
+    let early: Vec<Value> = replies(&session).into_iter().filter(|r| r["id"] == "early").collect();
+    assert_eq!(early.len(), 1);
+    assert_eq!(early[0]["result"], Value::Null);
+    assert!(session.logs().0.iter().any(|l| l.source == LogSource::Show && l.text == "early" && l.severity == 3), "no type → severity 3");
+    session.stop();
+}
+
+#[test]
+fn server_health_updates_the_status_record_without_changing_the_phase() {
+    let session = ready("serverstatus");
+    assert!(eventually(|| log_text(&session, "status sent").is_some()));
+    assert!(session.wait_until(WAIT, |s| s.health.as_ref().is_some_and(|h| h.health == "error")));
+    let status = session.status();
+    assert_eq!(status.phase, Phase::Ready, "health is separate from the phase");
+    let message = status.health.unwrap().message.unwrap();
+    assert!(message.len() <= super::protocol::HEALTH_MESSAGE_BYTES + 3, "bounded: {}", message.len());
+    assert_eq!(session.counters().malformed_health, 1, "unknown health is ignored and logged");
+    assert!(log_text(&session, "[lsp] ignored server status").is_some());
+    assert!(log_text(&session, "[lsp] server status warning: Failed spawning proc-macro server").is_some());
+    session.stop();
+    assert_clean_end(&session, Phase::Exited, "stopped");
+}
+
+fn pull(session: &Session, previous: Option<&str>) -> Outcome {
+    let request = session.begin_pull(DOC, previous).unwrap();
+    request_outcome(request)
+}
+
+fn request_outcome(request: super::session::PendingRequest) -> Outcome { request.wait(WAIT) }
+
+#[test]
+fn documents_sync_through_the_session_and_pull_reports_follow_result_ids() {
+    let session = ready("pull");
+    let open = session.open_document(DOC, "rust", "fn main() {}\n").unwrap();
+    assert_eq!(server_text(&session, DOC)["text"], "fn main() {}\n");
+    // An incremental change in UTF-16 units after a non-BMP character.
+    let change = json!({"range": {"start": {"line": 0, "character": 11}, "end": {"line": 0, "character": 11}}, "text": " /*😀*/ bad()"});
+    let view = session.change_document(DOC, open.epoch, vec![change]).unwrap();
+    assert_eq!(view.version, 2);
+    let change = json!({"range": {"start": {"line": 0, "character": 15}, "end": {"line": 0, "character": 15}}, "text": "!"});
+    session.change_document(DOC, open.epoch, vec![change]).unwrap();
+    assert_eq!(server_text(&session, DOC)["text"], "fn main() { /*😀!*/ bad()}\n");
+    let Outcome::Result(first) = pull(&session, None) else { panic!() };
+    assert_eq!(first["kind"], "full");
+    assert_eq!(first["items"].as_array().unwrap().len(), 1);
+    let result_id = first["resultId"].as_str().unwrap().to_string();
+    let Outcome::Result(second) = pull(&session, Some(&result_id)) else { panic!() };
+    assert_eq!(second["kind"], "unchanged", "previousResultId is sent and honoured");
+    session.save_document(DOC, "").unwrap();
+    assert_eq!(server_text(&session, DOC)["saves"], 1);
+    session.close_document(DOC).unwrap();
+    assert_eq!(server_text(&session, DOC)["text"], Value::Null);
+    assert!(matches!(session.begin_pull(DOC, None), Err(super::session::PullError::NotSynced)), "closed documents are not pulled");
+    session.stop();
+    assert_clean_end(&session, Phase::Exited, "stopped");
+}
+
+#[test]
+fn a_server_cancelled_pull_with_retrigger_data_is_reported_as_retrigger() {
+    let session = ready("pull,retrigger");
+    session.open_document(DOC, "rust", "x").unwrap();
+    assert_eq!(pull(&session, None), Outcome::Retrigger);
+    session.stop();
+}
+
+#[test]
+fn session_death_resolves_pending_pulls_and_empties_the_document_table() {
+    let session = ready("pull");
+    session.open_document(DOC, "rust", "x").unwrap();
+    let never = session.begin_request("test/never", json!({})).unwrap();
+    session.request("test/crash", json!({}), Duration::from_millis(100)).ok();
+    assert_eq!(never.wait(WAIT), Outcome::NoResult);
+    assert_clean_end(&session, Phase::Crashed, "exited with code 3");
+    assert!(session.document(DOC).is_none());
+    assert!(session.status().resync.is_empty());
+}
+
+#[test]
+fn a_forced_writer_overflow_desyncs_then_resyncs_to_the_model_text_exactly_once() {
+    let mut limits = limits();
+    limits.writer_capacity = 8;
+    limits.request_reserve = 2;
+    limits.writer_low_water = 2;
+    limits.resync_bound = Duration::from_millis(400);
+    let session = Session::start(spec("pull,stall_after_open=1500"), limits, 1);
+    assert!(session.wait_until(WAIT, |s| s.phase == Phase::Ready));
+    let open = session.open_document(DOC, "rust", "").unwrap();
+    // The server stops reading; changes fill the pipe and then the writer.
+    let mut model = String::new();
+    let mut epoch = open.epoch;
+    let mut desynced = false;
+    for n in 0..400 {
+        let piece = format!("{n:04}{}\n", "x".repeat(4096));
+        let at = model.lines().count();
+        model.push_str(&piece);
+        let change = json!({"range": {"start": {"line": at, "character": 0}, "end": {"line": at, "character": 0}}, "text": piece});
+        let view = session.change_document(DOC, epoch, vec![change]).unwrap();
+        if view.sync != super::documents::DocState::Synced { desynced = true; epoch = view.epoch; break; }
+    }
+    assert!(desynced, "the writer never filled");
+    assert_eq!(session.status().resync.iter().collect::<Vec<_>>(), vec![DOC]);
+    // Edits while desynced are not queued.
+    model.push_str("tail\n");
+    let flagged = session.change_document(DOC, epoch, vec![json!({"text": "ignored"})]).unwrap();
+    assert!(matches!(flagged.sync, super::documents::DocState::Desynced { changed: true, .. }));
+    assert!(session.begin_pull(DOC, None).is_err(), "requests on a desynced document fail fast");
+    assert!(session.wait_until(WAIT, |s| s.unresponsive), "the bound reports Unresponsive while the server is not reading");
+    let room = session.status().writer_room;
+    assert!(session.wait_until(WAIT, |s| s.writer_room > room), "the drain is signalled as an event");
+    let synced = session.resync_document(DOC, &model).unwrap();
+    assert_eq!(synced.sync, super::documents::DocState::Synced);
+    assert_eq!(server_text(&session, DOC)["text"], Value::String(model.clone()), "server text equals model text");
+    assert!(session.wait_until(WAIT, |s| !s.unresponsive && s.resync.is_empty()));
+    let stats = session.document_stats();
+    assert_eq!((stats.desyncs, stats.resyncs), (1, 1));
+    session.stop();
+    assert_clean_end(&session, Phase::Exited, "stopped");
+}
+
+#[test]
+fn delivery_batches_are_acknowledged_and_carry_status_logs_and_fresh_pushes() {
+    let session = ready("pull,flood=10");
+    assert!(eventually(|| log_text(&session, "flood done").is_some()));
+    let first = session.next_batch(256, 1 << 20, 1000).expect("a first batch");
+    assert!(first.status.is_some(), "the first batch carries the status record");
+    assert!(session.next_batch(256, 1 << 20, 1000).is_none(), "held until acknowledged");
+    session.ack_batch();
+    let rest = drain(&session);
+    let logs: usize = std::iter::once(&first).chain(rest.iter()).map(|b| b.logs.len()).sum();
+    assert!(logs >= 10, "log lines are delivered once each: {logs}");
+    assert!(session.next_batch(256, 1 << 20, 1000).is_none(), "nothing new, nothing sent");
+    session.stop();
+}
+
+#[test]
+fn a_push_older_than_the_documents_version_is_dropped() {
+    let session = ready("push_stale");
+    session.open_document(DOC, "rust", "a").unwrap();
+    session.change_document(DOC, 1, vec![json!({"text": "b"})]).unwrap();
+    assert!(eventually(|| log_text(&session, "pushed stale").is_some()));
+    let events: Vec<Delivered> = drain(&session).into_iter().flat_map(|b| b.events).collect();
+    assert!(!events.iter().any(|e| matches!(e, Delivered::Diagnostics { uri, .. } if uri == DOC)), "{events:?}");
+    assert_eq!(session.counters().stale_pushes, 1);
+    session.stop();
+}
+
+fn status_spec(script: &str) -> LaunchSpec {
+    let mut spec = spec(script);
+    spec.experimental = json!({"serverStatusNotification": true});
+    spec
+}
+
+#[test]
+fn v24_pulls_wait_for_the_workspace_to_report_ready() {
+    let session = Session::start(status_spec("pull,loading"), limits(), 1);
+    assert!(session.wait_until(WAIT, |s| s.phase == Phase::Ready));
+    assert_eq!(session.status().workspace_ready, Some(false));
+    session.open_document(DOC, "rust", "bad()").unwrap();
+    assert!(matches!(session.begin_pull(DOC, None), Err(super::session::PullError::NotReady)),
+        "an empty report before readiness proves nothing, so none is requested");
+    // Quiescent with health error: the workspace did not load; still not ready.
+    session.notify("test/quiesce_error", json!({})).unwrap();
+    assert!(session.wait_until(WAIT, |s| s.health.as_ref().is_some_and(|h| h.health == "error")));
+    assert_eq!(session.status().workspace_ready, Some(false));
+    session.notify("test/quiesce", json!({})).unwrap();
+    assert!(session.wait_until(WAIT, |s| s.workspace_ready == Some(true)));
+    let Outcome::Result(report) = pull(&session, None) else { panic!() };
+    assert_eq!(report["items"].as_array().unwrap().len(), 1);
+    // A workspace reload re-arms the gate until the next ready report.
+    assert!(session.reload_workspace("Cargo.toml changed"));
+    assert!(session.wait_until(WAIT, |s| s.workspace_ready == Some(false)));
+    assert!(matches!(session.begin_pull(DOC, None), Err(super::session::PullError::NotReady)));
+    session.notify("test/quiesce", json!({})).unwrap();
+    assert!(session.wait_until(WAIT, |s| s.workspace_ready == Some(true)));
+    session.stop();
+    // A server that reports no status is never gated.
+    let plain = ready("pull");
+    assert_eq!(plain.status().workspace_ready, None);
+    plain.open_document(DOC, "rust", "x").unwrap();
+    assert!(plain.begin_pull(DOC, None).is_ok());
+    plain.stop();
+}
+
+#[test]
+fn a_newer_pull_cancels_the_documents_in_flight_pull() {
+    let session = ready("pull");
+    session.open_document(DOC, "rust", "x").unwrap();
+    let first = session.begin_pull(DOC, None).unwrap();
+    let second = session.begin_pull(DOC, None).unwrap();
+    assert_eq!(first.wait(WAIT), Outcome::NoResult, "the older pull is cancelled");
+    assert!(matches!(second.wait(WAIT), Outcome::Result(_)));
+    session.stop();
+}
+
+#[test]
+fn v27_workspace_reloads_are_coalesced() {
+    let session = ready("");
+    assert!(session.reload_workspace("Cargo.toml changed"));
+    for _ in 0..5 { assert!(session.reload_workspace("Cargo.toml changed again")); }
+    assert!(eventually(|| log_text(&session, "reload 2").is_some()));
+    std::thread::sleep(Duration::from_millis(800));
+    assert!(log_text(&session, "reload 3").is_none(), "six requests in a burst send two reloads, never more");
+    assert_eq!(session.status().reloads, 2);
+    assert!(eventually(|| { let ok = session.reload_workspace("later"); ok }) && eventually(|| log_text(&session, "reload 3").is_some()),
+        "after the burst settles, a new change reloads again");
+    session.stop();
+    assert_clean_end(&session, Phase::Exited, "stopped");
+}
+
+/// Opt-in smoke test against an installed rust-analyzer (skips cleanly when
+/// absent): `cargo test --lib real_rust_analyzer -- --ignored --nocapture`.
+/// Prints the measured timings and facts for the Stage 1b record.
+#[test]
+#[ignore]
+fn real_rust_analyzer_smoke() {
+    use super::adapter::{LanguageAdapter, ProjectRef};
+    use super::rust_adapter::RustAdapter;
+    let which = |name: &str| std::process::Command::new("which").arg(name).output().ok()
+        .filter(|o| o.status.success()).map(|o| PathBuf::from(String::from_utf8_lossy(&o.stdout).trim()));
+    let (Some(server), Some(cargo)) = (which("rust-analyzer"), which("cargo")) else { eprintln!("rust-analyzer or cargo absent: skipped"); return; };
+    let version = String::from_utf8_lossy(&std::process::Command::new(&server).arg("--version").output().unwrap().stdout).trim().to_string();
+    let dir = std::env::temp_dir().join(format!("craidd-ra-smoke-{}", std::process::id()));
+    let _ = std::fs::remove_dir_all(&dir);
+    std::fs::create_dir_all(dir.join("src")).unwrap();
+    let manifest = "[package]\nname = \"smoke\"\nversion = \"0.1.0\"\nedition = \"2021\"\n";
+    std::fs::write(dir.join("Cargo.toml"), manifest).unwrap();
+    let main = "mod util;\nfn main() { util::ok(1); }\n";
+    std::fs::write(dir.join("src/main.rs"), main).unwrap();
+    std::fs::write(dir.join("src/util.rs"), "pub fn ok() {}\n").unwrap();
+    let tool = (server.clone(), version.clone());
+    let adapter = RustAdapter::with(move || Ok(ToolRef { path: tool.0.clone(), version: tool.1.clone() }), move || Ok(cargo.clone()), Duration::from_secs(10));
+    let project = ProjectRef { id: "smoke".into(), name: "smoke".into(), language: "rust".into(), folder: dir.clone() };
+    let context = adapter.resolve(&project).unwrap();
+    let started = Instant::now();
+    let session = Session::start(context.launch_spec(adapter.configuration_section()), Limits::default(), 1);
+    let long = Duration::from_secs(120);
+    assert!(session.wait_until(long, |s| s.phase == Phase::Ready || s.phase.is_terminal()));
+    assert_eq!(session.status().phase, Phase::Ready, "{:?}", session.status().terminal_reason);
+    let ready_ms = started.elapsed().as_millis();
+    let uri = super::adapter::file_uri(&dir.join("src/main.rs"));
+    session.open_document(&uri, "rust", main).unwrap();
+    let gated = matches!(session.begin_pull(&uri, None), Err(super::session::PullError::NotReady));
+    // Ready by status, or (status-less, for example a tap that drops every serverStatus) by the fallback.
+    assert!(session.wait_until(long, |s| s.workspace_ready == Some(true) || s.ready_fallback), "the gate never opened: {:?}", session.status());
+    let quiescent_ms = started.elapsed().as_millis();
+    let status_less = session.status().ready_fallback;
+    if status_less { eprintln!("[smoke] status-less: no serverStatus arrived; fallback opened the gate after {quiescent_ms} ms"); }
+    let first = session.begin_pull(&uri, None).unwrap().wait(long);
+    let Outcome::Result(report) = &first else { panic!("pull: {first:?}") };
+    let codes: Vec<String> = report["items"].as_array().unwrap().iter().map(|d| format!("{}:{}", d["source"], d["code"])).collect();
+    assert!(codes.iter().any(|c| c.contains("E0061")), "pull reports the argument-count break: {codes:?}");
+    let second = session.begin_pull(&uri, report["resultId"].as_str()).unwrap().wait(long);
+    session.save_document(&uri, main).unwrap();
+    let saved = Instant::now();
+    let mut pushed = None;
+    while pushed.is_none() && saved.elapsed() < long {
+        if let Some(batch) = session.next_batch(256, 1 << 20, 1000) {
+            for event in batch.events {
+                if let Delivered::Diagnostics { uri: u, diagnostics, .. } = event {
+                    if u == uri && !diagnostics.is_empty() { pushed = Some((saved.elapsed().as_millis(), diagnostics.iter().map(|d| d["source"].to_string()).collect::<Vec<_>>())); }
+                }
+            }
+            session.ack_batch();
+        } else { session.wait_for_delivery(Duration::from_millis(200)); }
+    }
+    // V27: break the manifest, then fix it; health recovers only after a reload.
+    if status_less {
+        eprintln!("[smoke] ready after {ready_ms} ms; gate opened by fallback after {quiescent_ms} ms; pull refused before: {gated}");
+        eprintln!("[smoke] first pull: kind {} items {codes:?}; second pull: {second:?}; push after didSave: {pushed:?}", report["kind"]);
+        eprintln!("[smoke] V27 part skipped: health is only reported through serverStatus");
+        assert!(pushed.is_some());
+        session.stop();
+        assert_clean_end(&session, Phase::Exited, "stopped");
+        let _ = std::fs::remove_dir_all(&dir);
+        return;
+    }
+    std::fs::write(dir.join("Cargo.toml"), "[package\nname = \"smoke\"\n").unwrap();
+    let broke = session.wait_until(Duration::from_secs(60), |s| s.health.as_ref().is_some_and(|h| h.health == "error"));
+    let broken_message = session.status().health.and_then(|h| h.message);
+    std::fs::write(dir.join("Cargo.toml"), manifest).unwrap();
+    let recovered_alone = session.wait_until(Duration::from_secs(10), |s| s.health.as_ref().is_some_and(|h| h.health == "ok"));
+    let reload_at = Instant::now();
+    let reloaded = !recovered_alone && session.reload_workspace("Cargo.toml changed");
+    let recovered = recovered_alone || session.wait_until(Duration::from_secs(60), |s| s.health.as_ref().is_some_and(|h| h.health == "ok"));
+    eprintln!("[smoke] server: {version}");
+    eprintln!("[smoke] ready after {ready_ms} ms; workspace quiescent after {quiescent_ms} ms; pull refused before readiness: {gated}");
+    eprintln!("[smoke] first pull: kind {} resultId {:?} items {codes:?}", report["kind"], report["resultId"]);
+    eprintln!("[smoke] second pull with previousResultId: {second:?}");
+    eprintln!("[smoke] push after didSave: {pushed:?}");
+    eprintln!("[smoke] broken manifest -> health error: {broke} ({broken_message:?}); recovered without reload in 10 s: {recovered_alone}; reload sent: {reloaded}; recovered: {recovered} ({} ms after reload)", reload_at.elapsed().as_millis());
+    eprintln!("[smoke] refreshes answered: {}, reloads: {}", session.counters().refreshes, session.status().reloads);
+    assert!(pushed.is_some(), "cargo check pushes after didSave");
+    assert!(recovered, "health returns to ok after the manifest is fixed");
+    session.stop();
+    assert_clean_end(&session, Phase::Exited, "stopped");
+    let _ = std::fs::remove_dir_all(&dir);
+}
+
+/// V27 variant: the session starts with a broken manifest that is fixed later.
+#[test]
+#[ignore]
+fn real_rust_analyzer_broken_at_start_recovers_through_reload() {
+    use super::adapter::{LanguageAdapter, ProjectRef};
+    use super::rust_adapter::RustAdapter;
+    let which = |name: &str| std::process::Command::new("which").arg(name).output().ok()
+        .filter(|o| o.status.success()).map(|o| PathBuf::from(String::from_utf8_lossy(&o.stdout).trim()));
+    let (Some(server), Some(cargo)) = (which("rust-analyzer"), which("cargo")) else { eprintln!("absent: skipped"); return; };
+    let dir = std::env::temp_dir().join(format!("craidd-ra-broken-{}", std::process::id()));
+    let _ = std::fs::remove_dir_all(&dir);
+    std::fs::create_dir_all(dir.join("src")).unwrap();
+    std::fs::write(dir.join("Cargo.toml"), "[package\nname = \"smoke\"\n").unwrap();
+    std::fs::write(dir.join("src/main.rs"), "fn main() {}\n").unwrap();
+    let adapter = RustAdapter::with(move || Ok(ToolRef { path: server.clone(), version: "installed".into() }), move || Ok(cargo.clone()), Duration::from_secs(10));
+    let project = ProjectRef { id: "b".into(), name: "b".into(), language: "rust".into(), folder: dir.clone() };
+    let session = Session::start(adapter.resolve(&project).unwrap().launch_spec("rust-analyzer"), Limits::default(), 1);
+    assert!(session.wait_until(Duration::from_secs(60), |s| s.phase == Phase::Ready));
+    let broke = session.wait_until(Duration::from_secs(60), |s| s.health.as_ref().is_some_and(|h| h.health == "error") || s.ready_fallback);
+    if session.status().ready_fallback {
+        eprintln!("[broken-start] status-less: no serverStatus within the fallback bound; V27 needs health, skipped");
+        session.stop();
+        let _ = std::fs::remove_dir_all(&dir);
+        return;
+    }
+    std::fs::write(dir.join("Cargo.toml"), "[package]\nname = \"smoke\"\nversion = \"0.1.0\"\nedition = \"2021\"\n").unwrap();
+    let alone = session.wait_until(Duration::from_secs(15), |s| s.health.as_ref().is_some_and(|h| h.health == "ok"));
+    let at = Instant::now();
+    if !alone { assert!(session.reload_workspace("Cargo.toml changed")); }
+    let recovered = alone || session.wait_until(Duration::from_secs(60), |s| s.health.as_ref().is_some_and(|h| h.health == "ok"));
+    eprintln!("[broken-start] error at start: {broke}; recovered without reload in 15 s: {alone}; recovered after reload: {recovered} in {} ms; reloads {}",
+        at.elapsed().as_millis(), session.status().reloads);
+    assert!(recovered);
+    session.stop();
+    let _ = std::fs::remove_dir_all(&dir);
+}
+
+#[test]
+fn v2_a_watch_limit_line_on_stderr_warns_on_the_chip_and_stays_in_output() {
+    let session = ready("watch_limit");
+    assert!(session.wait_until(WAIT, |s| s.watcher_warning.is_some()));
+    let status = session.status();
+    assert!(status.watcher_warning.as_deref().unwrap().contains("OS file watch limit reached."));
+    assert_eq!(status.phase, Phase::Ready);
+    assert!(status.health.is_none(), "health is untouched: the server reports nothing on the protocol");
+    let lines = session.logs().0;
+    assert!(lines.iter().any(|l| l.source == LogSource::Stderr && l.text.ends_with("WARN notify error: OS file watch limit reached.")),
+        "the raw line is kept for Output");
+    assert!(lines.iter().any(|l| l.text.ends_with("No path was found.")));
+    session.stop();
+    let quiet = ready("stderr");
+    std::thread::sleep(Duration::from_millis(200));
+    assert!(quiet.status().watcher_warning.is_none(), "ordinary stderr never warns");
+    quiet.stop();
+}
+
+#[test]
+fn decision_31_a_status_less_server_falls_back_after_the_bound() {
+    let mut limits = limits();
+    limits.ready_fallback = Duration::from_millis(600);
+    // Declares the status notification; the fake never sends one.
+    let session = Session::start(status_spec("pull"), limits.clone(), 1);
+    assert!(session.wait_until(WAIT, |s| s.phase == Phase::Ready));
+    session.open_document(DOC, "rust", "bad()").unwrap();
+    assert!(matches!(session.begin_pull(DOC, None), Err(super::session::PullError::NotReady)), "before the timeout: no pull, so no early report");
+    assert!(session.wait_until(WAIT, |s| s.ready_fallback), "suppression is bounded");
+    assert!(log_text(&session, "[lsp] the server sent no workspace status").is_some(), "the log records it");
+    assert!(matches!(pull(&session, None), Outcome::Result(_)), "after the timeout the gate is open");
+    // A status arriving later switches gating to it: closed until it reports ready.
+    session.notify("test/quiesce_error", json!({})).unwrap();
+    assert!(session.wait_until(WAIT, |s| !s.ready_fallback && s.health.is_some()));
+    assert!(matches!(session.begin_pull(DOC, None), Err(super::session::PullError::NotReady)));
+    session.notify("test/quiesce", json!({})).unwrap();
+    assert!(session.wait_until(WAIT, |s| s.workspace_ready == Some(true)));
+    session.stop();
+    // A server that sends status (still loading) is never treated as status-less.
+    let loading = Session::start(status_spec("pull,loading"), limits, 1);
+    assert!(loading.wait_until(WAIT, |s| s.phase == Phase::Ready));
+    std::thread::sleep(Duration::from_millis(1200));
+    assert!(!loading.status().ready_fallback, "a long load with status is not a fallback");
+    loading.stop();
+}
+
+#[test]
+fn f3_show_message_request_with_no_type_or_actions_is_answered_while_the_consumer_is_stalled() {
+    let session = ready("flood=3000,ask_stalled");
+    // No batch is ever taken or acknowledged: the reply must not wait on the frontend (A3).
+    assert!(eventually(|| replies(&session).iter().any(|r| r["id"] == "s-1")), "never answered");
+    assert!(session.snapshot_keys() > 0, "the flood is still undelivered: the consumer really is stalled");
+    let reply: Vec<Value> = replies(&session).into_iter().filter(|r| r["id"] == "s-1").collect();
+    assert_eq!(reply.len(), 1, "exactly once");
+    assert_eq!(reply[0]["id"], json!("s-1"), "the string id is echoed verbatim");
+    assert_eq!(reply[0]["result"], Value::Null, "no selection");
+    assert!(reply[0].get("error").is_none());
+    assert!(session.logs().0.iter().any(|l| l.source == LogSource::Show && l.text == "while stalled" && l.severity == 3),
+        "no type → severity 3, shown as a notice");
+    session.stop();
+    assert_clean_end(&session, Phase::Exited, "stopped");
+}
+
+/// V2 against the real server, opt-in: `CRAIDD_INOTIFY_HOG=<path to the
+/// Verification lane's inotify_hog.py> cargo test --lib real_rust_analyzer_v2 -- --ignored --nocapture`.
+/// The helper holds this user's watches (no sudo, bounded hold, freed on exit).
+#[test]
+#[ignore]
+fn real_rust_analyzer_v2_watch_limit_warns() {
+    use std::io::BufRead as _;
+    use super::adapter::{LanguageAdapter, ProjectRef};
+    use super::rust_adapter::RustAdapter;
+    let Ok(hog) = std::env::var("CRAIDD_INOTIFY_HOG") else { eprintln!("CRAIDD_INOTIFY_HOG unset: skipped"); return; };
+    let which = |name: &str| std::process::Command::new("which").arg(name).output().ok()
+        .filter(|o| o.status.success()).map(|o| PathBuf::from(String::from_utf8_lossy(&o.stdout).trim()));
+    let (Some(server), Some(cargo)) = (which("rust-analyzer"), which("cargo")) else { eprintln!("absent: skipped"); return; };
+    let dir = std::env::temp_dir().join(format!("craidd-ra-v2-{}", std::process::id()));
+    let _ = std::fs::remove_dir_all(&dir);
+    std::fs::create_dir_all(dir.join("src")).unwrap();
+    std::fs::write(dir.join("Cargo.toml"), "[package]\nname = \"v2\"\nversion = \"0.1.0\"\nedition = \"2021\"\n").unwrap();
+    std::fs::write(dir.join("src/main.rs"), "fn main() {}\n").unwrap();
+    struct Hog(std::process::Child);
+    impl Drop for Hog { fn drop(&mut self) { unsafe { libc::kill(self.0.id() as i32, libc::SIGTERM); } let _ = self.0.wait(); } }
+    let mut child = std::process::Command::new("python3").args(["-I", &hog, "--hold", "60"])
+        .stdout(std::process::Stdio::piped()).spawn().unwrap();
+    let mut lines = std::io::BufReader::new(child.stdout.take().unwrap()).lines();
+    let hog = Hog(child);
+    let holding = lines.by_ref().map_while(Result::ok).find(|l| l.contains("\"holding\"")).expect("helper never held watches");
+    eprintln!("[v2] {holding}");
+    let started = Instant::now();
+    let adapter = RustAdapter::with(move || Ok(ToolRef { path: server.clone(), version: "installed".into() }), move || Ok(cargo.clone()), Duration::from_secs(10));
+    let project = ProjectRef { id: "v2".into(), name: "v2".into(), language: "rust".into(), folder: dir.clone() };
+    let mut spec = adapter.resolve(&project).unwrap().launch_spec("rust-analyzer");
+    spec.env.retain(|(k, _)| k != "RA_LOG");
+    let session = Session::start(spec, Limits::default(), 1);
+    let warned = session.wait_until(Duration::from_secs(40), |s| s.watcher_warning.is_some());
+    let status = session.status();
+    eprintln!("[v2] RA_LOG unset; warned: {warned} after {} ms; warning: {:?}; health: {:?}; phase: {:?}",
+        started.elapsed().as_millis(), status.watcher_warning, status.health, status.phase);
+    let raw = session.logs().0.into_iter().filter(|l| l.text.contains("watch limit")).map(|l| format!("{:?}: {}", l.source, l.text)).collect::<Vec<_>>();
+    eprintln!("[v2] raw lines kept for Output: {raw:?}");
+    session.stop();
+    drop(hog);
+    eprintln!("[v2] released: {:?}", lines.map_while(Result::ok).find(|l| l.contains("released")));
+    let _ = std::fs::remove_dir_all(&dir);
+    assert!(warned, "the watch-limit line must reach the status record");
+}
+
+#[test]
+fn decision_33_a_reload_timeout_is_logged_never_fatal() {
+    let mut limits = limits();
+    limits.reload_timeout = Duration::from_millis(300);
+    let session = Session::start(spec("hang_reload"), limits, 1);
+    assert!(session.wait_until(WAIT, |s| s.phase == Phase::Ready));
+    assert!(session.reload_workspace("Cargo.toml changed"));
+    assert!(eventually(|| log_text(&session, "[lsp] workspace reload got no reply").is_some()));
+    assert_eq!(session.status().phase, Phase::Ready, "the session survives");
+    assert_eq!(session.request("test/echo", json!(1), WAIT), Ok(Outcome::Result(json!(1))));
+    assert!(session.reload_workspace("again"), "a later change can reload again");
+    session.stop();
+    assert_clean_end(&session, Phase::Exited, "stopped");
+}
+
+#[test]
+fn decision_28_log_message_text_warns_but_show_message_does_not() {
+    let session = ready("watch_limit_log");
+    assert!(session.wait_until(WAIT, |s| s.watcher_warning.is_some()));
+    assert_eq!(session.status().watcher_warning.as_deref(), Some("notify error: OS File Watch Limit Reached."), "logMessage, any case");
+    session.stop();
+}
+
+#[test]
+fn decision_28_the_output_ring_stays_bounded_and_keeps_the_raw_lines() {
+    let mut limits = limits();
+    limits.stderr_lines = 8;
+    let session = Session::start(spec("stderr,watch_limit"), limits, 1);
+    assert!(session.wait_until(WAIT, |s| s.phase == Phase::Ready && s.watcher_warning.is_some()));
+    assert!(eventually(|| session.logs().0.iter().any(|l| l.text.ends_with("OS file watch limit reached."))));
+    let (lines, dropped) = session.logs();
+    assert!(lines.len() <= 8, "the ring bound holds: {}", lines.len());
+    assert!(dropped > 0, "older lines are dropped and counted");
+    assert!(lines.iter().any(|l| l.source == LogSource::Stderr && l.text.ends_with("WARN notify error: OS file watch limit reached.")),
+        "the raw line is kept for Output");
+    session.stop();
+}
+
+/// Decision 33 against the real server: a root broken from the start, a
+/// nested non-member manifest saved (expect no reload), then the root fixed.
+/// Runs the same layout, membership and action steps as `lsp_manifest_changed`.
+#[test]
+#[ignore]
+fn real_rust_analyzer_decision_33_broken_root_ignores_a_nested_non_member() {
+    use super::adapter::{LanguageAdapter, ProjectRef};
+    use super::commands::{manifest_action, manifest_affects, ManifestAction};
+    use super::rust_adapter::RustAdapter;
+    let which = |name: &str| std::process::Command::new("which").arg(name).output().ok()
+        .filter(|o| o.status.success()).map(|o| PathBuf::from(String::from_utf8_lossy(&o.stdout).trim()));
+    let (Some(server), Some(cargo)) = (which("rust-analyzer"), which("cargo")) else { eprintln!("absent: skipped"); return; };
+    let dir = std::env::temp_dir().join(format!("craidd-ra-d33-{}", std::process::id()));
+    let _ = std::fs::remove_dir_all(&dir);
+    std::fs::create_dir_all(dir.join("src")).unwrap();
+    std::fs::write(dir.join("Cargo.toml"), "[package\nname = \"d33\"\n").unwrap();
+    std::fs::write(dir.join("src/main.rs"), "fn main() {}\n").unwrap();
+    let adapter = RustAdapter::with(move || Ok(ToolRef { path: server.clone(), version: "installed".into() }), move || Ok(cargo.clone()), Duration::from_secs(10));
+    let project = ProjectRef { id: "d33".into(), name: "d33".into(), language: "rust".into(), folder: dir.clone() };
+    let context = adapter.resolve(&project).unwrap();
+    assert!(context.manifests.is_none(), "membership was never resolved");
+    let (root, members) = (context.root.clone(), context.manifests.clone());
+    let session = Session::start(context.launch_spec("rust-analyzer"), Limits::default(), 1);
+    assert!(session.wait_until(Duration::from_secs(60), |s| s.phase == Phase::Ready));
+    if !session.wait_until(Duration::from_secs(60), |s| s.health.as_ref().is_some_and(|h| h.health == "error") || s.ready_fallback)
+        || session.status().ready_fallback { eprintln!("[d33] no serverStatus: skipped"); session.stop(); return; }
+    let decide = |path: &std::path::Path| {
+        let fresh = adapter.workspace_layout(&project);
+        let mut known: Vec<&[PathBuf]> = vec![];
+        if let Some(m) = &members { known.push(m); }
+        if let Some((_, m)) = &fresh { known.push(m); }
+        let affected = manifest_affects(path, &root, &known);
+        let root_changed = fresh.as_ref().is_some_and(|(r, _)| r.canonicalize().ok() != root.canonicalize().ok());
+        let status = session.status();
+        let action = manifest_action(affected, root_changed, status.phase == Phase::Ready, status.health.is_some_and(|h| h.health == "ok"), false);
+        if action == ManifestAction::Reload { session.reload_workspace("Cargo.toml changed"); }
+        (affected, action)
+    };
+    // A separate crate nested under the root, saved while the root is broken.
+    let nested = dir.join("tools/gen");
+    std::fs::create_dir_all(nested.join("src")).unwrap();
+    std::fs::write(nested.join("src/main.rs"), "fn main() {}\n").unwrap();
+    std::fs::write(nested.join("Cargo.toml"), "[package]\nname = \"gen\"\nversion = \"0.1.0\"\nedition = \"2021\"\n[workspace]\n").unwrap();
+    let (affected, action) = decide(&nested.join("Cargo.toml"));
+    std::thread::sleep(Duration::from_secs(5));
+    let after_nested = session.status();
+    eprintln!("[d33] nested non-member saved: affected {affected}, action {action:?}, reloads {}, health {:?}",
+        after_nested.reloads, after_nested.health.as_ref().map(|h| h.health.clone()));
+    assert!(!affected && action == ManifestAction::Nothing && after_nested.reloads == 0);
+    // The root manifest fixed: it is affected even with membership unknown.
+    std::fs::write(dir.join("Cargo.toml"), "[package]\nname = \"d33\"\nversion = \"0.1.0\"\nedition = \"2021\"\n").unwrap();
+    let at = Instant::now();
+    let (affected, action) = decide(&dir.join("Cargo.toml"));
+    let recovered = session.wait_until(Duration::from_secs(60), |s| s.health.as_ref().is_some_and(|h| h.health == "ok"));
+    eprintln!("[d33] root fixed: affected {affected}, action {action:?}, reloads {}, recovered {recovered} in {} ms",
+        session.status().reloads, at.elapsed().as_millis());
+    assert!(affected && recovered);
+    session.stop();
+    let _ = std::fs::remove_dir_all(&dir);
 }

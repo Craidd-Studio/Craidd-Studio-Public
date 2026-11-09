@@ -48,6 +48,7 @@ interface ToolchainSnapshot {
   defaults: Record<string, string>;
   preferencesPath: string;
   downloadDebugSymbols: boolean;
+  differsFromStored?: boolean;
 }
 
 const languages = ["rust", "typescript", "javascript", "cpp", "csharp", "python", "config"] as const;
@@ -306,6 +307,9 @@ export default function PreferencesDialog({ onClose, initialArea = "editor", ini
                     <span className="text-[11px] text-zinc-500">
                       {snapshot ? (snapshot.scanned ? `${snapshot.tools.length} tools detected automatically` : "Not yet scanned") : "Loading…"}
                     </span>
+                    {snapshot?.differsFromStored && <span className="text-[11px] text-amber-400 basis-full">
+                      Showing tools found just now that your saved scan lacks. Nothing is saved until you press Rescan my system.
+                    </span>}
                     <button onClick={() => void scan()} disabled={busy || !snapshot}
                       className="ml-auto px-3 py-1.5 rounded border border-zinc-700 text-[11px] text-zinc-300 hover:bg-zinc-800 disabled:opacity-50">
                       {busy ? "Scanning…" : "Rescan my system"}
