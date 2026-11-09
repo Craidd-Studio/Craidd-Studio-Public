@@ -8,7 +8,7 @@ use std::sync::{Arc, Mutex, MutexGuard, Weak};
 use std::time::{Duration, Instant};
 
 use serde::Serialize;
-use serde_json::Value;
+use serde_json::{json, Value};
 use tauri::ipc::Channel;
 use tauri::{State, WebviewWindow};
 
@@ -21,7 +21,8 @@ use super::protocol::{LogLine, Outcome};
 use super::registry::{LaunchDecision, LspRegistry};
 use super::router::{project_ref, route, NotRouted, Route};
 use super::rust_adapter::RustAdapter;
-use super::session::{Batch, Limits, PullError, RequestError, Session};
+use super::providers::ProviderKind;
+use super::session::{Batch, Limits, ProviderError, PullError, RequestError, Session};
 
 /// ◇ Delivery batch bounds. The design sets them from G3 measurements,
 /// which are not recorded yet; these are provisional safety values.
@@ -334,6 +335,92 @@ pub(crate) async fn lsp_pull(window: WebviewWindow, state: State<'_, LspManager>
         Outcome::Retrigger => PullReply::Retrigger,
         Outcome::Error { code, message } => PullReply::Error { code, message },
     })
+}
+
+/// A provider reply (Stage 1c, decision 40): the document's epoch and uri are echoed so the
+/// frontend can reject it against the epoch and `versionId` it captured at request time.
+#[derive(Serialize, Debug, PartialEq)]
+#[serde(rename_all = "camelCase", rename_all_fields = "camelCase", tag = "kind")]
+pub(crate) enum ProviderReply {
+    Result { epoch: u64, uri: String, value: Value },
+    /// Cancelled, superseded, timed out, `ContentModified`, `ServerCancelled` or the session ended.
+    NoResult { epoch: u64, uri: String },
+    Busy,
+    NotSynced,
+    Disabled,
+    Error { code: i64, message: String },
+}
+
+const CONTENT_MODIFIED: i64 = -32801;
+const SERVER_CANCELLED: i64 = -32802;
+
+/// Shared by the typed commands below: begin, wait off the async thread, cancel on no result.
+async fn run_provider(window: WebviewWindow, state: State<'_, LspManager>, session: u64, uri: String, kind: ProviderKind, params: Value)
+    -> Result<ProviderReply, String> {
+    let session = state.session(window.label(), session)?;
+    let (request, epoch) = match session.begin_provider(kind, &uri, params) {
+        Ok(started) => started,
+        Err(ProviderError::Disabled) => return Ok(ProviderReply::Disabled),
+        Err(ProviderError::NotSynced) => return Ok(ProviderReply::NotSynced),
+        Err(ProviderError::Busy) | Err(ProviderError::Request(RequestError::Busy)) => return Ok(ProviderReply::Busy),
+        Err(ProviderError::Request(_)) => return Ok(ProviderReply::NoResult { epoch: 0, uri }),
+    };
+    let id = request.id;
+    let canceller = session.clone();
+    let finished = uri.clone();
+    let outcome = tauri::async_runtime::spawn_blocking(move || {
+        let outcome = request.wait(kind.timeout());
+        if outcome == Outcome::NoResult { canceller.cancel(id); }
+        canceller.finish_provider(&finished, kind, id);
+        outcome
+    }).await.map_err(|e| e.to_string())?;
+    Ok(reply_for(outcome, epoch, uri))
+}
+
+/// `ContentModified` and `ServerCancelled` are "no result", never errors.
+pub(crate) fn reply_for(outcome: Outcome, epoch: u64, uri: String) -> ProviderReply {
+    match outcome {
+        Outcome::Result(value) => ProviderReply::Result { epoch, uri, value },
+        Outcome::NoResult | Outcome::Retrigger => ProviderReply::NoResult { epoch, uri },
+        Outcome::Error { code, .. } if code == CONTENT_MODIFIED || code == SERVER_CANCELLED => ProviderReply::NoResult { epoch, uri },
+        Outcome::Error { code, message } => ProviderReply::Error { code, message },
+    }
+}
+
+fn at(line: u32, character: u32) -> Value { json!({ "position": { "line": line, "character": character } }) }
+
+#[tauri::command]
+pub(crate) async fn lsp_hover(window: WebviewWindow, state: State<'_, LspManager>, session: u64, uri: String, line: u32, character: u32)
+    -> Result<ProviderReply, String> {
+    run_provider(window, state, session, uri, ProviderKind::Hover, at(line, character)).await
+}
+
+#[tauri::command]
+pub(crate) async fn lsp_definition(window: WebviewWindow, state: State<'_, LspManager>, session: u64, uri: String, line: u32, character: u32)
+    -> Result<ProviderReply, String> {
+    run_provider(window, state, session, uri, ProviderKind::Definition, at(line, character)).await
+}
+
+#[tauri::command]
+pub(crate) async fn lsp_references(window: WebviewWindow, state: State<'_, LspManager>, session: u64, uri: String, line: u32, character: u32,
+    include_declaration: bool) -> Result<ProviderReply, String> {
+    let mut params = at(line, character);
+    params["context"] = json!({ "includeDeclaration": include_declaration });
+    run_provider(window, state, session, uri, ProviderKind::References, params).await
+}
+
+#[tauri::command]
+pub(crate) async fn lsp_document_symbol(window: WebviewWindow, state: State<'_, LspManager>, session: u64, uri: String)
+    -> Result<ProviderReply, String> {
+    run_provider(window, state, session, uri, ProviderKind::DocumentSymbol, json!({})).await
+}
+
+/// Monaco's cancellation token fired: cancel this kind's in-flight request for the document.
+#[tauri::command]
+pub(crate) fn lsp_cancel_provider(window: WebviewWindow, state: State<'_, LspManager>, session: u64, uri: String, kind: ProviderKind)
+    -> Result<(), String> {
+    state.session(window.label(), session)?.cancel_provider(&uri, kind);
+    Ok(())
 }
 
 /// A change restarted the document's debounce: its in-flight pull is cancelled.

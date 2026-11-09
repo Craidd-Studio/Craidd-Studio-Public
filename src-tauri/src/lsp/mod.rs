@@ -13,6 +13,7 @@ pub(crate) mod session;
 pub(crate) mod adapter;
 pub(crate) mod router;
 pub(crate) mod registry;
+pub(crate) mod providers;
 pub(crate) mod commands;
 #[cfg(test)]
 mod fake_server;

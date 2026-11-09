@@ -884,3 +884,132 @@ fn real_rust_analyzer_decision_33_broken_root_ignores_a_nested_non_member() {
     session.stop();
     let _ = std::fs::remove_dir_all(&dir);
 }
+
+// ---- Stage 1c step 1: provider request plumbing (fake server) ----
+
+mod providers_1c {
+    use super::*;
+    use crate::lsp::commands::{reply_for, ProviderReply};
+    use crate::lsp::providers::ProviderKind;
+    use crate::lsp::session::ProviderError;
+
+    const KINDS: [ProviderKind; 4] = [ProviderKind::Hover, ProviderKind::Definition, ProviderKind::References, ProviderKind::DocumentSymbol];
+
+    fn open(script: &str) -> (Session, String) {
+        let session = ready(script);
+        let uri = "file:///fx/a.rs".to_string();
+        session.open_document(&uri, "rust", "fn a() {}\n").unwrap();
+        (session, uri)
+    }
+    fn params(kind: ProviderKind) -> Value {
+        let mut p = json!({ "position": { "line": 0, "character": 3 } });
+        if kind == ProviderKind::References { p["context"] = json!({ "includeDeclaration": true }); }
+        p
+    }
+
+    #[test]
+    fn every_kind_round_trips_with_the_documents_epoch() {
+        let (session, uri) = open("");
+        for kind in KINDS {
+            let (request, epoch) = session.begin_provider(kind, &uri, params(kind)).unwrap();
+            assert_eq!(epoch, 1);
+            let Outcome::Result(value) = request.wait(WAIT) else { panic!("{kind:?}") };
+            assert_eq!(value["method"], kind.method());
+            assert_eq!(value["params"]["textDocument"]["uri"], uri, "the uri is set by the backend, not the caller");
+            if kind != ProviderKind::DocumentSymbol { assert_eq!(value["params"]["position"]["character"], 3); }
+            if kind == ProviderKind::References { assert_eq!(value["params"]["context"]["includeDeclaration"], true); }
+        }
+        session.stop();
+    }
+
+    #[test]
+    fn a_kind_the_server_did_not_negotiate_is_never_requested() {
+        let (session, uri) = open("no_providers");
+        for kind in KINDS {
+            assert!(matches!(session.begin_provider(kind, &uri, params(kind)), Err(ProviderError::Disabled)), "{kind:?}");
+        }
+        session.stop();
+    }
+
+    #[test]
+    fn an_unopened_document_is_not_synced() {
+        let session = ready("");
+        assert!(matches!(session.begin_provider(ProviderKind::Hover, "file:///fx/none.rs", params(ProviderKind::Hover)), Err(ProviderError::NotSynced)));
+        session.stop();
+    }
+
+    #[test]
+    fn a_newer_request_supersedes_the_older_one_and_the_late_reply_is_dropped() {
+        let (session, uri) = open("provider_slow=300");
+        let (first, _) = session.begin_provider(ProviderKind::Hover, &uri, params(ProviderKind::Hover)).unwrap();
+        let began = Instant::now();
+        let (second, _) = session.begin_provider(ProviderKind::Hover, &uri, params(ProviderKind::Hover)).unwrap();
+        assert_eq!(first.wait(WAIT), Outcome::NoResult, "the superseded request resolves to no result at once");
+        assert!(began.elapsed() < Duration::from_millis(250), "it did not wait for the server");
+        assert!(matches!(second.wait(WAIT), Outcome::Result(_)));
+        // A different kind on the same document is independent.
+        let (other, _) = session.begin_provider(ProviderKind::DocumentSymbol, &uri, json!({})).unwrap();
+        assert!(matches!(other.wait(WAIT), Outcome::Result(_)));
+        session.stop();
+    }
+
+    #[test]
+    fn cancel_wakes_the_caller_without_waiting_for_the_server() {
+        let (session, uri) = open("provider_never");
+        let (request, _) = session.begin_provider(ProviderKind::Definition, &uri, params(ProviderKind::Definition)).unwrap();
+        session.cancel_provider(&uri, ProviderKind::Definition);
+        assert_eq!(request.wait(WAIT), Outcome::NoResult);
+        session.stop();
+    }
+
+    #[test]
+    fn one_kind_cannot_take_the_whole_pending_table() {
+        let session = ready("provider_never");
+        let mut uris = vec![];
+        for n in 0..4 {
+            let uri = format!("file:///fx/r{n}.rs");
+            session.open_document(&uri, "rust", "x").unwrap();
+            uris.push(uri);
+        }
+        let share = ProviderKind::References.share();
+        let held: Vec<_> = uris.iter().take(share).map(|u| session.begin_provider(ProviderKind::References, u, params(ProviderKind::References)).unwrap()).collect();
+        assert!(matches!(session.begin_provider(ProviderKind::References, &uris[share], params(ProviderKind::References)), Err(ProviderError::Busy)));
+        // Another kind still gets room, and a repeat for a document already in flight supersedes rather than counts.
+        assert!(session.begin_provider(ProviderKind::Hover, &uris[share], params(ProviderKind::Hover)).is_ok());
+        assert!(session.begin_provider(ProviderKind::References, &uris[0], params(ProviderKind::References)).is_ok());
+        drop(held);
+        session.stop();
+    }
+
+    #[test]
+    fn a_dead_session_resolves_every_awaiting_request() {
+        let (session, uri) = open("provider_never");
+        let (request, _) = session.begin_provider(ProviderKind::Hover, &uri, params(ProviderKind::Hover)).unwrap();
+        session.stop();
+        assert_eq!(request.wait(WAIT), Outcome::NoResult);
+    }
+
+    #[test]
+    fn content_modified_and_server_cancelled_are_no_result_and_other_errors_are_errors() {
+        let uri = || "file:///x".to_string();
+        for code in [-32801, -32802] {
+            assert_eq!(reply_for(Outcome::Error { code, message: "m".into() }, 4, uri()), ProviderReply::NoResult { epoch: 4, uri: uri() });
+        }
+        assert_eq!(reply_for(Outcome::Error { code: -32603, message: "boom".into() }, 4, uri()), ProviderReply::Error { code: -32603, message: "boom".into() });
+        assert_eq!(reply_for(Outcome::Retrigger, 1, uri()), ProviderReply::NoResult { epoch: 1, uri: uri() });
+        let (session, u) = open("provider_modified");
+        let (request, epoch) = session.begin_provider(ProviderKind::Hover, &u, params(ProviderKind::Hover)).unwrap();
+        assert_eq!(reply_for(request.wait(WAIT), epoch, u.clone()), ProviderReply::NoResult { epoch: 1, uri: u });
+        session.stop();
+    }
+
+    #[test]
+    fn reply_json_keys_are_the_ones_the_frontend_reads() {
+        let v = serde_json::to_value(ProviderReply::Result { epoch: 2, uri: "u".into(), value: json!(1) }).unwrap();
+        assert_eq!(v, json!({"kind": "result", "epoch": 2, "uri": "u", "value": 1}));
+        assert_eq!(serde_json::to_value(ProviderReply::NoResult { epoch: 2, uri: "u".into() }).unwrap(), json!({"kind": "noResult", "epoch": 2, "uri": "u"}));
+        for (reply, kind) in [(ProviderReply::Busy, "busy"), (ProviderReply::NotSynced, "notSynced"), (ProviderReply::Disabled, "disabled")] {
+            assert_eq!(serde_json::to_value(reply).unwrap(), json!({ "kind": kind }));
+        }
+    }
+}

@@ -53,12 +53,13 @@ async function fresh() {
   const pulls = await load("../src/lib/lsp/pulls.ts", {});
   const metrics = await load("../src/lib/lsp/metrics.ts", {});
   const launch = await load("../src/lib/lsp/launch.ts", {});
+  const requests = await load("../src/lib/lsp/requests.ts", {});
   const languages = await load("../src/lib/languages.ts", {});
   const store = await load("../src/store/lspStore.ts", { zustand: liveZustand });
   const bridge = await load("../src/lib/lsp/bridge.ts", {
     "@tauri-apps/api/core": core, "../../store/solutionStore": solution, "../../store/splitStore": split,
     "../../store/lspStore": store, "../languages": languages, "./documents": documents, "./diagnostics": diagnostics,
-    "./pulls": pulls, "./protocol": protocol, "./metrics": metrics, "./launch": launch,
+    "./pulls": pulls, "./protocol": protocol, "./metrics": metrics, "./launch": launch, "./requests.ts": requests,
   });
   const boundary = await load("../src/components/layout/ChipBoundary.tsx", {});
   const statusBar = await load("../src/components/layout/StatusBar.tsx", {

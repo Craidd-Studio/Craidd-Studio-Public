@@ -1,3 +1,4 @@
+import { ProviderRequests, type ProviderReply } from "./requests.ts";
 import type { Monaco } from "@monaco-editor/react";
 import type { editor } from "monaco-editor";
 import { Channel, invoke } from "@tauri-apps/api/core";
@@ -335,6 +336,18 @@ function pullHost(session: number) {
     },
   };
 }
+
+/** Provider requests (Stage 1c): flush, capture, supersede, cancel and stale rejection live in `requests.ts`. */
+export const providerRequests = new ProviderRequests({
+  binding: (fileId) => { const binding = tracker.binding(fileId); return binding ? { session: binding.session, uri: binding.uri } : null; },
+  stamp: (fileId) => {
+    const model = modelFor(fileId);
+    return model && tracker.state(fileId) === "open" ? { epoch: tracker.epoch(fileId), versionId: model.getVersionId() } : null;
+  },
+  flush: (fileId) => tracker.flush(fileId),
+  call: (command, args) => invoke<ProviderReply>(command, args),
+  cancel: (session, uri, kind) => invoke<void>("lsp_cancel_provider", { session, uri, kind }),
+});
 
 // ---- Documents and the deferred launch ----
 
