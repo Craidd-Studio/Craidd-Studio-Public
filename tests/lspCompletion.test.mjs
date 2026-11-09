@@ -95,3 +95,54 @@ test("trigger characters are not in this module: nothing here names a language's
   const text = await readFile(new URL("../src/lib/lsp/completion.ts", import.meta.url), "utf8");
   assert.doesNotMatch(text, /["'`]::["'`]|triggerCharacters *[:=] *\[/);
 });
+
+import { hasSeveralCursors, guardMultiCursor } from "../src/lib/lsp/completionAccept.ts";
+
+test("with several cursors owned items are not offered at all; plain items still are", () => {
+  const items = { items: [{ label: "Owned", data: { d: 1 } }, { label: "Plain", textEdit: { newText: "Plain", range: r(4, 8, 4, 13) } }] };
+  const some = (allowOwned) => map(items, { allowOwned }).suggestions.map((s) => s.label);
+  assert.deepEqual(some(true), ["Owned", "Plain"]);
+  assert.deepEqual(some(false), ["Plain"], "the no-op prefix edit would be applied at every cursor, so no owned item is offered");
+  assert.deepEqual(map(items).suggestions.map((s) => s.label), ["Owned", "Plain"], "the default offers them");
+});
+
+function fakeMonaco(editors) {
+  const created = [];
+  return { created, editor: { getEditors: () => editors, onDidCreateEditor: (fn) => { created.push(fn); return { dispose() {} }; } } };
+}
+const fakeEditor = (model, selections) => {
+  const e = { model, selections, listeners: [], triggered: [],
+    getModel: () => e.model, getSelections: () => e.selections,
+    onDidChangeCursorSelection: (fn) => { e.listeners.push(fn); return { dispose() {} }; },
+    trigger: (...args) => e.triggered.push(args) };
+  return e;
+};
+
+test("hasSeveralCursors looks at every editor showing the model", () => {
+  const model = {};
+  assert.equal(hasSeveralCursors(fakeMonaco([fakeEditor(model, [1])]), model), false);
+  assert.equal(hasSeveralCursors(fakeMonaco([fakeEditor(model, [1, 2])]), model), true);
+  assert.equal(hasSeveralCursors(fakeMonaco([fakeEditor({}, [1, 2])]), model), false, "another model's cursors do not count");
+  assert.equal(hasSeveralCursors(fakeMonaco([fakeEditor(model, [1]), fakeEditor(model, [1, 2, 3])]), model), true, "a split view counts too");
+});
+
+test("a second cursor added while one of our lists is open closes the suggest widget; otherwise nothing happens", () => {
+  const model = {};
+  const editor = fakeEditor(model, [1]);
+  let open = true;
+  guardMultiCursor(fakeMonaco([editor]), () => open);
+  editor.listeners[0]();
+  assert.deepEqual(editor.triggered, [], "one cursor: left alone");
+  editor.selections = [1, 2];
+  editor.listeners[0]();
+  assert.deepEqual(editor.triggered, [["craidd", "hideSuggestWidget", {}]]);
+  open = false;
+  editor.listeners[0]();
+  assert.equal(editor.triggered.length, 1, "no list of ours is open: Monaco's own completion is untouched");
+  const m = fakeMonaco([]);
+  guardMultiCursor(m, () => true);
+  const late = fakeEditor(model, [1, 2]);
+  m.created[0](late);
+  late.listeners[0]();
+  assert.equal(late.triggered.length, 1, "editors created later are watched too");
+});

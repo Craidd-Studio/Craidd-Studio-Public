@@ -1,6 +1,6 @@
 import { ProviderRequests, type ProviderReply } from "./requests.ts";
 import { ProviderRegistrations, providerAvailable, triggerCharacters, withNotice } from "./providers.ts";
-import { ACCEPT_COMMAND, registerAcceptCommand, type Entry } from "./completionAccept.ts";
+import { ACCEPT_COMMAND, guardMultiCursor, hasSeveralCursors, registerAcceptCommand, type Entry } from "./completionAccept.ts";
 import { contextToLsp, listToMonaco, type LspItem } from "./completion.ts";
 import { hoverToMonaco } from "./hover.ts";
 import { symbolsToMonaco } from "./symbols.ts";
@@ -467,6 +467,14 @@ function chipNotice(fileId: string, prefix: string, text: string | null, output 
     if (notes.length !== (view.notes ?? []).length || notes.some((n, i) => n !== view.notes?.[i])) updateSession(session, { notes });
   }
 }
+const multiCursorNoted = new Set<number>();
+/** Once per session, not per keystroke. */
+function noteMultiCursor(fileId: string): void {
+  const session = tracker.binding(fileId)?.session ?? 0;
+  if (multiCursorNoted.has(session)) return;
+  multiCursorNoted.add(session);
+  appendLspOutput([{ session, severity: 3, text: "[lsp] completion that needs the language server to finish it is not offered while several cursors are active" }]);
+}
 const completionNotice = (fileId: string, text: string) => chipNotice(fileId, "Completion ", text);
 
 /**
@@ -477,6 +485,7 @@ function ensureCompletion(monaco: Monaco, languageId: string, caps: NegotiatedCa
   if (!providerAvailable(caps, "completion")) return;
   if (!acceptRegistered) {
     acceptRegistered = true;
+    guardMultiCursor(monaco, (model) => { const id = fileIdOf(model as editor.ITextModel); return Boolean(id) && [...completionEntries.values()].some((e) => e.fileId === id); });
     registerAcceptCommand(monaco, {
       entry: (id) => completionEntries.get(id),
       resolve: async (id) => {
@@ -500,11 +509,13 @@ function ensureCompletion(monaco: Monaco, languageId: string, caps: NegotiatedCa
       for (const key of [...completionEntries.keys()]) if (completionEntries.get(key)!.fileId === fileId) completionEntries.delete(key);
       const word = model.getWordUntilPosition(position);
       const focused = monaco.editor.getEditors().find((e: editor.ICodeEditor) => e.getModel() === model);
+      const several = hasSeveralCursors(monaco, model);
+      if (several) noteMultiCursor(fileId);
       const mode = focused?.getOption(monaco.editor.EditorOption.suggest).insertMode === "replace" ? "replace" : "insert";
       return listToMonaco(result, {
         word: { lineNumber: position.lineNumber, startColumn: word.startColumn, endColumn: word.endColumn,
           text: model.getValueInRange({ startLineNumber: position.lineNumber, startColumn: word.startColumn, endLineNumber: position.lineNumber, endColumn: word.endColumn }) },
-        resolveProvider: live?.completion?.resolve === true, mode, ownedCommand: ACCEPT_COMMAND,
+        resolveProvider: live?.completion?.resolve === true, mode, ownedCommand: ACCEPT_COMMAND, allowOwned: !several,
         register: (id, item) => { const key = `${fileId}\u0000${id}`; completionEntries.set(key, { item, fileId, position: { line: line, character } }); return key; },
       }) as unknown as languages.CompletionList;
     },

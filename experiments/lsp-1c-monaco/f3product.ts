@@ -1,5 +1,5 @@
 import * as monaco from "monaco-editor";
-import { registerAcceptCommand, ACCEPT_COMMAND } from "../../src/lib/lsp/completionAccept.ts";
+import { registerAcceptCommand, guardMultiCursor, hasSeveralCursors, ACCEPT_COMMAND } from "../../src/lib/lsp/completionAccept.ts";
 import { listToMonaco } from "../../src/lib/lsp/completion.ts";
 
 // Runs the PRODUCT accept command (src/lib/lsp/completionAccept.ts) and list mapping (completion.ts)
@@ -29,6 +29,8 @@ registerAcceptCommand(monaco, {
   boundMs: 700,
 });
 
+guardMultiCursor(monaco, () => entries.size > 0);
+
 async function scenario(name: string, text: string, pos: { lineNumber: number; column: number }, items: any[], opts: {
   mode?: "insert" | "replace"; setup?: (e: monaco.editor.IStandaloneCodeEditor) => void; before?: (e: monaco.editor.IStandaloneCodeEditor) => Promise<void>; during?: (e: monaco.editor.IStandaloneCodeEditor) => Promise<void>; resolve?: (item: any) => Promise<any>; wait?: number;
 } = {}) {
@@ -43,7 +45,7 @@ async function scenario(name: string, text: string, pos: { lineNumber: number; c
   const reg = monaco.languages.registerCompletionItemProvider("probe", {
     provideCompletionItems: (m, p) => {
       const w = m.getWordUntilPosition(p);
-      return listToMonaco({ isIncomplete: false, items }, {
+      return listToMonaco({ isIncomplete: false, items }, { allowOwned: !hasSeveralCursors(monaco, m),
         word: { lineNumber: p.lineNumber, startColumn: w.startColumn, endColumn: w.endColumn, text: m.getValueInRange({ startLineNumber: p.lineNumber, startColumn: w.startColumn, endLineNumber: p.lineNumber, endColumn: w.endColumn }) },
         resolveProvider: true, mode: opts.mode ?? "insert", ownedCommand: ACCEPT_COMMAND,
         register: (id, item) => { const key = `${name}:${id}`; entries.set(key, { item, fileId, position: { line: p.lineNumber - 1, character: p.column - 1 } }); return key; },
@@ -112,9 +114,15 @@ async function main() {
     say(`9   one undo: ${ok(o.model.getValue() === BASE)} (${show(o.model.getValue())})`);
     done(o);
   }
-  { // 10 several cursors: rejected, nothing applied
-    const o = await scenario("multi", "fn a() {\n    let x = HashM\n    let y = HashM\n}\n", { lineNumber: 2, column: 18 }, [hashMap], { setup: (e) => e.setSelections([new monaco.Selection(2, 18, 2, 18), new monaco.Selection(3, 18, 3, 18)]) });
-    say(`10 two cursors: final unchanged ${ok(o.final === "fn a() {\n    let x = HashM\n    let y = HashM\n}\n")}; notice=${show(o.notices)}`);
+  const TWO = "fn a() {\n    let x = HashM\n    let y = abcde\n}\n";
+  { // 10a two cursors BEFORE the list opens: owned items are not offered, nothing is applied
+    const o = await scenario("multiA", TWO, { lineNumber: 2, column: 18 }, [hashMap], { setup: (e) => e.setSelections([new monaco.Selection(2, 18, 2, 18), new monaco.Selection(3, 18, 3, 18)]) });
+    say(`10a two cursors before the list: document byte-identical ${ok(o.final === TWO)}; no intermediate state ${ok(o.states.length === 1)}; no suggest widget ${ok(entries.size === 0)}`);
+    done(o);
+  }
+  { // 10b a second cursor added AFTER the list opened, before accept: the widget closes, nothing is applied
+    const o = await scenario("multiB", TWO, { lineNumber: 2, column: 18 }, [hashMap], { before: async (e) => { e.setSelections([new monaco.Selection(2, 18, 2, 18), new monaco.Selection(3, 18, 3, 18)]); await sleep(100); } });
+    say(`10b cursor added after the list opened: document byte-identical ${ok(o.final === TWO)}; no intermediate state ${ok(o.states.length === 1)} (${o.states.length} states)`);
     done(o);
   }
   { // 11 a second completion opens right after accept

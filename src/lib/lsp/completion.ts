@@ -93,6 +93,8 @@ export interface WordAt { startColumn: number; endColumn: number; text: string; 
  */
 export function listToMonaco(result: unknown, opts: {
   word: WordAt; resolveProvider: boolean; mode: "insert" | "replace"; ownedCommand: string; register(id: string, item: LspItem): string;
+  /** False when several cursors are active: the no-op primary edit would also be applied at the other cursors, so owned items are not offered at all. */
+  allowOwned?: boolean;
 }): { suggestions: MonacoItem[]; incomplete: boolean } {
   const list: LspItem[] = Array.isArray(result) ? result : Array.isArray((result as any)?.items) ? (result as any).items : [];
   const incomplete = Boolean(!Array.isArray(result) && (result as any)?.isIncomplete);
@@ -103,6 +105,7 @@ export function listToMonaco(result: unknown, opts: {
     const label = labelText(item);
     if (!label) continue;
     const owned = needsOwnedAccept(item, opts.resolveProvider);
+    if (owned && opts.allowOwned === false) continue;
     const out: MonacoItem = { label: item.label, kind: kindToMonaco(item.kind), insertText: label, range: prefixRange,
       sortText: item.sortText, filterText: item.filterText ?? label, detail: item.detail, documentation: item.documentation as any,
       tags: item.tags ?? (item.deprecated ? [1] : undefined), preselect: item.preselect };

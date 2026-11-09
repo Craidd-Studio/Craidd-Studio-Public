@@ -93,3 +93,24 @@ export function registerAcceptCommand(monaco: MonacoLike, deps: AcceptDeps): { d
     model.pushStackElement();
   });
 }
+
+/** True when any editor showing `model` has more than one selection. */
+export function hasSeveralCursors(monaco: MonacoLike, model: unknown): boolean {
+  return monaco.editor.getEditors().some((e: any) => e.getModel() === model && (e.getSelections()?.length ?? 0) > 1);
+}
+
+/**
+ * F3's no-op primary edit is a no-op only at the primary cursor: Monaco applies it at every cursor, rewriting
+ * text before the others. So owned items are never offered with several cursors (`hasSeveralCursors` at list
+ * time), and if a second cursor appears while one of our lists is open, the suggest widget is closed before
+ * an accept can happen. `listOpen` says whether an owned list is current for the editor's file.
+ */
+export function guardMultiCursor(monaco: MonacoLike, listOpen: (model: unknown) => boolean): { dispose(): void } {
+  const watch = (editor: any) => editor.onDidChangeCursorSelection(() => {
+    const model = editor.getModel();
+    if (model && (editor.getSelections()?.length ?? 0) > 1 && listOpen(model)) editor.trigger("craidd", "hideSuggestWidget", {});
+  });
+  const subs = monaco.editor.getEditors().map(watch);
+  subs.push(monaco.editor.onDidCreateEditor((editor: any) => { subs.push(watch(editor)); }));
+  return { dispose() { subs.forEach((s: any) => s.dispose()); } };
+}
