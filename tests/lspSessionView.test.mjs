@@ -221,3 +221,19 @@ test("a truncation note on the session view is shown in the chip's detail (decis
   env.lsp.useLsp.setState((state) => ({ sessions: { ...state.sessions, 1: { ...state.sessions[1], notes: [...state.sessions[1].notes, note] } } }));
   assert.match(renderToStaticMarkup(createElement(env.StatusBar)), /\+105 more not shown/);
 });
+
+test("an ended session leaves its read-only tabs open, unbound and saying so (decision 51)", async () => {
+  const env = await started();
+  const { endedDocs } = env.lsp;
+  const tabs = [{ fileId: "/ro/a.rs", readOnly: true }, { fileId: "/ws/b.rs" }];
+  assert.deepEqual(endedDocs(["/ro/a.rs", "/ws/b.rs", "/gone.rs"], tabs, 3), { "/ro/a.rs": { kind: "ended", session: 3 } },
+    "only read-only tabs; ordinary documents relaunch through routing as before");
+  env.lsp.useLsp.setState((state) => ({ docs: { ...state.docs, [FILE]: { kind: "ended", session: 1 } } }));
+  const markup = renderToStaticMarkup(createElement(env.StatusBar));
+  assert.match(markup, /language server: not connected; navigate from a live session to reconnect/);
+  assert.doesNotMatch(markup, /Restart/);
+  const bridge = await readFile(new URL("../src/lib/lsp/bridge.ts", import.meta.url), "utf8");
+  assert.match(bridge, /find\(\(tab\) => tab\.fileId === fileId\)\?\.readOnly\) return;/, "routing never re-attaches a read-only tab");
+  assert.match(bridge, /markEnded\(tracker\.sessionEnded\(generation\), generation\)/, "the terminal-status path marks them");
+  assert.match(bridge, /endedDocs\(affected, useSolution\.getState\(\)\.tabs, generation\)/, "so does the restart path");
+});
