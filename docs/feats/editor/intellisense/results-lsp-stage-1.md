@@ -1307,6 +1307,46 @@ Stack on `4726c8d`: `dfbddef` (owned completion items are not offered with sever
 
 **Verdict:** the multi-cursor fix is **Verified** (U23b and U23c byte-identical, no regression in U22); U19's hover claim is **Verified** as a leftover widget; the not-connected note shows only briefly (recorded for the lead); hooks on/off **Unverified** in the IDE; one unreproduced test flake recorded. No gate moves.
 
+#### U25 and U26: G3 and G4 under provider load, `feat/lsp-stage-1c` at `f20a31e` (2026-11-09, DA-11). Harness-observed, pending user review.
+
+Code under test: the `195dfed` run checkout (the tip `f20a31e` differs from it only by documentation). Workload: a scratch copy of Craidd's own `src-tauri` (about 400 crates) opened as a solution, `commands/debug.rs` (2824 lines) and `lib.rs` open; for **45 s** from the start of indexing, real key events (3 characters about every 150 ms, 588 to 628 keystrokes), scrolling every fourth batch, a tab switch every twelfth, **and** provider requests: hover about every 3 s, definition (in the same file), completion (list opened, then dismissed), references (Shift+F12, then dismissed). LSP on (the tap as the server, for wire sizes) versus `CRAIDD_LSP=0`, **3 runs each, alternating**, Xvfb `:98` (software rendering, so absolute times are not comparable with a real desktop). Script `scripts/jobb_u25.py`; evidence `/mnt/ext_drives/Development/Development/Desktop Development/Craidd-Studio/.claude/worktrees/intellisense-verify-0b263b/verification/lsp-1b/runs/jobb/u25/{on,off}{1,2,3}/result.json`. The frame-gap and input-to-paint numbers are the approved substitutes (no long-task API in this WebKitGTK).
+
+**G3, interaction (raw numbers, baseline beside).**
+
+| Measure | LSP on (3 runs) | `CRAIDD_LSP=0` (3 runs) |
+|---|---|---|
+| Frame gap p50 / p95 | 16 / 17 ms in every run | 16 / 17 ms in every run |
+| Frame gap max | 92, 98, 88 ms | 95, 86, 82 ms |
+| Gaps over 50 ms / over 100 ms | 1, 1, 1 / 0, 0, 0 | 1, 1, 1 / 0, 0, 0 |
+| Input to paint p50 | 29, 28, 28 ms | 28, 28, 27 ms |
+| Input to paint p95 | **50**, 37, 36 ms | 35, 34, 35 ms |
+| Input to paint max | 113, 142, 123 ms | 116, 124, 125 ms |
+| Keystrokes delivered in 45 s | 588, 607, 607 | 628, 622, 622 |
+| Startup to interactive | 2963, 2963, 2961 ms | 2959, 2961, 2965 ms |
+| Server CPU over the run | 82.6, 100.7, 100.2 CPU-seconds | no server |
+| Webview VmRSS at the end | 771, 772, 790 MB | 736, 738, 741 MB |
+| `rust-analyzer` VmRSS at the end | 2269, 2094, 1908 MB | none |
+
+Reading: typing, scrolling, tab switching and the four provider kinds together gave frame gaps and input to paint close to the baseline. The one visible difference is run 1 with LSP on, input to paint p95 50 ms against 34 to 37 ms elsewhere; the other two on-runs are within 2 ms of the baseline, so no systematic regression is shown, but three runs per mode is a small sample and the p95 spread is larger with LSP on. Fewer keystrokes were delivered with LSP on in run 1 (588 against 622 to 628), which fits a busier main thread in that run. No budget is claimed.
+
+**Provider hooks (the new `providers` field, per run on, after the 45 s):**
+
+| Kind | sent | applied | stale | empty | busy | cancelled |
+|---|---|---|---|---|---|---|
+| `documentSymbol` | 29, 31, 31 | 22, 18, 20 | 7, 13, 10 | 0, 0, 1 | 0 | 0 |
+| `hover` | 10, 10, 10 | 4, 3, 5 | 4, 6, 4 | 2, 1, 1 | 0 | 0 |
+| `completion` | 9, 10, 10 | 7, 9, 9 | 0 | 2, 1, 1 | 0 | 0 |
+| `definition` | 9, 10, 10 | 6, 9, 9 | 0 | 3, 1, 1 | 0 | 0 |
+| `references` | 5, 5, 5 | 4, 4, 4 | 0 | 1, 1, 1 | 0 | 0 |
+
+The stale counts are the point of the guard: continuous typing changed the document while hover and outline requests were in flight, and those replies were dropped (about 40 percent of hovers and 25 to 40 percent of outline requests), while completion, definition and references (issued between keystrokes) were never stale. None was `busy` or `cancelled`. `providerLatencyMs` held one or two entries per run only (for example `documentSymbol` p95 17 ms, `completion` max 52 ms in run 2); its window is short, so latency is **not characterised** here. `channelBytes` (frontend Channel): 608 686, 558 146 and 579 107; `channelMessages`: 1754, 1312, 1443.
+
+**Wire sizes (tap, server to client, over the whole run with indexing):** 3620, 3025 and 3074 messages; p50 175 to 182 B, p95 192 to 264 B, max 64 117 B (one message, the largest response), total 2.85 to 2.95 MB. Client requests seen: hover 10, definition 9 to 10, documentSymbol 29 to 31, completion 9 to 10, references 5 per run. (The Channel hook's byte count is smaller than the wire total because coalescing and the class rules drop or merge messages; both are recorded, neither is a budget.)
+
+**G4, stalled consumer.** The IDE cannot stall the frontend consumer on demand, so G4's stalled-consumer evidence is the fake-server tests: **U26** is `lsp::tests::a_stalled_consumer_with_providers_active_loses_no_reply_and_stalls_nothing` (80 provider requests across all kinds all get their replies, the server is not stalled, undelivered state stays bounded and drains in bounded batches) and `a_stalled_consumer_never_stalls_the_server_or_loses_replaceable_state` (stage 1a); both passed in every `cargo test --lib` run on this stack (about 40 full runs). In the IDE runs above: no provider request was `busy` or `cancelled`, so the in-flight cap and the per-kind limit were not reached, and each kind's `sent` equals `applied + stale + empty`.
+
+**Verdicts (no budget invented):** G3 provider-load numbers are **recorded against the baseline** (above), with the sample-size and rig caveats; G4's stalled-consumer part is **Verified at the fake-server level**, and the IDE run shows no cap breach. Neither gate is marked Pass here: both stay for the architect's and the user's review, as every U-step does.
+
 #### Other findings recorded during U1 (not 1b verdicts)
 
 1. **The language-server usable check accepts any binary that exits 0.** `lldb-dap` was accepted as Rust's language server. That is consistent with the designed check (V7), which proves only that a binary runs. What the chip showed for that session was not observed.
