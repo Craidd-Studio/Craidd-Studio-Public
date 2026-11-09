@@ -3,6 +3,8 @@ mod types;
 mod process_supervisor;
 mod lsp;
 mod ownership;
+#[cfg(test)]
+mod test_exec;
 
 pub use process_supervisor::entry as process_supervisor_entry;
 
