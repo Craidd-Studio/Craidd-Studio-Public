@@ -107,11 +107,12 @@ export function serverName(view: LspSessionView): string {
 /**
  * Whether the chip offers ↻ Restart (decision 38: recovery is the manual restart).
  * It does once the session ended or went unresponsive, and also while a live
- * session's own health is "error" (for example a broken workspace root).
- * Health "warning" keeps the bar quiet.
+ * session's own health is "error" (for example a broken workspace root) or a
+ * file-watcher failure is recorded (decision 28: Restart clears it).
+ * Generic health "warning" keeps the bar quiet.
  */
-export function restartOffered(state: ChipState, health: string | undefined | null): boolean {
-  return state === "crashed" || state === "failed" || state === "stopped" || state === "unresponsive" || health === "error";
+export function restartOffered(state: ChipState, health: string | undefined | null, watcherWarning?: string | null): boolean {
+  return state === "crashed" || state === "failed" || state === "stopped" || state === "unresponsive" || health === "error" || Boolean(watcherWarning);
 }
 
 export function chipLabel(state: ChipState, name: string): string {

@@ -44,7 +44,7 @@ function LanguageServerChip({ fileId }: { fileId: string | null }) {
     <button type="button" onClick={showLspOutput} title={detail} className={`${colour} hover:text-zinc-200`}>
       {info.alias ? `${name}: alias` : chipLabel(state, name)}{view.status.readyFallback ? " (no status)" : ""}{warn || watcher ? " ⚠" : ""}
     </button>
-    {restartOffered(state, health?.health) && <button type="button" title={`Restart ${name}`} aria-label={`Restart ${name}`}
+    {restartOffered(state, health?.health, watcher) && <button type="button" title={`Restart ${name}`} aria-label={`Restart ${name}`}
       onClick={() => void restartSession(info.session).catch((error) => console.warn("[lsp] restart failed:", error))}
       className="text-zinc-400 hover:text-zinc-100">↻ Restart</button>}
   </span>;
