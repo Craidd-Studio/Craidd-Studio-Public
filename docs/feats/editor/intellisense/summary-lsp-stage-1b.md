@@ -43,7 +43,7 @@ Words as in the results record's verification table. The "Job B adds" column nam
 | V9 | Monaco model URI and lifetime | **Unverified** (table) | Batch 8 (U11) recorded one run; models are not disposed on tab close (finding 17); split view **Unverified** |
 | V10 | Monaco: does accept wait for a pending resolve | **Failed** | Stage 1c, headless probe (`experiments/lsp-1c-monaco`, merge `5975ef1`): Monaco does not wait for the resolve, so F1 cannot be atomic. Not a Stage 1b item |
 | V11, V12 | Incomplete-list flag and context; one undo step | **Verified** | Stage 1c, headless probes (`experiments/lsp-1c-monaco`). Not a UI run |
-| V18 | Server sends additional edits when not declared lazy | **Unverified** | Stage 1c; Implementation is testing it against the real server |
+| V18 | Server sends additional edits when not declared lazy | **Failed** | Stage 1c, opt-in test `e4da9b0` on `exp/lsp-1c-v18` against `rust-analyzer 1 (9074e9b4c6)`: with the edits not declared lazy, the `HashMap` auto-import item is absent from the list (116 items for 40 s); declared lazy, it is present and resolve adds the `use` line. One version, one case. Not a Stage 1b item |
 | V13 | `showMessageRequest` | **Unverified** against the real server | Fake-server test passes; 1 of 4 edge cases built |
 | V14 | Server child processes | **Verified** | — |
 | V15 | Republish on open | **Verified**: no republish on open | Batch 4/10: whether an evicted file's rows return was examined; decision 22 stays open |
@@ -104,9 +104,9 @@ From the [approvals file](delegated-approvals-lsp-stage-1.md) and the findings:
 
 - **A6, A7 and the stage 6 "keep flowing" sentence** (DA-9).
 - **Stage 1b acceptance, and Stage 1 acceptance** (every gate G1–G7 Pass).
-- **Review of the most consequential stand-ins:** DA-4 (philosophy A2 wording), DA-11 (starting Stage 1c), DA-14 (decisions 49 and 54).
+- **Review of the most consequential stand-ins:** DA-4 (philosophy A2 wording), DA-11 (starting Stage 1c), DA-14 (decisions 49 and 54), and above all **DA-15** (F3, Craidd-owned completion acceptance, decision 56), which goes beyond DA-12 and should be reviewed first.
 - **Decision 52 and the ownership conflict:** the symlinked-vendor holder rule (changes file-identity rules 2 and 3), now with finding 18's cause: ownership rejects symlinks, so decision 12's alias is unreachable. Whether ownership or the design changes is the architect's; step 7 of the 1c plan waits.
-- **Stage 1c route after V10 Failed:** per the design's order, step 9 goes to F2 (eager mode), which depends on V18. If V18 also fails, completion cannot ship and that goes to the architect.
+- **Stage 1c route after V10 and V18 Failed:** neither F1 nor F2 gives atomic acceptance, so the design's rule applies (the completion part of 1c does not ship). DA-15 approves **F3, Craidd-owned acceptance, as a probe first** (decision 56, probe pending): step 9 uses it only if the headless probe passes. If the probe fails, completion does not ship and that goes to the architect. Hover, symbols, definition, references and navigation proceed regardless.
 - **Decision 22's memory budget**, now with finding 16's numbers.
 - **V16 wording** (decision 37) from the U10 facts.
 - **V7's rustup shim** as a release qualification.
