@@ -582,9 +582,10 @@ Requirements:
 |---|---|---|---|
 | F1 | Monaco waits for the resolve; if the resolve fails, times out, is stale or returns invalid edits, a compensating revert after accept (through the item's post-accept command) restores the document and shows a notice. The revert command is a Monaco-local command that Craidd attaches to the item, not a server `workspace/executeCommand` (decision 54). | None when it works | V10 (waiting and revert feasibility) |
 | F2 | **Eager mode.** Craidd stops declaring lazy `additionalTextEdits`, so edits arrive complete in the completion list and an item is whole or absent. Documentation and detail stay lazy. | Slower completion lists, measured under G3 | V18 (the server then sends them eagerly) |
+| F3 | **Craidd-owned acceptance.** *Stand-in approval (DA-15), probe pending.* Craidd declares lazy `additionalTextEdits` as F1 does. For an item that may still gain edits on resolve, it gives Monaco a no-op primary edit and a Monaco-local accept command (decision 54's mechanism). That command awaits the resolve (decision 43's ◇ bound), validates primary plus additional edits against rules 1–8 above, and applies them as one grouped edit with one undo stop. It rejects the whole item, with no change to the document, if the model's version moved since accept, the resolve fails or times out, or the edits overlap. | A custom accept path in Craidd; the item is visibly inert until the resolve returns | A headless probe (`experiments/lsp-1c-monaco`) showing idle accept is atomic and one undo step, typing during the resolve rejects with the document unchanged apart from the typing, a failed or late resolve applies nothing, and Monaco never applies a partial edit |
 | Never | Apply the primary edit alone. | — | — |
 
-If neither F1 nor F2 can be shown to work, atomic acceptance cannot be guaranteed. Acceptance criterion 1 is not weakened to fit; the completion part of Stage 1c does not ship until it can.
+If neither F1 nor F2 can be shown to work, atomic acceptance cannot be guaranteed. Acceptance criterion 1 is not weakened to fit; the completion part of Stage 1c does not ship until it can. V10 and V18 both **Failed** (Monaco does not wait for a pending resolve; with lazy edits not declared, `rust-analyzer` omits auto-import items), so neither F1 nor F2 gives atomic acceptance; F3 is approved as a probe first under [DA-15](delegated-approvals-lsp-stage-1.md), and if the probe fails this rule stands.
 
 ---
 
@@ -1140,6 +1141,10 @@ These are not designed here. They are recorded so Stage 1 does not close doors o
 55. ~~**When Stage 1c is done.**~~ **Approved.** *Stand-in approval (DA-14).* Criterion 1 demonstrated, V10–V12 and V18 recorded, G3 and G4 recorded under provider load. Completing 1c accepts no gate. See the [plan](plan-lsp-stage-1c-providers.md#proposed-decisions).
 52. **Symlinked-vendor holder rule. Open, needs the architect.** If U10 shows the holder rule gives a canonical-path holder no features, the candidate change prefers the path inside the project tree, which alters [File identity](#file-identity-three-questions) rules 2 and 3. Not approved under DA-14; step 7 of the [plan](plan-lsp-stage-1c-providers.md#proposed-decisions) waits for U10 and the architect (relates to decision 37).
 
+**Stage 1c completion acceptance (stand-in approval, goes beyond DA-12).**
+
+56. **F3, Craidd-owned completion acceptance.** *Stand-in approval (DA-15), probe pending.* Adds a route to decision 13's fallback list after V10 and V18 both Failed: see F3 in the [fallback table](#accepting-a-completion-including-additionaltextedits). It becomes the route for plan step 9 only if the probe passes all four conditions there; otherwise the rule stands and the completion part of 1c does not ship, while hover, symbols, definition, references and navigation proceed. Decision 13's principle is unchanged: atomic or rejected, never primary-only. **This goes beyond what DA-12 allows (it adds a route to an existing decision), and the architect should review it first.**
+
 Checked against the applied philosophy: nothing in decisions 20–37 contradicts it. `rust-analyzer/reloadWorkspace` and the status notification are adapter-owned extensions beneath the philosophy's "every other server is a table entry" rule, and the manual restart button it requires is preserved.
 
 The ◇ values introduced by this revision (admission reserve, cancelled-entry expiry, bad-body tolerance, Unresponsive bound; class T has none because it is a fixed-size record) are initial proposals to be tuned from measured results. The pull revision adds more: the pull debounce, the concurrency cap, the retrigger bound, the consecutive-failure bound, the reload coalescing window and timeout, and the readiness wait for a server with no status notification.
@@ -1196,5 +1201,5 @@ Philosophy amendments are applied or withdrawn before the stage they govern is m
 
 ---
 
-*Last updated: Phase 3 (Stage 1 proposal; pull diagnostics in Stage 1b, decisions 16–18 approved, decisions 19–36 and 38 and amendments A2, A4 approved; A2 wording corrected and decision 39 recorded under stand-in approvals DA-4 and DA-5; Stage 1c plan linked, decisions 40–51 and 53–55 approved as stand-ins (DA-14), decision 52 open; decision 37 keeps V16 open). Author(s): ShinkuKira21*
+*Last updated: Phase 3 (Stage 1 proposal; pull diagnostics in Stage 1b, decisions 16–18 approved, decisions 19–36 and 38 and amendments A2, A4 approved; A2 wording corrected and decision 39 recorded under stand-in approvals DA-4 and DA-5; Stage 1c plan linked, decisions 40–51 and 53–55 approved as stand-ins (DA-14), decision 52 open; V10 and V18 Failed, decision 56 (F3) under DA-15 with its probe pending; decision 37 keeps V16 open). Author(s): ShinkuKira21*
 *This document is a design.*
