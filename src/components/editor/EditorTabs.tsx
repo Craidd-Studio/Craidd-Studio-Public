@@ -20,7 +20,7 @@ export default function EditorTabs({
   // Editing changes tab content on every keystroke. Tab chrome only needs
   // to repaint when its label or status changes.
   useSolution((s) => s.tabs.map((t) =>
-    `${t.fileId}\u0000${t.name}\u0000${t.language}\u0000${t.dirty}\u0000${t.diskState}`
+    `${t.fileId}\u0000${t.name}\u0000${t.language}\u0000${t.dirty}\u0000${t.diskState}\u0000${t.readOnly ? 1 : 0}`
   ).join("\u0001"));
   const tabs = useSolution.getState().tabs;
   const activeFileId = useSolution((s) => s.activeFileId);
@@ -79,6 +79,10 @@ export default function EditorTabs({
               <path d="M3 1.75h6l4 4v8.5H3z" /><path d="M9 1.75v4h4" />
             </svg>
             <span className="text-xs whitespace-nowrap">{tab.name}</span>
+            {tab.readOnly && <svg role="img" aria-label="Read-only" className="w-3 h-3 shrink-0 text-zinc-500" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
+              <title>Read-only: opened by navigation from a language server. Craidd never saves it.</title>
+              <rect x="3.5" y="7" width="9" height="6.5" rx="1" /><path d="M5.5 7V5a2.5 2.5 0 015 0v2" />
+            </svg>}
             {dot && <span title={tab.diskState === "deleted" ? "Deleted on disk" : tab.diskState === "newer" ? "Changed on disk" : "Unsaved changes"} className={"w-2 h-2 rounded-full shrink-0 " + dot} />}
             <button
               onClick={onClose}

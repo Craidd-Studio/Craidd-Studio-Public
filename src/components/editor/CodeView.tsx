@@ -107,6 +107,7 @@ function CodeView({ onReady }: { onReady?: (instance: editor.IStandaloneCodeEdit
   const [callSites, setCallSites] = useState<LdiCallSite[]>([]);
   const [breakpointError, setBreakpointError] = useState<string | null>(null);
   const activeFileId = useSolution((s) => s.activeFileId);
+  const activeReadOnly = useSolution((s) => s.tabs.find((tab) => tab.fileId === s.activeFileId)?.readOnly ?? false);
   const activeDirty = useSolution((s) => s.tabs.find((tab) => tab.fileId === s.activeFileId)?.dirty ?? false);
   const solution = useSolution((s) => s.solution);
   const savedContent = useSolution((s) => s.tabs.find((tab) => tab.fileId === s.activeFileId)?.originalContent ?? "");
@@ -169,7 +170,9 @@ function CodeView({ onReady }: { onReady?: (instance: editor.IStandaloneCodeEdit
   const tabSize = usePreferences((s) => s.tabSize);
   const theme = usePreferences((s) => s.theme);
   const options = useMemo(() => ({
-    readOnly: false,
+    // Per path view, not per model (decision 50): a second view of the same file keeps its own editability.
+    readOnly: activeReadOnly,
+    readOnlyMessage: { value: "Read-only: opened by navigation from a language server. Craidd never saves it." },
     fontSize,
     tabSize,
     fontFamily: "'JetBrains Mono', 'Fira Code', Consolas, monospace",
@@ -182,7 +185,7 @@ function CodeView({ onReady }: { onReady?: (instance: editor.IStandaloneCodeEdit
     automaticLayout: true,
     wordWrap: wordWrap ? "on" as const : "off" as const,
     padding: { top: 8, bottom: 8 },
-  }), [fontSize, tabSize, wordWrap]);
+  }), [fontSize, tabSize, wordWrap, activeReadOnly]);
   const onChange = useCallback((value: string | undefined) => {
     if (typeof value === "string" && activeFileId) updateTabContent(activeFileId, value);
   }, [activeFileId, updateTabContent]);

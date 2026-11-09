@@ -371,6 +371,9 @@ async fn run_provider(window: WebviewWindow, state: State<'_, LspManager>, sessi
     let outcome = tauri::async_runtime::spawn_blocking(move || {
         let outcome = request.wait(kind.timeout());
         if outcome == Outcome::NoResult { canceller.cancel(id); }
+        if matches!(kind, ProviderKind::Definition | ProviderKind::References) {
+            if let Outcome::Result(value) = &outcome { canceller.record_returned(value); }
+        }
         canceller.finish_provider(&finished, kind, id);
         outcome
     }).await.map_err(|e| e.to_string())?;
@@ -413,6 +416,18 @@ pub(crate) async fn lsp_references(window: WebviewWindow, state: State<'_, LspMa
 pub(crate) async fn lsp_document_symbol(window: WebviewWindow, state: State<'_, LspManager>, session: u64, uri: String)
     -> Result<ProviderReply, String> {
     run_provider(window, state, session, uri, ProviderKind::DocumentSymbol, json!({})).await
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub(crate) struct TargetFile { path: String, text: String }
+
+/// Read an unowned navigation target (decision 49): only a path this session returned, text only, size-capped, never written.
+#[tauri::command]
+pub(crate) async fn lsp_read_target(window: WebviewWindow, state: State<'_, LspManager>, session: u64, path: String) -> Result<TargetFile, String> {
+    let session = state.session(window.label(), session)?;
+    tauri::async_runtime::spawn_blocking(move || session.read_target(Path::new(&path)).map(|(path, text)| TargetFile { path, text }))
+        .await.map_err(|e| e.to_string())?
 }
 
 /// Monaco's cancellation token fired: cancel this kind's in-flight request for the document.

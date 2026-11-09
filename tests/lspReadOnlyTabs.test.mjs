@@ -1,0 +1,41 @@
+import assert from "node:assert/strict";
+import test from "node:test";
+import { readFile } from "node:fs/promises";
+
+// These read the sources: the store and editors pull in Tauri and Monaco, which the node suites do not load.
+// They pin the rules (decision 50), not behaviour; the behaviour is checked in the IDE (U-steps).
+const src = (path) => readFile(new URL(`../${path}`, import.meta.url), "utf8");
+const body = (text, start, end) => text.slice(text.indexOf(start), text.indexOf(end, text.indexOf(start)));
+
+test("a read-only tab can never become dirty, be saved or be disk-checked", async () => {
+  const store = await src("src/store/solutionStore.ts");
+  assert.match(body(store, "updateTabContent: (fileId, content) => {", "saveFile:"), /current\?\.readOnly \|\|/);
+  assert.match(body(store, "saveFile: async (fileId, force = false) => {", "const { invoke }"), /tab\.readOnly\) return "error"/);
+  assert.match(body(store, "refreshDiskStateFor: async (fileId) => {", "const { invoke }"), /tab\.readOnly\) return;/);
+  const reveal = body(store, "revealReadOnly: (absolutePath, text, line, column) => {", "closeTab:");
+  assert.match(reveal, /dirty: false/);
+  assert.match(reveal, /readOnly: true/);
+  assert.match(reveal, /existing \? state\.tabs : \[\.\.\.state\.tabs, tab\]/, "a tab already open keeps its own editability");
+});
+
+test("editability follows the tab's path view, in both editors, and not the shared model", async () => {
+  assert.match(await src("src/components/editor/CodeView.tsx"), /readOnly: activeReadOnly,/);
+  assert.match(await src("src/components/editor/SideEditor.tsx"), /readOnly: tab\.readOnly === true,/);
+  assert.doesNotMatch(await src("src/components/editor/CodeView.tsx"), /model\.updateOptions\(\{ *readOnly/);
+});
+
+test("the tab strip shows the lock glyph with its reason, and re-renders when the flag changes", async () => {
+  const tabs = await src("src/components/editor/EditorTabs.tsx");
+  assert.match(tabs, /tab\.readOnly && <svg role="img" aria-label="Read-only"/);
+  assert.match(tabs, /Craidd never saves it/);
+  assert.match(tabs, /t\.readOnly \? 1 : 0/);
+});
+
+test("the unowned route reads through the originating session only and binds with the canonical path", async () => {
+  const bridge = await src("src/lib/lsp/bridge.ts");
+  const unowned = body(bridge, "unowned: async (path, line, column, origin) => {", "// ---- Documents and the deferred launch");
+  assert.match(unowned, /lsp_read_target/);
+  assert.match(unowned, /canonical: target\.path/);
+  assert.match(unowned, /fileUri\(target\.path\)/);
+  assert.match(unowned, /if \(!binding\)/, "without a session there is no read");
+});

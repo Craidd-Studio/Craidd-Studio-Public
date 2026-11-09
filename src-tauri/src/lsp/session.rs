@@ -166,6 +166,8 @@ struct Inner {
     pulls: Mutex<HashMap<String, i64>>,
     /// In-flight provider requests, one per (document, kind): a newer one supersedes it (Stage 1c).
     providers: Mutex<HashMap<(String, ProviderKind), i64>>,
+    /// Canonical paths this session returned in definition or references replies (decision 49).
+    returned: Mutex<std::collections::HashSet<std::path::PathBuf>>,
     /// Workspace reload: (in flight, another requested meanwhile).
     reload: Mutex<(bool, bool)>,
     /// When the readiness gate was last armed (Ready, or a reload).
@@ -228,6 +230,7 @@ impl Session {
             documents: Mutex::new(DocTable::default()),
             pulls: Mutex::default(),
             providers: Mutex::default(),
+            returned: Mutex::default(),
             reload: Mutex::new((false, false)),
             gate_armed: Mutex::new(None),
             cursor: Mutex::new(Cursor::default()),
@@ -859,6 +862,27 @@ impl Session {
         })?;
         lock(&self.0.providers).insert(key, request.id);
         Ok((request, epoch))
+    }
+
+    /// Remember the files a reply pointed at (canonicalised), so an unowned one can be read once and only once the server named it.
+    pub(crate) fn record_returned(&self, value: &Value) {
+        let mut canonical = vec![];
+        for uri in super::providers::returned_uris(value) {
+            if let Some(path) = super::providers::uri_path(&uri) {
+                if let Ok(resolved) = std::fs::canonicalize(&path) { canonical.push(resolved); }
+            }
+        }
+        let mut returned = lock(&self.0.returned);
+        for path in canonical {
+            if returned.len() >= super::providers::RETURNED_MAX { break; }
+            returned.insert(path);
+        }
+    }
+
+    /// The text of a path this session returned; refuses any other path (decision 49).
+    pub(crate) fn read_target(&self, path: &std::path::Path) -> Result<(String, String), String> {
+        let returned = lock(&self.0.returned).clone();
+        super::providers::read_returned(path, &returned)
     }
 
     /// Cancel the in-flight request of this kind for the document (a newer one, or Monaco's token).

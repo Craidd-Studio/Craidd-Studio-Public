@@ -88,6 +88,8 @@ export interface EditorTab {
   dirty: boolean;
   diskState: DiskState;
   mtimeAtLastSync: number;
+  /** Set for a navigation target outside every project (decision 50): never edited, saved, dirty or disk-checked. */
+  readOnly?: boolean;
 }
 
 export interface Manifest {

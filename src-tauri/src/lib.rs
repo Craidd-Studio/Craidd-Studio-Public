@@ -214,6 +214,7 @@ pub fn run() {
             lsp::commands::lsp_references,
             lsp::commands::lsp_document_symbol,
             lsp::commands::lsp_cancel_provider,
+            lsp::commands::lsp_read_target,
             lsp::commands::lsp_manifest_changed,
             lsp::commands::lsp_ack,
             lsp::commands::lsp_status,

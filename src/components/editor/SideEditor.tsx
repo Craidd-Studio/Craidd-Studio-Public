@@ -66,6 +66,7 @@ export default function SideEditor() {
           instance.onDidDispose(() => { if (getActiveEditor() === instance) setActiveEditor(null); });
         }}
         options={{
+          readOnly: tab.readOnly === true, readOnlyMessage: { value: "Read-only: opened by navigation from a language server. Craidd never saves it." },
           fontSize, tabSize, fontFamily: "'JetBrains Mono', 'Fira Code', Consolas, monospace",
           minimap: { enabled: false }, scrollBeyondLastLine: false, automaticLayout: true,
           glyphMargin: false, wordWrap: wordWrap ? "on" : "off", padding: { top: 8, bottom: 8 },

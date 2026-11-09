@@ -216,6 +216,11 @@ fn fake_lsp_server_entry() {
                 if fake.has("provider_modified") { fake.send(json!({"jsonrpc":"2.0","id":id,"error":{"code":-32801,"message":"content modified"}})); continue; }
                 if fake.has("provider_error") { fake.send(json!({"jsonrpc":"2.0","id":id,"error":{"code":-32603,"message":"boom"}})); continue; }
                 if let Some(ms) = fake.value("provider_slow").and_then(|n| n.parse::<u64>().ok()) { std::thread::sleep(Duration::from_millis(ms)); }
+                if let Some(uri) = fake.value("provider_uri").map(String::from) {
+                    let range = json!({"start": {"line": 0, "character": 0}, "end": {"line": 0, "character": 1}});
+                    fake.reply(&id, json!([{"uri": uri, "range": range}]));
+                    continue;
+                }
                 let params = message["params"].clone();
                 fake.reply(&id, json!({"method": m, "params": params}));
             }

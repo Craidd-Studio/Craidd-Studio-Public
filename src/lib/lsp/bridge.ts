@@ -394,8 +394,10 @@ function registerProviders(monaco: Monaco): void {
   // Decision 46: Monaco never creates a model for a navigation target itself; Craidd's tab logic opens it.
   // attachMonaco runs once, so this registers once.
   monaco.editor.registerEditorOpener({
-    async openCodeEditor(_source: editor.ICodeEditor, resource: Uri, selectionOrPosition?: IRange | IPosition) {
-      const result = await openTarget(navigationDeps(), resource.scheme, resource.path, selectionOrPosition as Selection | undefined);
+    async openCodeEditor(source: editor.ICodeEditor, resource: Uri, selectionOrPosition?: IRange | IPosition) {
+      const sourceModel = source?.getModel?.();
+      const origin = sourceModel ? fileIdOf(sourceModel) : null;
+      const result = await openTarget(navigationDeps(), resource.scheme, resource.path, selectionOrPosition as Selection | undefined, origin);
       return result !== "ignored";
     },
   });
@@ -416,8 +418,24 @@ function navigationDeps(): NavigationDeps {
       return who && !who.ambiguous?.length ? { projectId: who.projectId } : null;
     },
     reveal: (path, line, column) => useSolution.getState().revealFile(path, line, column),
-    // Step 5 makes this a read-only tab; until then the target is reported, never opened as an editable file.
-    unowned: async (path) => { appendLspOutput([{ session: 0, severity: 3, text: `[lsp] ${path} is outside the solution's projects; read-only navigation is not available yet` }]); },
+    // Decisions 49-51: a path the originating session returned is read once (text only, size-capped), shown
+    // as a read-only tab, and bound to that session with its canonical-path URI. Anything else is refused.
+    unowned: async (path, line, column, origin) => {
+      const binding = origin ? tracker.binding(origin) : null;
+      if (!binding) {
+        appendLspOutput([{ session: 0, severity: 3, text: `[lsp] ${path} is outside the solution's projects and there is no language-server session to read it through` }]);
+        return;
+      }
+      try {
+        const target = await invoke<{ path: string; text: string }>("lsp_read_target", { session: binding.session, path });
+        useSolution.getState().revealReadOnly(target.path, target.text, line, column);
+        tracker.bind(target.path, { ...binding, uri: fileUri(target.path), canonical: target.path, syncKind: "incremental" });
+        refreshDocInfo(target.path);
+        void activateBound(target.path);
+      } catch (error) {
+        appendLspOutput([{ session: binding.session, severity: 2, text: `[lsp] could not open ${path}: ${String(error)}` }]);
+      }
+    },
   };
 }
 

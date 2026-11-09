@@ -49,7 +49,9 @@ test("an unowned path never reaches the editable reveal; it goes to the read-onl
   assert.equal(await openTarget(d.deps, "file", "/ws/ext.rs", undefined), "unowned");
   assert.equal(await openTarget(d.deps, "file", "/home/u/.cargo/registry/x.rs", { lineNumber: 2 }), "unowned");
   assert.ok(d.log.every(([kind]) => kind !== "reveal"));
-  assert.deepEqual(d.log.at(-1), ["unowned", "/home/u/.cargo/registry/x.rs", 2, 1]);
+  assert.deepEqual(d.log.at(-1), ["unowned", "/home/u/.cargo/registry/x.rs", 2, 1, null]);
+  await openTarget(d.deps, "file", "/home/u/.cargo/registry/y.rs", { lineNumber: 3 }, "/ws/origin.rs");
+  assert.deepEqual(d.log.at(-1), ["unowned", "/home/u/.cargo/registry/y.rs", 3, 1, "/ws/origin.rs"], "the originating file is passed so the session can be found");
 });
 
 test("a non-file resource is left to Monaco, and a bad position falls back to 1:1", async () => {

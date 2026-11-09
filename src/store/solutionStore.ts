@@ -103,6 +103,8 @@ interface SolutionState {
 
   openFile: (absolutePath: string, fileName: string) => Promise<void>;
   revealFile: (absolutePath: string, line: number, column: number) => Promise<void>;
+  /** Open a navigation target outside every project as a read-only tab (decisions 49-51). A tab already open keeps its own editability. */
+  revealReadOnly: (absolutePath: string, text: string, line: number, column: number) => void;
   closeTab: (fileId: string) => void;
   setActiveFile: (fileId: string) => void;
 
@@ -1568,6 +1570,20 @@ export const useSolution = create<SolutionState>((set, get) => ({
     }));
   },
 
+  revealReadOnly: (absolutePath, text, line, column) => {
+    const name = absolutePath.split("/").pop() || absolutePath;
+    set((state) => {
+      const existing = state.tabs.some((t) => t.fileId === absolutePath);
+      const tab: EditorTab = { fileId: absolutePath, name, language: languageFromFilename(name), monacoLanguage: monacoLanguageForFilename(name),
+        content: text, originalContent: text, dirty: false, diskState: "inSync", mtimeAtLastSync: 0, readOnly: true };
+      return {
+        tabs: existing ? state.tabs : [...state.tabs, tab],
+        activeFileId: absolutePath,
+        navigation: { fileId: absolutePath, line: Math.max(1, line), column: Math.max(1, column), serial: (state.navigation?.serial ?? 0) + 1 },
+      };
+    });
+  },
+
   closeTab: (fileId) => set((s) => {
     const tabs = s.tabs.filter((t) => t.fileId !== fileId);
     let activeFileId = s.activeFileId;
@@ -1582,7 +1598,8 @@ export const useSolution = create<SolutionState>((set, get) => ({
   },
 
   updateTabContent: (fileId, content) => {
-    if (get().tabs.find((t) => t.fileId === fileId)?.content === content) return;
+    const current = get().tabs.find((t) => t.fileId === fileId);
+    if (current?.readOnly || current?.content === content) return;
     set((s) => ({
       tabs: s.tabs.map((t) =>
         t.fileId === fileId
@@ -1595,7 +1612,7 @@ export const useSolution = create<SolutionState>((set, get) => ({
   saveFile: async (fileId, force = false) => {
     const state = get();
     const tab = state.tabs.find((t) => t.fileId === fileId);
-    if (!tab) return "error";
+    if (!tab || tab.readOnly) return "error"; // a read-only navigation target has no save path
     const { invoke } = await import("@tauri-apps/api/core");
 
     try {
@@ -1703,7 +1720,7 @@ export const useSolution = create<SolutionState>((set, get) => ({
   refreshDiskStateFor: async (fileId) => {
     const state = get();
     const tab = state.tabs.find((t) => t.fileId === fileId);
-    if (!tab) return;
+    if (!tab || tab.readOnly) return;
     const { invoke } = await import("@tauri-apps/api/core");
     try {
       const stats = await invoke<{ path: string; exists: boolean; readable: boolean; mtimeMs: number; size: number }[]>(

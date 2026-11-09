@@ -1004,6 +1004,25 @@ mod providers_1c {
     }
 
     #[test]
+    fn an_unowned_target_is_readable_only_after_this_session_returned_it() {
+        let dir = std::env::temp_dir().join(format!("craidd-ret-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).unwrap();
+        let (named, unnamed) = (dir.join("named.rs"), dir.join("unnamed.rs"));
+        std::fs::write(&named, "pub fn named() {}\n").unwrap();
+        std::fs::write(&unnamed, "pub fn unnamed() {}\n").unwrap();
+        let (session, uri) = open(&format!("provider_uri={}", crate::lsp::adapter::file_uri(&named)));
+        assert!(session.read_target(&named).is_err(), "nothing was returned yet");
+        let (request, _) = session.begin_provider(ProviderKind::Definition, &uri, params(ProviderKind::Definition)).unwrap();
+        let outcome = request.wait(WAIT);
+        let Outcome::Result(value) = &outcome else { panic!("{outcome:?}") };
+        session.record_returned(value);
+        assert_eq!(session.read_target(&named).unwrap().1, "pub fn named() {}\n");
+        assert!(session.read_target(&unnamed).unwrap_err().contains("not returned"));
+        session.stop();
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
     fn reply_json_keys_are_the_ones_the_frontend_reads() {
         let v = serde_json::to_value(ProviderReply::Result { epoch: 2, uri: "u".into(), value: json!(1) }).unwrap();
         assert_eq!(v, json!({"kind": "result", "epoch": 2, "uri": "u", "value": 1}));

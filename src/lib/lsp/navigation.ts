@@ -40,19 +40,19 @@ export interface NavigationDeps {
   /** Open (or focus) an owned file at a position, through the store's existing tab logic. */
   reveal(path: string, line: number, column: number): Promise<void>;
   /** An unowned target (step 5). */
-  unowned(path: string, line: number, column: number): Promise<void>;
+  unowned(path: string, line: number, column: number, origin: string | null): Promise<void>;
 }
 
 export type Opened = "holder" | "owned" | "unowned" | "ignored";
 
 /** The editor opener's decision. Returns what happened; `ignored` leaves Monaco's default (non-file resources). */
-export async function openTarget(deps: NavigationDeps, scheme: string, path: string, at: Selection | undefined): Promise<Opened> {
+export async function openTarget(deps: NavigationDeps, scheme: string, path: string, at: Selection | undefined, origin: string | null = null): Promise<Opened> {
   if (scheme !== "file" || !path.startsWith("/")) return "ignored";
   const line = Math.max(1, at?.startLineNumber ?? at?.lineNumber ?? 1);
   const column = Math.max(1, at?.startColumn ?? at?.column ?? 1);
   if (deps.isOpen(path)) { await deps.reveal(path, line, column); return "holder"; }
   const owner = await deps.owner(path);
   if (owner && owner.projectId) { await deps.reveal(path, line, column); return "owned"; }
-  await deps.unowned(path, line, column);
+  await deps.unowned(path, line, column, origin);
   return "unowned";
 }
