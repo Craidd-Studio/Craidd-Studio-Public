@@ -369,7 +369,9 @@ the language server status. The IDE survives. The user decides
 whether to restart.
 
 **How are server settings surfaced?** Not in Phase 3. The
-`initializationOptions` sent to each server are the defaults. Making
+`initializationOptions` sent to each server are the defaults. Defaults
+are held by the adapter and hashed into server identity. A configuration
+change is a new identity, not a live mutation. Making
 them user-editable is a later phase, and it lives in the project's
 `.craidd` or in `~/.craidd-studio/user_preferences.toml`, following
 the same three-file rule.

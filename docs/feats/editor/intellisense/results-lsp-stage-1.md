@@ -33,8 +33,8 @@ Rules:
 |---|---|---|---|
 | G1 | No server during startup or restore; bounded deferral; startup measured apart from server cost | **Fail** | U1, 2026-11-03: attempt 2, no server ever launched (`startupDone`, fixed in `700b59d`); attempt 3, the window crashes on the first attach (`view.server` undefined; fixed in `ead1a68`, verified 2026-11-08); gate measurements not yet rerun |
 | G2 | One `rust-analyzer` per shared Cargo workspace | Unmeasured | Fake-server registry test reproduced; the real count needs U2 |
-| G3 | Indexing never blocks interaction; separate target directory cost; Channel message rate and size | Unmeasured | Needs U12; completes in 1c |
-| G4 | Rapid typing, file switching and a stalled consumer are bounded | Unmeasured | 1b fake and node evidence reproduced; completes in 1c |
+| G3 | Indexing never blocks interaction; separate target directory cost; Channel message rate and size | Unmeasured. **Architect (14 November 2026): keep pending** until one targeted cold first-check measurement is run | Recorded, harness-observed, pending user review: U12 (warm) and U25 (under provider load) against the `CRAIDD_LSP=0` baseline; no regression shown. The cold first-check duration was not captured. The p95 outlier (one LSP-on run at 50 ms input-to-paint p95 against 34–35 ms baseline) is preserved here and is not averaged away. The cold result will be recorded beside the warm and responsiveness evidence |
+| G4 | Rapid typing, file switching and a stalled consumer are bounded | **Pass** (architect, 14 November 2026, on the recorded evidence) | **Real editor** (harness-observed, pending user review): U2 (one process per identity), V26 (0.14–0.23 pulls per keystroke, at most one pull in flight per document), no busy or cancelled requests under provider load. **Fake-server tests, kept distinct** (the IDE cannot stall its own consumer): `a_stalled_consumer_with_providers_active_loses_no_reply_and_stalls_nothing` and `a_stalled_consumer_never_stalls_the_server_or_loses_replaceable_state` |
 | G5 | Diagnostics do not flood Monaco; diagnostic store size | Unmeasured | Needs U7 (hooks) |
 | G6 | Closing a solution terminates its servers and their descendants | Unmeasured | The real tree is known (V14); Craidd-managed close and kill need U8 |
 | G7 | Synchronisation correctness, document lifetimes and forced overflow | Unmeasured | Forced overflow and resync tests reproduced; UI cases need U9 |
@@ -50,7 +50,7 @@ The three-stage plan is approved, so evidence is also recorded per stage. A stag
 | G1 | Partial: backend revalidation tests only (see Stage 1a record) | **Fail** (U1, 2026-11-03: attempt 2, no attach; attempt 3 at `700b59d`, the window crashes on the first attach) | n/a | Unmeasured |
 | G2 | Recorded: identity tests against real `cargo` workspaces | Partial: `registry_shares_one_server_per_identity_and_solution_close_stops_all` reproduced; real count Unmeasured (U2) | n/a | Unmeasured |
 | G3 (including G3b) | n/a | Unmeasured | Unmeasured | Unmeasured |
-| G4 | Recorded: stalled consumer against the fake server | n/a | Unmeasured | Unmeasured |
+| G4 | Recorded: stalled consumer against the fake server | n/a | Recorded: real editor under provider load (U2, V26) | **Pass** (architect) |
 | G5 | n/a | Unmeasured (U7 pending) | n/a | Unmeasured |
 | G6 | Recorded: fake-server process tree, including a detached descendant | Partial: real descendants identified (V14) and none left after a protocol shutdown; Craidd close/kill Unmeasured (U8) | n/a | Unmeasured |
 | G7 | n/a | Partial: `a_forced_writer_overflow_desyncs_then_resyncs_to_the_model_text_exactly_once` and the node sync tests reproduced; UI cases Unmeasured (U9) | n/a | Unmeasured |
