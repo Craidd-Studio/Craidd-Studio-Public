@@ -39,3 +39,14 @@ test("the unowned route reads through the originating session only and binds wit
   assert.match(unowned, /fileUri\(target\.path\)/);
   assert.match(unowned, /if \(!binding\)/, "without a session there is no read");
 });
+
+test("a rebind goes through the unowned route: bind to the navigating session, replace `ended`, open; a live holder is only focused", async () => {
+  const bridge = await src("src/lib/lsp/bridge.ts");
+  const unowned = body(bridge, "unowned: async (path, line, column, origin) => {", "// ---- Documents and the deferred launch");
+  assert.match(unowned, /held\?\.session === binding\.session/, "already held by the navigating session: focus only");
+  assert.match(unowned, /tracker\.bind\(target\.path/);
+  assert.match(unowned, /refreshDocInfo\(target\.path\);\s*void activateBound\(target\.path\)/, "the bound entry replaces `ended`, then didOpen");
+  assert.match(unowned, /if \(!binding\) \{[^}]*revealFile/s, "without a live session an open read-only tab is focused and keeps its note");
+  const commands = await src("src-tauri/src/lsp/commands.rs");
+  assert.match(commands, /retired\.insert\(session, tracked\.session\.clone\(\)\)/, "a restarted session stays findable for its acknowledgements");
+});
