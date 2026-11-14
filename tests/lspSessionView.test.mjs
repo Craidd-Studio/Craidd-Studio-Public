@@ -252,3 +252,24 @@ test("the ended note is sticky: routing never attaches a read-only tab, however 
   const onActive = bridge.slice(bridge.indexOf("function onActive"), bridge.indexOf("async function attachActive"));
   assert.match(onActive, /isNavigationOnly\(useSolution\.getState\(\)\.tabs, fileId\)\) return;/);
 });
+
+test("closing the solution clears the ended sessions' Monaco markers on every model, not only on models a tab still maps to (design: Semantics)", async () => {
+  const env = await started();
+  const set = [];
+  const model = { uri: { toString: () => FILE }, isDisposed: () => false, onDidChangeContent: () => ({ dispose() {} }), onWillDispose: () => ({ dispose() {} }) };
+  const noop = () => ({ dispose() {} });
+  const monaco = {
+    editor: { getModels: () => [model], getModel: () => model, onDidCreateModel: noop, registerEditorOpener: noop, registerCommand: noop,
+      setModelMarkers: (m, owner, markers) => set.push([owner, markers.length]) },
+    languages: new Proxy({}, { get: () => noop }),
+    Uri: { parse: (text) => ({ toString: () => text }) },
+  };
+  env.bridge.attachMonaco(monaco);
+  env.deliver({ session: 1, batch: { status: status("ready", 3), events: [], logs: [], droppedLogs: 0 } });
+  set.length = 0;
+  const { useSolution } = await import(solution);
+  useSolution.setState({ clnPath: "/lab/other/other.cln", rootPath: "/lab/other" });
+  for (const owner of ["lsp:1:push", "lsp:1:pull"]) assert.ok(set.some(([o, n]) => o === owner && n === 0), `${owner} cleared on the old model`);
+  const bridge = await readFile(new URL("../src/lib/lsp/bridge.ts", import.meta.url), "utf8");
+  assert.match(bridge, /diagnostics\.clearSession\(generation\); clearSessionMarkers\(generation\);/);
+});

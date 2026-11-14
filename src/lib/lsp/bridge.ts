@@ -622,12 +622,26 @@ async function attachActive(reason: "idle" | "timeout"): Promise<void> {
   if (useSolution.getState().activeFileId !== fileId) onActive();
 }
 
+/**
+ * A session's markers on every model, whether or not a tab still maps to the uri: closing the solution replaces the
+ * tabs, so the uri lookup `clearSessionDiagnostics` uses can come up empty while the old model still shows the markers
+ * (design: markers are cleared whenever a session ends).
+ */
+function clearSessionMarkers(generation: number): void {
+  const monaco = monacoRef;
+  if (!monaco) return;
+  for (const model of monaco.editor.getModels()) {
+    if (model.isDisposed()) continue;
+    for (const route of ["push", "pull"]) monaco.editor.setModelMarkers(model, `lsp:${generation}:${route}`, []);
+  }
+}
+
 function closeSolution(): void {
   gate.cancel();
   for (const scheduler of schedulers.values()) scheduler.stop();
   schedulers.clear();
   awaitingReady.clear();
-  for (const generation of lastStatus.keys()) diagnostics.clearSession(generation);
+  for (const generation of lastStatus.keys()) { diagnostics.clearSession(generation); clearSessionMarkers(generation); }
   lastStatus.clear();
   tracker.forgetAll();
   useLsp.setState({ sessions: {}, docs: {}, problems: [], evictedFiles: 0, notRetained: 0 });
