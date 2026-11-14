@@ -1391,6 +1391,50 @@ Fix under test: `7a2f814` (navigating to an already-open read-only tab from a li
 
 **Verdict:** the rebind fix is **Verified**; the previous failure (tab stays `ended`, note stays) no longer occurs. The `ldi_pair…` test failure is environmental. No gate moves.
 
+#### Merge verification at `b403fb7`: regression suites, A6, G3 cold check, memory stages, harness re-run (2026-11-14, architect-authorised merge). Harness-observed, pending user review.
+
+Build: `feat/intellisense-ws` at `b403fb7` (the merge of `14f37ca`), own run checkout, isolated `HOME`, Xvfb `:98`, dev binary on port 1440. Scripts `scripts/jobb_a6.py`, `jobb_cold.py`, `jobb_mem.py` and the earlier ones, on `verify/lsp-stage-1b-jobb`; evidence under the run checkout's `runs/jobb/` (`a6-*`, `cold*`, `mem-*`, `b4-*`).
+
+**1. Regression suites.** `node --test` 178 passed; `tsc` 0; `vite build` 0; `process_cleanup` 7 passed, 1 ignored; 26 `commands::debug*` tests ok. `cargo test --lib`, three runs: 256 passed and 1 failed each time, the failure being `commands::linked_windows::tests::ldi_pair_requires_selected_managed_debug_and_library_build_slots` (**the known environmental failure**: `netcoredbg` is not installed on this machine; the same test fails on `9bb0805`). Opt-in real-server tests (`-- --ignored`, 10): 9 passed (all five `real_rust_analyzer_*`, `native_breakpoint_recognition_latency`, `production_driver_and_cmake_artifact_with_real_tools`, `real_dap_stacks_feed_production_rust_native_binding`, `fake_lsp_server_entry`) and 1 failed: `commands::build_order::tests::build_order_lab_real_tools` with `You must install or update .NET to run this application` (also environmental: the .NET runtime is not usable here). No LSP test failed.
+
+**2. A6, diagnostics and markers from a dead session are cleared.** `fx-small` copy; an error added and saved, so the store held push (2 rows) and pull (1 row) problems for session 1, with matching Monaco markers `lsp:1:push` 2 and `lsp:1:pull` 1 on the open model and 3 `LIVE` rows in the Problems panel. Then the session was ended three ways and the store (per session and route), the Monaco markers and the panel were read at 1, 3, 8 and 20 s.
+
+| Ending | Store problems for the dead session | Monaco markers of the dead session | Problems panel rows | Other |
+|---|---|---|---|---|
+| `restartSession` (the action `↻ Restart` calls) | 0 at 1 s | 0 at 1 s | 0 at 1 s | session 1 `exited`; session 2 `ready` repopulates its own rows (owner `lsp:2:*`) from 3 s; nothing of session 1 returns |
+| `kill -9` of my `rust-analyzer` pid (checked by command line) | 0 at 1 s | 0 at 1 s | 0 at 1 s | session 1 `crashed`; nothing returns in 20 s |
+| closing the solution (opening another solution through the store's `openSolution`) | 0 (`closeSolution` clears the store) | **still present: `lsp:1:pull` 1 and `lsp:1:push` 2 after 20 s** | 0 | session 1 stays `shuttingDown` in the store (stale view, finding 11) |
+
+**Discrepancy (A6, close-solution path):** the store and the Problems panel are clean, but the Monaco markers of the ended session remain on the retained model of the old file; `closeSolution` in `bridge.ts` clears the store but does not clear Monaco's markers, and Monaco models outlive their tabs (U11). Restart and kill clear markers correctly, so the other two endings are **Verified**; the close-solution ending is **Failed** for markers. (The window-close ending cannot be read afterwards, since the process exits; the server is gone from the process table in every run, G6.) Evidence `a6-closeb-try1/result.json`. An earlier attempt using `clearSolution()` did not trigger the close path at all (the bridge closes only when the `.cln` or root path changes); that attempt is not used.
+
+**3. G3 cold first check (the p95 outlier is preserved).** On the scratch copy of `src-tauri`, only `target/rust-analyzer` inside the scratch copy was removed (it held 0 MB at the time of the first run; a directory of 965 MB is rebuilt each time) and the server's first check was timed from the tap, idle. Three runs: server `initialize` reply to **first quiescent status** 12.4 to 12.6 s; the check (`rust-analyzer/flycheck/0`) **begins** 12.5 to 12.7 s after the reply and **ends** at 33.6, 33.8 and 34.0 s, so the **first check takes 21.1 to 21.4 s from its begin and 33.6 to 34.0 s from the `initialize` reply**; the target directory is 965 MB afterwards. Next to the warm figure recorded earlier (0.1 s on a populated `target/rust-analyzer`). The input-to-paint **p95 outlier of 50 ms in U25 run 1** (the other runs 34 to 37 ms; baseline 34 to 35 ms) stays recorded in the U25 entry and is not removed or averaged away. No budget is claimed.
+
+**4. Memory stages on `fx-big` (decision 22 input).** Webview VmRSS (the app's `WebKitWebProcess`, `/proc/<pid>/status`), three runs with LSP on and two with `CRAIDD_LSP=0`:
+
+| Stage | LSP on (3 runs) | `CRAIDD_LSP=0` (2 runs) |
+|---|---|---|
+| Solution open | 545, 545, 546 MB | 549, 556 MB |
+| Peak during the flood (2 s sampling) | 1429, 1648, 1478 MB | 758, 770 MB |
+| Settled (60 s after the last delivery; for the baseline 20 s idle) | 1309, 1510, 1343 MB | 687, 699 MB |
+| After the Problems panel opens | 1382, 1609, 1411 MB | 740, 750 MB |
+| Post-clear (the server killed, session ended; baseline: not applicable) | 1305, 1502, 1354 MB | n/a |
+| After closing the solution (another opened) | 1322, 1518, 1346 MB | 711, 726 MB |
+
+Store at settled, LSP on: `problems` 20 976 to 20 983 rows (`stored` pull 500, push 20 476 to 20 483), **evicted files 1446 to 1450**, **not retained 1801**, `channelBytes` about 66 to 71 MB cumulative, one server of 890 to 943 MB. After the session ends the store reads `problems` 0, `evicted` 0 and `notRetained` 0 (A6 confirmed for the store, route by route). The language-server path costs about 620 to 810 MB of webview memory at settled against the baseline, and the Problems panel adds 53 to 99 MB; **the memory is largely not returned** after the session ends and the store is cleared (1305 to 1502 MB post-clear, against a baseline of 687 to 699 MB): the webview heap is retained, so a cleared store does not mean a smaller process. Numbers only; no budget is proposed here.
+
+**5. Harness re-run at `b403fb7`** (same scripts, same fixtures): U2/G2 servers after `alpha`, `beta`, `outside`: 1, 1, 2 in 3 of 3 runs, none left. U8/G6: closing the window and `kill -9`, on `fx-procmacro` and the `src-tauri` scratch copy, leave 0 `rust-analyzer`, `cargo`, `rustc` or proc-macro processes within 0.5 s, 4 of 4. U1/G1: 0 servers with no tabs and with a non-Rust tab active; one launch after a Rust tab, first server 2.80 to 2.83 s after the click, startup to interactive 2969 to 2979 ms on versus 2971 to 2978 ms with `CRAIDD_LSP=0` (3 runs each). U9/G7: the server's text equals the model byte for byte at all 12 steps (including CRLF and non-BMP), no version errors. U7/G5: `fx-many` push set 7227 and pull 40 rows, no eviction below the caps; the save-triggered check still needs an edit that changes the result (see the earlier entry).
+
+**What still needs the architect's eyes (and how).** Every harness result above is "harness-observed, pending user review". These cannot be done by the harness:
+
+1. **G1, parked window.** Open a linked-debug solution (a Power Config with two windows), park (hide) one window while a Rust file is active, then restore it. Look for: no `rust-analyzer` process before the window is restored and a Rust tab is active (`ps` or a process monitor); the chip changes only after restore; one launch, not two. Also hide and restore with a non-Rust tab active: no server until a Rust tab is active.
+2. **G7, real focus change.** In `fx-small`, edit `util.rs` on disk with another program, close its tab, then click back into the Craidd window (a real focus change). Look for: `main.rs` shows the new error without being edited; then revert on disk while Craidd keeps focus and wait 30 s. Also with a model disposed (switch away from a tab and back): after an on-disk edit the tab should show the new text and the server should be resynchronised (U9 step 9, which the harness could not reach).
+3. **G5 / split view.** In `fx-small`, open `util.rs` beside `main.rs` (split view) and change `pub fn ok()` to `pub fn ok(x: u32)` without saving: `main.rs` should gain the error without being edited (U3 step 3 as written). Look for: the marker appears within about half a second.
+4. **G2 diagnostics by eye.** Open `fx-ws` files `alpha`, `beta`, `outside` and look at the chip and markers in each; the server count was measured, the chip text and look were not judged.
+5. **G6, close with the window open.** Close the solution from the app's own menu if one exists (the harness found none: "Get Started" does not close it) and confirm the server is gone; closing the window is verified.
+6. **V2, native file-watch limit hold.** Pending the user's second approval; `↻ Restart` was verified by injection only.
+7. **A6 close-solution markers.** After opening a different solution, open the old solution's file again: look for stale error markers from the previous session (the discrepancy above).
+8. **Visuals the harness cannot judge:** the lock glyph's look, the hover widget and the outline's appearance, the "not connected" note, and the chip's colours.
+
 #### Other findings recorded during U1 (not 1b verdicts)
 
 1. **The language-server usable check accepts any binary that exits 0.** `lldb-dap` was accepted as Rust's language server. That is consistent with the designed check (V7), which proves only that a binary runs. What the chip showed for that session was not observed.
