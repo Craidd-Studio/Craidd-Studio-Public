@@ -366,7 +366,8 @@ preference" means operationally.
 **What if a language server crashes?** Same containment as any other
 process. Signal-aware exit reporting in Output. A restart button in
 the language server status. The IDE survives. The user decides
-whether to restart.
+whether to restart. No automatic restart in Stage 1; diagnostics from a
+dead session are cleared.
 
 **How are server settings surfaced?** Not in Phase 3. The
 `initializationOptions` sent to each server are the defaults. Defaults
