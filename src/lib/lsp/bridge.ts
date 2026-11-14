@@ -432,6 +432,7 @@ function asLocations(monaco: Monaco, targets: Target[]): languages.Location[] {
 function navigationDeps(): NavigationDeps {
   return {
     isOpen: (path) => useSolution.getState().tabs.some((tab) => tab.fileId === path),
+    isReadOnly: (path) => useSolution.getState().tabs.find((tab) => tab.fileId === path)?.readOnly === true,
     owner: async (path) => {
       const solution = useSolution.getState().solution;
       if (!solution) return null;
@@ -443,8 +444,16 @@ function navigationDeps(): NavigationDeps {
     // as a read-only tab, and bound to that session with its canonical-path URI. Anything else is refused.
     unowned: async (path, line, column, origin) => {
       const binding = origin ? tracker.binding(origin) : null;
+      const held = tracker.binding(path);
+      // Already open here and held by the navigating session (and not ended): focus it, nothing to rebind.
+      if (binding && held?.session === binding.session && useSolution.getState().tabs.some((tab) => tab.fileId === path)) {
+        await useSolution.getState().revealFile(path, line, column);
+        return;
+      }
       if (!binding) {
-        appendLspOutput([{ session: 0, severity: 3, text: `[lsp] ${path} is outside the solution's projects and there is no language-server session to read it through` }]);
+        // No live session to read or bind through: an already-open read-only tab is still focused (its `ended` note stays).
+        if (useSolution.getState().tabs.some((tab) => tab.fileId === path)) await useSolution.getState().revealFile(path, line, column);
+        else appendLspOutput([{ session: 0, severity: 3, text: `[lsp] ${path} is outside the solution's projects and there is no language-server session to read it through` }]);
         return;
       }
       try {
