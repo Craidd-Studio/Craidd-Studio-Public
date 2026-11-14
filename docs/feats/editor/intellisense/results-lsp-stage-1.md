@@ -1435,6 +1435,24 @@ Store at settled, LSP on: `problems` 20 976 to 20 983 rows (`stored` pull 500, p
 7. **A6 close-solution markers.** After opening a different solution, open the old solution's file again: look for stale error markers from the previous session (the discrepancy above).
 8. **Visuals the harness cannot judge:** the lock glyph's look, the hover widget and the outline's appearance, the "not connected" note, and the chip's colours.
 
+#### Re-check of the close-solution markers fix, `fix/lsp-close-solution-markers` at `0efc4d9` (2026-11-14, A6, DA-7). Harness-observed, pending user review.
+
+Fix under test: `0efc4d9` on `5f66c64` (`bridge.ts` `closeSolution` now clears the ended sessions' Monaco markers as well as the store; 2 files, 36 lines). Own run checkout, dev binary on port 1440 with a Vite started from this checkout (its working directory checked), Xvfb `:98`, isolated `HOME`. Script `scripts/jobb_a6.py`; evidence `runs/jobb/cm-a6-*`, `cm-smoke-*`, `cm-u22-*` under the run checkout.
+
+**Suites.** `node --test` 179 passed; `tsc` 0; `vite build` 0; `process_cleanup` 7 passed, 1 ignored; 26 `commands::debug*` tests ok; `cargo test --lib` three times: 256 passed and 1 failed each time, the known environmental `ldi_pair_requires_selected_managed_debug_and_library_build_slots` (`netcoredbg` not installed).
+
+**A6, all three endings** (an error added and saved: before each, the store held push 2 and pull 1 for session 1, Monaco held `lsp:1:push` 2 and `lsp:1:pull` 1, and the panel showed 3 `LIVE` rows). Read at 1, 3, 8 and 20 s:
+
+| Ending | Store problems of session 1 | Monaco markers of session 1 | Problems panel rows | Session |
+|---|---|---|---|---|
+| `restartSession` | 0 at 1 s | 0 at 1 s | 0 at 1 s | `exited`; session 2 repopulates its own rows from about 8 s (`lsp:2:*`); nothing of session 1 returns |
+| `kill -9` of my own server pid | 0 at 1 s | 0 at 1 s | 0 at 1 s | `crashed`; nothing returns in 20 s |
+| closing the solution (opening another through the store's `openSolution`) | 0 at 1 s | **0 at 1 s (previously 3 markers remained)** | 0 at 1 s | `shuttingDown` stays in the session list (the stale view, finding 11; no rows or markers of it remain) |
+
+No discrepancy remains for the three endings. **Verified**, harness-observed, pending user review.
+
+**Smoke.** 1b cold start: `didOpen` reached the server and the pull markers appeared (ready in 8.6 s on this run, a slower start-up sample than the usual 3 s; not repeated). U22 unchanged: symbol plus `use` line, no intermediate state with the symbol but no `use` line, one undo restores the exact original, one redo re-applies both.
+
 #### Other findings recorded during U1 (not 1b verdicts)
 
 1. **The language-server usable check accepts any binary that exits 0.** `lldb-dap` was accepted as Rust's language server. That is consistent with the designed check (V7), which proves only that a binary runs. What the chip showed for that session was not observed.
