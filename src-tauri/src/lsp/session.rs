@@ -23,6 +23,7 @@ use super::delivery::{Coalescer, Delivered, LogRing, Phase, StatusRecord};
 use super::documents::{DocError, DocTable, DocView, Refused, Sink};
 use super::framing::{encode, read_frame, FrameLimits, FrameWriter, QueueError};
 use super::pending::PendingTable;
+use super::providers::ProviderKind;
 use super::protocol::{self, Inbound, LogLine, LogSource, Outcome, METHOD_NOT_FOUND, REQUEST_FAILED};
 
 /// Initial ◇ values from the design, to be tuned from measurement.
@@ -102,6 +103,17 @@ pub(crate) enum RequestError { NotReady, Busy, Closed }
 pub(crate) enum SendError { NotReady, Full, Closed }
 
 #[derive(Debug, PartialEq, Eq)]
+pub(crate) enum ProviderError {
+    /// The server did not negotiate this kind (or sync is unusable, or the session is not ready).
+    Disabled,
+    /// The document is not open, or is desynced.
+    NotSynced,
+    /// This kind's share of the pending table is used up.
+    Busy,
+    Request(RequestError),
+}
+
+#[derive(Debug, PartialEq, Eq)]
 pub(crate) enum PullError {
     /// The server offers no pull; push is the only route.
     Disabled,
@@ -152,6 +164,10 @@ struct Inner {
     documents: Mutex<DocTable>,
     /// The one in-flight pull per document; a newer pull cancels it.
     pulls: Mutex<HashMap<String, i64>>,
+    /// In-flight provider requests, one per (document, kind): a newer one supersedes it (Stage 1c).
+    providers: Mutex<HashMap<(String, ProviderKind), i64>>,
+    /// Canonical paths this session returned in definition or references replies (decision 49).
+    returned: Mutex<std::collections::HashSet<std::path::PathBuf>>,
     /// Workspace reload: (in flight, another requested meanwhile).
     reload: Mutex<(bool, bool)>,
     /// When the readiness gate was last armed (Ready, or a reload).
@@ -213,6 +229,8 @@ impl Session {
             snapshots: Mutex::new(Coalescer::default()),
             documents: Mutex::new(DocTable::default()),
             pulls: Mutex::default(),
+            providers: Mutex::default(),
+            returned: Mutex::default(),
             reload: Mutex::new((false, false)),
             gate_armed: Mutex::new(None),
             cursor: Mutex::new(Cursor::default()),
@@ -817,6 +835,67 @@ impl Session {
         let request = self.begin_request("textDocument/diagnostic", params).map_err(PullError::Request)?;
         lock(&self.0.pulls).insert(uri.into(), request.id);
         Ok(request)
+    }
+
+    /// Begin a provider request (Stage 1c, decision 40). Returns the request and the document's
+    /// current epoch, which the caller echoes so the frontend can reject a stale reply. A newer
+    /// request for the same (document, kind) supersedes the previous one; no lock is held across
+    /// the round trip.
+    pub(crate) fn begin_provider(&self, kind: ProviderKind, uri: &str, mut params: Value) -> Result<(PendingRequest, u64), ProviderError> {
+        let caps = self.caps().ok_or(ProviderError::Disabled)?;
+        if !kind.enabled(&caps) { return Err(ProviderError::Disabled); }
+        let epoch = match lock(&self.0.documents).view(uri) {
+            Some(doc) if doc.sync == super::documents::DocState::Synced => doc.epoch,
+            _ => return Err(ProviderError::NotSynced),
+        };
+        let key = (uri.to_string(), kind);
+        {
+            let providers = lock(&self.0.providers);
+            let used = providers.keys().filter(|(_, k)| *k == kind).count();
+            if used >= kind.share() && !providers.contains_key(&key) { return Err(ProviderError::Busy); }
+        }
+        if kind.names_document() { params["textDocument"] = json!({ "uri": uri }); }
+        self.cancel_provider(uri, kind);
+        let request = self.begin_request(kind.method(), params).map_err(|e| match e {
+            RequestError::Busy => ProviderError::Busy,
+            other => ProviderError::Request(other),
+        })?;
+        lock(&self.0.providers).insert(key, request.id);
+        Ok((request, epoch))
+    }
+
+    /// Remember the files a reply pointed at (canonicalised), so an unowned one can be read once and only once the server named it.
+    pub(crate) fn record_returned(&self, value: &Value) {
+        let mut canonical = vec![];
+        for uri in super::providers::returned_uris(value) {
+            if let Some(path) = super::providers::uri_path(&uri) {
+                if let Ok(resolved) = std::fs::canonicalize(&path) { canonical.push(resolved); }
+            }
+        }
+        let mut returned = lock(&self.0.returned);
+        for path in canonical {
+            if returned.len() >= super::providers::RETURNED_MAX { break; }
+            returned.insert(path);
+        }
+    }
+
+    /// The text of a path this session returned; refuses any other path (decision 49).
+    pub(crate) fn read_target(&self, path: &std::path::Path) -> Result<(String, String), String> {
+        let returned = lock(&self.0.returned).clone();
+        super::providers::read_returned(path, &returned)
+    }
+
+    /// Cancel the in-flight request of this kind for the document (a newer one, or Monaco's token).
+    pub(crate) fn cancel_provider(&self, uri: &str, kind: ProviderKind) {
+        let previous = lock(&self.0.providers).remove(&(uri.to_string(), kind));
+        if let Some(id) = previous { self.cancel(id); }
+    }
+
+    /// The request finished; forget it unless a newer one replaced it.
+    pub(crate) fn finish_provider(&self, uri: &str, kind: ProviderKind, id: i64) {
+        let mut providers = lock(&self.0.providers);
+        let key = (uri.to_string(), kind);
+        if providers.get(&key) == Some(&id) { providers.remove(&key); }
     }
 
     /// Cancel the document's in-flight pull (a change restarted its debounce).

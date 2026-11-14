@@ -15,6 +15,11 @@ function LanguageServerChip({ fileId }: { fileId: string | null }) {
   const info = useLsp((s) => (fileId ? s.docs[fileId] : undefined));
   const view = useLsp((s) => (info?.kind === "bound" ? s.sessions[info.session] : undefined));
   if (!info || info.kind === "none" || info.kind === "notRouted") return null;
+  if (info.kind === "ended") {
+    return <span className="text-zinc-500" title="The language server this tab was opened from has ended. Navigate to this file again from a live session to reconnect.">
+      language server: not connected; navigate from a live session to reconnect
+    </span>;
+  }
   if (info.kind === "waiting") return <span className="text-zinc-500">language server…</span>;
   if (info.kind === "unavailable") {
     return <button type="button" onClick={showLspOutput} title={info.reason} className="text-amber-400 hover:text-amber-300">

@@ -85,6 +85,10 @@ Two no-op variants were run through every case: **prefixRange** (range covers th
 
 **Verdict: F3 passes every case in this probe.** Limits: plain Monaco with a test provider, synthetic timing (resolve 10/800 ms), commands driving the widget rather than real key presses, and one item shape. It does not test the real server's items (`InsertReplaceEdit`, snippets), cursor placement after the edit beyond the simple case, multiple cursors, or an accept while a second completion is open. The notice hook is a stub; the user-visible notice is product work.
 
+## F3 product probe (Stage 1c steps 8-9)
+
+`f3product.ts`; run `experiments/lsp-1c-monaco/run.sh f3product`. Runs the product modules `src/lib/lsp/completion.ts` and `src/lib/lsp/completionAccept.ts` in plain Monaco 0.56.0 with a fake server. Output of the last run: idle accept (cursor 3:20, one undo, no partial state), typing during the resolve rejects with a notice, failed and hung resolves apply nothing, overlap and same-line edits reject the whole item, a character typed before accept is replaced with the right cursor, InsertReplaceEdit follows Monaco's insert or replace mode, a snippet primary applies with its placeholder selected and undoes in one step, two cursors are rejected with a notice, and a second completion opened during the resolve leaves no partial state. Same limits as above: synthetic timing, commands rather than real key presses.
+
 ---
 
 *Last updated: Phase 3 (Stage 1c prep, V10-V12 probes). Author(s): ShinkuKira21.*

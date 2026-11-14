@@ -52,7 +52,24 @@ export type LspDocInfo =
   | { kind: "waiting" }
   | { kind: "notRouted"; reason: string }
   | { kind: "unavailable"; reason: string }
-  | { kind: "bound"; session: number; alias: string | null; state: string };
+  | { kind: "bound"; session: number; alias: string | null; state: string }
+  /** A read-only navigation tab whose originating session ended: open, unbound, no intelligence (decision 51). */
+  | { kind: "ended"; session: number };
+
+/** A read-only tab opened by navigation: bound only by navigation from a live session, never by routing. */
+export function isNavigationOnly(tabs: { fileId: string; readOnly?: boolean }[], fileId: string): boolean {
+  return tabs.find((tab) => tab.fileId === fileId)?.readOnly === true;
+}
+
+/**
+ * Decision 51: when a session ends, each of its read-only tabs stays open but unbound and says so. Other
+ * documents keep the existing behaviour (they relaunch through the normal routing).
+ */
+export function endedDocs(affected: string[], tabs: { fileId: string; readOnly?: boolean }[], session: number): Record<string, LspDocInfo> {
+  const out: Record<string, LspDocInfo> = {};
+  for (const fileId of affected) if (tabs.find((tab) => tab.fileId === fileId)?.readOnly) out[fileId] = { kind: "ended", session };
+  return out;
+}
 
 export interface LspOutputLine { session: number; text: string; severity: number }
 

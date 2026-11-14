@@ -1241,6 +1241,156 @@ This matches Implementation's report: prefixRange passes every case; emptyRange 
 
 Limits (as the README says): plain Monaco, test provider, synthetic timing, commands drive the widget rather than real keys, one item shape; it says nothing about the real server's items (`InsertReplaceEdit`, snippets) or the cursor placement beyond case 7. **Verdict:** F3 with the `prefixRange` variant **Verified** for cases 1 to 7; the `emptyRange` variant **Failed** case 6 and is not usable.
 
+#### Stage 1c steps 0 to 2 (hover), independent check of `feat/lsp-1c-step2` at `36c4ba0` (2026-11-09, DA-11). Harness-observed, pending user review.
+
+Package: `410750e` (step 0), `ee2766d` (step 1: request plumbing, decisions 40 and 41), `36c4ba0` (step 2: hover, decision 45), on `939cbf1`. Own run checkout `/mnt/ext_drives/Development/Development/Desktop Development/Craidd-Studio/.claude/worktrees/intellisense-verify-0b263b/verification/lsp-1b/runs/s2-36c4ba0`; dev binary on port 1440; Xvfb `:98`; isolated `HOME`; the tap as the language server; the new fixture `fixtures/fx-1c`. Scripts `scripts/jobb_s2.py` and the tap's new hover-rewrite option; evidence `/mnt/ext_drives/Development/Development/Desktop Development/Craidd-Studio/.claude/worktrees/intellisense-verify-0b263b/verification/lsp-1b/runs/jobb/s2-*`.
+
+**1. Suites.** `node --test` 140 passed; `tsc` 0; `vite build` 0; `cargo test --lib` run **3 times**: 246 passed, 0 failed, 9 ignored each time (no flaky test); `process_cleanup` 7 passed, 1 ignored; 26 `commands::debug*` tests ok.
+
+**1b smoke (cold start).** Ready in 3.3 s; `didOpen` reached the server (tap: 1); after an error was typed the pull markers appeared (3) and the push store held 2 rows. No regression seen.
+
+**U14, hover on a known symbol.** On `HashMap` in `main.rs` the hover widget showed `std::collections::hash::map`, `pub struct HashMap<K, V, S = RandomState, A = Global>` and the std documentation; one `textDocument/hover` request reached the server; `ProviderRequests.stats` (read from `bridge.ts`'s exported `providerRequests`) `sent 1, applied 1`, the rest 0. The negative case (no request when the server lacks `hover`) was not run in the IDE; it is covered by the Rust fake-server test `a_kind_the_server_did_not_negotiate_is_never_requested` (`lsp/tests.rs`, passed in all three runs) and the node table test in `tests/lspProviderCaps.test.mjs`. **Verified** for the positive case, harness-observed.
+
+**U15, stale hover: Unverified in the IDE.** I requested a hover and edited the document in the same tick: the request carries the flushed document, the reply was for the current text at the old cursor position (`HashMap`, the symbol now under it), `applied` rose to 2, `stale` and `superseded` stayed 0, and the second `textDocument/hover` reached the server (3 of 3 runs). A reply is only stale if the edit lands **after** the request has gone and before the reply, and rust-analyzer replies in milliseconds, so that window was not reached; the counter `stale` was never exercised here. The behaviour is covered by the node test `a reply is dropped when the epoch or the model versionId moved while it was in flight` and `a newer request of the same kind supersedes the older one` (`tests/lspRequests.test.mjs`). What the IDE run does show is that an edit is flushed before the hover request and that no old symbol's hover appeared.
+
+**Security spot-check (decision 45): Verified.** The tap rewrote the hover reply (`CRAIDD_LSP_TAP_REWRITE_HOVER`; one reply rewritten, logged as `rewritten`) to a fenced `fn probe()`, then `[click](command:workbench.action.quit)`, `<b>bold</b>`, `<img src=x onerror="window.__pwn=1">` and `[ok](https://example.com)`. The hover widget showed the text `fn probe()` and `click bold ok`: the `command:` link is **not** an anchor (plain text `click`), there is no `<b>` and no `<img>` element in the widget (0 and 0), and the `onerror` handler did not run (`window.__pwn` unset). The only anchor was the https link, whose target Monaco keeps in `data-href` (opened through the opener, not a live `href`). This agrees with `hover.ts` (`isTrusted false`, `supportHtml false`, `command:` links turned into text) and the node tests in `tests/lspHover.test.mjs`.
+
+**Verdict:** step 2 (hover) with steps 0 and 1 is **Verified** for U14, the security check and the 1b smoke; the stale-hover counter (U15) is **Unverified** in the IDE and rests on the node tests. No gate moves.
+
+#### Stage 1c steps 3 and 4 (document symbols, definition and the editor opener), `feat/lsp-1c-step4` at `97cc915` (2026-11-09, DA-11). Harness-observed, pending user review.
+
+Package: `2be3b90` (step 3, document symbols, plus the hover hardening: every `command:` URI dropped) and `97cc915` (step 4, definition with Monaco's editor opener routed through Craidd's tabs, decision 46). Own run checkout (detached `97cc915`), dev binary on port 1440, Xvfb `:98`, isolated `HOME`, the tap, fixture `fixtures/fx-1c`. Scripts `scripts/jobb_1c.py` (`u16`, `u17`) and `jobb_s2.py` (smoke, `u14`); evidence `/mnt/ext_drives/Development/Development/Desktop Development/Craidd-Studio/.claude/worktrees/intellisense-verify-0b263b/verification/lsp-1b/runs/jobb/s4-*`. Implementation had not re-run the suites after its rebase, so these runs are the first.
+
+**1. Suites.** `node --test` 152 passed; `tsc` 0; `vite build` 0; `cargo test --lib` run **3 times**: 246 passed, 0 failed, 9 ignored each time; `process_cleanup` 7 passed, 1 ignored; 26 `commands::debug*` tests ok.
+
+**U16, the outline (`editor.action.quickOutline`, `shapes.rs`).** One `textDocument/documentSymbol` request. The quick-pick listed 9 symbols, in the file's nesting: `geometry` (module), `Area` (trait) with `area`, `Circle` (struct) with `radius`, `impl geometry::Area for Circle` with `area`, and `impl Circle` (with `circumference`; the script printed the first eight rows). That matches the file: 1 module, 1 trait with 1 method, 1 struct with 1 field, 2 impls with 1 method each. **Verified**, harness-observed; the rows are text, so the visual look of the outline and breadcrumbs is for the user.
+
+**U17, definition (`editor.action.revealDefinition` from `main.rs`).** Tab bar read from the page (tabs only):
+
+| Case | Tabs before | Tabs after | Active and cursor after |
+|---|---|---|---|
+| (a) same file, `counts` | `main.rs` | `main.rs` | `main.rs`, cursor 10:6 to 9:13 (the `let mut counts` line) |
+| (b) another project file, not open, `shapes::Circle` | `main.rs` | `main.rs`, `shapes.rs` | `shapes.rs`, cursor 7:12 (the struct's name): a new editable tab in the project's own path form |
+| (c) a file already open, `shared_value` | `main.rs`, `shapes.rs`, `shared.rs` | the same three | `shared.rs` focused, cursor 1:8; **no second tab** |
+| (d) std symbol, `HashMap` | the same three | the same three | `main.rs`, cursor unchanged (9:23): **nothing was opened** |
+
+Four `textDocument/definition` requests reached the server. **Verified** for (a) to (c), harness-observed.
+
+**Definition to `HashMap` (std), the step 4 behaviour.** No tab was opened (above). The Output source `Language Server` carries `[lsp] /usr/lib/rustlib/src/rust/library/std/src/collections/hash/map.rs is outside the solution's projects; read-only navigation is not available yet`, as step 4 intends (step 5 changes this). **Verified.**
+
+**Hover and 1b smoke (re-run).** Hover on `HashMap` still shows `pub struct HashMap<K, V, S = RandomState, A = Global>` with the std docs; stats `sent 1, applied 1`. Cold start ready in 3.5 s, `didOpen` reached the server, pull markers appeared (3) after an error was typed.
+
+**Verdict:** steps 3 and 4 are **Verified** for U16 and U17 (a to c and the std case), plus hover and the 1b smoke; no gate moves.
+
+#### Stage 1c steps 5 and 6 (read-only navigation tabs, references with a cap), `feat/lsp-1c-step6` at `867ba5c` (2026-11-09, DA-11). Harness-observed, pending user review.
+
+Package: `e0538ca` (step 5: `lsp_read_target`, a read-only tab with a lock glyph, decisions 49 to 51) and `867ba5c` (step 6: references with a visible "+N" cap, decision 47). Own run checkout, dev binary on port 1440, Xvfb `:98`, isolated `HOME`, the tap, fixture `fixtures/fx-1c` (a generated 600-reference module for the cap). Script `scripts/jobb_s6.py`; evidence `/mnt/ext_drives/Development/Development/Desktop Development/Craidd-Studio/.claude/worktrees/intellisense-verify-0b263b/verification/lsp-1b/runs/jobb/s6-*`. Implementation had not re-run the suites after its rebase.
+
+**1. Suites.** `node --test` 158 passed; `tsc` 0; `vite build` 0; `cargo test --lib` run **3 times**: 253 passed, 0 failed, 9 ignored each time; `process_cleanup` 7 passed, 1 ignored; 26 `commands::debug*` tests ok.
+
+**U18, definition to the standard library and to a registry crate.** Definition on `HashMap` and on `adler2::Adler32` each opened a **read-only tab** (`map.rs` under `/usr/lib/rustlib/src/rust/library/std/src/collections/hash/`, `lib.rs` under `~/.cargo/registry/src/…/adler2-2.0.1/src/`). Each tab shows an SVG lock with `aria-label="Read-only"` and the hover reason `Read-only: opened by navigation from a language server. Craidd never saves it.`; the editor's `readOnly` option is true; typing `zzz` and `Ctrl+S` changed nothing (model length 95 115 before and after for `map.rs`); the target file's sha256 is identical before and after; **hover works inside the read-only tab** (bound session): `std::collections::hash::map pub struct HashMap<K, V, S = RandomState, A = Global> …` and `adler2 pub struct Adler32 { a: u16, b: u16 } …`. **Verified**, harness-observed; the glyph's look is for the user.
+
+**U19, restart with the unowned tab open.** `restartSession` was called for the session while the `map.rs` tab was open: the tab **stayed**, the lock glyph stayed, no crash (`could not render` absent), and a hover inside the tab still answered afterwards. **Not observed:** the "unbound, with a note" state the plan describes; the Output source showed no line and the hover kept working, so after a restart the tab either re-binds to the new session or the old binding still answers, and which was not examined. **Unverified** for the unbound note; the no-crash part is **Verified**.
+
+**U20, references.** Shift+F12 on `shared_value` in `shared.rs` opened the peek with **References (5)**: `shared.rs` (the declaration), `a.rs` (2), `b.rs` (1), `main.rs` (1). One `textDocument/references` request. Note for the lead: the standard `editor.action.goToReferences` and `referenceSearch.trigger` actions did not run through `editor.trigger` in this build (no request was sent), whereas the keyboard shortcut works; so references are reachable from the keyboard, and the script uses Shift+F12. **Verified.**
+
+**U20, the cap.** A generated module with 600 calls of `shared_value()` (605 results): the peek shows **References (500)** and the Output source carries `[lsp] references limited to 500; +105 more not shown`. So the "+N" is visible in Output (not in the peek). **Verified**, harness-observed.
+
+**Security of `lsp_read_target` (decisions 49 to 51).** Invoked from the webview with the real session id:
+
+| Call | Result |
+|---|---|
+| a scratch file the server never returned (created by the script; content not printed) | refused: `… was not returned by this language server` |
+| a project file (`src/b.rs`) never returned by a navigation reply | refused with the same message |
+| a relative path (`../../../../etc/hostname`) | refused: `cannot open …: No such file or directory`; no content returned |
+| a session id that does not exist | refused: `language-server session 999999 is gone` |
+
+No real user file's content was read or recorded. **Verified.**
+
+**Hover, definition and 1b smoke.** Covered by the same runs: cold start ready in 4 s, `didOpen` reached the server, hover and definition behaved as before (U18's hover inside the tabs, U20's single references request).
+
+**Verdict:** steps 5 and 6 are **Verified** for U18, U20, the cap and the security refusals; U19's unbound note is **Unverified**; no gate moves.
+
+#### Re-check of the multi-cursor fix and steps 10 prep, `feat/lsp-1c-step89` at `195dfed` (2026-11-09, DA-7, DA-11). Harness-observed, pending user review.
+
+Stack on `4726c8d`: `dfbddef` (owned completion items are not offered with several cursors; a guard closes the suggest widget when a cursor is added while it is open), `68638be` (decision 51: a read-only tab shows a muted "not connected" note when its session ends), `195dfed` (step 10 prep: provider-load metrics hooks, decision 53, and a stalled-consumer provider test). Own run checkout, dev binary on port 1440, Xvfb `:98`, isolated `HOME`, the tap. Script `scripts/jobb_s9.py` (`u23b`, `u23c`, `u22`), `jobb_s6.py` (`u19`), evidence `/mnt/ext_drives/Development/Development/Desktop Development/Craidd-Studio/.claude/worktrees/intellisense-verify-0b263b/verification/lsp-1b/runs/jobb/s10-*`.
+
+**1. Suites.** `node --test` 175 passed; `tsc` 0; `vite build` 0; `process_cleanup` 7 passed, 1 ignored; 26 `commands::debug*` tests ok. `cargo test --lib`, three runs: 256 passed in runs 1 and 3, and **one failure in run 2**: `lsp::tests::every_terminal_cause_leaves_the_same_invariants` (`tests.rs:62`, `assertion left == right failed: no pending entry left, left: 1, right: 0`), 255 passed and 1 failed. A test of the pending table's cleanup under a terminal cause, racing the session thread. **Not reproduced** in 10 further full runs (all 256 passed) or in 25 isolated runs of that test; this test had passed in every earlier package check (about 12 full runs). One failure in 38 full runs: a timing flake, not a regression I can pin to this stack. Logs `s10-lib-2.log` and `s10-etc-fail-*` (none), under `/mnt/ext_drives/Development/Development/Desktop Development/Craidd-Studio/.claude/worktrees/intellisense-verify-0b263b/verification/lsp-1b/runs/..`.
+
+**2. U23b, two cursors then completion.** With a second cursor at `1:1` and the cursor in `let m: HashM`, the suggest list showed **no items at all** (the owned `HashMap` auto-import item is not offered); the document is **byte-identical** to the original; Output carries once `[lsp] completion that needs the language server to finish it is not offered while several cursors are active`. **Verified**; this repairs the earlier failure.
+**U23c, a second cursor added after the list opened.** The list showed `HashMap<…>(use std::collections::HashMap)`; adding the second cursor **closed** the widget (the guard), nothing was accepted, and the document is **byte-identical**. **Verified.**
+
+**3. U22 again, one cursor.** Unchanged: `HashMap` accepted gives the symbol and the `use` line, 3 change events with no state holding the symbol without the `use` line, one undo restores the exact original, one redo re-applies both. No regression.
+
+**4. U19, restart with the read-only std tab open.** The store trace after `restartSession`: at +1 s the tab's document is `ended` and the status bar reads **`language server: not connected; navigate from a live session to reconnect`** (decision 51); by +4 s the document is `notRouted` and the note is **gone** (the tab itself, its lock glyph and its content stay, no crash). The session view stays `shuttingDown` in the store (the stale-view finding 11). So the note is shown for a few seconds and then disappears; whether that is the intended persistence is for the lead. **Hover:** with the earlier hover widget dismissed (Escape) before asking again, **no hover appears after the restart and no further `textDocument/hover` request reaches the server** (1 request on the wire in total, before the restart). The earlier observation that "hover still answered" was a **leftover hover widget** from before the restart, as Implementation suspected; the hover content was a markdown section and not a marker. **Verified.**
+
+**5. Hooks on and off (decision 35).** All runs above had the dev hooks on. The hooks cannot be switched off at run time (they are compiled out of a production frontend only), so an IDE comparison would need a `tauri build --debug` with a different React mode, as in U13, and was **not run**; **Unverified** in the IDE. The node tests `lspMetrics.test.mjs` ("the hooks only count: ProviderRequests behaves the same with and without an observer"; "in a production build the hooks are inert") passed, and behaviour with the hooks on was unchanged in every re-check here.
+
+**What U25 needs (from the step 10 prep commit and the new hook output).** The hooks add to `window.__craiddLspMetrics()` and the `[lsp:metrics]` Output lines: `providers` (per kind: `sent`, `applied`, `stale`, `busy`, `empty`, `cancelled`), `providerLatencyMs` (per kind: `max`, `p95`, `count`, over a window) and `channelBytes`; U26 is the Rust test `a_stalled_consumer_with_providers_active_loses_no_reply_and_stalls_nothing` (passed in all runs). For U25 I need: a run checkout with the scratch `src-tauri` solution file (`craidd-rt.cln`) created, `jobb_u12.py` extended to issue hover, definition and completion requests (and references) during the typing and tab switching while indexing, the same run with `CRAIDD_LSP=0` as the baseline, the new hook fields read at the end and the tap for per-request wire sizes; G3 and G4 numbers are then recorded against the baseline. No product change is needed. The G4 stalled-consumer evidence stays the fake-server test.
+
+**Smoke.** Cold start ready in 3.3 s, `didOpen` reached the server, markers appeared; hover on `HashMap` unchanged (sent 1, applied 1); references on `shared_value` give `References (5)`; definition (a same-file, b another file, c already open, d std read-only tab) unchanged.
+
+**Verdict:** the multi-cursor fix is **Verified** (U23b and U23c byte-identical, no regression in U22); U19's hover claim is **Verified** as a leftover widget; the not-connected note shows only briefly (recorded for the lead); hooks on/off **Unverified** in the IDE; one unreproduced test flake recorded. No gate moves.
+
+#### U25 and U26: G3 and G4 under provider load, `feat/lsp-stage-1c` at `f20a31e` (2026-11-09, DA-11). Harness-observed, pending user review.
+
+Code under test: the `195dfed` run checkout (the tip `f20a31e` differs from it only by documentation). Workload: a scratch copy of Craidd's own `src-tauri` (about 400 crates) opened as a solution, `commands/debug.rs` (2824 lines) and `lib.rs` open; for **45 s** from the start of indexing, real key events (3 characters about every 150 ms, 588 to 628 keystrokes), scrolling every fourth batch, a tab switch every twelfth, **and** provider requests: hover about every 3 s, definition (in the same file), completion (list opened, then dismissed), references (Shift+F12, then dismissed). LSP on (the tap as the server, for wire sizes) versus `CRAIDD_LSP=0`, **3 runs each, alternating**, Xvfb `:98` (software rendering, so absolute times are not comparable with a real desktop). Script `scripts/jobb_u25.py`; evidence `/mnt/ext_drives/Development/Development/Desktop Development/Craidd-Studio/.claude/worktrees/intellisense-verify-0b263b/verification/lsp-1b/runs/jobb/u25/{on,off}{1,2,3}/result.json`. The frame-gap and input-to-paint numbers are the approved substitutes (no long-task API in this WebKitGTK).
+
+**G3, interaction (raw numbers, baseline beside).**
+
+| Measure | LSP on (3 runs) | `CRAIDD_LSP=0` (3 runs) |
+|---|---|---|
+| Frame gap p50 / p95 | 16 / 17 ms in every run | 16 / 17 ms in every run |
+| Frame gap max | 92, 98, 88 ms | 95, 86, 82 ms |
+| Gaps over 50 ms / over 100 ms | 1, 1, 1 / 0, 0, 0 | 1, 1, 1 / 0, 0, 0 |
+| Input to paint p50 | 29, 28, 28 ms | 28, 28, 27 ms |
+| Input to paint p95 | **50**, 37, 36 ms | 35, 34, 35 ms |
+| Input to paint max | 113, 142, 123 ms | 116, 124, 125 ms |
+| Keystrokes delivered in 45 s | 588, 607, 607 | 628, 622, 622 |
+| Startup to interactive | 2963, 2963, 2961 ms | 2959, 2961, 2965 ms |
+| Server CPU over the run | 82.6, 100.7, 100.2 CPU-seconds | no server |
+| Webview VmRSS at the end | 771, 772, 790 MB | 736, 738, 741 MB |
+| `rust-analyzer` VmRSS at the end | 2269, 2094, 1908 MB | none |
+
+Reading: typing, scrolling, tab switching and the four provider kinds together gave frame gaps and input to paint close to the baseline. The one visible difference is run 1 with LSP on, input to paint p95 50 ms against 34 to 37 ms elsewhere; the other two on-runs are within 2 ms of the baseline, so no systematic regression is shown, but three runs per mode is a small sample and the p95 spread is larger with LSP on. Fewer keystrokes were delivered with LSP on in run 1 (588 against 622 to 628), which fits a busier main thread in that run. No budget is claimed.
+
+**Provider hooks (the new `providers` field, per run on, after the 45 s):**
+
+| Kind | sent | applied | stale | empty | busy | cancelled |
+|---|---|---|---|---|---|---|
+| `documentSymbol` | 29, 31, 31 | 22, 18, 20 | 7, 13, 10 | 0, 0, 1 | 0 | 0 |
+| `hover` | 10, 10, 10 | 4, 3, 5 | 4, 6, 4 | 2, 1, 1 | 0 | 0 |
+| `completion` | 9, 10, 10 | 7, 9, 9 | 0 | 2, 1, 1 | 0 | 0 |
+| `definition` | 9, 10, 10 | 6, 9, 9 | 0 | 3, 1, 1 | 0 | 0 |
+| `references` | 5, 5, 5 | 4, 4, 4 | 0 | 1, 1, 1 | 0 | 0 |
+
+The stale counts are the point of the guard: continuous typing changed the document while hover and outline requests were in flight, and those replies were dropped (about 40 percent of hovers and 25 to 40 percent of outline requests), while completion, definition and references (issued between keystrokes) were never stale. None was `busy` or `cancelled`. `providerLatencyMs` held one or two entries per run only (for example `documentSymbol` p95 17 ms, `completion` max 52 ms in run 2); its window is short, so latency is **not characterised** here. `channelBytes` (frontend Channel): 608 686, 558 146 and 579 107; `channelMessages`: 1754, 1312, 1443.
+
+**Wire sizes (tap, server to client, over the whole run with indexing):** 3620, 3025 and 3074 messages; p50 175 to 182 B, p95 192 to 264 B, max 64 117 B (one message, the largest response), total 2.85 to 2.95 MB. Client requests seen: hover 10, definition 9 to 10, documentSymbol 29 to 31, completion 9 to 10, references 5 per run. (The Channel hook's byte count is smaller than the wire total because coalescing and the class rules drop or merge messages; both are recorded, neither is a budget.)
+
+**G4, stalled consumer.** The IDE cannot stall the frontend consumer on demand, so G4's stalled-consumer evidence is the fake-server tests: **U26** is `lsp::tests::a_stalled_consumer_with_providers_active_loses_no_reply_and_stalls_nothing` (80 provider requests across all kinds all get their replies, the server is not stalled, undelivered state stays bounded and drains in bounded batches) and `a_stalled_consumer_never_stalls_the_server_or_loses_replaceable_state` (stage 1a); both passed in every `cargo test --lib` run on this stack (about 40 full runs). In the IDE runs above: no provider request was `busy` or `cancelled`, so the in-flight cap and the per-kind limit were not reached, and each kind's `sent` equals `applied + stale + empty`.
+
+**Verdicts (no budget invented):** G3 provider-load numbers are **recorded against the baseline** (above), with the sample-size and rig caveats; G4's stalled-consumer part is **Verified at the fake-server level**, and the IDE run shows no cap breach. Neither gate is marked Pass here: both stay for the architect's and the user's review, as every U-step does.
+
+#### Re-check of the rebind fix, `fix/lsp-1c-rebind` at `704d9a6` (2026-11-14, DA-7, decision 51). Harness-observed, pending user review.
+
+Fix under test: `7a2f814` (navigating to an already-open read-only tab from a live session rebinds it and clears the `ended` note) and `704d9a6` (a restarted session keeps its acknowledgements, so its terminal status arrives), on `9bb0805`. Own run checkout, dev binary on port 1440, Xvfb `:98`, isolated `HOME`, the tap. Script `scripts/jobb_sticky.py`; evidence `runs/jobb/rb-u19-try1/` (store trace per sample), `rb-u22-try1/`, `rb-smoke-try1/` under the run checkout's `runs/`.
+
+**Environment note.** This pass ran on 2026-11-14 after the machine's packages had changed (rustc now `1.99.1-4`; the earlier run checkouts and the original worktree no longer existed and were re-created; `netcoredbg` is no longer installed, `pacman -Qi netcoredbg` finds nothing).
+
+**1. Suites.** `node --test` 178 passed; `tsc` 0; `vite build` 0; `process_cleanup` 7 passed, 1 ignored; 26 `commands::debug*` tests ok. `cargo test --lib`, three runs: **256 passed and 1 failed in every run**, the failing test being `commands::linked_windows::tests::ldi_pair_requires_selected_managed_debug_and_library_build_slots` (`linked_windows.rs:2403`: `host needs a supported Debug Power slot and installed debugger`). **Environmental and pre-existing:** the same test run alone on `9bb0805` (the parent of this fix, own checkout, same target directory) fails with the same message, and `netcoredbg` is not installed on this machine now, whereas the same test passed in every earlier package's runs (256 passed, 0 failed, 3 to 5 runs each, 2026-11-08 to 2026-11-09). It is outside the LSP code. The first `cargo test` after moving the checkout needed a clean target (stale build-script paths), not a code problem.
+
+**2. U19 in full, on `704d9a6` (store trace): Verified.**
+- Before the restart: `map.rs` (the read-only std tab) `bound`, session 1 `ready`.
+- After `restartSession`: the tab's document `ended`; the note `language server: not connected; navigate from a live session to reconnect` is shown at +1, +4, +10, +20, **+31 and +36 s**; the **old session 1 is `exited`** from the first sample (before this fix it stayed `shuttingDown`).
+- A live session started (switching to `main.rs`: session 2 `ready`), then definition on `HashMap` again from `main.rs`: the `map.rs` tab was focused, its document is **`bound`** (rebound, with a fresh `didOpen`), the **note is gone** (still gone 16 s later), one `map.rs` tab only (`main.rs`, `map.rs`), the lock glyph stays.
+- Hover inside the rebound tab (an old widget dismissed first): `std::collections::hash::map pub struct HashMap<K, V, S = RandomState, A = Global>`, a markdown section, **not a marker**.
+- 12 s later nothing changed: session 1 `exited`, session 2 `ready`, the tab `bound`.
+
+**3. Smoke.** U22 unchanged (symbol plus `use std::collections::HashMap;`, 3 change events with no state holding the symbol without the `use` line, one undo restores the exact original, one redo re-applies both). The 1b cold start: ready in 3.0 s, `didOpen` reached the server, pull markers appeared.
+
+**Verdict:** the rebind fix is **Verified**; the previous failure (tab stays `ended`, note stays) no longer occurs. The `ldi_pair…` test failure is environmental. No gate moves.
+
 #### Other findings recorded during U1 (not 1b verdicts)
 
 1. **The language-server usable check accepts any binary that exits 0.** `lldb-dap` was accepted as Rust's language server. That is consistent with the designed check (V7), which proves only that a binary runs. What the chip showed for that session was not observed.

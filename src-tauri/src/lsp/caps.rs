@@ -278,6 +278,21 @@ mod tests {
     }
 
     #[test]
+    fn the_frontend_summary_has_exactly_the_validated_keys_and_never_the_raw_result() {
+        let caps = ok(json!({"textDocumentSync": 2, "completionProvider": {"triggerCharacters": ["."], "resolveProvider": true},
+            "hoverProvider": true, "definitionProvider": true, "referencesProvider": false, "documentSymbolProvider": true,
+            "someRawServerField": {"secret": 1}}));
+        let value = serde_json::to_value(&caps).unwrap();
+        let mut keys: Vec<&str> = value.as_object().unwrap().keys().map(String::as_str).collect();
+        keys.sort();
+        assert_eq!(keys, ["completion", "definition", "documentSymbol", "hover", "notes", "pull", "references", "save", "serverName",
+            "serverVersion", "sync", "syncUnusable"]);
+        assert_eq!(value["completion"], json!({"triggerCharacters": ["."], "resolve": true}));
+        assert_eq!((value["hover"].clone(), value["references"].clone()), (json!(true), json!(false)));
+        assert!(!value.to_string().contains("someRawServerField"), "the raw initialize result never reaches the frontend");
+    }
+
+    #[test]
     fn completion_trigger_characters_and_resolve_gating() {
         let completion = |value: Value| ok(json!({"textDocumentSync": 2, "completionProvider": value})).completion;
         assert_eq!(completion(json!({"triggerCharacters": [".", "", 3, ":"]})).unwrap().trigger_characters, vec![".", ":"]);

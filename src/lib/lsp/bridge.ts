@@ -1,14 +1,21 @@
+import { ProviderRequests, type ProviderReply } from "./requests.ts";
+import { ProviderRegistrations, providerAvailable, triggerCharacters, withNotice } from "./providers.ts";
+import { ACCEPT_COMMAND, guardMultiCursor, hasSeveralCursors, registerAcceptCommand, type Entry } from "./completionAccept.ts";
+import { contextToLsp, listToMonaco, type LspItem } from "./completion.ts";
+import { hoverToMonaco } from "./hover.ts";
+import { symbolsToMonaco } from "./symbols.ts";
+import { locationsToTargets, openTarget, referencesToTargets, type NavigationDeps, type Selection, type Target } from "./navigation.ts";
 import type { Monaco } from "@monaco-editor/react";
-import type { editor } from "monaco-editor";
+import type { editor, languages, Position, CancellationToken, Uri, IRange, IPosition } from "monaco-editor";
 import { Channel, invoke } from "@tauri-apps/api/core";
 import { useSolution } from "../../store/solutionStore";
 import { useSplit } from "../../store/splitStore";
-import { appendLspOutput, serverName, useLsp, viewWithAttach, viewWithStatus, type LspSessionView } from "../../store/lspStore";
+import { appendLspOutput, endedDocs, isNavigationOnly, serverName, useLsp, viewWithAttach, viewWithStatus, type LspSessionView } from "../../store/lspStore";
 import { LANGUAGES } from "../languages";
 import { DocumentTracker, type Binding, type DocTransport } from "./documents";
 import { DiagnosticsModel, gateOpen, isAuthoritative, type Attribution, type Route } from "./diagnostics";
 import { gateOpened, PullScheduler, type PullReply, type PullReport } from "./pulls";
-import { fileUri, isTerminal, uriToPath, toMonacoRange, type Batch, type ContentChange, type DocView, type LspDiagnostic, type StatusRecord } from "./protocol";
+import { fileUri, isTerminal, uriToPath, toMonacoRange, toLspPosition, type Batch, type ContentChange, type DocView, type LspDiagnostic, type NegotiatedCaps, type StatusRecord } from "./protocol";
 import { metrics } from "./metrics";
 import { LaunchGate } from "./launch";
 
@@ -214,6 +221,13 @@ function restoreMarkers(fileId: string): void {
   }
 }
 
+/** Read-only tabs of an ended session say so; every other affected document is refreshed as before. */
+function markEnded(affected: string[], generation: number): void {
+  const ended = endedDocs(affected, useSolution.getState().tabs, generation);
+  if (Object.keys(ended).length > 0) useLsp.setState((state) => ({ docs: { ...state.docs, ...ended } }));
+  for (const fileId of affected) if (!(fileId in ended)) refreshDocInfo(fileId);
+}
+
 function clearSessionDiagnostics(session: number): void {
   const monaco = monacoRef;
   const uris = diagnostics.clearSession(session);
@@ -245,7 +259,7 @@ function onStatus(generation: number, status: StatusRecord): void {
     schedulers.get(generation)?.stop();
     schedulers.delete(generation);
     awaitingReady.delete(generation);
-    for (const fileId of tracker.sessionEnded(generation)) refreshDocInfo(fileId);
+    markEnded(tracker.sessionEnded(generation), generation);
     clearSessionDiagnostics(generation);
     return;
   }
@@ -271,6 +285,7 @@ function onStatus(generation: number, status: StatusRecord): void {
 
 function onBatch(generation: number, batch: Batch): void {
   metrics.channelMessage();
+  if (metrics.enabled) metrics.channelBytes(JSON.stringify(batch).length);
   if (batch.status) onStatus(generation, batch.status);
   for (const event of batch.events) {
     if (event.kind === "diagnostics") queueDiagnostics(generation, event.uri, "push", event.diagnostics);
@@ -336,6 +351,194 @@ function pullHost(session: number) {
   };
 }
 
+/** Provider requests (Stage 1c): flush, capture, supersede, cancel and stale rejection live in `requests.ts`. */
+export const providerRequests = new ProviderRequests({
+  binding: (fileId) => { const binding = tracker.binding(fileId); return binding ? { session: binding.session, uri: binding.uri } : null; },
+  stamp: (fileId) => {
+    const model = modelFor(fileId);
+    return model && tracker.state(fileId) === "open" ? { epoch: tracker.epoch(fileId), versionId: model.getVersionId() } : null;
+  },
+  flush: (fileId) => tracker.flush(fileId),
+  call: (command, args) => invoke<ProviderReply>(command, args),
+  cancel: (session, uri, kind) => invoke<void>("lsp_cancel_provider", { session, uri, kind }),
+}, (kind, outcome, ms) => metrics.provider(kind, outcome, ms));
+
+// ---- Monaco providers (once per language; capability-checked per call) ----
+
+const registrations = new ProviderRegistrations();
+
+function sessionCaps(fileId: string) {
+  const binding = tracker.binding(fileId);
+  return binding && tracker.state(fileId) === "open" ? lastStatus.get(binding.session)?.caps ?? null : null;
+}
+
+function registerProviders(monaco: Monaco): void {
+  for (const language of LANGUAGES) {
+    registrations.ensure(language.id, "hover", "", () => monaco.languages.registerHoverProvider(language.id, {
+      async provideHover(model: editor.ITextModel, position: Position, token: CancellationToken) {
+        const fileId = fileIdOf(model);
+        if (!fileId || !providerAvailable(sessionCaps(fileId), "hover")) return null;
+        const { line, character } = toLspPosition(position.lineNumber, position.column);
+        return hoverToMonaco(await providerRequests.request("hover", fileId, { line, character }, token)) as languages.Hover | null;
+      },
+    }));
+    registrations.ensure(language.id, "documentSymbol", "", () => monaco.languages.registerDocumentSymbolProvider(language.id, {
+      async provideDocumentSymbols(model: editor.ITextModel, token: CancellationToken) {
+        const fileId = fileIdOf(model);
+        if (!fileId || !providerAvailable(sessionCaps(fileId), "documentSymbol")) return null;
+        const { symbols, dropped } = symbolsToMonaco(await providerRequests.request("documentSymbol", fileId, {}, token));
+        // Visible beyond the Output tab: the chip detail names the truncation until a complete result replaces it.
+        chipNotice(fileId, "Outline ", dropped > 0 ? `Outline limited to ${symbols.length} symbols; +${dropped} more not shown` : null);
+        return symbols as unknown as languages.DocumentSymbol[];
+      },
+    }));
+    registrations.ensure(language.id, "definition", "", () => monaco.languages.registerDefinitionProvider(language.id, {
+      async provideDefinition(model: editor.ITextModel, position: Position, token: CancellationToken) {
+        const fileId = fileIdOf(model);
+        if (!fileId || !providerAvailable(sessionCaps(fileId), "definition")) return null;
+        const { line, character } = toLspPosition(position.lineNumber, position.column);
+        return asLocations(monaco, locationsToTargets(await providerRequests.request("definition", fileId, { line, character }, token)));
+      },
+    }));
+    registrations.ensure(language.id, "references", "", () => monaco.languages.registerReferenceProvider(language.id, {
+      async provideReferences(model: editor.ITextModel, position: Position, context: languages.ReferenceContext, token: CancellationToken) {
+        const fileId = fileIdOf(model);
+        if (!fileId || !providerAvailable(sessionCaps(fileId), "references")) return null;
+        const { line, character } = toLspPosition(position.lineNumber, position.column);
+        const { targets, dropped } = referencesToTargets(await providerRequests.request("references", fileId,
+          { line, character, includeDeclaration: context.includeDeclaration }, token));
+        chipNotice(fileId, "References ", dropped > 0 ? `References limited to ${targets.length}; +${dropped} more not shown` : null);
+        return asLocations(monaco, targets);
+      },
+    }));
+  }
+  // Decision 46: Monaco never creates a model for a navigation target itself; Craidd's tab logic opens it.
+  // attachMonaco runs once, so this registers once.
+  monaco.editor.registerEditorOpener({
+    async openCodeEditor(source: editor.ICodeEditor, resource: Uri, selectionOrPosition?: IRange | IPosition) {
+      const sourceModel = source?.getModel?.();
+      const origin = sourceModel ? fileIdOf(sourceModel) : null;
+      const result = await openTarget(navigationDeps(), resource.scheme, resource.path, selectionOrPosition as Selection | undefined, origin);
+      return result !== "ignored";
+    },
+  });
+}
+
+function asLocations(monaco: Monaco, targets: Target[]): languages.Location[] {
+  return targets.map((target) => ({ uri: monaco.Uri.file(target.path), range: target.range }));
+}
+
+/** Ownership comes from the single backend resolver (`lsp_attribute`); the store opens or focuses the tab. */
+function navigationDeps(): NavigationDeps {
+  return {
+    isOpen: (path) => useSolution.getState().tabs.some((tab) => tab.fileId === path),
+    isReadOnly: (path) => useSolution.getState().tabs.find((tab) => tab.fileId === path)?.readOnly === true,
+    owner: async (path) => {
+      const solution = useSolution.getState().solution;
+      if (!solution) return null;
+      const [who] = await invoke<{ projectId: string | null; ambiguous: string[] }[]>("lsp_attribute", { paths: [path], solution, languages: languageTable() });
+      return who && !who.ambiguous?.length ? { projectId: who.projectId } : null;
+    },
+    reveal: (path, line, column) => useSolution.getState().revealFile(path, line, column),
+    // Decisions 49-51: a path the originating session returned is read once (text only, size-capped), shown
+    // as a read-only tab, and bound to that session with its canonical-path URI. Anything else is refused.
+    unowned: async (path, line, column, origin) => {
+      const binding = origin ? tracker.binding(origin) : null;
+      const held = tracker.binding(path);
+      // Already open here and held by the navigating session (and not ended): focus it, nothing to rebind.
+      if (binding && held?.session === binding.session && useSolution.getState().tabs.some((tab) => tab.fileId === path)) {
+        await useSolution.getState().revealFile(path, line, column);
+        return;
+      }
+      if (!binding) {
+        // No live session to read or bind through: an already-open read-only tab is still focused (its `ended` note stays).
+        if (useSolution.getState().tabs.some((tab) => tab.fileId === path)) await useSolution.getState().revealFile(path, line, column);
+        else appendLspOutput([{ session: 0, severity: 3, text: `[lsp] ${path} is outside the solution's projects and there is no language-server session to read it through` }]);
+        return;
+      }
+      try {
+        const target = await invoke<{ path: string; text: string }>("lsp_read_target", { session: binding.session, path });
+        useSolution.getState().revealReadOnly(target.path, target.text, line, column);
+        tracker.bind(target.path, { ...binding, uri: fileUri(target.path), canonical: target.path, syncKind: "incremental" });
+        refreshDocInfo(target.path);
+        void activateBound(target.path);
+      } catch (error) {
+        appendLspOutput([{ session: binding.session, severity: 2, text: `[lsp] could not open ${path}: ${String(error)}` }]);
+      }
+    },
+  };
+}
+
+// ---- Completion (F3: Craidd-owned acceptance, DA-15) ----
+
+const completionEntries = new Map<string, Entry>();
+let acceptRegistered = false;
+
+/** A notice on existing surfaces only (decision 44): an Output line (when `text` is set) and the chip's detail. */
+function chipNotice(fileId: string, prefix: string, text: string | null, output = true): void {
+  const session = tracker.binding(fileId)?.session;
+  if (text !== null && output) appendLspOutput([{ session: session ?? 0, severity: 2, text: `[lsp] ${text}` }]);
+  const view = session === undefined ? undefined : useLsp.getState().sessions[session];
+  if (session !== undefined && view) {
+    const notes = withNotice(view.notes, prefix, text);
+    if (notes.length !== (view.notes ?? []).length || notes.some((n, i) => n !== view.notes?.[i])) updateSession(session, { notes });
+  }
+}
+const multiCursorNoted = new Set<number>();
+/** Once per session, not per keystroke. */
+function noteMultiCursor(fileId: string): void {
+  const session = tracker.binding(fileId)?.session ?? 0;
+  if (multiCursorNoted.has(session)) return;
+  multiCursorNoted.add(session);
+  appendLspOutput([{ session, severity: 3, text: "[lsp] completion that needs the language server to finish it is not offered while several cursors are active" }]);
+}
+const completionNotice = (fileId: string, text: string) => chipNotice(fileId, "Completion ", text);
+
+/**
+ * Registered once per language when its first ready session reports the trigger characters (never hardcoded);
+ * re-registered only if a later session reports different ones.
+ */
+function ensureCompletion(monaco: Monaco, languageId: string, caps: NegotiatedCaps | null): void {
+  if (!providerAvailable(caps, "completion")) return;
+  if (!acceptRegistered) {
+    acceptRegistered = true;
+    guardMultiCursor(monaco, (model) => { const id = fileIdOf(model as editor.ITextModel); return Boolean(id) && [...completionEntries.values()].some((e) => e.fileId === id); });
+    registerAcceptCommand(monaco, {
+      entry: (id) => completionEntries.get(id),
+      resolve: async (id) => {
+        const entry = completionEntries.get(id);
+        if (!entry) return null;
+        return await providerRequests.request("completionResolve", entry.fileId, { item: entry.item }) as LspItem | null;
+      },
+      notice: completionNotice,
+    });
+  }
+  const chars = triggerCharacters(caps);
+  registrations.ensure(languageId, "completion", chars.join("\u0000"), () => monaco.languages.registerCompletionItemProvider(languageId, {
+    triggerCharacters: chars,
+    async provideCompletionItems(model: editor.ITextModel, position: Position, context: languages.CompletionContext, token: CancellationToken) {
+      const fileId = fileIdOf(model);
+      const live = fileId ? sessionCaps(fileId) : null;
+      if (!fileId || !providerAvailable(live, "completion")) return { suggestions: [] };
+      const { line, character } = toLspPosition(position.lineNumber, position.column);
+      const { triggerKind, triggerCharacter } = contextToLsp(context);
+      const result = await providerRequests.request("completion", fileId, { line, character, triggerKind, triggerCharacter }, token);
+      for (const key of [...completionEntries.keys()]) if (completionEntries.get(key)!.fileId === fileId) completionEntries.delete(key);
+      const word = model.getWordUntilPosition(position);
+      const focused = monaco.editor.getEditors().find((e: editor.ICodeEditor) => e.getModel() === model);
+      const several = hasSeveralCursors(monaco, model);
+      if (several) noteMultiCursor(fileId);
+      const mode = focused?.getOption(monaco.editor.EditorOption.suggest).insertMode === "replace" ? "replace" : "insert";
+      return listToMonaco(result, {
+        word: { lineNumber: position.lineNumber, startColumn: word.startColumn, endColumn: word.endColumn,
+          text: model.getValueInRange({ startLineNumber: position.lineNumber, startColumn: word.startColumn, endLineNumber: position.lineNumber, endColumn: word.endColumn }) },
+        resolveProvider: live?.completion?.resolve === true, mode, ownedCommand: ACCEPT_COMMAND, allowOwned: !several,
+        register: (id, item) => { const key = `${fileId}\u0000${id}`; completionEntries.set(key, { item, fileId, position: { line: line, character } }); return key; },
+      }) as unknown as languages.CompletionList;
+    },
+  }));
+}
+
 // ---- Documents and the deferred launch ----
 
 function refreshDocInfo(fileId: string): void {
@@ -352,6 +555,7 @@ async function activateBound(fileId: string): Promise<void> {
   if (caps?.syncUnusable) return;
   binding.syncKind = caps?.sync === "full" ? "full" : "incremental";
   await tracker.activate(fileId);
+  if (monacoRef) ensureCompletion(monacoRef, binding.languageId, caps ?? null);
   refreshDocInfo(fileId);
   for (const scheduler of schedulers.values()) scheduler.activated(fileId);
 }
@@ -372,6 +576,8 @@ const gate = new LaunchGate(scheduleIdle, (reason) => void attachActive(reason),
 /** The visible, active document changed (or startup finished): bound documents activate; others schedule the deferred launch. */
 function onActive(): void {
   const fileId = useSolution.getState().activeFileId;
+  // A read-only navigation tab is bound only by navigation from a live session (decision 51), never by routing.
+  if (fileId && isNavigationOnly(useSolution.getState().tabs, fileId)) return;
   const binding = fileId ? tracker.binding(fileId) : null;
   const outcome = gate.onActive(fileId, {
     enabled: useLsp.getState().enabled,
@@ -385,6 +591,9 @@ function onActive(): void {
 async function attachActive(reason: "idle" | "timeout"): Promise<void> {
   const { activeFileId: fileId, solution, tabs } = useSolution.getState();
   if (!gate.startupDone || !fileId || !solution || !tabs.some((t) => t.fileId === fileId)) return;
+  // A read-only navigation tab is bound only by navigation from a live session (decision 51). Routing it would answer
+  // "not routed" and overwrite its `ended` note, so an attach (for example after a restart) leaves it alone.
+  if (isNavigationOnly(tabs, fileId)) return;
   const key = solutionKey;
   useLsp.setState((state) => ({ docs: { ...state.docs, [fileId]: { kind: "waiting" } } }));
   const languages = languageTable();
@@ -433,6 +642,7 @@ let wired = false;
 export function attachMonaco(monaco: Monaco): void {
   if (monacoRef) return;
   monacoRef = monaco;
+  registerProviders(monaco);
   const watch = (model: editor.ITextModel) => {
     const fileId = fileIdOf(model);
     if (fileId) {
@@ -504,11 +714,11 @@ export async function restartSession(generation: number): Promise<void> {
 
 /** The old session is stopping: unbind its documents and attach the active one afresh. */
 function afterRestart(generation: number): void {
-  for (const fileId of tracker.sessionEnded(generation)) refreshDocInfo(fileId);
+  const affected = tracker.sessionEnded(generation);
   useLsp.setState((state) => {
     const docs = { ...state.docs };
     for (const [fileId, info] of Object.entries(docs)) if (info.kind === "bound" && info.session === generation) delete docs[fileId];
-    return { docs };
+    return { docs: { ...docs, ...endedDocs(affected, useSolution.getState().tabs, generation) } };
   });
   gate.scheduleLaunch();
 }

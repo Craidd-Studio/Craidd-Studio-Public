@@ -59,8 +59,12 @@ fn assert_clean_end(session: &Session, phase: Phase, reason: &str) {
     let status = session.status();
     assert_eq!(status.phase, phase, "reason: {:?}", status.terminal_reason);
     assert!(status.terminal_reason.as_deref().unwrap_or("").contains(reason), "reason {:?} lacks {reason:?}", status.terminal_reason);
-    assert_eq!(session.pending_len(), 0, "no pending entry left");
-    assert_eq!(session.snapshot_keys(), 0, "no class S entry left");
+    // `terminate()` publishes the terminal phase first (so new requests are refused at once) and then resolves the
+    // pending table, discards the snapshots and empties the document table. A reader that saw the phase can
+    // therefore catch those steps a few microseconds from done, so wait for them, bounded, instead of asserting
+    // the instant the phase is visible. No caller is ever left waiting: they are woken by step 2, not by the phase.
+    assert!(eventually(|| session.pending_len() == 0), "no pending entry left, left {}", session.pending_len());
+    assert!(eventually(|| session.snapshot_keys() == 0), "no class S entry left, left {}", session.snapshot_keys());
     assert!(eventually(|| session.torn_down() && session.live_threads() == 0 && !session.has_writer()),
         "threads remain: {}, writer held: {}", session.live_threads(), session.has_writer());
     if let Some(pid) = session.pid() { assert!(eventually(|| !alive(pid)), "server {pid} still alive"); }
@@ -881,6 +885,284 @@ fn real_rust_analyzer_decision_33_broken_root_ignores_a_nested_non_member() {
     eprintln!("[d33] root fixed: affected {affected}, action {action:?}, reloads {}, recovered {recovered} in {} ms",
         session.status().reloads, at.elapsed().as_millis());
     assert!(affected && recovered);
+    session.stop();
+    let _ = std::fs::remove_dir_all(&dir);
+}
+
+// ---- Stage 1c step 1: provider request plumbing (fake server) ----
+
+mod providers_1c {
+    use super::*;
+    use crate::lsp::commands::{reply_for, ProviderReply};
+    use crate::lsp::providers::ProviderKind;
+    use crate::lsp::session::ProviderError;
+
+    const KINDS: [ProviderKind; 4] = [ProviderKind::Hover, ProviderKind::Definition, ProviderKind::References, ProviderKind::DocumentSymbol];
+
+    fn open(script: &str) -> (Session, String) {
+        let session = ready(script);
+        let uri = "file:///fx/a.rs".to_string();
+        session.open_document(&uri, "rust", "fn a() {}\n").unwrap();
+        (session, uri)
+    }
+    fn params(kind: ProviderKind) -> Value {
+        let mut p = json!({ "position": { "line": 0, "character": 3 } });
+        if kind == ProviderKind::References { p["context"] = json!({ "includeDeclaration": true }); }
+        p
+    }
+
+    #[test]
+    fn every_kind_round_trips_with_the_documents_epoch() {
+        let (session, uri) = open("");
+        for kind in KINDS {
+            let (request, epoch) = session.begin_provider(kind, &uri, params(kind)).unwrap();
+            assert_eq!(epoch, 1);
+            let Outcome::Result(value) = request.wait(WAIT) else { panic!("{kind:?}") };
+            assert_eq!(value["method"], kind.method());
+            assert_eq!(value["params"]["textDocument"]["uri"], uri, "the uri is set by the backend, not the caller");
+            if kind != ProviderKind::DocumentSymbol { assert_eq!(value["params"]["position"]["character"], 3); }
+            if kind == ProviderKind::References { assert_eq!(value["params"]["context"]["includeDeclaration"], true); }
+        }
+        session.stop();
+    }
+
+    #[test]
+    fn a_kind_the_server_did_not_negotiate_is_never_requested() {
+        let (session, uri) = open("no_providers");
+        for kind in KINDS {
+            assert!(matches!(session.begin_provider(kind, &uri, params(kind)), Err(ProviderError::Disabled)), "{kind:?}");
+        }
+        session.stop();
+    }
+
+    #[test]
+    fn an_unopened_document_is_not_synced() {
+        let session = ready("");
+        assert!(matches!(session.begin_provider(ProviderKind::Hover, "file:///fx/none.rs", params(ProviderKind::Hover)), Err(ProviderError::NotSynced)));
+        session.stop();
+    }
+
+    #[test]
+    fn a_newer_request_supersedes_the_older_one_and_the_late_reply_is_dropped() {
+        let (session, uri) = open("provider_slow=300");
+        let (first, _) = session.begin_provider(ProviderKind::Hover, &uri, params(ProviderKind::Hover)).unwrap();
+        let began = Instant::now();
+        let (second, _) = session.begin_provider(ProviderKind::Hover, &uri, params(ProviderKind::Hover)).unwrap();
+        assert_eq!(first.wait(WAIT), Outcome::NoResult, "the superseded request resolves to no result at once");
+        assert!(began.elapsed() < Duration::from_millis(250), "it did not wait for the server");
+        assert!(matches!(second.wait(WAIT), Outcome::Result(_)));
+        // A different kind on the same document is independent.
+        let (other, _) = session.begin_provider(ProviderKind::DocumentSymbol, &uri, json!({})).unwrap();
+        assert!(matches!(other.wait(WAIT), Outcome::Result(_)));
+        session.stop();
+    }
+
+    #[test]
+    fn cancel_wakes_the_caller_without_waiting_for_the_server() {
+        let (session, uri) = open("provider_never");
+        let (request, _) = session.begin_provider(ProviderKind::Definition, &uri, params(ProviderKind::Definition)).unwrap();
+        session.cancel_provider(&uri, ProviderKind::Definition);
+        assert_eq!(request.wait(WAIT), Outcome::NoResult);
+        session.stop();
+    }
+
+    #[test]
+    fn one_kind_cannot_take_the_whole_pending_table() {
+        let session = ready("provider_never");
+        let mut uris = vec![];
+        for n in 0..4 {
+            let uri = format!("file:///fx/r{n}.rs");
+            session.open_document(&uri, "rust", "x").unwrap();
+            uris.push(uri);
+        }
+        let share = ProviderKind::References.share();
+        let held: Vec<_> = uris.iter().take(share).map(|u| session.begin_provider(ProviderKind::References, u, params(ProviderKind::References)).unwrap()).collect();
+        assert!(matches!(session.begin_provider(ProviderKind::References, &uris[share], params(ProviderKind::References)), Err(ProviderError::Busy)));
+        // Another kind still gets room, and a repeat for a document already in flight supersedes rather than counts.
+        assert!(session.begin_provider(ProviderKind::Hover, &uris[share], params(ProviderKind::Hover)).is_ok());
+        assert!(session.begin_provider(ProviderKind::References, &uris[0], params(ProviderKind::References)).is_ok());
+        drop(held);
+        session.stop();
+    }
+
+    #[test]
+    fn a_dead_session_resolves_every_awaiting_request() {
+        let (session, uri) = open("provider_never");
+        let (request, _) = session.begin_provider(ProviderKind::Hover, &uri, params(ProviderKind::Hover)).unwrap();
+        session.stop();
+        assert_eq!(request.wait(WAIT), Outcome::NoResult);
+    }
+
+    #[test]
+    fn content_modified_and_server_cancelled_are_no_result_and_other_errors_are_errors() {
+        let uri = || "file:///x".to_string();
+        for code in [-32801, -32802] {
+            assert_eq!(reply_for(Outcome::Error { code, message: "m".into() }, 4, uri()), ProviderReply::NoResult { epoch: 4, uri: uri() });
+        }
+        assert_eq!(reply_for(Outcome::Error { code: -32603, message: "boom".into() }, 4, uri()), ProviderReply::Error { code: -32603, message: "boom".into() });
+        assert_eq!(reply_for(Outcome::Retrigger, 1, uri()), ProviderReply::NoResult { epoch: 1, uri: uri() });
+        let (session, u) = open("provider_modified");
+        let (request, epoch) = session.begin_provider(ProviderKind::Hover, &u, params(ProviderKind::Hover)).unwrap();
+        assert_eq!(reply_for(request.wait(WAIT), epoch, u.clone()), ProviderReply::NoResult { epoch: 1, uri: u });
+        session.stop();
+    }
+
+    #[test]
+    fn an_unowned_target_is_readable_only_after_this_session_returned_it() {
+        let dir = std::env::temp_dir().join(format!("craidd-ret-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).unwrap();
+        let (named, unnamed) = (dir.join("named.rs"), dir.join("unnamed.rs"));
+        std::fs::write(&named, "pub fn named() {}\n").unwrap();
+        std::fs::write(&unnamed, "pub fn unnamed() {}\n").unwrap();
+        let (session, uri) = open(&format!("provider_uri={}", crate::lsp::adapter::file_uri(&named)));
+        assert!(session.read_target(&named).is_err(), "nothing was returned yet");
+        let (request, _) = session.begin_provider(ProviderKind::Definition, &uri, params(ProviderKind::Definition)).unwrap();
+        let outcome = request.wait(WAIT);
+        let Outcome::Result(value) = &outcome else { panic!("{outcome:?}") };
+        session.record_returned(value);
+        assert_eq!(session.read_target(&named).unwrap().1, "pub fn named() {}\n");
+        assert!(session.read_target(&unnamed).unwrap_err().contains("not returned"));
+        session.stop();
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn completion_carries_its_context_and_resolve_sends_the_item_unchanged() {
+        let (session, uri) = open("");
+        let params = json!({ "position": { "line": 0, "character": 3 }, "context": { "triggerKind": 2, "triggerCharacter": ":" } });
+        let (request, _) = session.begin_provider(ProviderKind::Completion, &uri, params).unwrap();
+        let Outcome::Result(list) = request.wait(WAIT) else { panic!() };
+        assert_eq!(list["isIncomplete"], true);
+        assert_eq!(list["items"][0]["context"], json!({ "triggerKind": 2, "triggerCharacter": ":" }));
+        let item = list["items"][0].clone();
+        let (resolve, _) = session.begin_provider(ProviderKind::CompletionResolve, &uri, item.clone()).unwrap();
+        let Outcome::Result(resolved) = resolve.wait(WAIT) else { panic!() };
+        assert_eq!(resolved["data"], item["data"], "the opaque data went out and came back byte-identical");
+        assert!(resolved.get("textDocument").is_none(), "resolve names no document: the item is the whole payload");
+        let (merged, ignored) = crate::lsp::caps::merge_resolved(&item, &resolved, true);
+        assert_eq!(merged["label"], "HashMap", "a label the server changed is ignored");
+        assert!(ignored.contains(&"label".to_string()));
+        assert_eq!(merged["detail"], "resolved detail");
+        assert_eq!(merged["additionalTextEdits"][0]["newText"], "use std::collections::HashMap;\n");
+        session.stop();
+    }
+
+    #[test]
+    fn completion_resolve_is_gated_on_the_servers_resolve_provider() {
+        use crate::lsp::caps::{Completion, NegotiatedCaps};
+        let (session, uri) = open("no_providers");
+        let _ = &session;
+        let mut caps = session.caps().unwrap();
+        for (completion, completion_ok, resolve_ok) in [
+            (None, false, false),
+            (Some(Completion { trigger_characters: vec![], resolve: false }), true, false),
+            (Some(Completion { trigger_characters: vec![], resolve: true }), true, true),
+        ] {
+            caps.completion = completion;
+            assert_eq!((ProviderKind::Completion.enabled(&caps), ProviderKind::CompletionResolve.enabled(&caps)), (completion_ok, resolve_ok));
+        }
+        let _: Option<NegotiatedCaps> = None;
+        let _ = uri;
+        session.stop();
+    }
+
+    /// U26 (G4 with providers active): the consumer is stalled while a flood of replaceable state arrives AND provider
+    /// requests are in flight. Provider replies are class R, delivered to the awaiting command and never to the stalled
+    /// Channel, so they must all complete; the server must not stall; memory stays bounded; the stalled consumer then
+    /// drains in bounded batches and the final clearing set still arrives.
+    #[test]
+    fn a_stalled_consumer_with_providers_active_loses_no_reply_and_stalls_nothing() {
+        let session = ready("flood=3000");
+        let uri = "file:///fx/a.rs".to_string();
+        session.open_document(&uri, "rust", "fn a() {}\n").unwrap();
+        assert!(eventually(|| session.snapshot_keys() > 0), "the flood is undelivered: the consumer really is stalled");
+        let started = Instant::now();
+        let mut answered = 0;
+        for round in 0..20 {
+            for kind in KINDS {
+                let (request, _) = session.begin_provider(kind, &uri, params(kind)).unwrap();
+                match request.wait(WAIT) {
+                    Outcome::Result(value) => { assert_eq!(value["method"], kind.method(), "round {round}"); answered += 1; }
+                    other => panic!("a provider reply was lost while the consumer was stalled: {other:?}"),
+                }
+            }
+        }
+        assert_eq!(answered, 80, "every provider reply reached its awaiting command");
+        assert!(started.elapsed() < Duration::from_secs(10), "the server was never stalled by the missing consumer");
+        assert!(session.snapshot_keys() <= 800, "undelivered state stays bounded by the distinct keys, however many provider calls ran");
+        let mut drained = 0;
+        while let Some(batch) = session.next_batch(256, 1 << 20, 1000) { assert!(batch.events.len() <= 256, "bounded batches"); drained += batch.events.len(); session.ack_batch(); }
+        assert!(drained > 0);
+        assert_eq!(session.snapshot_keys(), 0, "everything replaceable was delivered once");
+        session.stop();
+    }
+
+    #[test]
+    fn reply_json_keys_are_the_ones_the_frontend_reads() {
+        let v = serde_json::to_value(ProviderReply::Result { epoch: 2, uri: "u".into(), value: json!(1) }).unwrap();
+        assert_eq!(v, json!({"kind": "result", "epoch": 2, "uri": "u", "value": 1}));
+        assert_eq!(serde_json::to_value(ProviderReply::NoResult { epoch: 2, uri: "u".into() }).unwrap(), json!({"kind": "noResult", "epoch": 2, "uri": "u"}));
+        for (reply, kind) in [(ProviderReply::Busy, "busy"), (ProviderReply::NotSynced, "notSynced"), (ProviderReply::Disabled, "disabled")] {
+            assert_eq!(serde_json::to_value(reply).unwrap(), json!({ "kind": kind }));
+        }
+    }
+}
+
+/// Stage 1c end to end through the backend (opt-in, real rust-analyzer): the adapter's own launch spec
+/// (lazy additional edits declared, F3), `begin_provider` for completion and for resolve, and the merge rule.
+/// The HashMap auto-import must arrive without its `use` edit and gain it from the resolve; `data` must come back byte-identical.
+#[test]
+#[ignore]
+fn real_rust_analyzer_hashmap_completion_end_to_end() {
+    use super::adapter::{LanguageAdapter, ProjectRef};
+    use super::providers::ProviderKind;
+    use super::rust_adapter::RustAdapter;
+    let which = |name: &str| std::process::Command::new("which").arg(name).output().ok()
+        .filter(|o| o.status.success()).map(|o| PathBuf::from(String::from_utf8_lossy(&o.stdout).trim()));
+    let (Some(server), Some(cargo)) = (which("rust-analyzer"), which("cargo")) else { eprintln!("rust-analyzer or cargo absent: skipped"); return; };
+    let version = String::from_utf8_lossy(&std::process::Command::new(&server).arg("--version").output().unwrap().stdout).trim().to_string();
+    let dir = std::env::temp_dir().join(format!("craidd-ra-1c-{}", std::process::id()));
+    let _ = std::fs::remove_dir_all(&dir);
+    std::fs::create_dir_all(dir.join("src")).unwrap();
+    std::fs::write(dir.join("Cargo.toml"), "[package]\nname = \"e2e\"\nversion = \"0.1.0\"\nedition = \"2021\"\n").unwrap();
+    let main = "fn main() {\n    let _m = HashMap\n}\n";
+    std::fs::write(dir.join("src/main.rs"), main).unwrap();
+    let uri = super::adapter::file_uri(&dir.join("src/main.rs"));
+    let tool = (server.clone(), version.clone());
+    let adapter = RustAdapter::with(move || Ok(ToolRef { path: tool.0.clone(), version: tool.1.clone() }), move || Ok(cargo.clone()), Duration::from_secs(10));
+    let project = ProjectRef { id: "e2e".into(), name: "e2e".into(), language: "rust".into(), folder: dir.clone() };
+    let context = adapter.resolve(&project).unwrap();
+    let spec = context.launch_spec(adapter.configuration_section());
+    assert!(spec.lazy_additional_edits, "the adapter declares lazy additionalTextEdits (F3)");
+    let long = Duration::from_secs(120);
+    let session = Session::start(spec, Limits::default(), 1);
+    assert!(session.wait_until(long, |s| s.phase == Phase::Ready || s.phase.is_terminal()));
+    session.open_document(&uri, "rust", main).unwrap();
+    assert!(session.wait_until(long, |s| s.workspace_ready == Some(true) || s.ready_fallback));
+    let negotiated = session.caps().unwrap().completion.unwrap();
+    eprintln!("[1c-e2e] negotiated: resolve={} trigger characters={:?}", negotiated.resolve, negotiated.trigger_characters);
+    assert!(negotiated.resolve);
+    let params = json!({ "position": { "line": 1, "character": 20 }, "context": { "triggerKind": 1 } });
+    let started = Instant::now();
+    let mut found = None;
+    while found.is_none() && started.elapsed() < Duration::from_secs(60) {
+        let (request, epoch) = session.begin_provider(ProviderKind::Completion, &uri, params.clone()).unwrap();
+        if let Outcome::Result(list) = request.wait(long) {
+            found = list["items"].as_array().and_then(|items| items.iter().find(|i| i["label"].as_str().is_some_and(|l| l.starts_with("HashMap"))).cloned()).map(|i| (i, epoch));
+        }
+        if found.is_none() { std::thread::sleep(Duration::from_millis(300)); }
+    }
+    let (item, epoch) = found.expect("no HashMap completion");
+    assert_eq!(epoch, 1);
+    assert!(item.get("additionalTextEdits").is_none(), "lazy declared: the list carries no edits");
+    assert!(item.get("data").is_some(), "the opaque data is present, so the item is resolvable (the F3 rule)");
+    let (resolve, _) = session.begin_provider(ProviderKind::CompletionResolve, &uri, item.clone()).unwrap();
+    let Outcome::Result(resolved) = resolve.wait(long) else { panic!("resolve gave no result") };
+    let (merged, ignored) = super::caps::merge_resolved(&item, &resolved, true);
+    eprintln!("[1c-e2e] resolve ignored fields: {ignored:?}; edits: {}", merged["additionalTextEdits"]);
+    assert_eq!(merged["data"], item["data"], "data is byte-identical");
+    assert_eq!(merged["label"], item["label"]);
+    assert!(merged["additionalTextEdits"][0]["newText"].as_str().unwrap().contains("use std::collections::HashMap;"));
     session.stop();
     let _ = std::fs::remove_dir_all(&dir);
 }

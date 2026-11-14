@@ -61,6 +61,9 @@ impl Fake {
             "completionProvider": {"triggerCharacters": [":", ".", "'"], "resolveProvider": true},
             "hoverProvider": true, "definitionProvider": true, "referencesProvider": true, "documentSymbolProvider": true,
         });
+        if self.has("no_providers") {
+            for key in ["hoverProvider", "definitionProvider", "referencesProvider", "documentSymbolProvider"] { caps.as_object_mut().unwrap().remove(key); }
+        }
         if self.value("encoding").is_some() { caps["positionEncoding"] = json!(self.value("encoding")); }
         if self.has("pull") { caps["diagnosticProvider"] = json!({"identifier": "fake", "interFileDependencies": true, "workspaceDiagnostics": false}); }
         json!({"capabilities": caps, "serverInfo": {"name": "fake-lsp", "version": "0.0"}})
@@ -206,6 +209,32 @@ fn fake_lsp_server_entry() {
                     let items: Vec<Value> = text.lines().filter(|l| l.contains("bad")).map(|l| json!({"message": l, "range": {"start": {"line": 0, "character": 0}, "end": {"line": 0, "character": 1}}})).collect();
                     fake.reply(&id, json!({"kind": "full", "resultId": result_id, "items": items}));
                 }
+            }
+            (Some("completionItem/resolve"), Some(id)) => {
+                // Echo the item back with edits added, plus a field a server must not change.
+                let mut item = message["params"].clone();
+                item["additionalTextEdits"] = json!([{"range": {"start": {"line": 0, "character": 0}, "end": {"line": 0, "character": 0}}, "newText": "use std::collections::HashMap;\n"}]);
+                item["detail"] = json!("resolved detail");
+                item["label"] = json!("CHANGED");
+                fake.reply(&id, item);
+            }
+            (Some("textDocument/completion"), Some(id)) => {
+                let ctx = message["params"]["context"].clone();
+                fake.reply(&id, json!({"isIncomplete": true, "items": [{"label": "HashMap", "kind": 22, "data": {"opaque": [1, 2, 3]}, "context": ctx}]}));
+            }
+            (Some(m @ ("textDocument/hover" | "textDocument/definition" | "textDocument/references" | "textDocument/documentSymbol")), Some(id)) => {
+                // Provider requests: echo method and params; flags script the failure modes.
+                if fake.has("provider_never") { continue; }
+                if fake.has("provider_modified") { fake.send(json!({"jsonrpc":"2.0","id":id,"error":{"code":-32801,"message":"content modified"}})); continue; }
+                if fake.has("provider_error") { fake.send(json!({"jsonrpc":"2.0","id":id,"error":{"code":-32603,"message":"boom"}})); continue; }
+                if let Some(ms) = fake.value("provider_slow").and_then(|n| n.parse::<u64>().ok()) { std::thread::sleep(Duration::from_millis(ms)); }
+                if let Some(uri) = fake.value("provider_uri").map(String::from) {
+                    let range = json!({"start": {"line": 0, "character": 0}, "end": {"line": 0, "character": 1}});
+                    fake.reply(&id, json!([{"uri": uri, "range": range}]));
+                    continue;
+                }
+                let params = message["params"].clone();
+                fake.reply(&id, json!({"method": m, "params": params}));
             }
             (Some("test/late"), Some(id)) => { std::thread::sleep(Duration::from_millis(300)); fake.reply(&id, json!("late")); }
             (Some("test/never"), Some(_)) => {}

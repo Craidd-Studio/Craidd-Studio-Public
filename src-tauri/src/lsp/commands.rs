@@ -8,7 +8,7 @@ use std::sync::{Arc, Mutex, MutexGuard, Weak};
 use std::time::{Duration, Instant};
 
 use serde::Serialize;
-use serde_json::Value;
+use serde_json::{json, Value};
 use tauri::ipc::Channel;
 use tauri::{State, WebviewWindow};
 
@@ -21,7 +21,8 @@ use super::protocol::{LogLine, Outcome};
 use super::registry::{LaunchDecision, LspRegistry};
 use super::router::{project_ref, route, NotRouted, Route};
 use super::rust_adapter::RustAdapter;
-use super::session::{Batch, Limits, PullError, RequestError, Session};
+use super::providers::ProviderKind;
+use super::session::{Batch, Limits, ProviderError, PullError, RequestError, Session};
 
 /// ◇ Delivery batch bounds. The design sets them from G3 measurements,
 /// which are not recorded yet; these are provisional safety values.
@@ -54,6 +55,14 @@ struct WindowLsp {
     registry: LspRegistry,
     adapters: Vec<Box<dyn LanguageAdapter>>,
     sessions: Mutex<HashMap<u64, Tracked>>,
+    /// Sessions a restart took out of `sessions` that are still stopping. Their delivery thread keeps sending until the
+    /// terminal status, and each batch needs its acknowledgement, so `lsp_ack` must still find them.
+    retired: Mutex<HashMap<u64, Session>>,
+}
+
+/// The live session if there is one, else a retired one that is still stopping.
+fn find_session<T: Clone>(live: &HashMap<u64, T>, retired: &HashMap<u64, T>, generation: u64) -> Option<T> {
+    live.get(&generation).or_else(|| retired.get(&generation)).cloned()
 }
 
 pub(crate) struct LspManager {
@@ -87,13 +96,15 @@ impl LspManager {
             registry: LspRegistry::new(Limits::default(), "rust-analyzer"),
             adapters: vec![Box::new(SharedRust(self.rust.clone()))],
             sessions: Mutex::default(),
+            retired: Mutex::default(),
         })).clone()
     }
 
     fn session(&self, label: &str, generation: u64) -> Result<Session, String> {
         let window = lock(&self.windows).get(label).cloned().ok_or("no language-server session for this window")?;
-        let sessions = lock(&window.sessions);
-        sessions.get(&generation).map(|t| t.session.clone()).ok_or_else(|| format!("language-server session {generation} is gone"))
+        let live: HashMap<u64, Session> = lock(&window.sessions).iter().map(|(g, t)| (*g, t.session.clone())).collect();
+        let retired = lock(&window.retired);
+        find_session(&live, &retired, generation).ok_or_else(|| format!("language-server session {generation} is gone"))
     }
 
     /// Solution or window close: every session stops through the normal
@@ -336,6 +347,134 @@ pub(crate) async fn lsp_pull(window: WebviewWindow, state: State<'_, LspManager>
     })
 }
 
+/// A provider reply (Stage 1c, decision 40): the document's epoch and uri are echoed so the
+/// frontend can reject it against the epoch and `versionId` it captured at request time.
+#[derive(Serialize, Debug, PartialEq)]
+#[serde(rename_all = "camelCase", rename_all_fields = "camelCase", tag = "kind")]
+pub(crate) enum ProviderReply {
+    Result { epoch: u64, uri: String, value: Value },
+    /// Cancelled, superseded, timed out, `ContentModified`, `ServerCancelled` or the session ended.
+    NoResult { epoch: u64, uri: String },
+    Busy,
+    NotSynced,
+    Disabled,
+    Error { code: i64, message: String },
+}
+
+const CONTENT_MODIFIED: i64 = -32801;
+const SERVER_CANCELLED: i64 = -32802;
+
+/// Shared by the typed commands below: begin, wait off the async thread, cancel on no result.
+async fn run_provider(window: WebviewWindow, state: State<'_, LspManager>, session: u64, uri: String, kind: ProviderKind, params: Value)
+    -> Result<ProviderReply, String> {
+    let session = state.session(window.label(), session)?;
+    let original = params.clone();
+    let (request, epoch) = match session.begin_provider(kind, &uri, params) {
+        Ok(started) => started,
+        Err(ProviderError::Disabled) => return Ok(ProviderReply::Disabled),
+        Err(ProviderError::NotSynced) => return Ok(ProviderReply::NotSynced),
+        Err(ProviderError::Busy) | Err(ProviderError::Request(RequestError::Busy)) => return Ok(ProviderReply::Busy),
+        Err(ProviderError::Request(_)) => return Ok(ProviderReply::NoResult { epoch: 0, uri }),
+    };
+    let id = request.id;
+    let canceller = session.clone();
+    let finished = uri.clone();
+    let outcome = tauri::async_runtime::spawn_blocking(move || {
+        let outcome = request.wait(kind.timeout());
+        if outcome == Outcome::NoResult { canceller.cancel(id); }
+        if matches!(kind, ProviderKind::Definition | ProviderKind::References) {
+            if let Outcome::Result(value) = &outcome { canceller.record_returned(value); }
+        }
+        canceller.finish_provider(&finished, kind, id);
+        outcome
+    }).await.map_err(|e| e.to_string())?;
+    // Resolve: only the lazily declared properties are taken; anything else the server changed is ignored and logged.
+    if kind == ProviderKind::CompletionResolve {
+        if let Outcome::Result(resolved) = &outcome {
+            let (merged, ignored) = super::caps::merge_resolved(&original, resolved, true);
+            if !ignored.is_empty() { session.note(&format!("[lsp] completion resolve changed {} (ignored)", ignored.join(", "))); }
+            return Ok(reply_for(Outcome::Result(merged), epoch, uri));
+        }
+    }
+    Ok(reply_for(outcome, epoch, uri))
+}
+
+/// `ContentModified` and `ServerCancelled` are "no result", never errors.
+pub(crate) fn reply_for(outcome: Outcome, epoch: u64, uri: String) -> ProviderReply {
+    match outcome {
+        Outcome::Result(value) => ProviderReply::Result { epoch, uri, value },
+        Outcome::NoResult | Outcome::Retrigger => ProviderReply::NoResult { epoch, uri },
+        Outcome::Error { code, .. } if code == CONTENT_MODIFIED || code == SERVER_CANCELLED => ProviderReply::NoResult { epoch, uri },
+        Outcome::Error { code, message } => ProviderReply::Error { code, message },
+    }
+}
+
+fn at(line: u32, character: u32) -> Value { json!({ "position": { "line": line, "character": character } }) }
+
+#[tauri::command]
+pub(crate) async fn lsp_hover(window: WebviewWindow, state: State<'_, LspManager>, session: u64, uri: String, line: u32, character: u32)
+    -> Result<ProviderReply, String> {
+    run_provider(window, state, session, uri, ProviderKind::Hover, at(line, character)).await
+}
+
+#[tauri::command]
+pub(crate) async fn lsp_definition(window: WebviewWindow, state: State<'_, LspManager>, session: u64, uri: String, line: u32, character: u32)
+    -> Result<ProviderReply, String> {
+    run_provider(window, state, session, uri, ProviderKind::Definition, at(line, character)).await
+}
+
+#[tauri::command]
+pub(crate) async fn lsp_references(window: WebviewWindow, state: State<'_, LspManager>, session: u64, uri: String, line: u32, character: u32,
+    include_declaration: bool) -> Result<ProviderReply, String> {
+    let mut params = at(line, character);
+    params["context"] = json!({ "includeDeclaration": include_declaration });
+    run_provider(window, state, session, uri, ProviderKind::References, params).await
+}
+
+/// `trigger_kind` is the LSP value (1 invoked, 2 trigger character, 3 re-trigger for an incomplete list).
+#[tauri::command]
+pub(crate) async fn lsp_completion(window: WebviewWindow, state: State<'_, LspManager>, session: u64, uri: String, line: u32, character: u32,
+    trigger_kind: u8, trigger_character: Option<String>) -> Result<ProviderReply, String> {
+    let mut params = at(line, character);
+    params["context"] = json!({ "triggerKind": trigger_kind });
+    if let (2, Some(ch)) = (trigger_kind, trigger_character) { params["context"]["triggerCharacter"] = Value::String(ch); }
+    run_provider(window, state, session, uri, ProviderKind::Completion, params).await
+}
+
+/// Resolve one completion item. The original server item goes back untouched (its `data` byte-identical).
+#[tauri::command]
+pub(crate) async fn lsp_completion_resolve(window: WebviewWindow, state: State<'_, LspManager>, session: u64, uri: String, item: Value)
+    -> Result<ProviderReply, String> {
+    if !item.is_object() { return Ok(ProviderReply::NoResult { epoch: 0, uri }); }
+    run_provider(window, state, session, uri, ProviderKind::CompletionResolve, item).await
+}
+
+#[tauri::command]
+pub(crate) async fn lsp_document_symbol(window: WebviewWindow, state: State<'_, LspManager>, session: u64, uri: String)
+    -> Result<ProviderReply, String> {
+    run_provider(window, state, session, uri, ProviderKind::DocumentSymbol, json!({})).await
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub(crate) struct TargetFile { path: String, text: String }
+
+/// Read an unowned navigation target (decision 49): only a path this session returned, text only, size-capped, never written.
+#[tauri::command]
+pub(crate) async fn lsp_read_target(window: WebviewWindow, state: State<'_, LspManager>, session: u64, path: String) -> Result<TargetFile, String> {
+    let session = state.session(window.label(), session)?;
+    tauri::async_runtime::spawn_blocking(move || session.read_target(Path::new(&path)).map(|(path, text)| TargetFile { path, text }))
+        .await.map_err(|e| e.to_string())?
+}
+
+/// Monaco's cancellation token fired: cancel this kind's in-flight request for the document.
+#[tauri::command]
+pub(crate) fn lsp_cancel_provider(window: WebviewWindow, state: State<'_, LspManager>, session: u64, uri: String, kind: ProviderKind)
+    -> Result<(), String> {
+    state.session(window.label(), session)?.cancel_provider(&uri, kind);
+    Ok(())
+}
+
 /// A change restarted the document's debounce: its in-flight pull is cancelled.
 #[tauri::command]
 pub(crate) fn lsp_cancel_pull(window: WebviewWindow, state: State<'_, LspManager>, session: u64, uri: String) -> Result<(), String> {
@@ -459,6 +598,12 @@ pub(crate) fn lsp_logs(window: WebviewWindow, state: State<'_, LspManager>, sess
 pub(crate) fn lsp_restart(window: WebviewWindow, state: State<'_, LspManager>, session: u64) -> Result<(), String> {
     let lsp = lock(&state.windows).get(window.label()).cloned().ok_or("no language-server session for this window")?;
     let tracked = lock(&lsp.sessions).remove(&session).ok_or("that session is gone")?;
+    {
+        // Keep it findable until it has ended (the delivery of its terminal status needs acknowledgements); forget finished ones.
+        let mut retired = lock(&lsp.retired);
+        retired.retain(|_, old| !old.status().phase.is_terminal());
+        retired.insert(session, tracked.session.clone());
+    }
     state.rust.forget(&tracked.project_folder);
     lsp.registry.retire(&tracked.identity);
     // A session that already ended is no longer in the registry: stopping it again changes nothing.
@@ -483,6 +628,18 @@ pub(crate) fn close_window(app: &tauri::AppHandle, label: &str) {
 mod tests {
     use super::*;
     use crate::ownership::tests::{languages, project, solution, Scripted};
+
+    #[test]
+    fn a_session_a_restart_retired_is_still_found_until_it_is_forgotten() {
+        let (mut live, mut retired) = (HashMap::new(), HashMap::new());
+        live.insert(2u64, "new");
+        retired.insert(1u64, "old");
+        assert_eq!(find_session(&live, &retired, 2), Some("new"));
+        assert_eq!(find_session(&live, &retired, 1), Some("old"), "the ack for the old session's last batch still reaches it");
+        assert_eq!(find_session(&live, &retired, 9), None);
+        retired.clear();
+        assert_eq!(find_session(&live, &retired, 1), None);
+    }
 
     #[test]
     fn attach_reply_keys_are_the_ones_the_frontend_reads() {

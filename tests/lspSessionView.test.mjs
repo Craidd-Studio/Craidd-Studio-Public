@@ -53,12 +53,19 @@ async function fresh() {
   const pulls = await load("../src/lib/lsp/pulls.ts", {});
   const metrics = await load("../src/lib/lsp/metrics.ts", {});
   const launch = await load("../src/lib/lsp/launch.ts", {});
+  const requests = await load("../src/lib/lsp/requests.ts", {});
+  const providersMod = await load("../src/lib/lsp/providers.ts", {});
+  const symbols = await load("../src/lib/lsp/symbols.ts", { "./protocol.ts": protocol });
+  const navigation = await load("../src/lib/lsp/navigation.ts", { "./protocol.ts": protocol });
+  const completion = await load("../src/lib/lsp/completion.ts", { "./protocol.ts": protocol });
+  const completionAccept = await load("../src/lib/lsp/completionAccept.ts", { "./completion.ts": completion });
+  const hover = await load("../src/lib/lsp/hover.ts", { "./protocol.ts": protocol });
   const languages = await load("../src/lib/languages.ts", {});
   const store = await load("../src/store/lspStore.ts", { zustand: liveZustand });
   const bridge = await load("../src/lib/lsp/bridge.ts", {
     "@tauri-apps/api/core": core, "../../store/solutionStore": solution, "../../store/splitStore": split,
     "../../store/lspStore": store, "../languages": languages, "./documents": documents, "./diagnostics": diagnostics,
-    "./pulls": pulls, "./protocol": protocol, "./metrics": metrics, "./launch": launch,
+    "./pulls": pulls, "./protocol": protocol, "./metrics": metrics, "./launch": launch, "./requests.ts": requests, "./providers.ts": providersMod, "./hover.ts": hover, "./symbols.ts": symbols, "./navigation.ts": navigation, "./completion.ts": completion, "./completionAccept.ts": completionAccept,
   });
   const boundary = await load("../src/components/layout/ChipBoundary.tsx", {});
   const statusBar = await load("../src/components/layout/StatusBar.tsx", {
@@ -204,4 +211,44 @@ test("↻ Restart is offered when a live session's health is error, not for a wa
   assert.equal(env.lsp.restartOffered("crashed", null), true);
   assert.equal(env.lsp.restartOffered("unresponsive", null), true);
   assert.equal(env.lsp.restartOffered("ready", "ok"), false);
+});
+
+test("a truncation note on the session view is shown in the chip's detail (decisions 44 and 47)", async () => {
+  const env = await started();
+  env.release(reply(status("ready", 1)));
+  await settle();
+  const note = "References limited to 500; +105 more not shown";
+  env.lsp.useLsp.setState((state) => ({ sessions: { ...state.sessions, 1: { ...state.sessions[1], notes: [...state.sessions[1].notes, note] } } }));
+  assert.match(renderToStaticMarkup(createElement(env.StatusBar)), /\+105 more not shown/);
+});
+
+test("an ended session leaves its read-only tabs open, unbound and saying so (decision 51)", async () => {
+  const env = await started();
+  const { endedDocs } = env.lsp;
+  const tabs = [{ fileId: "/ro/a.rs", readOnly: true }, { fileId: "/ws/b.rs" }];
+  assert.deepEqual(endedDocs(["/ro/a.rs", "/ws/b.rs", "/gone.rs"], tabs, 3), { "/ro/a.rs": { kind: "ended", session: 3 } },
+    "only read-only tabs; ordinary documents relaunch through routing as before");
+  env.lsp.useLsp.setState((state) => ({ docs: { ...state.docs, [FILE]: { kind: "ended", session: 1 } } }));
+  const markup = renderToStaticMarkup(createElement(env.StatusBar));
+  assert.match(markup, /language server: not connected; navigate from a live session to reconnect/);
+  assert.doesNotMatch(markup, /Restart/);
+  const bridge = await readFile(new URL("../src/lib/lsp/bridge.ts", import.meta.url), "utf8");
+  assert.match(bridge, /isNavigationOnly\(useSolution\.getState\(\)\.tabs, fileId\)\) return;/, "routing never re-attaches a read-only tab");
+  assert.match(bridge, /markEnded\(tracker\.sessionEnded\(generation\), generation\)/, "the terminal-status path marks them");
+  assert.match(bridge, /endedDocs\(affected, useSolution\.getState\(\)\.tabs, generation\)/, "so does the restart path");
+});
+
+test("the ended note is sticky: routing never attaches a read-only tab, however the attach is started (decision 51)", async () => {
+  const env = await started();
+  const { isNavigationOnly } = env.lsp;
+  const tabs = [{ fileId: "/ro/a.rs", readOnly: true }, { fileId: "/ws/b.rs" }];
+  assert.equal(isNavigationOnly(tabs, "/ro/a.rs"), true);
+  assert.equal(isNavigationOnly(tabs, "/ws/b.rs"), false);
+  assert.equal(isNavigationOnly(tabs, "/missing.rs"), false);
+  const bridge = await readFile(new URL("../src/lib/lsp/bridge.ts", import.meta.url), "utf8");
+  const attach = bridge.slice(bridge.indexOf("async function attachActive"), bridge.indexOf("lsp_attach", bridge.indexOf("async function attachActive")));
+  assert.match(attach, /if \(isNavigationOnly\(tabs, fileId\)\) return;/, "attachActive, which gate.scheduleLaunch() calls after a restart, skips it before anything is written");
+  assert.ok(attach.indexOf("isNavigationOnly") < attach.indexOf('kind: "waiting"'), "and before the 'waiting' entry would replace `ended`");
+  const onActive = bridge.slice(bridge.indexOf("function onActive"), bridge.indexOf("async function attachActive"));
+  assert.match(onActive, /isNavigationOnly\(useSolution\.getState\(\)\.tabs, fileId\)\) return;/);
 });
