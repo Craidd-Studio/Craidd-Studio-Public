@@ -10,7 +10,7 @@ import type { editor, languages, Position, CancellationToken, Uri, IRange, IPosi
 import { Channel, invoke } from "@tauri-apps/api/core";
 import { useSolution } from "../../store/solutionStore";
 import { useSplit } from "../../store/splitStore";
-import { appendLspOutput, endedDocs, serverName, useLsp, viewWithAttach, viewWithStatus, type LspSessionView } from "../../store/lspStore";
+import { appendLspOutput, endedDocs, isNavigationOnly, serverName, useLsp, viewWithAttach, viewWithStatus, type LspSessionView } from "../../store/lspStore";
 import { LANGUAGES } from "../languages";
 import { DocumentTracker, type Binding, type DocTransport } from "./documents";
 import { DiagnosticsModel, gateOpen, isAuthoritative, type Attribution, type Route } from "./diagnostics";
@@ -432,6 +432,7 @@ function asLocations(monaco: Monaco, targets: Target[]): languages.Location[] {
 function navigationDeps(): NavigationDeps {
   return {
     isOpen: (path) => useSolution.getState().tabs.some((tab) => tab.fileId === path),
+    isReadOnly: (path) => useSolution.getState().tabs.find((tab) => tab.fileId === path)?.readOnly === true,
     owner: async (path) => {
       const solution = useSolution.getState().solution;
       if (!solution) return null;
@@ -443,8 +444,16 @@ function navigationDeps(): NavigationDeps {
     // as a read-only tab, and bound to that session with its canonical-path URI. Anything else is refused.
     unowned: async (path, line, column, origin) => {
       const binding = origin ? tracker.binding(origin) : null;
+      const held = tracker.binding(path);
+      // Already open here and held by the navigating session (and not ended): focus it, nothing to rebind.
+      if (binding && held?.session === binding.session && useSolution.getState().tabs.some((tab) => tab.fileId === path)) {
+        await useSolution.getState().revealFile(path, line, column);
+        return;
+      }
       if (!binding) {
-        appendLspOutput([{ session: 0, severity: 3, text: `[lsp] ${path} is outside the solution's projects and there is no language-server session to read it through` }]);
+        // No live session to read or bind through: an already-open read-only tab is still focused (its `ended` note stays).
+        if (useSolution.getState().tabs.some((tab) => tab.fileId === path)) await useSolution.getState().revealFile(path, line, column);
+        else appendLspOutput([{ session: 0, severity: 3, text: `[lsp] ${path} is outside the solution's projects and there is no language-server session to read it through` }]);
         return;
       }
       try {
@@ -568,7 +577,7 @@ const gate = new LaunchGate(scheduleIdle, (reason) => void attachActive(reason),
 function onActive(): void {
   const fileId = useSolution.getState().activeFileId;
   // A read-only navigation tab is bound only by navigation from a live session (decision 51), never by routing.
-  if (fileId && useSolution.getState().tabs.find((tab) => tab.fileId === fileId)?.readOnly) return;
+  if (fileId && isNavigationOnly(useSolution.getState().tabs, fileId)) return;
   const binding = fileId ? tracker.binding(fileId) : null;
   const outcome = gate.onActive(fileId, {
     enabled: useLsp.getState().enabled,
@@ -582,6 +591,9 @@ function onActive(): void {
 async function attachActive(reason: "idle" | "timeout"): Promise<void> {
   const { activeFileId: fileId, solution, tabs } = useSolution.getState();
   if (!gate.startupDone || !fileId || !solution || !tabs.some((t) => t.fileId === fileId)) return;
+  // A read-only navigation tab is bound only by navigation from a live session (decision 51). Routing it would answer
+  // "not routed" and overwrite its `ended` note, so an attach (for example after a restart) leaves it alone.
+  if (isNavigationOnly(tabs, fileId)) return;
   const key = solutionKey;
   useLsp.setState((state) => ({ docs: { ...state.docs, [fileId]: { kind: "waiting" } } }));
   const languages = languageTable();

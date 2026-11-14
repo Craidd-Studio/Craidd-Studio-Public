@@ -1347,6 +1347,25 @@ The stale counts are the point of the guard: continuous typing changed the docum
 
 **Verdicts (no budget invented):** G3 provider-load numbers are **recorded against the baseline** (above), with the sample-size and rig caveats; G4's stalled-consumer part is **Verified at the fake-server level**, and the IDE run shows no cap breach. Neither gate is marked Pass here: both stay for the architect's and the user's review, as every U-step does.
 
+#### Re-check of the rebind fix, `fix/lsp-1c-rebind` at `704d9a6` (2026-11-14, DA-7, decision 51). Harness-observed, pending user review.
+
+Fix under test: `7a2f814` (navigating to an already-open read-only tab from a live session rebinds it and clears the `ended` note) and `704d9a6` (a restarted session keeps its acknowledgements, so its terminal status arrives), on `9bb0805`. Own run checkout, dev binary on port 1440, Xvfb `:98`, isolated `HOME`, the tap. Script `scripts/jobb_sticky.py`; evidence `runs/jobb/rb-u19-try1/` (store trace per sample), `rb-u22-try1/`, `rb-smoke-try1/` under the run checkout's `runs/`.
+
+**Environment note.** This pass ran on 2026-11-14 after the machine's packages had changed (rustc now `1.99.1-4`; the earlier run checkouts and the original worktree no longer existed and were re-created; `netcoredbg` is no longer installed, `pacman -Qi netcoredbg` finds nothing).
+
+**1. Suites.** `node --test` 178 passed; `tsc` 0; `vite build` 0; `process_cleanup` 7 passed, 1 ignored; 26 `commands::debug*` tests ok. `cargo test --lib`, three runs: **256 passed and 1 failed in every run**, the failing test being `commands::linked_windows::tests::ldi_pair_requires_selected_managed_debug_and_library_build_slots` (`linked_windows.rs:2403`: `host needs a supported Debug Power slot and installed debugger`). **Environmental and pre-existing:** the same test run alone on `9bb0805` (the parent of this fix, own checkout, same target directory) fails with the same message, and `netcoredbg` is not installed on this machine now, whereas the same test passed in every earlier package's runs (256 passed, 0 failed, 3 to 5 runs each, 2026-11-08 to 2026-11-09). It is outside the LSP code. The first `cargo test` after moving the checkout needed a clean target (stale build-script paths), not a code problem.
+
+**2. U19 in full, on `704d9a6` (store trace): Verified.**
+- Before the restart: `map.rs` (the read-only std tab) `bound`, session 1 `ready`.
+- After `restartSession`: the tab's document `ended`; the note `language server: not connected; navigate from a live session to reconnect` is shown at +1, +4, +10, +20, **+31 and +36 s**; the **old session 1 is `exited`** from the first sample (before this fix it stayed `shuttingDown`).
+- A live session started (switching to `main.rs`: session 2 `ready`), then definition on `HashMap` again from `main.rs`: the `map.rs` tab was focused, its document is **`bound`** (rebound, with a fresh `didOpen`), the **note is gone** (still gone 16 s later), one `map.rs` tab only (`main.rs`, `map.rs`), the lock glyph stays.
+- Hover inside the rebound tab (an old widget dismissed first): `std::collections::hash::map pub struct HashMap<K, V, S = RandomState, A = Global>`, a markdown section, **not a marker**.
+- 12 s later nothing changed: session 1 `exited`, session 2 `ready`, the tab `bound`.
+
+**3. Smoke.** U22 unchanged (symbol plus `use std::collections::HashMap;`, 3 change events with no state holding the symbol without the `use` line, one undo restores the exact original, one redo re-applies both). The 1b cold start: ready in 3.0 s, `didOpen` reached the server, pull markers appeared.
+
+**Verdict:** the rebind fix is **Verified**; the previous failure (tab stays `ended`, note stays) no longer occurs. The `ldi_pair…` test failure is environmental. No gate moves.
+
 #### Other findings recorded during U1 (not 1b verdicts)
 
 1. **The language-server usable check accepts any binary that exits 0.** `lldb-dap` was accepted as Rust's language server. That is consistent with the designed check (V7), which proves only that a binary runs. What the chip showed for that session was not observed.

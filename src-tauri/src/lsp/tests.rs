@@ -59,8 +59,12 @@ fn assert_clean_end(session: &Session, phase: Phase, reason: &str) {
     let status = session.status();
     assert_eq!(status.phase, phase, "reason: {:?}", status.terminal_reason);
     assert!(status.terminal_reason.as_deref().unwrap_or("").contains(reason), "reason {:?} lacks {reason:?}", status.terminal_reason);
-    assert_eq!(session.pending_len(), 0, "no pending entry left");
-    assert_eq!(session.snapshot_keys(), 0, "no class S entry left");
+    // `terminate()` publishes the terminal phase first (so new requests are refused at once) and then resolves the
+    // pending table, discards the snapshots and empties the document table. A reader that saw the phase can
+    // therefore catch those steps a few microseconds from done, so wait for them, bounded, instead of asserting
+    // the instant the phase is visible. No caller is ever left waiting: they are woken by step 2, not by the phase.
+    assert!(eventually(|| session.pending_len() == 0), "no pending entry left, left {}", session.pending_len());
+    assert!(eventually(|| session.snapshot_keys() == 0), "no class S entry left, left {}", session.snapshot_keys());
     assert!(eventually(|| session.torn_down() && session.live_threads() == 0 && !session.has_writer()),
         "threads remain: {}, writer held: {}", session.live_threads(), session.has_writer());
     if let Some(pid) = session.pid() { assert!(eventually(|| !alive(pid)), "server {pid} still alive"); }

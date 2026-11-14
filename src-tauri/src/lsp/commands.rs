@@ -55,6 +55,14 @@ struct WindowLsp {
     registry: LspRegistry,
     adapters: Vec<Box<dyn LanguageAdapter>>,
     sessions: Mutex<HashMap<u64, Tracked>>,
+    /// Sessions a restart took out of `sessions` that are still stopping. Their delivery thread keeps sending until the
+    /// terminal status, and each batch needs its acknowledgement, so `lsp_ack` must still find them.
+    retired: Mutex<HashMap<u64, Session>>,
+}
+
+/// The live session if there is one, else a retired one that is still stopping.
+fn find_session<T: Clone>(live: &HashMap<u64, T>, retired: &HashMap<u64, T>, generation: u64) -> Option<T> {
+    live.get(&generation).or_else(|| retired.get(&generation)).cloned()
 }
 
 pub(crate) struct LspManager {
@@ -88,13 +96,15 @@ impl LspManager {
             registry: LspRegistry::new(Limits::default(), "rust-analyzer"),
             adapters: vec![Box::new(SharedRust(self.rust.clone()))],
             sessions: Mutex::default(),
+            retired: Mutex::default(),
         })).clone()
     }
 
     fn session(&self, label: &str, generation: u64) -> Result<Session, String> {
         let window = lock(&self.windows).get(label).cloned().ok_or("no language-server session for this window")?;
-        let sessions = lock(&window.sessions);
-        sessions.get(&generation).map(|t| t.session.clone()).ok_or_else(|| format!("language-server session {generation} is gone"))
+        let live: HashMap<u64, Session> = lock(&window.sessions).iter().map(|(g, t)| (*g, t.session.clone())).collect();
+        let retired = lock(&window.retired);
+        find_session(&live, &retired, generation).ok_or_else(|| format!("language-server session {generation} is gone"))
     }
 
     /// Solution or window close: every session stops through the normal
@@ -588,6 +598,12 @@ pub(crate) fn lsp_logs(window: WebviewWindow, state: State<'_, LspManager>, sess
 pub(crate) fn lsp_restart(window: WebviewWindow, state: State<'_, LspManager>, session: u64) -> Result<(), String> {
     let lsp = lock(&state.windows).get(window.label()).cloned().ok_or("no language-server session for this window")?;
     let tracked = lock(&lsp.sessions).remove(&session).ok_or("that session is gone")?;
+    {
+        // Keep it findable until it has ended (the delivery of its terminal status needs acknowledgements); forget finished ones.
+        let mut retired = lock(&lsp.retired);
+        retired.retain(|_, old| !old.status().phase.is_terminal());
+        retired.insert(session, tracked.session.clone());
+    }
     state.rust.forget(&tracked.project_folder);
     lsp.registry.retire(&tracked.identity);
     // A session that already ended is no longer in the registry: stopping it again changes nothing.
@@ -612,6 +628,18 @@ pub(crate) fn close_window(app: &tauri::AppHandle, label: &str) {
 mod tests {
     use super::*;
     use crate::ownership::tests::{languages, project, solution, Scripted};
+
+    #[test]
+    fn a_session_a_restart_retired_is_still_found_until_it_is_forgotten() {
+        let (mut live, mut retired) = (HashMap::new(), HashMap::new());
+        live.insert(2u64, "new");
+        retired.insert(1u64, "old");
+        assert_eq!(find_session(&live, &retired, 2), Some("new"));
+        assert_eq!(find_session(&live, &retired, 1), Some("old"), "the ack for the old session's last batch still reaches it");
+        assert_eq!(find_session(&live, &retired, 9), None);
+        retired.clear();
+        assert_eq!(find_session(&live, &retired, 1), None);
+    }
 
     #[test]
     fn attach_reply_keys_are_the_ones_the_frontend_reads() {

@@ -233,7 +233,22 @@ test("an ended session leaves its read-only tabs open, unbound and saying so (de
   assert.match(markup, /language server: not connected; navigate from a live session to reconnect/);
   assert.doesNotMatch(markup, /Restart/);
   const bridge = await readFile(new URL("../src/lib/lsp/bridge.ts", import.meta.url), "utf8");
-  assert.match(bridge, /find\(\(tab\) => tab\.fileId === fileId\)\?\.readOnly\) return;/, "routing never re-attaches a read-only tab");
+  assert.match(bridge, /isNavigationOnly\(useSolution\.getState\(\)\.tabs, fileId\)\) return;/, "routing never re-attaches a read-only tab");
   assert.match(bridge, /markEnded\(tracker\.sessionEnded\(generation\), generation\)/, "the terminal-status path marks them");
   assert.match(bridge, /endedDocs\(affected, useSolution\.getState\(\)\.tabs, generation\)/, "so does the restart path");
+});
+
+test("the ended note is sticky: routing never attaches a read-only tab, however the attach is started (decision 51)", async () => {
+  const env = await started();
+  const { isNavigationOnly } = env.lsp;
+  const tabs = [{ fileId: "/ro/a.rs", readOnly: true }, { fileId: "/ws/b.rs" }];
+  assert.equal(isNavigationOnly(tabs, "/ro/a.rs"), true);
+  assert.equal(isNavigationOnly(tabs, "/ws/b.rs"), false);
+  assert.equal(isNavigationOnly(tabs, "/missing.rs"), false);
+  const bridge = await readFile(new URL("../src/lib/lsp/bridge.ts", import.meta.url), "utf8");
+  const attach = bridge.slice(bridge.indexOf("async function attachActive"), bridge.indexOf("lsp_attach", bridge.indexOf("async function attachActive")));
+  assert.match(attach, /if \(isNavigationOnly\(tabs, fileId\)\) return;/, "attachActive, which gate.scheduleLaunch() calls after a restart, skips it before anything is written");
+  assert.ok(attach.indexOf("isNavigationOnly") < attach.indexOf('kind: "waiting"'), "and before the 'waiting' entry would replace `ended`");
+  const onActive = bridge.slice(bridge.indexOf("function onActive"), bridge.indexOf("async function attachActive"));
+  assert.match(onActive, /isNavigationOnly\(useSolution\.getState\(\)\.tabs, fileId\)\) return;/);
 });

@@ -19,12 +19,13 @@ test("non-file URIs, malformed ranges and junk are skipped; null and empty give 
   assert.deepEqual(locationsToTargets([{ uri: "http://x/a.rs", range }, { uri: "file:///a.rs", range: { start: {} } }, 3, null, { uri: 5, range }]), []);
 });
 
-function deps({ open = [], owners = {} } = {}) {
+function deps({ open = [], owners = {}, readOnly = [] } = {}) {
   const log = [];
   return {
     log,
     deps: {
       isOpen: (p) => open.includes(p),
+      isReadOnly: (p) => readOnly.includes(p),
       owner: async (p) => { log.push(["owner", p]); return owners[p] ?? null; },
       reveal: async (...a) => { log.push(["reveal", ...a]); },
       unowned: async (...a) => { log.push(["unowned", ...a]); },
@@ -79,4 +80,13 @@ test("a large reference list is capped with the remainder counted, never silentl
   assert.equal(dropped, 37);
   assert.equal(referencesToTargets(many, 5).dropped, REFERENCES_CAP + 32);
   assert.deepEqual(referencesToTargets(null), { targets: [], dropped: 0 });
+});
+
+test("navigating to an open read-only tab rebinds it through the navigating session; an editable holder is only focused (decision 51)", async () => {
+  const d = deps({ open: ["/ro/x.rs", "/ws/a.rs"], readOnly: ["/ro/x.rs"] });
+  assert.equal(await openTarget(d.deps, "file", "/ro/x.rs", { lineNumber: 4, column: 2 }, "/ws/origin.rs"), "rebound");
+  assert.deepEqual(d.log.at(-1), ["unowned", "/ro/x.rs", 4, 2, "/ws/origin.rs"], "the unowned route re-reads, rebinds and clears `ended`");
+  assert.equal(await openTarget(d.deps, "file", "/ws/a.rs", undefined, "/ws/origin.rs"), "holder");
+  assert.deepEqual(d.log.at(-1), ["reveal", "/ws/a.rs", 1, 1]);
+  assert.ok(d.log.every(([kind, p]) => !(kind === "unowned" && p === "/ws/a.rs")), "an editable file never goes through the read-only route");
 });
