@@ -1391,6 +1391,30 @@ Fix under test: `7a2f814` (navigating to an already-open read-only tab from a li
 
 **Verdict:** the rebind fix is **Verified**; the previous failure (tab stays `ended`, note stays) no longer occurs. The `ldi_pair…` test failure is environmental. No gate moves.
 
+#### Stage 1c step 7, symlinked paths (decision 52, Option B), `feat/lsp-1c-step7` at `6f230e9` (2026-11-14). Harness-observed, pending user review.
+
+Package: `6f230e9` on `b403fb7` (router, `documents.ts`, `StatusBar.tsx`, `navigation.ts`, `bridge.ts`, the stores and tests). Own run checkout, dev binary on port 1440, Xvfb `:98`, isolated `HOME`, the tap. Script `scripts/jobb_u24.py` (opens by path through the app's `openFile` store action, since the explorer does not list symlinked folders); evidence `runs/jobb/s7v-*` and `s7w-alias-*` under the run checkout. **Harness note:** the first set of U24 runs (`s7-*`) was **discarded**: an older Vite of mine from the previous checkout still held port 1440, so the frontend was served from `b403fb7` while the binary was `6f230e9`; the step 7 UI was therefore missing. The runs below used a Vite started from the `6f230e9` checkout (its working directory checked).
+
+**Suites.** `node --test` 182 passed; `tsc` 0; `vite build` 0; `process_cleanup` 7 passed, 1 ignored; 26 `commands::debug*` tests ok; `cargo test --lib` three times: 259 passed and 1 failed each time, the failure being the known environmental `ldi_pair_requires_selected_managed_debug_and_library_build_slots` (`netcoredbg` not installed). **`ownership.rs` is unchanged:** `git diff b403fb7 6f230e9 -- src-tauri/src/ownership.rs` is empty (0 lines); the diff touches 12 files, none of them `ownership.rs`.
+
+**U24, what the IDE did** (symlink and canonical paths opened one after another; "registration" means a `didOpen` on the tap; only `main.rs` and one canonical path were ever opened on the wire):
+
+| Case | Tabs and chips | Wire |
+|---|---|---|
+| Owned canonical `real_mods/deep.rs` first, then the symlinked `src/linked/deep.rs` | The symlink tab is **read-only** (lock glyph) and its chip reads `rust-analyzer: alias`; its hover reads `Also open as …/real_mods/deep.rs: language features are off in this tab` | **one** `didOpen` (the canonical path) |
+| Symlinked `src/linked/deep.rs` first, then the canonical file | The symlink tab (first) is **read-only** and bound, registered by the canonical path; the canonical tab opened second reads `rust-analyzer: alias` | **one** `didOpen` (canonical) |
+| A symlink **outside** the project (`outside/util_link.rs`) to the owned `src/util.rs` | read-only, chip `rust-analyzer`, bound; opening the canonical `src/util.rs` afterwards gives that second tab `rust-analyzer: alias` | **one** `didOpen` (`src/util.rs`) |
+| A symlink outside the project to a file that is **not** project-owned (`outside/ext_link.rs`) | the status bar shows the **reason chip** `language server: opened through a symlink; open the real path for language features`; no server features | none for that file |
+| Vendored (a): `vendor_real/vend/src/lib.rs` (a real directory) | normal bound tab, chip `rust-analyzer` | one `didOpen` |
+| Vendored (b), (c): the symlinked `vendor/vend/src/lib.rs` opened as well | the symlinked tab is **read-only**, chip `rust-analyzer: alias` | still one `didOpen` (`vendor_real/…`) |
+| Vendored (d): definition on `vend::vended()` from `main.rs` with both open | the existing tabs stay (no third tab); the active tab is the alias-bearing pair as before | no extra registration |
+
+In every case the symlinked path ends as a **read-only alias** with the lock glyph (the lock's tooltip is the generic navigation text, `Read-only: opened by navigation from a language server…`; the symlink-specific reason is in the chip hover), the **canonical path holds the registration**, and an unowned symlink target shows the reason chip. In the vendored case (d) the navigation reuses the open holder.
+
+**Not checked:** whether a tab with unsaved edits is left alone (`markReadOnlyIfClean` says so; not forced here); the real-filesystem (non-harness) variants of (a)–(d) beyond these; the visual look of the chip and glyph (for the user).
+
+**Verdict:** step 7 is **Verified** for U24 as far as these runs go (alias is read-only, one registration on the wire, the reason chip for an unowned symlink, `ownership.rs` untouched), harness-observed, pending user review. V16's open question (what the canonical-path holder gets) is answered for this build: the canonical path is the registered holder and the symlinked tab is the alias. No gate moves.
+
 #### Other findings recorded during U1 (not 1b verdicts)
 
 1. **The language-server usable check accepts any binary that exits 0.** `lldb-dap` was accepted as Rust's language server. That is consistent with the designed check (V7), which proves only that a binary runs. What the chip showed for that session was not observed.
