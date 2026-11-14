@@ -111,6 +111,11 @@ export class DocumentTracker {
     return [...this.docs.values()].filter((d) => d.binding?.session === session && d.state === "open").map((d) => d.fileId);
   }
 
+  /** The tab that holds the registration for a filesystem identity, in any session (navigation focuses it, rule 3). */
+  holderTab(canonical: string): string | null {
+    return [...this.docs.values()].find((d) => d.binding?.canonical === canonical && d.state !== "alias" && d.state !== "pending")?.fileId ?? null;
+  }
+
   /** The tab holding the registration for a filesystem identity, if any. */
   holderOf(canonical: string, session: number, except?: string): Doc | undefined {
     return [...this.docs.values()].find((d) => d.fileId !== except && d.binding?.session === session

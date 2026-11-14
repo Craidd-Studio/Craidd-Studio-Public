@@ -195,3 +195,39 @@ test("session end returns documents to Pending without sending anything", async 
   await h.tracker.close("/ws/a.rs");
   assert.equal(h.calls.filter(([kind]) => kind === "close").length, 0);
 });
+
+test("symlinked-vendor cases (b)-(d): a symlink tab and its owned file are one registration; the alias is read-only in effect and promoted when the holder closes", async () => {
+  const h = harness();
+  const real = "/ws/app/real_mods/deep.rs", link = "/ws/app/linked/deep.rs";
+  h.model(real, "fn a() {}"); h.model(link, "fn a() {}");
+  // Both bound to one filesystem identity (the attach step canonicalised the symlink path to the real one).
+  h.tracker.bind(real, h.binding(real, 1, real));
+  h.tracker.bind(link, { ...h.binding(link, 1, real), uri: fileUri(real) });
+  await h.tracker.activate(real);
+  await h.tracker.activate(link);
+  assert.equal(h.tracker.state(real), "open");
+  assert.equal(h.tracker.state(link), "alias");
+  assert.equal(h.tracker.aliasOf(link), real, "the note reads 'Also open as' the holder");
+  assert.deepEqual(h.calls.filter(([kind]) => kind === "open").length, 1, "one registration: the alias sends no didOpen");
+  assert.equal(h.tracker.holderTab(real), real, "navigation to either spelling focuses the holder");
+  // Edits in the alias are never sent (the server never sees two models of one file).
+  h.edit(link, 1, 1, "x");
+  await settle();
+  assert.equal(h.calls.filter(([kind]) => kind === "change").length, 0);
+  // When the holder closes, the alias is promoted to Pending and can register.
+  await h.tracker.close(real);
+  assert.equal(h.tracker.state(link), "pending");
+  await h.tracker.activate(link);
+  assert.equal(h.tracker.state(link), "open");
+  assert.equal(h.tracker.holderTab(real), link, "the promoted tab now holds it");
+  // (c) the reverse order: the symlink tab first holds it; the owned tab opened later is the alias, per 'earlier-activated holds'.
+  const g = harness();
+  g.model(real, "x"); g.model(link, "x");
+  g.tracker.bind(link, { ...g.binding(link, 1, real), uri: fileUri(real) });
+  g.tracker.bind(real, g.binding(real, 1, real));
+  await g.tracker.activate(link);
+  await g.tracker.activate(real);
+  assert.equal(g.tracker.state(link), "open");
+  assert.equal(g.tracker.state(real), "alias");
+  assert.equal(g.tracker.holderTab(real), link);
+});

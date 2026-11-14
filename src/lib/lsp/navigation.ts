@@ -37,6 +37,8 @@ export interface NavigationDeps {
   isOpen(path: string): boolean;
   /** The open tab for this path is a read-only navigation tab (it may need rebinding to the navigating session). */
   isReadOnly(path: string): boolean;
+  /** The open tab that holds the registration for this file under another path form (a symlink alias), or null. */
+  holder(path: string): string | null;
   /** The owning project of a path from the single ownership resolver, or null when unowned. */
   owner(path: string): Promise<{ projectId: string | null } | null>;
   /** Open (or focus) an owned file at a position, through the store's existing tab logic. */
@@ -59,6 +61,8 @@ export async function openTarget(deps: NavigationDeps, scheme: string, path: str
     await deps.reveal(path, line, column);
     return "holder";
   }
+  const holder = deps.holder(path);
+  if (holder) { await deps.reveal(holder, line, column); return "holder"; }
   const owner = await deps.owner(path);
   if (owner && owner.projectId) { await deps.reveal(path, line, column); return "owned"; }
   await deps.unowned(path, line, column, origin);

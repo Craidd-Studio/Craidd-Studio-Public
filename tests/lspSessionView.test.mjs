@@ -252,3 +252,12 @@ test("the ended note is sticky: routing never attaches a read-only tab, however 
   const onActive = bridge.slice(bridge.indexOf("function onActive"), bridge.indexOf("async function attachActive"));
   assert.match(onActive, /isNavigationOnly\(useSolution\.getState\(\)\.tabs, fileId\)\) return;/);
 });
+
+test("a symlinked path whose real file is not project-owned shows its reason on the chip, not nothing (decision 52, Option A)", async () => {
+  const env = await started();
+  env.lsp.useLsp.setState((state) => ({ docs: { ...state.docs, [FILE]: { kind: "symlinked", reason: "opened through a symlink; open the real path for language features" } } }));
+  const markup = renderToStaticMarkup(createElement(env.StatusBar));
+  assert.match(markup, /opened through a symlink; open the real path for language features/);
+  env.lsp.useLsp.setState((state) => ({ docs: { ...state.docs, [FILE]: { kind: "notRouted", reason: "no owning project" } } }));
+  assert.doesNotMatch(renderToStaticMarkup(createElement(env.StatusBar)), /symlink/, "an ordinary unowned file still shows no chip");
+});

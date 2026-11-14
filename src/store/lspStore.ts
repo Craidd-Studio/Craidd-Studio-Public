@@ -52,6 +52,8 @@ export type LspDocInfo =
   | { kind: "waiting" }
   | { kind: "notRouted"; reason: string }
   | { kind: "unavailable"; reason: string }
+  /** Opened through a symlink whose real file is not project-owned: the reason is shown (decision 52, Option A). */
+  | { kind: "symlinked"; reason: string }
   | { kind: "bound"; session: number; alias: string | null; state: string }
   /** A read-only navigation tab whose originating session ended: open, unbound, no intelligence (decision 51). */
   | { kind: "ended"; session: number };
