@@ -104,6 +104,20 @@ pub(crate) fn returned_uris(value: &serde_json::Value) -> Vec<String> {
     out
 }
 
+/// Every unowned file the IDE has read for navigation. These are external sources (the standard library, registry
+/// crates): no write command may touch them, whatever a tab claims (buffer-identity repair, 2026-11-16).
+static NAVIGATION_TARGETS: std::sync::Mutex<Option<std::collections::HashSet<std::path::PathBuf>>> = std::sync::Mutex::new(None);
+
+pub(crate) fn mark_navigation_target(canonical: &std::path::Path) {
+    if let Ok(mut set) = NAVIGATION_TARGETS.lock() { set.get_or_insert_with(Default::default).insert(canonical.to_path_buf()); }
+}
+
+/// True when `path` (through any symlink) is a file served read-only for navigation.
+pub(crate) fn is_navigation_target(path: &std::path::Path) -> bool {
+    let canonical = std::fs::canonicalize(path).unwrap_or_else(|_| path.to_path_buf());
+    NAVIGATION_TARGETS.lock().ok().and_then(|set| set.as_ref().map(|s| s.contains(&canonical))).unwrap_or(false)
+}
+
 /// The text of a path the session returned. Refuses anything else, oversize files and non-text;
 /// it never writes. The returned path is the canonical one.
 pub(crate) fn read_returned(path: &std::path::Path, returned: &std::collections::HashSet<std::path::PathBuf>) -> Result<(String, String), String> {
@@ -131,6 +145,20 @@ mod tests {
         d
     }
     fn returned_of(paths: &[&std::path::Path]) -> HashSet<std::path::PathBuf> { paths.iter().map(|p| std::fs::canonicalize(p).unwrap()).collect() }
+
+    #[test]
+    fn a_navigation_target_is_remembered_through_symlinks_and_nothing_else_is() {
+        let d = dir("nav");
+        let (real, link, other) = (d.join("real.rs"), d.join("link.rs"), d.join("other.rs"));
+        std::fs::write(&real, "x").unwrap();
+        std::fs::write(&other, "y").unwrap();
+        std::os::unix::fs::symlink(&real, &link).unwrap();
+        assert!(!is_navigation_target(&real));
+        mark_navigation_target(&std::fs::canonicalize(&real).unwrap());
+        assert!(is_navigation_target(&real) && is_navigation_target(&link), "a symlink to it is the same file");
+        assert!(!is_navigation_target(&other));
+        let _ = std::fs::remove_dir_all(&d);
+    }
 
     #[test]
     fn uris_decode_and_foreign_ones_are_refused() {

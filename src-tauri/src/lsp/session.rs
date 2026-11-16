@@ -882,7 +882,9 @@ impl Session {
     /// The text of a path this session returned; refuses any other path (decision 49).
     pub(crate) fn read_target(&self, path: &std::path::Path) -> Result<(String, String), String> {
         let returned = lock(&self.0.returned).clone();
-        super::providers::read_returned(path, &returned)
+        let read = super::providers::read_returned(path, &returned)?;
+        super::providers::mark_navigation_target(std::path::Path::new(&read.0));
+        Ok(read)
     }
 
     /// Cancel the in-flight request of this kind for the document (a newer one, or Monaco's token).

@@ -217,11 +217,20 @@ fn build_tree_shallow(root: &Path) -> std::io::Result<FileNode> {
     })
 }
 
+/// An unowned file the IDE served read-only for navigation (a standard-library or registry source) is never written.
+fn refuse_navigation_target(path: &Path) -> Result<(), String> {
+    if crate::lsp::providers::is_navigation_target(path) {
+        return Err(format!("{} is external source opened read-only for navigation; Craidd never writes it", path.display()));
+    }
+    Ok(())
+}
+
 /// Create a new file. Refuses if the file already exists.
 /// Creates parent directories if needed.
 #[tauri::command(async)]
 pub fn write_file(path: String, content: String) -> Result<(), String> {
     let p = Path::new(&path);
+    refuse_navigation_target(p)?;
     if p.is_dir() {
         return Err(format!(
             "A folder named '{}' already exists here. A file and a folder cannot share a name in the same location.",
@@ -468,6 +477,7 @@ fn atomic_overwrite(path: &Path, content: &[u8]) -> io::Result<()> {
 #[tauri::command(async)]
 pub fn overwrite_file(path: String, content: String) -> Result<(), String> {
     let p = Path::new(&path);
+    refuse_navigation_target(p)?;
     atomic_overwrite(p, content.as_bytes()).map_err(|e| format!("overwrite_file({path}) failed: {e}"))?;
     invalidate_parent(p);
     Ok(())
@@ -633,6 +643,24 @@ mod discovery_tests {
         delete_path(file, false).unwrap();
         assert!(read_dir_children(root_str.clone(), root_str).unwrap().children.unwrap().is_empty());
         fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn external_navigation_sources_are_never_written() {
+        let dir = std::env::temp_dir().join(format!("craidd-fs-nav-{}", std::process::id()));
+        let _ = fs::remove_dir_all(&dir);
+        fs::create_dir_all(&dir).unwrap();
+        let (external, project) = (dir.join("hashmap.rs"), dir.join("main.rs"));
+        fs::write(&external, "std source").unwrap();
+        fs::write(&project, "fn main() {}").unwrap();
+        crate::lsp::providers::mark_navigation_target(&fs::canonicalize(&external).unwrap());
+        let before = fs::read(&external).unwrap();
+        assert!(overwrite_file(external.to_string_lossy().into_owned(), "changed".into()).unwrap_err().contains("never writes"));
+        assert!(write_file(external.to_string_lossy().into_owned(), "changed".into()).is_err());
+        assert_eq!(fs::read(&external).unwrap(), before, "the external file is untouched");
+        overwrite_file(project.to_string_lossy().into_owned(), "fn main() { 1; }".into()).unwrap();
+        assert_eq!(fs::read_to_string(&project).unwrap(), "fn main() { 1; }", "an ordinary file still saves");
+        let _ = fs::remove_dir_all(&dir);
     }
 
     #[test]

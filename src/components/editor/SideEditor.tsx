@@ -8,6 +8,8 @@ import { useSplit } from "../../store/splitStore";
 import { setActiveEditor, getActiveEditor } from "../../lib/activeEditor";
 import { CRAIDD_DARK_THEME, defineCraiddDarkTheme } from "../../lib/editorThemes";
 import { attachMonaco } from "../../lib/lsp/bridge";
+import { attachEditorSync, markCraiddEditor, type MonacoLike } from "../../lib/editorModelSync";
+import { editorRouting } from "../../lib/editorRouting";
 
 /**
  * The side editor group. It edits the same Monaco model as the main editor,
@@ -19,7 +21,6 @@ export default function SideEditor() {
   const fileId = useSplit((s) => s.sideFileId);
   const tab = useSolution((s) => s.tabs.find((item) => item.fileId === fileId));
   const activeFileId = useSolution((s) => s.activeFileId);
-  const updateTabContent = useSolution((s) => s.updateTabContent);
   const fontSize = usePreferences((s) => s.fontSize);
   const tabSize = usePreferences((s) => s.tabSize);
   const wordWrap = usePreferences((s) => s.wordWrap);
@@ -57,10 +58,11 @@ export default function SideEditor() {
         keepCurrentModel
         theme={theme === "craidd-dark" ? CRAIDD_DARK_THEME : theme}
         beforeMount={defineCraiddDarkTheme}
-        onChange={(value) => { if (typeof value === "string") updateTabContent(fileId, value); }}
         onMount={(instance, monaco) => {
           instanceRef.current = instance;
           monacoRef.current = monaco;
+          markCraiddEditor(instance);
+          attachEditorSync(monaco as unknown as MonacoLike, editorRouting(monaco));
           attachMonaco(monaco);
           instance.onDidFocusEditorText(() => { useSplit.getState().setSideFocused(true); setActiveEditor(instance, () => fileId); });
           instance.onDidDispose(() => { if (getActiveEditor() === instance) setActiveEditor(null); });

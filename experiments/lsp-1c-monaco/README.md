@@ -89,6 +89,10 @@ Two no-op variants were run through every case: **prefixRange** (range covers th
 
 `f3product.ts`; run `experiments/lsp-1c-monaco/run.sh f3product`. Runs the product modules `src/lib/lsp/completion.ts` and `src/lib/lsp/completionAccept.ts` in plain Monaco 0.56.0 with a fake server. Output of the last run: idle accept (cursor 3:20, one undo, no partial state), typing during the resolve rejects with a notice, failed and hung resolves apply nothing, overlap and same-line edits reject the whole item, a character typed before accept is replaced with the right cursor, InsertReplaceEdit follows Monaco's insert or replace mode, a snippet primary applies with its placeholder selected and undoes in one step, two cursors are rejected with a notice, and a second completion opened during the resolve leaves no partial state. Same limits as above: synthetic timing, commands rather than real key presses.
 
+## Buffer-identity probe (critical repair, 2026-11-16)
+
+`buffer.ts`; run `experiments/lsp-1c-monaco/run.sh buffer`. Runs the product module `src/lib/editorModelSync.ts` against real Monaco 0.56: an embedded preview sharing a read-only model is read-only (typing changes nothing); with the preview forced editable the model guard reverts the edit, records no undo and writes nothing to the store; switching tabs with a diverged read-only model never writes into the other tab; an editable model's edit is stored under its own tab even if the switch happens right after; Undo while another tab is shown changes nothing, and Undo on the editable tab restores it. With the guards switched off, the first three checks FAIL (the preview edits the shared model and an undo entry is recorded).
+
 ---
 
 *Last updated: Phase 3 (Stage 1c prep, V10-V12 probes). Author(s): ShinkuKira21.*

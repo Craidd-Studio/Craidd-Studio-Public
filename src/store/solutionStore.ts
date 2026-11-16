@@ -1654,6 +1654,7 @@ export const useSolution = create<SolutionState>((set, get) => ({
     const state = get();
     const tab = state.tabs.find((t) => t.fileId === oldFileId);
     if (!tab) throw new Error("The file is no longer open.");
+    if (tab.readOnly) throw new Error("This is external source opened read-only for navigation; it cannot be saved.");
     if (state.tabs.some((t) => t.fileId === newPath && t.fileId !== oldFileId)) {
       throw new Error("The destination is already open in another tab.");
     }

@@ -17,6 +17,8 @@ import type { LdiBlue, LdiCallSite } from "../../store/ldiStore";
 import type { CraiddSolution } from "../../types/project";
 import { useNativeDebug } from "../../store/nativeDebugStore";
 import { attachMonaco } from "../../lib/lsp/bridge";
+import { attachEditorSync, markCraiddEditor, type MonacoLike } from "../../lib/editorModelSync";
+import { editorRouting } from "../../lib/editorRouting";
 
 interface CallSiteCacheEntry {
   savedContent: string;
@@ -134,7 +136,6 @@ function CodeView({ onReady }: { onReady?: (instance: editor.IStandaloneCodeEdit
   // Monaco owns the live text while typing. The store still receives every
   // change for Save, but React only needs to rerender on a tab switch or a
   // disk reload (which changes originalContent).
-  const updateTabContent = useSolution((s) => s.updateTabContent);
   const active = useSolution.getState().tabs.find((t) => t.fileId === activeFileId);
 
   useEffect(() => {
@@ -186,9 +187,6 @@ function CodeView({ onReady }: { onReady?: (instance: editor.IStandaloneCodeEdit
     wordWrap: wordWrap ? "on" as const : "off" as const,
     padding: { top: 8, bottom: 8 },
   }), [fontSize, tabSize, wordWrap, activeReadOnly]);
-  const onChange = useCallback((value: string | undefined) => {
-    if (typeof value === "string" && activeFileId) updateTabContent(activeFileId, value);
-  }, [activeFileId, updateTabContent]);
 
   useEffect(() => {
     if (!navigation || navigation.fileId !== activeFileId) return;
@@ -270,9 +268,10 @@ function CodeView({ onReady }: { onReady?: (instance: editor.IStandaloneCodeEdit
         value={active.content}
         theme={theme === "craidd-dark" ? CRAIDD_DARK_THEME : theme}
         beforeMount={defineCraiddDarkTheme}
-        onChange={onChange}
         onMount={(instance: editor.IStandaloneCodeEditor, monaco: Monaco) => {
           editorRef.current = instance;
+          markCraiddEditor(instance);
+          attachEditorSync(monaco as unknown as MonacoLike, editorRouting(monaco));
           attachMonaco(monaco);
           onReady?.(instance);
           const mainFile = () => useSolution.getState().activeFileId;
