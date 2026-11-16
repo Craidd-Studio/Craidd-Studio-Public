@@ -1453,6 +1453,30 @@ No discrepancy remains for the three endings. **Verified**, harness-observed, pe
 
 **Smoke.** 1b cold start: `didOpen` reached the server and the pull markers appeared (ready in 8.6 s on this run, a slower start-up sample than the usual 3 s; not repeated). U22 unchanged: symbol plus `use` line, no intermediate state with the symbol but no `use` line, one undo restores the exact original, one redo re-applies both.
 
+#### Re-check of the buffer-identity repair, `fix/lsp-buffer-identity` at `e6927b4` (2026-11-16). Harness-observed, pending user review.
+
+Fix under test: `e6927b4` on `1eb77f6` (edits routed by the changed model's identity in `src/lib/editorModelSync.ts`; the captured-id `onChange` removed from both editors; a read-only tab's model is reverted if anything changes it; embedded editors, including the References peek preview, are read-only; `saveFileAs` refuses read-only tabs; the backend `write_file` and `overwrite_file` refuse any file `lsp_read_target` served). Same conditions as the reproduction: a disposable copy of `fx-1c`, own run checkout, own Vite on port 1440 (working directory checked), no contact with the main checkout, no window capture. Scripts `scripts/jobb_dl.py` (the reproduction, variants `v1` to `v5` and a repeat of `v1`) and `scripts/jobb_dl2.py` (the new variants); evidence `runs/jobb/bi-*` and `bi2-*` under the run checkout; every step records the store tabs (length, head, dirty, read-only), every Monaco model, and the sha256 of the std `map.rs` and every fixture file.
+
+**1. Suites.** `node --test` 186 passed; `tsc` 0; `vite build` 0; `process_cleanup` 7 passed, 1 ignored; 26 `commands::debug*` tests ok. `cargo test --lib`, three runs: 258 passed and 1 failed in runs 2 and 3 (the known environmental `ldi_pair_requires_selected_managed_debug_and_library_build_slots`, `netcoredbg` not installed), and **257 passed and 2 failed in run 1**: that run also failed `lsp::tests::f2_refresh_is_answered_null_once_each_and_moves_the_counter_only_with_pull`, one of the timing flakes Implementation has reported (it passed in the other two runs; not repeated further here).
+
+**2. The reproduction, 6 of 6 runs: the bug no longer occurs.** In every run (`v1`, `v2`, `v3`, `v4`, `v5` and a repeat of `v1`):
+- F12 into the std `map.rs`: **`main.rs` stays at 446 characters, clean, in the store and the model**, on the first switch and at every later switch (steps 1, 1b, 3a, 3b, and 3c in `v3` and `v4`); `map.rs` stays at 95 115 characters, read-only, clean, in both the store and its model; no tab's store ever holds another file's text.
+- The peek: Shift+F12 on `HashMap`, the reference inside `map.rs` selected, `Q` typed in the preview: the preview editor's `readOnly` option is **true**, the `map.rs` model stays **95 115** (it was 95 116 before the fix), and the store and the tab stay clean.
+- `v5`: `Ctrl+S` in `main.rs` right after the navigation leaves `src/main.rs` on disk **unchanged** (446 bytes, head `mod shared;`), sha256 unchanged.
+- `v4`: one `Ctrl+Z` in `main.rs` changes nothing (the editor has no edits of its own); `v2`: typing in a peek opened from inside `map.rs`: both models unchanged.
+
+**3. Variants** (`jobb_dl2.py`; at every step the invariant "no store tab holds another file's text" held, and no disk file changed):
+- **Typing in `main.rs`, then F12, back, then undo:** `Z` typed in `main.rs` (store 447, dirty), F12 into `map.rs` (`main.rs` stays 447 and its own `Z`; `map.rs` 95 115), back to `main.rs`, **one undo: `main.rs` returns to 446 characters and clean, equal to the original model**, `map.rs` untouched; a second undo changes nothing. Undo restores only `main.rs`'s own edit.
+- **Side editor (split) plus F12:** with `shared.rs` in the side group, F12 into `map.rs` and back: `main.rs` 446 clean, `shared.rs` 40 clean, `map.rs` 95 115 read-only clean; showing the read-only `map.rs` in the side editor as well changes nothing.
+- **A rebind after a restart:** F12 into `map.rs`, `restartSession`, back to `main.rs` (a live session), F12 again (the read-only tab rebinds): at all five steps `main.rs` stays 446 clean and `map.rs` 95 115 clean.
+- **Shift+F12, then Enter on a `map.rs` reference:** **inconclusive**: in this harness the Enter did not open the `map.rs` tab (the tab list stayed `main.rs` only), so that navigation path was not exercised; the stores and models stayed clean throughout. Variant `v3`'s F12 inside the peek after typing was run and stayed clean.
+
+**4. Hashes.** Before and after every run: the std `map.rs` sha256 prefix **`1c4722af9911`** unchanged, and every fixture file unchanged, except in the one run that edits on purpose (below). The `fx-1c` fixture files are the committed ones; no run changed `Cargo.toml`, `src/shared.rs`, `a.rs`, `b.rs` or `shapes.rs`.
+
+**5. Edits still work.** `Z` typed in `main.rs` (store 447, dirty), `Ctrl+S`: the dirty dot clears, and `src/main.rs` on disk is **447 bytes, exactly the original plus one `Z` at offset 71** (position of the typing; sha256 prefix `4cbda26b27d7` against the original); nothing else changed.
+
+**Verdict:** the repair is **Verified** against the reproduction and the variants above (harness-observed, pending user review). The Enter-on-reference path and the native conflict dialog remain unexercised (for the user: Shift+F12, select a `map.rs` reference, press Enter, then check `main.rs` and `map.rs` and press `Ctrl+S` in `main.rs`). One `lsp::tests` timing flake and the known environmental failure appeared in the library run.
+
 #### Other findings recorded during U1 (not 1b verdicts)
 
 1. **The language-server usable check accepts any binary that exits 0.** `lldb-dap` was accepted as Rust's language server. That is consistent with the designed check (V7), which proves only that a binary runs. What the chip showed for that session was not observed.
