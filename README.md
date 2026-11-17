@@ -1,14 +1,6 @@
 # Craidd Studio
 
-## Repository move
-***If you cloned this repository before it moved to the Craidd-Studio organisation, update its saved remote URL:***
-
-```bash
-git remote set-url origin git@github.com:Craidd-Studio/Craidd-Studio-Public.git
-git remote -v
-```
-
-**Alpha preview · Linux-targeted polyglot IDE**
+**Source alpha · Linux polyglot IDE**
 
 Craidd Studio brings the projects in a solution into one place while letting
 each running program have its own IDE window. Edit source, choose a project
@@ -22,6 +14,38 @@ but [acceptance work is still in progress](docs/roadmaps/Roadmap-v0.0.4A.md).
 Expect to install the language toolchains and debugger adapters used by the
 projects you open; Craidd discovers external tools rather than bundling them.
 
+## Current feature set
+
+The source tree integrates the following work. Feature availability and public
+release acceptance are tracked separately in the [current release status](docs/releases/README.md).
+
+| Area | Included in source |
+| --- | --- |
+| Projects | Template wizard for Rust, C#, C++, Tauri + React and ASP.NET Core; existing-code declarations and editable build/run/debug configurations |
+| Editing | Source editor, split view, Markdown Docs browser and editable preview |
+| Rust language intelligence | External `rust-analyzer`: diagnostics, hover, symbols, definition, references and completion; read-only external-source navigation |
+| Debugging | External C#/Rust/C++ adapters, threads, Watch, value hover and linked-window workflows |
+| Native profiling | Process attachment, Gold ranges, recording scopes, snapshots and an expanded Profiling editor tab |
+| Analysis | Finished CSV metric inspection, timed Linux `perf` capture, call trees and symbol-location support |
+| Unity experiments | Native target discovery and Play lifecycle profiling; explicit experimental managed C# attach through DotRush Mono |
+
+Language intelligence currently has a Rust implementation; declaring another
+project language does not imply its language server is integrated. Unity managed
+attach, Mono naming and thread-control experiments retain their documented limits.
+Craidd does not install or bundle your compilers, language servers or debugger adapters.
+
+## Release status
+
+The integrated source is available for early testing. The current local Debian
+package is an **internal debug build**, not a qualified public binary release.
+Human buffer-safety/usability acceptance, optimized performance and clean-machine
+installation checks remain open. The integrated terminal, CSV live follow and
+cross-session comparison are future work.
+
+See the [17 November integration record](docs/handoffs/handoff-phase-3-prerelease-integration.md)
+for exact tested revisions and remaining gates. A passing automated scenario is
+scoped evidence; it does not establish acceptance of every language or workflow.
+
 ## Platform and prerequisites
 
 - **Target:** Linux. Windows may be considered later; it is not a supported
@@ -32,6 +56,8 @@ projects you open; Craidd discovers external tools rather than bundling them.
 - **To run Craidd Studio from source:** Rust and Cargo, Node.js and npm, and
   the Linux development libraries needed to build a Tauri 2 application.
   Both `cargo` and `npm` need to be available on your `PATH`.
+- **For Rust language intelligence:** install `rust-analyzer`; external standard-library source navigation also needs Rust source (`rust-src`). Select or rescan external tools in User Preferences.
+- **For timed CPU sampling:** install Linux `perf` and use a system policy that permits profiling the selected target. Craidd does not change that policy.
 - **To try the included debug labs:** install their own toolchains and
   adapters. The C# examples use the .NET 10 SDK and `netcoredbg`; Rust and
   C++ debugging use `lldb-dap`. Native examples also need CMake and a C++17
@@ -49,36 +75,23 @@ npm run tauri dev
 package restore, such as NuGet packages for the Avalonia GUI or npm packages
 for the Rust Tauri GUI. See each lab's README before starting it.
 
-## How to make a project
+## Create a project
 
-Craidd is solution-first: everything — trees, configs, builds, debuggers —
-hangs off a `.cln` solution that declares its projects. So the first thing
-you do is open a folder and declare a project inside it.
+From Getting Started, choose **Create Project Wizard**:
 
-**From an empty folder:**
+1. Choose a language and an available template. Entries labelled **Planned**
+   are visible design directions and cannot be created yet.
+2. Set the project name and parent location. The destination must be new or
+   empty. Keep **Set up build, run, and debug configurations** enabled when
+   you want generated Power configurations.
+3. Choose **Review project** to inspect the proposed files, configurations and
+   tool requirements, then **Create project** to write and open it.
 
-1. **File → Open Folder…** and pick a folder (create one first if you like).
-2. The Solution Explorer shows **"No solution in this folder."** Click
-   **New project**.
-3. Fill in the New Project dialog:
-   - **Project name** — the folder name under the solution root, and the
-     base name of the `.craidd` marker written inside it.
-   - **Language** — Rust, TypeScript, JavaScript, Python, C++, C#, or Config.
-     This is what the project's filtered tree is built from. Pick the
-     language you're actually working in, not the file extension you happen
-     to have on disk.
-   - *(Optional)* **Create a Config project too?** — attaches a `[config]`
-     facet to the same marker so JSON/TOML/YAML/INI files in the project (or
-     a directory you point at) show up as a separate config tree. Useful for
-     app settings, save data, toolchain configs.
-   - *(Optional)* **Fine Tune after creation?** — opens the membership editor
-     so you can decide, file by file, which files belong to the language tree
-     and which belong to the config tree.
-4. Click **Create**. Craidd writes the folder, drops a `.craidd` marker
-   inside it, creates or updates the solution's `.cln`, and populates the
-   project tree. The Configurations chip in the toolbar will light up with
-   inferred Power Configs derived from any manifests it finds (`Cargo.toml`,
-   `package.json`, `*.csproj`, `CMakeLists.txt`).
+Available templates include Rust Empty/Console and Tauri v2 + React;
+C# Empty/Console and ASP.NET Core Web API; and C++ Empty/Console. Creating a
+framework scaffold does not install its dependencies or qualify every debug path.
+The integrated native smoke currently covers the Rust console creation/build/run
+journey; the other template acceptance cases remain separate.
 
 **From a folder that already has code:**
 
@@ -209,12 +222,22 @@ records the control boundaries and remaining validation work.
 
 ## What to expect from this alpha
 
-Craidd currently concentrates on project and solution workflows, external
-tool discovery, builds, linked windows, and C#/Rust/C++ debugging. Language
-server integration, an integrated terminal, wider release validation and some
-debugger lifecycle cases remain on the [roadmap](docs/roadmaps/Roadmap-v0.0.4A.md).
-Use the included labs to explore the supported paths and report the exact
-solution, configuration, adapter and steps when something fails.
+Use the included labs and disposable projects to explore the supported paths.
+When reporting a problem, include the commit or build identifier, Linux distro
+and desktop, tool/adapter versions, solution and configuration, reproduction
+steps, and expected versus observed behavior. Redact private paths, tokens and
+project content before sharing logs or screenshots.
 
 Start with the [documentation index](docs/README.md) for the project model,
 feature designs and current plans.
+
+## Existing clones after the repository move
+
+If your public clone still points to the old repository location, update its
+remote URL. A separate staging clone can retain its staging `origin` and use
+`public` for this repository.
+
+```bash
+git remote set-url origin git@github.com:Craidd-Studio/Craidd-Studio-Public.git
+git remote -v
+```

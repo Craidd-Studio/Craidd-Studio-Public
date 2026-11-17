@@ -1,5 +1,5 @@
 // Harness-only controlled intervals, compiled only in a disposable plugin copy.
-#include "../../../support/profiling/craidd_gold.hpp"
+#include "../../../src-tauri/native/profiling/craidd_gold.hpp"
 #include <memory>
 namespace { std::unique_ptr<craidd_gold::Range> outer, inner; }
 extern "C" {

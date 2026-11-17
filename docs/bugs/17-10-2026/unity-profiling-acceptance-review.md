@@ -1,5 +1,8 @@
 # Unity profiling acceptance review — automated execution, 17 October 2026
 
+> Source layout update, 17 November 2026: the historical `support/profiling`
+> path below is now [`src-tauri/native/profiling/`](../../../src-tauri/native/profiling/README.md). The header contents and historical results are unchanged.
+
 **Roadmap track:** Phase 3.5 profiling, composing with Phase 3.x debugging.
 
 **Status:** Automated review and runtime test of `feat/unity/profiling-a-to-p` at

@@ -1,5 +1,8 @@
 # Unity profiling UI/UX — Opus review handoff
 
+> Source layout update, 17 November 2026: the historical `support/profiling`
+> path below is now [`src-tauri/native/profiling/`](../../src-tauri/native/profiling/README.md). The header contents and historical results are unchanged.
+
 **Roadmap track:** Phase 3.x / 3.5, usable native Unity attach and profiling.
 
 **Status:** Historical brief prepared on 16 October 2026. The user later

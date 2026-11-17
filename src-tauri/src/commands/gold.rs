@@ -217,7 +217,7 @@ fn prepare_source(file: &str, points: Vec<Marker>) -> Result<String, String> {
             || p.end
                 .is_some_and(|end| lines[end as usize - 1].trim() != "CRAIDD_GOLD_END();")
         {
-            return Err("The first C++ provider requires explicit CRAIDD_GOLD_START(); / CRAIDD_GOLD_END(); / CRAIDD_GOLD_SOLO(); statement anchors. Arbitrary source-line instrumentation is not qualified. See support/profiling and the Unity anchored fixture.".into());
+            return Err("The first C++ provider requires explicit CRAIDD_GOLD_START(); / CRAIDD_GOLD_END(); / CRAIDD_GOLD_SOLO(); statement anchors. Arbitrary source-line instrumentation is not qualified. See src-tauri/native/profiling and the Unity anchored fixture.".into());
         }
     }
     let dir = std::env::temp_dir().join(format!("craidd-gold-{}", super::profiling::stamp()));
@@ -268,7 +268,7 @@ fn prepare_source(file: &str, points: Vec<Marker>) -> Result<String, String> {
     fs::write(dir.join(name), generated).map_err(|e| e.to_string())?;
     fs::write(
         dir.join("craidd_gold.hpp"),
-        include_str!("../../../support/profiling/craidd_gold.hpp"),
+        include_str!("../../native/profiling/craidd_gold.hpp"),
     )
     .map_err(|e| e.to_string())?;
     fs::write(

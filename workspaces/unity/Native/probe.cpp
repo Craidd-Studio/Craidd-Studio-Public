@@ -1,4 +1,4 @@
-#include "../../../support/profiling/craidd_gold.hpp"
+#include "../../../src-tauri/native/profiling/craidd_gold.hpp"
 #include <atomic>
 #include <cstdlib>
 #include <cstring>

@@ -19,7 +19,7 @@ test('Profiling workspace preserves real capture and inspection beside editable 
   const markdownFile = join(root, 'Guide.md');
   await writeFile(markdownFile, '# Merged guide\n\nMarkdown and profiling share the editor workspace.\n');
   const executable = join(root, 'collector');
-  await promisify(execFile)('g++', ['-std=c++17','-pthread','-I'+join(ROOT,'support/profiling'),join(ROOT,'tests/fixtures/attach-profiling/late_profile_target.cpp'),'-o',executable]);
+  await promisify(execFile)('g++', ['-std=c++17','-pthread','-I'+join(ROOT,'src-tauri/native/profiling'),join(ROOT,'tests/fixtures/attach-profiling/late_profile_target.cpp'),'-o',executable]);
   const app = await launch('profiler-workspace'); t.after(() => app.close());
   await openSolution(app, join(root,'Analysis.cln'));
   await app.wd.command('POST','/window/rect',{width:1440,height:1050});

@@ -16,7 +16,7 @@ def run(output):
     with tempfile.TemporaryDirectory(prefix='craidd-unity-first-') as temp:
         root = pathlib.Path(temp); project = root / 'workspaces/unity'
         shutil.copytree(repo / 'workspaces/unity', project, ignore=shutil.ignore_patterns('Library', 'Temp', 'Logs', 'Builds', 'obj', 'UserSettings', 'build'))
-        shutil.copytree(repo / 'support/profiling', root / 'support/profiling')
+        shutil.copytree(repo / 'src-tauri/native/profiling', root / 'src-tauri/native/profiling')
         subprocess.run(['cmake', '-S', str(project / 'Native'), '-B', str(project / 'Native/build'), '-DCMAKE_BUILD_TYPE=Debug'], check=True)
         subprocess.run(['cmake', '--build', str(project / 'Native/build')], check=True)
         (project / 'Assets/Editor/UnityFirstSmoke.cs').write_text('''using System;

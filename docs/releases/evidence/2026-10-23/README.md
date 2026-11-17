@@ -1,5 +1,8 @@
 # Release-audit evidence, 23 October 2026
 
+> Source layout update, 17 November 2026: the historical `support/profiling`
+> path below is now [`src-tauri/native/profiling/`](../../../../src-tauri/native/profiling/README.md). The header contents and historical results are unchanged.
+
 **Roadmap track:** Wider Linux IDE gate.
 **Status:** Mixed results; see the [assessment](../../public-release-readiness-2026-10-23.md). No release or human sign-off.
 

@@ -1,5 +1,9 @@
 # Unity profiling repair and runtime report
 
+> Source layout update, 17 November 2026: the provider header is now in
+> [`src-tauri/native/profiling/`](../../../src-tauri/native/profiling/README.md).
+> Its contents and the historical results below are unchanged.
+
 **Roadmap track:** Phase 3.x / 3.5, native Unity attach and profiling.
 
 **Status:** Native fixture repairs and scoped runtime qualification, 17 October
@@ -55,7 +59,7 @@ Relevant production sources are
 [`profilingStore.ts`](../../../src/store/profilingStore.ts),
 [`profiling.rs`](../../../src-tauri/src/commands/profiling.rs),
 [`profiling_discovery.rs`](../../../src-tauri/src/commands/profiling_discovery.rs),
-[`craidd_gold.hpp`](../../../support/profiling/craidd_gold.hpp),
+[`craidd_gold.hpp`](../../../src-tauri/native/profiling/craidd_gold.hpp),
 [`NativeProbe.cs`](../../../workspaces/unity/Assets/Scripts/NativeProbe.cs),
 [`ProbePlayLifecycle.cs`](../../../workspaces/unity/Assets/Editor/ProbePlayLifecycle.cs)
 and [`probe.cpp`](../../../workspaces/unity/Native/probe.cpp).

@@ -9,7 +9,7 @@ import { ROOT } from "./harness.mjs";
 export async function disposableUnity(output, namespace, { graphics = false } = {}) {
   const root = await mkdtemp(join(tmpdir(), "cui-"));
   const project = join(root, "workspaces/unity");
-  const files = execFileSync("git", ["ls-files", "-z", "workspaces/unity", "support/profiling"], { cwd: ROOT }).toString().split("\0").filter(Boolean);
+  const files = execFileSync("git", ["ls-files", "-z", "workspaces/unity", "src-tauri/native/profiling"], { cwd: ROOT }).toString().split("\0").filter(Boolean);
   for (const file of files) {
     const dest = join(root, file); await mkdir(dirname(dest), { recursive: true }); await copyFile(join(ROOT, file), dest);
   }
