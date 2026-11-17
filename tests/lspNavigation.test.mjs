@@ -19,13 +19,14 @@ test("non-file URIs, malformed ranges and junk are skipped; null and empty give 
   assert.deepEqual(locationsToTargets([{ uri: "http://x/a.rs", range }, { uri: "file:///a.rs", range: { start: {} } }, 3, null, { uri: 5, range }]), []);
 });
 
-function deps({ open = [], owners = {}, readOnly = [] } = {}) {
+function deps({ open = [], owners = {}, readOnly = [], holders = {} } = {}) {
   const log = [];
   return {
     log,
     deps: {
       isOpen: (p) => open.includes(p),
       isReadOnly: (p) => readOnly.includes(p),
+      holder: (p) => holders[p] ?? null,
       owner: async (p) => { log.push(["owner", p]); return owners[p] ?? null; },
       reveal: async (...a) => { log.push(["reveal", ...a]); },
       unowned: async (...a) => { log.push(["unowned", ...a]); },
@@ -89,4 +90,14 @@ test("navigating to an open read-only tab rebinds it through the navigating sess
   assert.equal(await openTarget(d.deps, "file", "/ws/a.rs", undefined, "/ws/origin.rs"), "holder");
   assert.deepEqual(d.log.at(-1), ["reveal", "/ws/a.rs", 1, 1]);
   assert.ok(d.log.every(([kind, p]) => !(kind === "unowned" && p === "/ws/a.rs")), "an editable file never goes through the read-only route");
+});
+
+test("navigation to a file another tab holds under a different path form focuses that holder, no second tab (case d)", async () => {
+  // The symlinked tab /ws/app/linked/deep.rs holds the registration for /ws/app/real_mods/deep.rs.
+  const d = deps({ open: ["/ws/app/linked/deep.rs"], holders: { "/ws/app/real_mods/deep.rs": "/ws/app/linked/deep.rs" }, owners: { "/ws/app/real_mods/deep.rs": { projectId: "p" } } });
+  assert.equal(await openTarget(d.deps, "file", "/ws/app/real_mods/deep.rs", { lineNumber: 3, column: 4 }, "/ws/app/main.rs"), "holder");
+  assert.deepEqual(d.log, [["reveal", "/ws/app/linked/deep.rs", 3, 4]], "the holder is focused; the owner resolver is not even asked, and nothing new is opened");
+  // With no holder the owned spelling opens in its own form.
+  const e = deps({ owners: { "/ws/app/real_mods/deep.rs": { projectId: "p" } } });
+  assert.equal(await openTarget(e.deps, "file", "/ws/app/real_mods/deep.rs", undefined, null), "owned");
 });

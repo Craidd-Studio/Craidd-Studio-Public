@@ -19,7 +19,7 @@ use super::delivery::StatusRecord;
 use super::documents::{DocError, DocView};
 use super::protocol::{LogLine, Outcome};
 use super::registry::{LaunchDecision, LspRegistry};
-use super::router::{project_ref, route, NotRouted, Route};
+use super::router::{project_ref, route, route_attach, AttachRoute, NotRouted, Route, SYMLINK_REASON};
 use super::rust_adapter::RustAdapter;
 use super::providers::ProviderKind;
 use super::session::{Batch, Limits, ProviderError, PullError, RequestError, Session};
@@ -162,7 +162,11 @@ pub(crate) enum AttachReply {
         session: u64, uri: String, canonical: String, language_id: String,
         project_id: String, project_name: String, launched: bool,
         server: String, version: String, root: String, notes: Vec<String>, status: StatusRecord,
+        /// The presented path is unowned only because a symlink is in it; the registration is by its owned canonical path (decision 52).
+        via_symlink: bool,
     },
+    /// Unowned because of a symlink, and the real file is not project-owned either (decision 52, Option A).
+    Symlinked { reason: String },
     /// Not an error and no warning: this file has no language server.
     NotRouted { reason: String },
     /// Revalidation failed or the solution is closing; simply no launch.
@@ -197,9 +201,12 @@ pub(crate) async fn lsp_attach(window: WebviewWindow, state: State<'_, LspManage
     let reply = tauri::async_runtime::spawn_blocking(move || -> Result<(AttachReply, Option<Session>), String> {
         let path = PathBuf::from(&file);
         let lookup = |language: &str| languages.get(language).cloned();
-        let (project, adapter) = match route(&path, &solution, &lookup, &DiskProbe, &worker.adapters) {
-            Route::NotRouted(reason) => return Ok((AttachReply::NotRouted { reason: not_routed(reason) }, None)),
-            Route::Routed { project, adapter } => (project, adapter),
+        let canonicalize = |p: &Path| std::fs::canonicalize(p).ok();
+        let (project, adapter, via_symlink, path) = match route_attach(&path, &solution, &lookup, &DiskProbe, &worker.adapters, &canonicalize) {
+            AttachRoute::Plain(Route::NotRouted(reason)) => return Ok((AttachReply::NotRouted { reason: not_routed(reason) }, None)),
+            AttachRoute::Plain(Route::Routed { project, adapter }) => (project, adapter, false, path),
+            AttachRoute::Alias { canonical, project, adapter } => (project, adapter, true, canonical),
+            AttachRoute::SymlinkUnowned => return Ok((AttachReply::Symlinked { reason: SYMLINK_REASON.into() }, None)),
         };
         let reference = project_ref(&solution, project);
         let context = adapter.resolve(&reference);
@@ -224,7 +231,7 @@ pub(crate) async fn lsp_attach(window: WebviewWindow, state: State<'_, LspManage
         Ok((AttachReply::Routed {
             session: generation, uri: file_uri(&path), canonical, language_id,
             project_id: project.id.clone(), project_name: project.name.clone(), launched,
-            server, version, root, notes, status: session.status(),
+            server, version, root, notes, status: session.status(), via_symlink,
         }, launched.then_some(session)))
     }).await.map_err(|e| e.to_string())??;
     if let (AttachReply::Routed { session: generation, launched: true, .. }, Some(session)) = &reply {
@@ -653,10 +660,11 @@ mod tests {
         let routed = AttachReply::Routed {
             session: 1, uri: "u".into(), canonical: "c".into(), language_id: "rust".into(), project_id: "p".into(),
             project_name: "n".into(), launched: true, server: "s".into(), version: "v".into(), root: "r".into(),
-            notes: vec![], status: StatusRecord::new(1),
+            notes: vec![], status: StatusRecord::new(1), via_symlink: false,
         };
         assert_eq!(keys(routed), ["canonical", "kind", "languageId", "launched", "notes", "projectId", "projectName",
-            "root", "server", "session", "status", "uri", "version"]);
+            "root", "server", "session", "status", "uri", "version", "viaSymlink"]);
+        assert_eq!(keys(AttachReply::Symlinked { reason: "r".into() }), ["kind", "reason"]);
         let value = serde_json::to_value(AttachReply::NotRouted { reason: "r".into() }).unwrap();
         assert_eq!(value, serde_json::json!({"kind": "notRouted", "reason": "r"}));
         assert_eq!(keys(AttachReply::Skipped { reason: "r".into() }), ["kind", "reason"]);

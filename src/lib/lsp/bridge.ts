@@ -35,8 +35,10 @@ export const LAUNCH_MAX_WAIT_MS = 1500;
 interface AttachRouted {
   kind: "routed"; session: number; uri: string; canonical: string; languageId: string; projectId: string; projectName: string;
   launched: boolean; server: string; version: string; root: string; notes: string[]; status: StatusRecord;
+  /** Unowned only because of a symlink; registered by its owned canonical path (decision 52). */
+  viaSymlink?: boolean;
 }
-type AttachReply = AttachRouted | { kind: "notRouted" | "skipped" | "unavailable"; reason: string } | { kind: "disabled" };
+type AttachReply = AttachRouted | { kind: "notRouted" | "skipped" | "unavailable" | "symlinked"; reason: string } | { kind: "disabled" };
 
 let monacoRef: Monaco | null = null;
 let solutionKey: string | null = null;
@@ -434,6 +436,7 @@ function navigationDeps(): NavigationDeps {
   return {
     isOpen: (path) => useSolution.getState().tabs.filter(isFileTab).some((tab) => tab.fileId === path),
     isReadOnly: (path) => useSolution.getState().tabs.filter(isFileTab).find((tab) => tab.fileId === path)?.readOnly === true,
+    holder: (path) => tracker.holderTab(path),
     owner: async (path) => {
       const solution = useSolution.getState().solution;
       if (!solution) return null;
@@ -611,6 +614,8 @@ async function attachActive(reason: "idle" | "timeout"): Promise<void> {
     return;
   }
   if (reply.launched) metrics.launched(reason);
+  // Option B (decision 52): the tab reached the owned file through a symlink, so it is an alias view of it (read-only, decision 12).
+  if (reply.viaSymlink) useSolution.getState().markReadOnlyIfClean(fileId);
   // The Channel's first status batch can arrive before this reply and create the view: merge, never skip.
   useLsp.setState((state) => ({ sessions: { ...state.sessions, [reply.session]: viewWithAttach(state.sessions[reply.session], {
     generation: reply.session, server: reply.server, version: reply.version, root: reply.root, notes: reply.notes, status: reply.status }) } }));

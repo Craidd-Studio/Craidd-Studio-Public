@@ -50,3 +50,15 @@ test("a rebind goes through the unowned route: bind to the navigating session, r
   const commands = await src("src-tauri/src/lsp/commands.rs");
   assert.match(commands, /retired\.insert\(session, tracked\.session\.clone\(\)\)/, "a restarted session stays findable for its acknowledgements");
 });
+
+test("step 7 wiring: a symlink alias tab is marked read-only (never one with unsaved edits) and the unowned symlink case shows its reason", async () => {
+  const store = await src("src/store/solutionStore.ts");
+  assert.match(body(store, "markReadOnlyIfClean: (fileId) =>", "revealReadOnly:"), /!t\.dirty && !t\.readOnly \? \{ \.\.\.t, readOnly: true \}/);
+  const bridge = await src("src/lib/lsp/bridge.ts");
+  assert.match(bridge, /if \(reply\.viaSymlink\) useSolution\.getState\(\)\.markReadOnlyIfClean\(fileId\);/);
+  const bar = await src("src/components/layout/StatusBar.tsx");
+  assert.match(bar, /info\.kind === "symlinked"/);
+  assert.match(bar, /language server: \{info\.reason\}/);
+  const backend = await src("src-tauri/src/lsp/router.rs");
+  assert.match(backend, /opened through a symlink; open the real path for language features/);
+});

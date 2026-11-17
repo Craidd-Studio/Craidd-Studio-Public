@@ -108,6 +108,8 @@ interface SolutionState {
   openFile: (absolutePath: string, fileName: string, options?: { activate?: boolean }) => Promise<void>;
   revealFile: (absolutePath: string, line: number, column: number) => Promise<void>;
   /** Open a navigation target outside every project as a read-only tab (decisions 49-51). A tab already open keeps its own editability. */
+  /** A tab that reached an owned file through a symlink is a read-only alias view (decision 52); a tab with unsaved edits is left alone. */
+  markReadOnlyIfClean: (fileId: string) => void;
   revealReadOnly: (absolutePath: string, text: string, line: number, column: number) => void;
   openProfiler: () => void;
   setActiveTab: (id: string) => void;
@@ -1596,6 +1598,10 @@ export const useSolution = create<SolutionState>((storeSet, get) => {
         serial: (state.navigation?.serial ?? 0) + 1 },
     }));
   },
+
+  markReadOnlyIfClean: (fileId) => set((s) => ({
+    tabs: s.tabs.map((t) => (t.kind === "file" && t.fileId === fileId && !t.dirty && !t.readOnly ? { ...t, readOnly: true } : t)),
+  })),
 
   revealReadOnly: (absolutePath, text, line, column) => {
     const name = absolutePath.split("/").pop() || absolutePath;
