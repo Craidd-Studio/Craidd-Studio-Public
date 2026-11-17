@@ -1,0 +1,1 @@
+**Early Alpha · Linux** · [Source repository](https://github.com/Craidd-Studio/Craidd-Studio-Public) · [Technical docs](https://github.com/Craidd-Studio/Craidd-Studio-Public/tree/master/docs) · [Report an issue](https://github.com/Craidd-Studio/Craidd-Studio-Public/issues)
