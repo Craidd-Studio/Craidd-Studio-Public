@@ -51,7 +51,7 @@ fn catalog(language: &str) -> Result<&'static [(&'static str, &'static str)], St
             ("debugger", "lldb-dap"), ("debugger", "lldb-dap-19"),
             ("debugger", "lldb-dap-18"), ("debugger", "lldb-dap-17"),
             ("debugger", "lldb-vscode")]),
-        "csharp" => Ok(&[("sdk", "dotnet"), ("debugger", "netcoredbg")]),
+        "csharp" => Ok(&[("sdk", "dotnet"), ("debugger", "netcoredbg"), ("unity_debugger", "monodbg.dll")]),
         "python" => Ok(&[("runtime", "python3"), ("package_manager", "uv"), ("package_manager", "poetry"), ("package_manager", "pdm"), ("package_manager", "pip3")]),
         "config" => Ok(&[]),
         _ => Err(format!("Unsupported language: {language}")),
@@ -116,6 +116,28 @@ pub(crate) fn find_executable(name: &str) -> Option<PathBuf> {
         if candidate.is_file() { return Some(candidate); }
     }
     None
+}
+
+// DotRush's Mono debugger is a framework-dependent .dll, not a PATH executable.
+// Discover only installed VS Code-family extensions; never download or bundle it.
+pub(crate) fn dotrush_mono_debuggers(home: &Path) -> Vec<ToolEntry> {
+    let mut found: Vec<(Vec<u64>, ToolEntry)> = Vec::new();
+    for editor in [".vscode", ".vscode-oss", ".vscode-insiders"] {
+        let Ok(entries) = fs::read_dir(home.join(editor).join("extensions")) else { continue };
+        for entry in entries.filter_map(Result::ok) {
+            let folder = entry.file_name().to_string_lossy().into_owned();
+            let Some(version) = folder.strip_prefix("nromanov.dotrush-") else { continue };
+            let path = entry.path().join("extension/bin/DebuggerMono/monodbg.dll");
+            if path.is_file() {
+                // Newest first for Automatic: compare 26.10 above 26.9 numerically.
+                let key = version.split(['.', '-']).map(|part| part.parse().unwrap_or(0)).collect();
+                found.push((key, ToolEntry { role: "unity_debugger".into(), name: "monodbg.dll".into(),
+                    path: path.to_string_lossy().into_owned(), version: format!("DotRush {version} ({editor})") }));
+            }
+        }
+    }
+    found.sort_by(|a, b| b.0.cmp(&a.0));
+    found.into_iter().map(|(_, tool)| tool).collect()
 }
 
 fn probe(role: &str, name: &str, path: &Path) -> ToolEntry {
@@ -232,7 +254,12 @@ pub fn get_toolchain(language: String) -> Result<ToolchainSnapshot, String> {
 pub fn scan_toolchain(language: String) -> Result<ToolchainSnapshot, String> {
     let definitions = catalog(&language)?;
     clear_reprobe_cache(&language);
-    let found: Vec<ToolEntry> = definitions.iter().filter_map(|(role, name)| discover(&language, role, name)).collect();
+    let found: Vec<ToolEntry> = definitions.iter().flat_map(|(role, name)| {
+        if *role == "unity_debugger" {
+            return std::env::var_os("HOME").map(|home| dotrush_mono_debuggers(Path::new(&home))).unwrap_or_default();
+        }
+        discover(&language, role, name).into_iter().collect()
+    }).collect();
     let _guard = PREFS_LOCK.lock().map_err(|e| e.to_string())?;
     let path = prefs_path()?;
     let mut prefs = read_prefs(&path)?;
@@ -669,5 +696,28 @@ mod tests {
     fn rust_catalog_offers_a_language_server_role() {
         assert!(catalog("rust").unwrap().contains(&("language_server", "rust-analyzer")));
         assert!(!catalog("cpp").unwrap().iter().any(|(role, _)| *role == "language_server"), "Stage 1 is Rust only");
+    }
+
+    #[test]
+    fn discovers_installed_dotrush_mono_debuggers_only() {
+        let home = std::env::temp_dir().join(format!("craidd-dotrush-{}", std::process::id()));
+        let installed = home.join(".vscode/extensions/nromanov.dotrush-26.10.277/extension/bin/DebuggerMono");
+        fs::create_dir_all(&installed).unwrap();
+        fs::write(installed.join("monodbg.dll"), b"fixture").unwrap();
+        // An extension folder without the adapter, and an unrelated publisher, are ignored.
+        fs::create_dir_all(home.join(".vscode-oss/extensions/nromanov.dotrush-26.8.1/extension")).unwrap();
+        let older = home.join(".vscode-oss/extensions/nromanov.dotrush-26.9.256/extension/bin/DebuggerMono");
+        fs::create_dir_all(&older).unwrap();
+        fs::write(older.join("monodbg.dll"), b"fixture").unwrap();
+        let other = home.join(".vscode/extensions/someone.dotrush-1.0.0/extension/bin/DebuggerMono");
+        fs::create_dir_all(&other).unwrap();
+        fs::write(other.join("monodbg.dll"), b"fixture").unwrap();
+        let found = dotrush_mono_debuggers(&home);
+        assert_eq!(found.len(), 2);
+        assert_eq!(found[1].version, "DotRush 26.9.256 (.vscode-oss)");
+        assert_eq!(found[0].role, "unity_debugger");
+        assert_eq!(found[0].version, "DotRush 26.10.277 (.vscode)");
+        assert!(found[0].path.ends_with("nromanov.dotrush-26.10.277/extension/bin/DebuggerMono/monodbg.dll"));
+        fs::remove_dir_all(home).unwrap();
     }
 }

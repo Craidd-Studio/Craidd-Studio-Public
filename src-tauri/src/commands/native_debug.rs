@@ -1559,7 +1559,7 @@ mod tests {
             solution: "/solution.cln".into(),
             configuration: Some(label.into()),
             profile: None,
-            spec: super::super::runner::RunSpec {
+            spec: super::super::runner::RunSpec { embedded_mono_jit_map:false,
                 label: label.into(),
                 program: method.into(),
                 args: vec![],

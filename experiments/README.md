@@ -76,3 +76,11 @@ in a test report.
 [lsp-1c-monaco/](lsp-1c-monaco/README.md) holds headless-Chrome probes of
 Monaco 0.56.0's completion acceptance (V10, V11, V12), run before the accept
 path is written. Branch `exp/lsp-1c-monaco-verify`.
+
+## Unity managed C# debugging
+
+[`unity-managed-debug/`](unity-managed-debug/README.md) builds DotRush's Mono
+debug adapter from pinned source for Craidd's experimental **Unity C# ·
+DotRush Mono (Editor)** attach route. The build stays in that experiment's
+ignored `.local-tools/` and is selected explicitly in Preferences. It is
+separate from the thread-control experiments above.

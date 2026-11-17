@@ -29,6 +29,8 @@ export default function ConfigurationForm({ config, projects, allConfigs, soluti
   const debugConfig = isComposition ? allConfigs.find((item) => item.name === slots?.debug) : config;
   const debugCwd = debugConfig?.kind === "debug" && debugConfig.method === "cargo"
     ? resolveSpec(debugConfig, solution.root, solution, null)?.cwd : undefined;
+  const [monoHelper,setMonoHelper]=useState<{available:boolean;reason?:string}|null>(null);
+  useEffect(()=>{let alive=true;if(config.kind!=="run"||isComposition)return;import("@tauri-apps/api/core").then(({invoke})=>invoke<{available:boolean;reason?:string}>("perf_action",{request:{action:"monoHelperCapability"}})).then(v=>{if(alive)setMonoHelper(v);}).catch(e=>{if(alive)setMonoHelper({available:false,reason:String(e)});});return()=>{alive=false;};},[config.kind,isComposition]);
   const [prerequisite, setPrerequisite] = useState<{ cwd: string; value?: DebugPrerequisite | null; error?: string } | null>(null);
   useEffect(() => {
     let cancelled = false;
@@ -70,7 +72,7 @@ export default function ConfigurationForm({ config, projects, allConfigs, soluti
           </>
         ) : (
           <>
-            <Field label="Kind"><select className={inputClass} value={config.kind} disabled={!editable} onChange={(e) => set({ kind: e.target.value as ConfigKind })}>{kinds.map((kind) => <option key={kind} value={kind}>{kind}</option>)}</select></Field>
+            <Field label="Kind"><select className={inputClass} value={config.kind} disabled={!editable} onChange={(e) => set({ kind: e.target.value as ConfigKind,embeddedMonoJitMap:e.target.value==="run"?config.embeddedMonoJitMap:false })}>{kinds.map((kind) => <option key={kind} value={kind}>{kind}</option>)}</select></Field>
             <Field label="Project"><select className={inputClass} value={config.target} disabled={!editable} onChange={(e) => set({ target: e.target.value })}><option value=".">Whole solution</option>{projects.map((project) => <option key={project.path} value={project.path}>{project.name}</option>)}</select></Field>
             <Field label="Method"><select className={inputClass} value={config.method ?? ""} disabled={!editable} onChange={(e) => set(e.target.value === "plan" ? { method: "plan", kind: "build", target: ".", order: { steps: [] }, command: undefined } : { method: e.target.value || undefined })}><option value="">Automatic</option>{methods.map((method) => <option key={method} value={method}>{method === "plan" ? "Build order" : method}</option>)}</select></Field>
             {config.method === "plan" ? <BuildOrderEditor config={config} configs={allConfigs} editable={editable} onChange={onChange} /> : <>
@@ -82,6 +84,7 @@ export default function ConfigurationForm({ config, projects, allConfigs, soluti
                 .map((item) => <option key={item.name} value={item.name}>{item.name}</option>)}
             </select></Field>
             {config.order?.before && <p className="text-[11px] text-blue-300">Wait for {config.order.before} to succeed before this action. Applies to individual and linked launches.</p>}
+            {config.kind==="run"&&<div className="pt-3 border-t border-zinc-800 space-y-2"><div className="text-[11px] uppercase tracking-wide text-zinc-500">Experimental profiling · launch only</div><label className="flex gap-2 text-[12px] text-zinc-300"><input aria-label="Write a JIT map for an embedded Mono runtime" type="checkbox" disabled={!editable||(!monoHelper?.available&&!config.embeddedMonoJitMap)} checked={!!config.embeddedMonoJitMap} onChange={e=>set({embeddedMonoJitMap:e.target.checked})}/>Write a JIT map for an embedded Mono runtime</label><p className="text-[11px] text-zinc-500">Off by default. Uses a bundled native helper for Linux x86_64 GNU hosts that dynamically resolve mono_jit_init_version. Startup methods may remain unnamed; missing callers are not recovered. Generated maps are retained. Attach does not inject a helper.</p>{monoHelper&&!monoHelper.available&&<p role="status" className="text-[11px] text-amber-400">Unavailable: {monoHelper.reason}</p>}</div>}
             <div className="pt-3 border-t border-zinc-800 space-y-2">
               <div className="text-[11px] uppercase tracking-wide text-zinc-500">Linked startup order</div>
               <p className="text-[11px] text-zinc-500">Start after these linked projects finish starting and pass their readiness checks. Projects must have a participating linked session.</p>

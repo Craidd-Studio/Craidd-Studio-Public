@@ -1,5 +1,8 @@
+import { PROFILER_TAB_ID, isFileTab } from "../../types/project";
+import { showProfiler } from "../../lib/profilerWorkspace";
 import { useEffect, useState } from "react";
 import MenuBar from "../menu/MenuBar";
+import AttachProcessDialog from "../dialogs/AttachProcessDialog";
 import Toolbar from "./Toolbar";
 import StatusBar from "./StatusBar";
 import ActivityBar from "./ActivityBar";
@@ -28,6 +31,8 @@ import { listenForBreakpointFocus } from "../../lib/breakpointFocus";
 import { RemoteEditorPane } from "./RemoteContext";
 import { listenForBreakpointChanges, useBreakpoints } from "../../store/breakpointStore";
 import { listenToDebug, useDebug } from "../../store/debugStore";
+import { listenToProfiling } from "../../store/profilingStore";
+import { listenToGold, useGold } from "../../store/goldStore";
 import { listenToLdi } from "../../store/ldiStore";
 
 interface ProjectToolchainCheck {
@@ -43,6 +48,7 @@ const LANGUAGE_LABELS: Record<string, string> = {
 };
 
 export default function AppShell({ startProjectDialog = false, onCloseStartProjectDialog }: { startProjectDialog?: boolean; onCloseStartProjectDialog?: () => void }) {
+  const [attachOpen, setAttachOpen] = useState(false);
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [prefsOpen, setPrefsOpen] = useState(false);
   const [prefsArea, setPrefsArea] = useState<"editor" | "toolchains">("editor");
@@ -89,6 +95,18 @@ export default function AppShell({ startProjectDialog = false, onCloseStartProje
     setPrefsLanguage(language);
     setPrefsOpen(true);
   };
+  useEffect(() => {
+    const subscriptions = [listenToProfiling(), listenToGold()];
+    return () => { for (const subscription of subscriptions) void subscription.then(off => off()); };
+  }, []);
+  useEffect(() => { void useGold.getState().load(clnPath).catch(console.error); }, [clnPath]);
+  useEffect(() => {
+    const open = () => setAttachOpen(true);
+    window.addEventListener("craidd:show-profiler", showProfiler);
+    window.addEventListener("craidd:attach-process", open);
+    return () => { window.removeEventListener("craidd:attach-process", open); window.removeEventListener("craidd:show-profiler", showProfiler); };
+  }, []);
+
   useEffect(() => {
     let disposed = false;
     let unlisten: (() => void) | undefined;
@@ -162,8 +180,8 @@ export default function AppShell({ startProjectDialog = false, onCloseStartProje
     };
     const unlistenSolution = useSolution.subscribe((state, previous) => {
       if (state.activeFileId !== previous.activeFileId || state.tabs !== previous.tabs) {
-        const oldTab = previous.tabs.find((item) => item.fileId === previous.activeFileId);
-        const newTab = state.tabs.find((item) => item.fileId === state.activeFileId);
+        const oldTab = previous.tabs.filter(isFileTab).find((item) => item.fileId === previous.activeFileId);
+        const newTab = state.tabs.filter(isFileTab).find((item) => item.fileId === state.activeFileId);
         const typing = state.activeFileId === previous.activeFileId && oldTab?.content !== newTab?.content;
         publish(typing ? 600 : 80);
       }
@@ -246,16 +264,19 @@ export default function AppShell({ startProjectDialog = false, onCloseStartProje
   const sidebarVisible = usePreferences((s) => s.sidebarVisible);
   const bottomPanelVisible = usePreferences((s) => s.bottomPanelVisible);
   const rightPanelVisible = usePreferences((s) => s.rightPanelVisible);
+  const profilerActive = useSolution((s) => s.activeTabId === PROFILER_TAB_ID);
 
   const sidebarWidth = useLayout((s) => s.sidebarWidth);
   const setSidebarWidth = useLayout((s) => s.setSidebarWidth);
   const rightPanelWidth = useLayout((s) => s.rightPanelWidth);
   const setRightPanelWidth = useLayout((s) => s.setRightPanelWidth);
+  const profilerFocus = useLayout(s=>s.profilerFocus) && profilerActive;
   const bottomPanelHeight = useLayout((s) => s.bottomPanelHeight);
   const setBottomPanelHeight = useLayout((s) => s.setBottomPanelHeight);
 
   return (
     <div className="h-screen w-screen flex flex-col bg-zinc-950 text-zinc-300 text-[13px] overflow-hidden">
+      {attachOpen && <AttachProcessDialog onClose={() => setAttachOpen(false)} />}
       <MenuBar openCommandPalette={() => setPaletteOpen(true)} openPreferences={() => openPreferences()} />
       <Toolbar />
       {successVisible && (
@@ -283,7 +304,7 @@ export default function AppShell({ startProjectDialog = false, onCloseStartProje
 
       <div className="flex-1 flex min-h-0">
         <ActivityBar />
-        {sidebarVisible && (
+        {sidebarVisible && !profilerFocus && (
           <>
             <div style={{ width: sidebarWidth }} className="h-full shrink-0"><Sidebar /></div>
             <ResizeHandle orientation="vertical" onDrag={(delta) => setSidebarWidth(sidebarWidth + delta)} />
@@ -302,7 +323,7 @@ export default function AppShell({ startProjectDialog = false, onCloseStartProje
             </div>
             {remoteContext && !remoteEditing && <div className="absolute inset-0 flex flex-col min-h-0"><RemoteEditorPane context={remoteContext} /></div>}
           </div>
-          {bottomPanelVisible && (
+          {bottomPanelVisible && !profilerFocus && (
             <>
               <ResizeHandle orientation="horizontal" onDrag={(delta) => setBottomPanelHeight(bottomPanelHeight - delta)} />
               <div style={{ height: bottomPanelHeight }} className="shrink-0"><BottomPanel /></div>
@@ -310,7 +331,7 @@ export default function AppShell({ startProjectDialog = false, onCloseStartProje
           )}
         </div>
 
-        {rightPanelVisible && (
+        {rightPanelVisible && !profilerActive && (
           <>
             <ResizeHandle orientation="vertical" onDrag={(delta) => setRightPanelWidth(rightPanelWidth - delta)} />
             <div style={{ width: rightPanelWidth }} className="h-full shrink-0"><RightPanel /></div>

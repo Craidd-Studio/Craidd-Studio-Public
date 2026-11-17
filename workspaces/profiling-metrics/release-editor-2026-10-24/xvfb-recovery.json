@@ -1,0 +1,1327 @@
+{
+  "gate": "PASS",
+  "closeMethod": "application Window Manager close_linked_window native destroy path",
+  "display": "xvfb",
+  "build": "/tmp/craidd-release-audit-f6d4-release/release/craidd-studio",
+  "binarySha256": "a7f1f63f40e79624608214833e4f0e210c48ef9a0d2d9c39ff88d9baf0a24b09",
+  "fixtureSize": 153890865,
+  "id": "metrics-700413-1",
+  "owner": "workspace-1",
+  "mainLabel": "main",
+  "oneWindow": {
+    "epochMs": 1792849096365,
+    "rssBytes": 793075712,
+    "pssBytes": 376454144,
+    "processes": [
+      {
+        "pid": 700413,
+        "parent": 700411,
+        "rssBytes": 276148224,
+        "cpuTicks": 12,
+        "comm": "craidd-studio",
+        "executable": "/tmp/craidd-release-audit-f6d4-release/release/craidd-studio",
+        "pssBytes": 103671808
+      },
+      {
+        "pid": 700416,
+        "parent": 700413,
+        "rssBytes": 40120320,
+        "cpuTicks": 0,
+        "comm": "craidd-studio",
+        "executable": "/tmp/craidd-release-audit-f6d4-release/release/craidd-studio",
+        "pssBytes": 11393024
+      },
+      {
+        "pid": 700427,
+        "parent": 700413,
+        "rssBytes": 72376320,
+        "cpuTicks": 1,
+        "comm": "WebKitNetworkPr",
+        "executable": "/usr/lib/webkit2gtk-4.1/WebKitNetworkProcess",
+        "pssBytes": 32342016
+      },
+      {
+        "pid": 700501,
+        "parent": 700413,
+        "rssBytes": 404430848,
+        "cpuTicks": 25,
+        "comm": "WebKitWebProces",
+        "executable": "/usr/lib/webkit2gtk-4.1/WebKitWebProcess",
+        "pssBytes": 229047296
+      }
+    ]
+  },
+  "before": {
+    "epochMs": 1792849097573,
+    "rssBytes": 1240600576,
+    "pssBytes": 558928896,
+    "processes": [
+      {
+        "pid": 700413,
+        "parent": 700411,
+        "rssBytes": 299352064,
+        "cpuTicks": 18,
+        "comm": "craidd-studio",
+        "executable": "/tmp/craidd-release-audit-f6d4-release/release/craidd-studio",
+        "pssBytes": 113253376
+      },
+      {
+        "pid": 700416,
+        "parent": 700413,
+        "rssBytes": 40120320,
+        "cpuTicks": 0,
+        "comm": "craidd-studio",
+        "executable": "/tmp/craidd-release-audit-f6d4-release/release/craidd-studio",
+        "pssBytes": 10964992
+      },
+      {
+        "pid": 700427,
+        "parent": 700413,
+        "rssBytes": 72376320,
+        "cpuTicks": 1,
+        "comm": "WebKitNetworkPr",
+        "executable": "/usr/lib/webkit2gtk-4.1/WebKitNetworkProcess",
+        "pssBytes": 31076352
+      },
+      {
+        "pid": 700501,
+        "parent": 700413,
+        "rssBytes": 373735424,
+        "cpuTicks": 30,
+        "comm": "WebKitWebProces",
+        "executable": "/usr/lib/webkit2gtk-4.1/WebKitWebProcess",
+        "pssBytes": 169701376
+      },
+      {
+        "pid": 700596,
+        "parent": 700413,
+        "rssBytes": 455016448,
+        "cpuTicks": 50,
+        "comm": "WebKitWebProces",
+        "executable": "/usr/lib/webkit2gtk-4.1/WebKitWebProcess",
+        "pssBytes": 233932800
+      }
+    ]
+  },
+  "during": {
+    "epochMs": 1792849097918,
+    "rssBytes": 1319739392,
+    "pssBytes": 637989888,
+    "processes": [
+      {
+        "pid": 700413,
+        "parent": 700411,
+        "rssBytes": 383451136,
+        "cpuTicks": 52,
+        "comm": "craidd-studio",
+        "executable": "/tmp/craidd-release-audit-f6d4-release/release/craidd-studio",
+        "pssBytes": 197716992
+      },
+      {
+        "pid": 700416,
+        "parent": 700413,
+        "rssBytes": 40120320,
+        "cpuTicks": 0,
+        "comm": "craidd-studio",
+        "executable": "/tmp/craidd-release-audit-f6d4-release/release/craidd-studio",
+        "pssBytes": 10964992
+      },
+      {
+        "pid": 700427,
+        "parent": 700413,
+        "rssBytes": 72376320,
+        "cpuTicks": 1,
+        "comm": "WebKitNetworkPr",
+        "executable": "/usr/lib/webkit2gtk-4.1/WebKitNetworkProcess",
+        "pssBytes": 31076352
+      },
+      {
+        "pid": 700501,
+        "parent": 700413,
+        "rssBytes": 373735424,
+        "cpuTicks": 30,
+        "comm": "WebKitWebProces",
+        "executable": "/usr/lib/webkit2gtk-4.1/WebKitWebProcess",
+        "pssBytes": 169668608
+      },
+      {
+        "pid": 700596,
+        "parent": 700413,
+        "rssBytes": 450056192,
+        "cpuTicks": 51,
+        "comm": "WebKitWebProces",
+        "executable": "/usr/lib/webkit2gtk-4.1/WebKitWebProcess",
+        "pssBytes": 228562944
+      }
+    ]
+  },
+  "afterSamples": [
+    {
+      "epochMs": 1792849097962,
+      "rssBytes": 1208766464,
+      "pssBytes": 539943936,
+      "processes": [
+        {
+          "pid": 700413,
+          "parent": 700411,
+          "rssBytes": 286334976,
+          "cpuTicks": 54,
+          "comm": "craidd-studio",
+          "executable": "/tmp/craidd-release-audit-f6d4-release/release/craidd-studio",
+          "pssBytes": 107462656
+        },
+        {
+          "pid": 700416,
+          "parent": 700413,
+          "rssBytes": 40120320,
+          "cpuTicks": 0,
+          "comm": "craidd-studio",
+          "executable": "/tmp/craidd-release-audit-f6d4-release/release/craidd-studio",
+          "pssBytes": 10960896
+        },
+        {
+          "pid": 700427,
+          "parent": 700413,
+          "rssBytes": 72638464,
+          "cpuTicks": 1,
+          "comm": "WebKitNetworkPr",
+          "executable": "/usr/lib/webkit2gtk-4.1/WebKitNetworkProcess",
+          "pssBytes": 31130624
+        },
+        {
+          "pid": 700501,
+          "parent": 700413,
+          "rssBytes": 373735424,
+          "cpuTicks": 30,
+          "comm": "WebKitWebProces",
+          "executable": "/usr/lib/webkit2gtk-4.1/WebKitWebProcess",
+          "pssBytes": 169660416
+        },
+        {
+          "pid": 700596,
+          "parent": 700413,
+          "rssBytes": 435937280,
+          "cpuTicks": 52,
+          "comm": "WebKitWebProces",
+          "executable": "/usr/lib/webkit2gtk-4.1/WebKitWebProcess",
+          "pssBytes": 220729344
+        }
+      ]
+    },
+    {
+      "epochMs": 1792849098096,
+      "rssBytes": 1207435264,
+      "pssBytes": 538764288,
+      "processes": [
+        {
+          "pid": 700413,
+          "parent": 700411,
+          "rssBytes": 286334976,
+          "cpuTicks": 54,
+          "comm": "craidd-studio",
+          "executable": "/tmp/craidd-release-audit-f6d4-release/release/craidd-studio",
+          "pssBytes": 107446272
+        },
+        {
+          "pid": 700416,
+          "parent": 700413,
+          "rssBytes": 40120320,
+          "cpuTicks": 0,
+          "comm": "craidd-studio",
+          "executable": "/tmp/craidd-release-audit-f6d4-release/release/craidd-studio",
+          "pssBytes": 10960896
+        },
+        {
+          "pid": 700427,
+          "parent": 700413,
+          "rssBytes": 72638464,
+          "cpuTicks": 1,
+          "comm": "WebKitNetworkPr",
+          "executable": "/usr/lib/webkit2gtk-4.1/WebKitNetworkProcess",
+          "pssBytes": 31130624
+        },
+        {
+          "pid": 700501,
+          "parent": 700413,
+          "rssBytes": 372948992,
+          "cpuTicks": 30,
+          "comm": "WebKitWebProces",
+          "executable": "/usr/lib/webkit2gtk-4.1/WebKitWebProcess",
+          "pssBytes": 168947712
+        },
+        {
+          "pid": 700596,
+          "parent": 700413,
+          "rssBytes": 435392512,
+          "cpuTicks": 52,
+          "comm": "WebKitWebProces",
+          "executable": "/usr/lib/webkit2gtk-4.1/WebKitWebProcess",
+          "pssBytes": 220278784
+        }
+      ]
+    },
+    {
+      "epochMs": 1792849098229,
+      "rssBytes": 1207107584,
+      "pssBytes": 538612736,
+      "processes": [
+        {
+          "pid": 700413,
+          "parent": 700411,
+          "rssBytes": 286334976,
+          "cpuTicks": 54,
+          "comm": "craidd-studio",
+          "executable": "/tmp/craidd-release-audit-f6d4-release/release/craidd-studio",
+          "pssBytes": 107442176
+        },
+        {
+          "pid": 700416,
+          "parent": 700413,
+          "rssBytes": 40120320,
+          "cpuTicks": 0,
+          "comm": "craidd-studio",
+          "executable": "/tmp/craidd-release-audit-f6d4-release/release/craidd-studio",
+          "pssBytes": 10960896
+        },
+        {
+          "pid": 700427,
+          "parent": 700413,
+          "rssBytes": 72638464,
+          "cpuTicks": 1,
+          "comm": "WebKitNetworkPr",
+          "executable": "/usr/lib/webkit2gtk-4.1/WebKitNetworkProcess",
+          "pssBytes": 31130624
+        },
+        {
+          "pid": 700501,
+          "parent": 700413,
+          "rssBytes": 372948992,
+          "cpuTicks": 30,
+          "comm": "WebKitWebProces",
+          "executable": "/usr/lib/webkit2gtk-4.1/WebKitWebProcess",
+          "pssBytes": 168947712
+        },
+        {
+          "pid": 700596,
+          "parent": 700413,
+          "rssBytes": 435064832,
+          "cpuTicks": 52,
+          "comm": "WebKitWebProces",
+          "executable": "/usr/lib/webkit2gtk-4.1/WebKitWebProcess",
+          "pssBytes": 220131328
+        }
+      ]
+    },
+    {
+      "epochMs": 1792849098371,
+      "rssBytes": 1205714944,
+      "pssBytes": 536941568,
+      "processes": [
+        {
+          "pid": 700413,
+          "parent": 700411,
+          "rssBytes": 286334976,
+          "cpuTicks": 54,
+          "comm": "craidd-studio",
+          "executable": "/tmp/craidd-release-audit-f6d4-release/release/craidd-studio",
+          "pssBytes": 107409408
+        },
+        {
+          "pid": 700416,
+          "parent": 700413,
+          "rssBytes": 40120320,
+          "cpuTicks": 0,
+          "comm": "craidd-studio",
+          "executable": "/tmp/craidd-release-audit-f6d4-release/release/craidd-studio",
+          "pssBytes": 10960896
+        },
+        {
+          "pid": 700427,
+          "parent": 700413,
+          "rssBytes": 72638464,
+          "cpuTicks": 1,
+          "comm": "WebKitNetworkPr",
+          "executable": "/usr/lib/webkit2gtk-4.1/WebKitNetworkProcess",
+          "pssBytes": 31130624
+        },
+        {
+          "pid": 700501,
+          "parent": 700413,
+          "rssBytes": 372686848,
+          "cpuTicks": 30,
+          "comm": "WebKitWebProces",
+          "executable": "/usr/lib/webkit2gtk-4.1/WebKitWebProcess",
+          "pssBytes": 168562688
+        },
+        {
+          "pid": 700596,
+          "parent": 700413,
+          "rssBytes": 433934336,
+          "cpuTicks": 52,
+          "comm": "WebKitWebProces",
+          "executable": "/usr/lib/webkit2gtk-4.1/WebKitWebProcess",
+          "pssBytes": 218877952
+        }
+      ]
+    },
+    {
+      "epochMs": 1792849098505,
+      "rssBytes": 1205714944,
+      "pssBytes": 536925184,
+      "processes": [
+        {
+          "pid": 700413,
+          "parent": 700411,
+          "rssBytes": 286334976,
+          "cpuTicks": 54,
+          "comm": "craidd-studio",
+          "executable": "/tmp/craidd-release-audit-f6d4-release/release/craidd-studio",
+          "pssBytes": 107409408
+        },
+        {
+          "pid": 700416,
+          "parent": 700413,
+          "rssBytes": 40120320,
+          "cpuTicks": 0,
+          "comm": "craidd-studio",
+          "executable": "/tmp/craidd-release-audit-f6d4-release/release/craidd-studio",
+          "pssBytes": 10960896
+        },
+        {
+          "pid": 700427,
+          "parent": 700413,
+          "rssBytes": 72638464,
+          "cpuTicks": 1,
+          "comm": "WebKitNetworkPr",
+          "executable": "/usr/lib/webkit2gtk-4.1/WebKitNetworkProcess",
+          "pssBytes": 31130624
+        },
+        {
+          "pid": 700501,
+          "parent": 700413,
+          "rssBytes": 372686848,
+          "cpuTicks": 30,
+          "comm": "WebKitWebProces",
+          "executable": "/usr/lib/webkit2gtk-4.1/WebKitWebProcess",
+          "pssBytes": 168562688
+        },
+        {
+          "pid": 700596,
+          "parent": 700413,
+          "rssBytes": 433934336,
+          "cpuTicks": 52,
+          "comm": "WebKitWebProces",
+          "executable": "/usr/lib/webkit2gtk-4.1/WebKitWebProcess",
+          "pssBytes": 218861568
+        }
+      ]
+    },
+    {
+      "epochMs": 1792849098637,
+      "rssBytes": 1205714944,
+      "pssBytes": 536925184,
+      "processes": [
+        {
+          "pid": 700413,
+          "parent": 700411,
+          "rssBytes": 286334976,
+          "cpuTicks": 54,
+          "comm": "craidd-studio",
+          "executable": "/tmp/craidd-release-audit-f6d4-release/release/craidd-studio",
+          "pssBytes": 107409408
+        },
+        {
+          "pid": 700416,
+          "parent": 700413,
+          "rssBytes": 40120320,
+          "cpuTicks": 1,
+          "comm": "craidd-studio",
+          "executable": "/tmp/craidd-release-audit-f6d4-release/release/craidd-studio",
+          "pssBytes": 10960896
+        },
+        {
+          "pid": 700427,
+          "parent": 700413,
+          "rssBytes": 72638464,
+          "cpuTicks": 1,
+          "comm": "WebKitNetworkPr",
+          "executable": "/usr/lib/webkit2gtk-4.1/WebKitNetworkProcess",
+          "pssBytes": 31130624
+        },
+        {
+          "pid": 700501,
+          "parent": 700413,
+          "rssBytes": 372686848,
+          "cpuTicks": 30,
+          "comm": "WebKitWebProces",
+          "executable": "/usr/lib/webkit2gtk-4.1/WebKitWebProcess",
+          "pssBytes": 168562688
+        },
+        {
+          "pid": 700596,
+          "parent": 700413,
+          "rssBytes": 433934336,
+          "cpuTicks": 52,
+          "comm": "WebKitWebProces",
+          "executable": "/usr/lib/webkit2gtk-4.1/WebKitWebProcess",
+          "pssBytes": 218861568
+        }
+      ]
+    },
+    {
+      "epochMs": 1792849098768,
+      "rssBytes": 1205714944,
+      "pssBytes": 536925184,
+      "processes": [
+        {
+          "pid": 700413,
+          "parent": 700411,
+          "rssBytes": 286334976,
+          "cpuTicks": 54,
+          "comm": "craidd-studio",
+          "executable": "/tmp/craidd-release-audit-f6d4-release/release/craidd-studio",
+          "pssBytes": 107409408
+        },
+        {
+          "pid": 700416,
+          "parent": 700413,
+          "rssBytes": 40120320,
+          "cpuTicks": 1,
+          "comm": "craidd-studio",
+          "executable": "/tmp/craidd-release-audit-f6d4-release/release/craidd-studio",
+          "pssBytes": 10960896
+        },
+        {
+          "pid": 700427,
+          "parent": 700413,
+          "rssBytes": 72638464,
+          "cpuTicks": 1,
+          "comm": "WebKitNetworkPr",
+          "executable": "/usr/lib/webkit2gtk-4.1/WebKitNetworkProcess",
+          "pssBytes": 31130624
+        },
+        {
+          "pid": 700501,
+          "parent": 700413,
+          "rssBytes": 372686848,
+          "cpuTicks": 30,
+          "comm": "WebKitWebProces",
+          "executable": "/usr/lib/webkit2gtk-4.1/WebKitWebProcess",
+          "pssBytes": 168562688
+        },
+        {
+          "pid": 700596,
+          "parent": 700413,
+          "rssBytes": 433934336,
+          "cpuTicks": 52,
+          "comm": "WebKitWebProces",
+          "executable": "/usr/lib/webkit2gtk-4.1/WebKitWebProcess",
+          "pssBytes": 218861568
+        }
+      ]
+    },
+    {
+      "epochMs": 1792849098898,
+      "rssBytes": 1205714944,
+      "pssBytes": 536925184,
+      "processes": [
+        {
+          "pid": 700413,
+          "parent": 700411,
+          "rssBytes": 286334976,
+          "cpuTicks": 54,
+          "comm": "craidd-studio",
+          "executable": "/tmp/craidd-release-audit-f6d4-release/release/craidd-studio",
+          "pssBytes": 107409408
+        },
+        {
+          "pid": 700416,
+          "parent": 700413,
+          "rssBytes": 40120320,
+          "cpuTicks": 1,
+          "comm": "craidd-studio",
+          "executable": "/tmp/craidd-release-audit-f6d4-release/release/craidd-studio",
+          "pssBytes": 10960896
+        },
+        {
+          "pid": 700427,
+          "parent": 700413,
+          "rssBytes": 72638464,
+          "cpuTicks": 1,
+          "comm": "WebKitNetworkPr",
+          "executable": "/usr/lib/webkit2gtk-4.1/WebKitNetworkProcess",
+          "pssBytes": 31130624
+        },
+        {
+          "pid": 700501,
+          "parent": 700413,
+          "rssBytes": 372686848,
+          "cpuTicks": 30,
+          "comm": "WebKitWebProces",
+          "executable": "/usr/lib/webkit2gtk-4.1/WebKitWebProcess",
+          "pssBytes": 168562688
+        },
+        {
+          "pid": 700596,
+          "parent": 700413,
+          "rssBytes": 433934336,
+          "cpuTicks": 52,
+          "comm": "WebKitWebProces",
+          "executable": "/usr/lib/webkit2gtk-4.1/WebKitWebProcess",
+          "pssBytes": 218861568
+        }
+      ]
+    },
+    {
+      "epochMs": 1792849099029,
+      "rssBytes": 1205714944,
+      "pssBytes": 536925184,
+      "processes": [
+        {
+          "pid": 700413,
+          "parent": 700411,
+          "rssBytes": 286334976,
+          "cpuTicks": 54,
+          "comm": "craidd-studio",
+          "executable": "/tmp/craidd-release-audit-f6d4-release/release/craidd-studio",
+          "pssBytes": 107409408
+        },
+        {
+          "pid": 700416,
+          "parent": 700413,
+          "rssBytes": 40120320,
+          "cpuTicks": 1,
+          "comm": "craidd-studio",
+          "executable": "/tmp/craidd-release-audit-f6d4-release/release/craidd-studio",
+          "pssBytes": 10960896
+        },
+        {
+          "pid": 700427,
+          "parent": 700413,
+          "rssBytes": 72638464,
+          "cpuTicks": 1,
+          "comm": "WebKitNetworkPr",
+          "executable": "/usr/lib/webkit2gtk-4.1/WebKitNetworkProcess",
+          "pssBytes": 31130624
+        },
+        {
+          "pid": 700501,
+          "parent": 700413,
+          "rssBytes": 372686848,
+          "cpuTicks": 30,
+          "comm": "WebKitWebProces",
+          "executable": "/usr/lib/webkit2gtk-4.1/WebKitWebProcess",
+          "pssBytes": 168562688
+        },
+        {
+          "pid": 700596,
+          "parent": 700413,
+          "rssBytes": 433934336,
+          "cpuTicks": 52,
+          "comm": "WebKitWebProces",
+          "executable": "/usr/lib/webkit2gtk-4.1/WebKitWebProcess",
+          "pssBytes": 218861568
+        }
+      ]
+    },
+    {
+      "epochMs": 1792849099161,
+      "rssBytes": 1205714944,
+      "pssBytes": 536925184,
+      "processes": [
+        {
+          "pid": 700413,
+          "parent": 700411,
+          "rssBytes": 286334976,
+          "cpuTicks": 54,
+          "comm": "craidd-studio",
+          "executable": "/tmp/craidd-release-audit-f6d4-release/release/craidd-studio",
+          "pssBytes": 107409408
+        },
+        {
+          "pid": 700416,
+          "parent": 700413,
+          "rssBytes": 40120320,
+          "cpuTicks": 1,
+          "comm": "craidd-studio",
+          "executable": "/tmp/craidd-release-audit-f6d4-release/release/craidd-studio",
+          "pssBytes": 10960896
+        },
+        {
+          "pid": 700427,
+          "parent": 700413,
+          "rssBytes": 72638464,
+          "cpuTicks": 1,
+          "comm": "WebKitNetworkPr",
+          "executable": "/usr/lib/webkit2gtk-4.1/WebKitNetworkProcess",
+          "pssBytes": 31130624
+        },
+        {
+          "pid": 700501,
+          "parent": 700413,
+          "rssBytes": 372686848,
+          "cpuTicks": 30,
+          "comm": "WebKitWebProces",
+          "executable": "/usr/lib/webkit2gtk-4.1/WebKitWebProcess",
+          "pssBytes": 168562688
+        },
+        {
+          "pid": 700596,
+          "parent": 700413,
+          "rssBytes": 433934336,
+          "cpuTicks": 52,
+          "comm": "WebKitWebProces",
+          "executable": "/usr/lib/webkit2gtk-4.1/WebKitWebProcess",
+          "pssBytes": 218861568
+        }
+      ]
+    },
+    {
+      "epochMs": 1792849099291,
+      "rssBytes": 1205714944,
+      "pssBytes": 536925184,
+      "processes": [
+        {
+          "pid": 700413,
+          "parent": 700411,
+          "rssBytes": 286334976,
+          "cpuTicks": 54,
+          "comm": "craidd-studio",
+          "executable": "/tmp/craidd-release-audit-f6d4-release/release/craidd-studio",
+          "pssBytes": 107409408
+        },
+        {
+          "pid": 700416,
+          "parent": 700413,
+          "rssBytes": 40120320,
+          "cpuTicks": 1,
+          "comm": "craidd-studio",
+          "executable": "/tmp/craidd-release-audit-f6d4-release/release/craidd-studio",
+          "pssBytes": 10960896
+        },
+        {
+          "pid": 700427,
+          "parent": 700413,
+          "rssBytes": 72638464,
+          "cpuTicks": 1,
+          "comm": "WebKitNetworkPr",
+          "executable": "/usr/lib/webkit2gtk-4.1/WebKitNetworkProcess",
+          "pssBytes": 31130624
+        },
+        {
+          "pid": 700501,
+          "parent": 700413,
+          "rssBytes": 372686848,
+          "cpuTicks": 30,
+          "comm": "WebKitWebProces",
+          "executable": "/usr/lib/webkit2gtk-4.1/WebKitWebProcess",
+          "pssBytes": 168562688
+        },
+        {
+          "pid": 700596,
+          "parent": 700413,
+          "rssBytes": 433934336,
+          "cpuTicks": 52,
+          "comm": "WebKitWebProces",
+          "executable": "/usr/lib/webkit2gtk-4.1/WebKitWebProcess",
+          "pssBytes": 218861568
+        }
+      ]
+    },
+    {
+      "epochMs": 1792849099419,
+      "rssBytes": 1205714944,
+      "pssBytes": 536925184,
+      "processes": [
+        {
+          "pid": 700413,
+          "parent": 700411,
+          "rssBytes": 286334976,
+          "cpuTicks": 54,
+          "comm": "craidd-studio",
+          "executable": "/tmp/craidd-release-audit-f6d4-release/release/craidd-studio",
+          "pssBytes": 107409408
+        },
+        {
+          "pid": 700416,
+          "parent": 700413,
+          "rssBytes": 40120320,
+          "cpuTicks": 1,
+          "comm": "craidd-studio",
+          "executable": "/tmp/craidd-release-audit-f6d4-release/release/craidd-studio",
+          "pssBytes": 10960896
+        },
+        {
+          "pid": 700427,
+          "parent": 700413,
+          "rssBytes": 72638464,
+          "cpuTicks": 1,
+          "comm": "WebKitNetworkPr",
+          "executable": "/usr/lib/webkit2gtk-4.1/WebKitNetworkProcess",
+          "pssBytes": 31130624
+        },
+        {
+          "pid": 700501,
+          "parent": 700413,
+          "rssBytes": 372686848,
+          "cpuTicks": 30,
+          "comm": "WebKitWebProces",
+          "executable": "/usr/lib/webkit2gtk-4.1/WebKitWebProcess",
+          "pssBytes": 168562688
+        },
+        {
+          "pid": 700596,
+          "parent": 700413,
+          "rssBytes": 433934336,
+          "cpuTicks": 52,
+          "comm": "WebKitWebProces",
+          "executable": "/usr/lib/webkit2gtk-4.1/WebKitWebProcess",
+          "pssBytes": 218861568
+        }
+      ]
+    },
+    {
+      "epochMs": 1792849099549,
+      "rssBytes": 1205714944,
+      "pssBytes": 536925184,
+      "processes": [
+        {
+          "pid": 700413,
+          "parent": 700411,
+          "rssBytes": 286334976,
+          "cpuTicks": 54,
+          "comm": "craidd-studio",
+          "executable": "/tmp/craidd-release-audit-f6d4-release/release/craidd-studio",
+          "pssBytes": 107409408
+        },
+        {
+          "pid": 700416,
+          "parent": 700413,
+          "rssBytes": 40120320,
+          "cpuTicks": 1,
+          "comm": "craidd-studio",
+          "executable": "/tmp/craidd-release-audit-f6d4-release/release/craidd-studio",
+          "pssBytes": 10960896
+        },
+        {
+          "pid": 700427,
+          "parent": 700413,
+          "rssBytes": 72638464,
+          "cpuTicks": 1,
+          "comm": "WebKitNetworkPr",
+          "executable": "/usr/lib/webkit2gtk-4.1/WebKitNetworkProcess",
+          "pssBytes": 31130624
+        },
+        {
+          "pid": 700501,
+          "parent": 700413,
+          "rssBytes": 372686848,
+          "cpuTicks": 30,
+          "comm": "WebKitWebProces",
+          "executable": "/usr/lib/webkit2gtk-4.1/WebKitWebProcess",
+          "pssBytes": 168562688
+        },
+        {
+          "pid": 700596,
+          "parent": 700413,
+          "rssBytes": 433934336,
+          "cpuTicks": 52,
+          "comm": "WebKitWebProces",
+          "executable": "/usr/lib/webkit2gtk-4.1/WebKitWebProcess",
+          "pssBytes": 218861568
+        }
+      ]
+    },
+    {
+      "epochMs": 1792849099677,
+      "rssBytes": 1205714944,
+      "pssBytes": 536925184,
+      "processes": [
+        {
+          "pid": 700413,
+          "parent": 700411,
+          "rssBytes": 286334976,
+          "cpuTicks": 54,
+          "comm": "craidd-studio",
+          "executable": "/tmp/craidd-release-audit-f6d4-release/release/craidd-studio",
+          "pssBytes": 107409408
+        },
+        {
+          "pid": 700416,
+          "parent": 700413,
+          "rssBytes": 40120320,
+          "cpuTicks": 1,
+          "comm": "craidd-studio",
+          "executable": "/tmp/craidd-release-audit-f6d4-release/release/craidd-studio",
+          "pssBytes": 10960896
+        },
+        {
+          "pid": 700427,
+          "parent": 700413,
+          "rssBytes": 72638464,
+          "cpuTicks": 1,
+          "comm": "WebKitNetworkPr",
+          "executable": "/usr/lib/webkit2gtk-4.1/WebKitNetworkProcess",
+          "pssBytes": 31130624
+        },
+        {
+          "pid": 700501,
+          "parent": 700413,
+          "rssBytes": 372686848,
+          "cpuTicks": 30,
+          "comm": "WebKitWebProces",
+          "executable": "/usr/lib/webkit2gtk-4.1/WebKitWebProcess",
+          "pssBytes": 168562688
+        },
+        {
+          "pid": 700596,
+          "parent": 700413,
+          "rssBytes": 433934336,
+          "cpuTicks": 52,
+          "comm": "WebKitWebProces",
+          "executable": "/usr/lib/webkit2gtk-4.1/WebKitWebProcess",
+          "pssBytes": 218861568
+        }
+      ]
+    },
+    {
+      "epochMs": 1792849099812,
+      "rssBytes": 1205714944,
+      "pssBytes": 536925184,
+      "processes": [
+        {
+          "pid": 700413,
+          "parent": 700411,
+          "rssBytes": 286334976,
+          "cpuTicks": 54,
+          "comm": "craidd-studio",
+          "executable": "/tmp/craidd-release-audit-f6d4-release/release/craidd-studio",
+          "pssBytes": 107409408
+        },
+        {
+          "pid": 700416,
+          "parent": 700413,
+          "rssBytes": 40120320,
+          "cpuTicks": 1,
+          "comm": "craidd-studio",
+          "executable": "/tmp/craidd-release-audit-f6d4-release/release/craidd-studio",
+          "pssBytes": 10960896
+        },
+        {
+          "pid": 700427,
+          "parent": 700413,
+          "rssBytes": 72638464,
+          "cpuTicks": 1,
+          "comm": "WebKitNetworkPr",
+          "executable": "/usr/lib/webkit2gtk-4.1/WebKitNetworkProcess",
+          "pssBytes": 31130624
+        },
+        {
+          "pid": 700501,
+          "parent": 700413,
+          "rssBytes": 372686848,
+          "cpuTicks": 30,
+          "comm": "WebKitWebProces",
+          "executable": "/usr/lib/webkit2gtk-4.1/WebKitWebProcess",
+          "pssBytes": 168562688
+        },
+        {
+          "pid": 700596,
+          "parent": 700413,
+          "rssBytes": 433934336,
+          "cpuTicks": 52,
+          "comm": "WebKitWebProces",
+          "executable": "/usr/lib/webkit2gtk-4.1/WebKitWebProcess",
+          "pssBytes": 218861568
+        }
+      ]
+    },
+    {
+      "epochMs": 1792849099943,
+      "rssBytes": 1205714944,
+      "pssBytes": 536925184,
+      "processes": [
+        {
+          "pid": 700413,
+          "parent": 700411,
+          "rssBytes": 286334976,
+          "cpuTicks": 54,
+          "comm": "craidd-studio",
+          "executable": "/tmp/craidd-release-audit-f6d4-release/release/craidd-studio",
+          "pssBytes": 107409408
+        },
+        {
+          "pid": 700416,
+          "parent": 700413,
+          "rssBytes": 40120320,
+          "cpuTicks": 1,
+          "comm": "craidd-studio",
+          "executable": "/tmp/craidd-release-audit-f6d4-release/release/craidd-studio",
+          "pssBytes": 10960896
+        },
+        {
+          "pid": 700427,
+          "parent": 700413,
+          "rssBytes": 72638464,
+          "cpuTicks": 1,
+          "comm": "WebKitNetworkPr",
+          "executable": "/usr/lib/webkit2gtk-4.1/WebKitNetworkProcess",
+          "pssBytes": 31130624
+        },
+        {
+          "pid": 700501,
+          "parent": 700413,
+          "rssBytes": 372686848,
+          "cpuTicks": 30,
+          "comm": "WebKitWebProces",
+          "executable": "/usr/lib/webkit2gtk-4.1/WebKitWebProcess",
+          "pssBytes": 168562688
+        },
+        {
+          "pid": 700596,
+          "parent": 700413,
+          "rssBytes": 433934336,
+          "cpuTicks": 52,
+          "comm": "WebKitWebProces",
+          "executable": "/usr/lib/webkit2gtk-4.1/WebKitWebProcess",
+          "pssBytes": 218861568
+        }
+      ]
+    },
+    {
+      "epochMs": 1792849100071,
+      "rssBytes": 1205714944,
+      "pssBytes": 536925184,
+      "processes": [
+        {
+          "pid": 700413,
+          "parent": 700411,
+          "rssBytes": 286334976,
+          "cpuTicks": 54,
+          "comm": "craidd-studio",
+          "executable": "/tmp/craidd-release-audit-f6d4-release/release/craidd-studio",
+          "pssBytes": 107409408
+        },
+        {
+          "pid": 700416,
+          "parent": 700413,
+          "rssBytes": 40120320,
+          "cpuTicks": 1,
+          "comm": "craidd-studio",
+          "executable": "/tmp/craidd-release-audit-f6d4-release/release/craidd-studio",
+          "pssBytes": 10960896
+        },
+        {
+          "pid": 700427,
+          "parent": 700413,
+          "rssBytes": 72638464,
+          "cpuTicks": 1,
+          "comm": "WebKitNetworkPr",
+          "executable": "/usr/lib/webkit2gtk-4.1/WebKitNetworkProcess",
+          "pssBytes": 31130624
+        },
+        {
+          "pid": 700501,
+          "parent": 700413,
+          "rssBytes": 372686848,
+          "cpuTicks": 30,
+          "comm": "WebKitWebProces",
+          "executable": "/usr/lib/webkit2gtk-4.1/WebKitWebProcess",
+          "pssBytes": 168562688
+        },
+        {
+          "pid": 700596,
+          "parent": 700413,
+          "rssBytes": 433934336,
+          "cpuTicks": 52,
+          "comm": "WebKitWebProces",
+          "executable": "/usr/lib/webkit2gtk-4.1/WebKitWebProcess",
+          "pssBytes": 218861568
+        }
+      ]
+    },
+    {
+      "epochMs": 1792849100203,
+      "rssBytes": 1205714944,
+      "pssBytes": 536925184,
+      "processes": [
+        {
+          "pid": 700413,
+          "parent": 700411,
+          "rssBytes": 286334976,
+          "cpuTicks": 54,
+          "comm": "craidd-studio",
+          "executable": "/tmp/craidd-release-audit-f6d4-release/release/craidd-studio",
+          "pssBytes": 107409408
+        },
+        {
+          "pid": 700416,
+          "parent": 700413,
+          "rssBytes": 40120320,
+          "cpuTicks": 1,
+          "comm": "craidd-studio",
+          "executable": "/tmp/craidd-release-audit-f6d4-release/release/craidd-studio",
+          "pssBytes": 10960896
+        },
+        {
+          "pid": 700427,
+          "parent": 700413,
+          "rssBytes": 72638464,
+          "cpuTicks": 1,
+          "comm": "WebKitNetworkPr",
+          "executable": "/usr/lib/webkit2gtk-4.1/WebKitNetworkProcess",
+          "pssBytes": 31130624
+        },
+        {
+          "pid": 700501,
+          "parent": 700413,
+          "rssBytes": 372686848,
+          "cpuTicks": 30,
+          "comm": "WebKitWebProces",
+          "executable": "/usr/lib/webkit2gtk-4.1/WebKitWebProcess",
+          "pssBytes": 168562688
+        },
+        {
+          "pid": 700596,
+          "parent": 700413,
+          "rssBytes": 433934336,
+          "cpuTicks": 52,
+          "comm": "WebKitWebProces",
+          "executable": "/usr/lib/webkit2gtk-4.1/WebKitWebProcess",
+          "pssBytes": 218861568
+        }
+      ]
+    },
+    {
+      "epochMs": 1792849100338,
+      "rssBytes": 1205714944,
+      "pssBytes": 536925184,
+      "processes": [
+        {
+          "pid": 700413,
+          "parent": 700411,
+          "rssBytes": 286334976,
+          "cpuTicks": 54,
+          "comm": "craidd-studio",
+          "executable": "/tmp/craidd-release-audit-f6d4-release/release/craidd-studio",
+          "pssBytes": 107409408
+        },
+        {
+          "pid": 700416,
+          "parent": 700413,
+          "rssBytes": 40120320,
+          "cpuTicks": 1,
+          "comm": "craidd-studio",
+          "executable": "/tmp/craidd-release-audit-f6d4-release/release/craidd-studio",
+          "pssBytes": 10960896
+        },
+        {
+          "pid": 700427,
+          "parent": 700413,
+          "rssBytes": 72638464,
+          "cpuTicks": 1,
+          "comm": "WebKitNetworkPr",
+          "executable": "/usr/lib/webkit2gtk-4.1/WebKitNetworkProcess",
+          "pssBytes": 31130624
+        },
+        {
+          "pid": 700501,
+          "parent": 700413,
+          "rssBytes": 372686848,
+          "cpuTicks": 30,
+          "comm": "WebKitWebProces",
+          "executable": "/usr/lib/webkit2gtk-4.1/WebKitWebProcess",
+          "pssBytes": 168562688
+        },
+        {
+          "pid": 700596,
+          "parent": 700413,
+          "rssBytes": 433934336,
+          "cpuTicks": 52,
+          "comm": "WebKitWebProces",
+          "executable": "/usr/lib/webkit2gtk-4.1/WebKitWebProcess",
+          "pssBytes": 218861568
+        }
+      ]
+    },
+    {
+      "epochMs": 1792849100475,
+      "rssBytes": 1205714944,
+      "pssBytes": 536925184,
+      "processes": [
+        {
+          "pid": 700413,
+          "parent": 700411,
+          "rssBytes": 286334976,
+          "cpuTicks": 54,
+          "comm": "craidd-studio",
+          "executable": "/tmp/craidd-release-audit-f6d4-release/release/craidd-studio",
+          "pssBytes": 107409408
+        },
+        {
+          "pid": 700416,
+          "parent": 700413,
+          "rssBytes": 40120320,
+          "cpuTicks": 1,
+          "comm": "craidd-studio",
+          "executable": "/tmp/craidd-release-audit-f6d4-release/release/craidd-studio",
+          "pssBytes": 10960896
+        },
+        {
+          "pid": 700427,
+          "parent": 700413,
+          "rssBytes": 72638464,
+          "cpuTicks": 1,
+          "comm": "WebKitNetworkPr",
+          "executable": "/usr/lib/webkit2gtk-4.1/WebKitNetworkProcess",
+          "pssBytes": 31130624
+        },
+        {
+          "pid": 700501,
+          "parent": 700413,
+          "rssBytes": 372686848,
+          "cpuTicks": 30,
+          "comm": "WebKitWebProces",
+          "executable": "/usr/lib/webkit2gtk-4.1/WebKitWebProcess",
+          "pssBytes": 168562688
+        },
+        {
+          "pid": 700596,
+          "parent": 700413,
+          "rssBytes": 433934336,
+          "cpuTicks": 52,
+          "comm": "WebKitWebProces",
+          "executable": "/usr/lib/webkit2gtk-4.1/WebKitWebProcess",
+          "pssBytes": 218861568
+        }
+      ]
+    }
+  ],
+  "after": {
+    "epochMs": 1792849100475,
+    "rssBytes": 1205714944,
+    "pssBytes": 536925184,
+    "processes": [
+      {
+        "pid": 700413,
+        "parent": 700411,
+        "rssBytes": 286334976,
+        "cpuTicks": 54,
+        "comm": "craidd-studio",
+        "executable": "/tmp/craidd-release-audit-f6d4-release/release/craidd-studio",
+        "pssBytes": 107409408
+      },
+      {
+        "pid": 700416,
+        "parent": 700413,
+        "rssBytes": 40120320,
+        "cpuTicks": 1,
+        "comm": "craidd-studio",
+        "executable": "/tmp/craidd-release-audit-f6d4-release/release/craidd-studio",
+        "pssBytes": 10960896
+      },
+      {
+        "pid": 700427,
+        "parent": 700413,
+        "rssBytes": 72638464,
+        "cpuTicks": 1,
+        "comm": "WebKitNetworkPr",
+        "executable": "/usr/lib/webkit2gtk-4.1/WebKitNetworkProcess",
+        "pssBytes": 31130624
+      },
+      {
+        "pid": 700501,
+        "parent": 700413,
+        "rssBytes": 372686848,
+        "cpuTicks": 30,
+        "comm": "WebKitWebProces",
+        "executable": "/usr/lib/webkit2gtk-4.1/WebKitWebProcess",
+        "pssBytes": 168562688
+      },
+      {
+        "pid": 700596,
+        "parent": 700413,
+        "rssBytes": 433934336,
+        "cpuTicks": 52,
+        "comm": "WebKitWebProces",
+        "executable": "/usr/lib/webkit2gtk-4.1/WebKitWebProcess",
+        "pssBytes": 218861568
+      }
+    ]
+  },
+  "loading": {
+    "state": "loading",
+    "bytesRead": 33943223,
+    "totalBytes": 153890865,
+    "tables": [],
+    "maxMemoryBytes": 536870912,
+    "maxSets": 2,
+    "id": "metrics-700413-1",
+    "maxRows": 2000000,
+    "error": null,
+    "memoryBytes": 0,
+    "maxFileBytes": 1073741824,
+    "kind": "importedMetrics",
+    "joins": [],
+    "rows": [],
+    "paths": [
+      "/tmp/craidd-metric-release-20261024-million.csv"
+    ]
+  },
+  "closeRequestedAt": 1792849097918,
+  "trace": [
+    {
+      "bytesRead": 0,
+      "cancelled": false,
+      "epochMs": 1792849097575,
+      "event": "reader-started",
+      "id": "metrics-700413-1",
+      "owner": "workspace-1",
+      "state": "loading"
+    },
+    {
+      "bytesRead": 45935537,
+      "cancelled": true,
+      "epochMs": 1792849097921,
+      "event": "owner-close-cancel",
+      "id": "metrics-700413-1",
+      "owner": "workspace-1",
+      "state": "loading"
+    },
+    {
+      "bytesRead": 45935537,
+      "cancelled": true,
+      "epochMs": 1792849097921,
+      "event": "reader-finished",
+      "id": "metrics-700413-1",
+      "owner": "workspace-1",
+      "state": "cancelled"
+    },
+    {
+      "bytesRead": 45935537,
+      "cancelled": true,
+      "epochMs": 1792849097921,
+      "event": "storage-released",
+      "id": "metrics-700413-1",
+      "owner": "workspace-1",
+      "state": "cancelled"
+    }
+  ],
+  "releaseAfterCloseMs": 3,
+  "producerReaderFds": [],
+  "removedJobError": "Error: POST /session/ec9876d0-f7ba-4c69-a81b-bd3d56c6467c/execute/async: Metric source unavailable in this window",
+  "producerSizeUnchanged": true,
+  "ideUsable": true,
+  "newImportRow": {
+    "companions": [],
+    "row": {
+      "cells": [
+        1,
+        2
+      ],
+      "x": 2,
+      "line": 3,
+      "index": 1
+    }
+  }
+}

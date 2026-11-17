@@ -1,0 +1,48 @@
+{
+  "scope": "Known managed hot method weight only, identified by fixture-reported JIT address range; excludes unrelated runtime weight",
+  "machine": "sk27",
+  "kernel": "7.2.11-arch1-1",
+  "perf": "perf version 7.2.11-1",
+  "cases": [
+    {
+      "mode": "without",
+      "pid": 320240,
+      "knownMethodRange": [
+        "0x40ca9280",
+        "0x40ca9309"
+      ],
+      "rawLeafKnownManagedWeight": 1841841840,
+      "rawLeafNamedWeight": 0,
+      "rawLeafNamedPct": 0.0,
+      "knownManagedWeight": 0,
+      "namedKnownManagedWeight": 0,
+      "namedPct": null,
+      "totalSampledWeight": 1856856855,
+      "mapEntries": 0,
+      "recordStderr": "[ perf record: Woken up 60 times to write data ]\n[ perf record: Captured and wrote 14.912 MB /tmp/craidd-gr004-samples-20261023-verified/without.data ]\n"
+    },
+    {
+      "mode": "enabled",
+      "pid": 320301,
+      "knownMethodRange": [
+        "0x40500280",
+        "0x40500309"
+      ],
+      "rawLeafKnownManagedWeight": 1848848847,
+      "rawLeafNamedWeight": 1848848847,
+      "rawLeafNamedPct": 100.0,
+      "knownManagedWeight": 0,
+      "namedKnownManagedWeight": 0,
+      "namedPct": null,
+      "totalSampledWeight": 1860860859,
+      "mapEntries": 114,
+      "recordStderr": "[ perf record: Woken up 60 times to write data ]\n[ perf record: Captured and wrote 14.944 MB /tmp/craidd-gr004-samples-20261023-verified/enabled.data ]\n"
+    }
+  ],
+  "gates": {
+    "rawLeafWithoutMap": "PASS",
+    "rawLeafHelperMap": "PASS",
+    "withoutMapNaming": "FAIL",
+    "helperMapNaming": "FAIL"
+  }
+}

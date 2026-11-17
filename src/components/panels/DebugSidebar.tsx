@@ -44,7 +44,7 @@ export default function DebugSidebar() {
     if (!remote) { await reveal(file, line, 1); return; }
     await dispatchLinkedWindowCommand(remote.windowLabel, "reveal_file", JSON.stringify({ file, line }));
     await reveal(file, line, 1);
-    if (useSolution.getState().tabs.some((tab) => tab.fileId === file)) {
+    if (useSolution.getState().tabs.some((tab) => tab.kind === "file" && tab.fileId === file)) {
       useLinkedWindows.getState().setRemoteEditing(true);
     }
   };
@@ -77,6 +77,13 @@ export default function DebugSidebar() {
   };
   return <div className="min-h-0 flex-1 w-full flex flex-col overflow-hidden text-xs">
     <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden scroll-thin overscroll-contain" tabIndex={0} aria-label="Debugger details">
+      {debug.attached && debug.target && !remote && <section className="p-3 border-b border-zinc-700 bg-zinc-800/30">
+        <div className="font-semibold">Attached · {debug.target.name}</div>
+        <div className="mt-1 text-zinc-400">PID {debug.target.pid} · {debug.status}</div>
+        <div className="mt-1 text-zinc-500 break-all">{debug.target.executable}</div>
+        {["starting","running","paused","error"].includes(debug.status) && <button type="button" onClick={() => void debug.control("stop")} className="mt-2 rounded border border-zinc-600 px-2 py-1 hover:bg-zinc-800">Detach · keep running</button>}
+        <details className="mt-3"><summary>Modules ({debug.modules.length})</summary><button type="button" className="my-2 rounded border border-zinc-600 px-2 py-1" onClick={()=>void debug.refreshModules()}>Refresh mapped modules</button><div className="space-y-2 mt-2">{debug.modules.map((module) => <div key={module.id} className="break-all"><div>{module.name ?? module.path ?? module.id}</div><div className="text-zinc-500">{module.symbolStatus ?? "Symbol status unavailable"}</div></div>)}</div></details>
+      </section>}
       <LdiSessionCard />
       {closedNativeBlue && ["building", "starting", "running", "paused"].includes(debug.status) && <section className="border-b border-blue-900 bg-blue-950/20 p-3">
         <div className="font-semibold text-blue-300">Native view closed</div>

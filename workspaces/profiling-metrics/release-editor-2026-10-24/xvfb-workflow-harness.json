@@ -1,0 +1,30 @@
+{
+  "records": [
+    {
+      "step": "frontend-ready",
+      "at": "2026-10-24T13:38:32.644Z",
+      "origin": "tauri://localhost",
+      "root": true,
+      "ipc": true,
+      "url": "tauri://localhost",
+      "ready": "complete"
+    },
+    {
+      "step": "native-selection-after-brush",
+      "at": "2026-10-24T13:38:35.599Z",
+      "collapsed": true,
+      "text": "",
+      "focus": "DIV",
+      "anchor": "DIV"
+    },
+    {
+      "step": "final-profile",
+      "at": "2026-10-24T13:38:37.719Z",
+      "profile": null
+    }
+  ],
+  "log": [
+    "MESA-EGL: warning: DRI3 error: Could not get DRI3 device",
+    "MESA-EGL: warning: Ensure your X server supports DRI3 to get accelerated rendering"
+  ]
+}

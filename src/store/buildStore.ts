@@ -1,3 +1,4 @@
+import { isFileTab } from "../types/project";
 import { create } from "zustand";
 import { useSolution } from "./solutionStore";
 import { appendBuildProblem, decodeBuildLine, type BuildProblem } from "../lib/buildDiagnostics";
@@ -84,6 +85,7 @@ export function listenToBuildEvents(): Promise<void> { return ensureEvents(); }
 import type { ConfigEntry, CraiddSolution, OrderRequest } from "../types/project";
 
 export interface RunSpec {
+  embeddedMonoJitMap?: boolean;
   label: string;
   program: string;
   args: string[];
@@ -105,7 +107,11 @@ export interface RunSpec {
  * is deliberately small and honest: it either knows what to do, or
  * it returns null and the toolbar shows a failure message.
  */
-export function resolveSpec(
+export function resolveSpec(...args:Parameters<typeof resolveSpecBase>):RunSpec|null {
+ const spec=resolveSpecBase(...args);
+ return spec&&args[0].kind==="run"&&args[0].embeddedMonoJitMap?{...spec,embeddedMonoJitMap:true}:spec;
+}
+function resolveSpecBase(
   config: ConfigEntry,
   solutionRoot: string,
   solution: CraiddSolution,
@@ -367,7 +373,7 @@ export const useBuild = create<BuildState>((set, get) => ({
 
     // The launched program must match the source currently visible in the
     // editor. A conflict blocks launch instead of overwriting another view.
-    for (const tab of useSolution.getState().tabs.filter((tab) => tab.dirty)) {
+    for (const tab of useSolution.getState().tabs.filter(isFileTab).filter((tab) => tab.dirty)) {
       const result = await useSolution.getState().saveFile(tab.fileId);
       if (result !== "saved") {
         set({ status: "failed", output: `${result === "conflict" ? "Disk conflict" : "Could not save"}: ${tab.name}. Resolve it before ${action}.\n` });
@@ -379,7 +385,7 @@ export const useBuild = create<BuildState>((set, get) => ({
     // Refresh clean copies before rebuilding so the editor shows the source
     // corresponding to the new executable; dirty copies were checked above.
     await useSolution.getState().refreshDiskStates();
-    for (const tab of useSolution.getState().tabs.filter((tab) => !tab.dirty && tab.diskState === "newer")) {
+    for (const tab of useSolution.getState().tabs.filter(isFileTab).filter((tab) => !tab.dirty && tab.diskState === "newer")) {
       await useSolution.getState().reloadTabFromDisk(tab.fileId);
     }
 

@@ -515,7 +515,7 @@ pub async fn list_ldi_call_sites(
             if !cwd.starts_with(&solution_root) || !config.args.iter().any(|arg| arg == "--build") { return None; }
             Some((config.name, LdiSelection { label: "preview".into(), instance_id: String::new(),
                 configuration: None, profile: None,
-                window_id: 0, solution: origin.solution.clone(), spec: super::runner::RunSpec {
+                window_id: 0, solution: origin.solution.clone(), spec: super::runner::RunSpec { embedded_mono_jit_map:false,
                     label: "preview".into(), program: "cmake".into(), args: config.args,
                     env: Default::default(), cwd: cwd.to_string_lossy().into_owned(),
                     linked: None, order: None,
@@ -2499,7 +2499,7 @@ mod tests {
                 selection: super::super::linked_windows::LdiSelection { label: partner.into(),
                     configuration: None, profile: None,
                     instance_id: partner.into(), window_id: 2, solution: "/solution.cln".into(),
-                    spec: super::super::runner::RunSpec { label: library.into(), program: "cmake".into(),
+                    spec: super::super::runner::RunSpec { embedded_mono_jit_map:false, label: library.into(), program: "cmake".into(),
                         args: vec![], env: Default::default(), cwd: "/native".into(), linked: None, order: None } },
                 origin_cwd: "/project".into(), native_source: String::new() });
         }
@@ -2551,7 +2551,7 @@ mod tests {
             configuration: None, profile: None,
             label: "native".into(), instance_id: "one".into(), window_id: 2,
             solution: root.join("ldi-interop-playground.cln").to_string_lossy().into_owned(),
-            spec: super::super::runner::RunSpec { label: "native".into(), program: "cmake".into(),
+            spec: super::super::runner::RunSpec { embedded_mono_jit_map:false, label: "native".into(), program: "cmake".into(),
                 args: vec!["--build".into(), "build".into()], env: Default::default(),
                 cwd: root.join("Native").to_string_lossy().into_owned(), linked: None, order: None },
         };

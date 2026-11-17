@@ -133,6 +133,8 @@ pub struct SolutionWithPath {
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct ConfigEntry {
+    #[serde(default,skip_serializing_if="std::ops::Not::not")]
+    pub embedded_mono_jit_map:bool,
     pub name: String,
     /// Inference-only metadata for a solution-level recommendation.
     #[serde(default)]

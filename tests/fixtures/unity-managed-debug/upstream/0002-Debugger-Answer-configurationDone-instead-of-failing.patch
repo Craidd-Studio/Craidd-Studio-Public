@@ -1,0 +1,31 @@
+From bfea3b2989487b9408fba74b632b4a5da62a84a3 Mon Sep 17 00:00:00 2001
+From: Edward Patch <edwardpatch767@gmail.com>
+Date: Fri, 16 Oct 2026 23:48:36 +0100
+Subject: [PATCH 2/2] [Debugger]: Answer configurationDone instead of failing
+
+DebugAdapterBase throws NotImplementedException for an unhandled
+configurationDone, which ends the session. Return an empty response.
+---
+ src/DotRush.Debugging.Mono/DebugSession.cs | 6 ++++++
+ 1 file changed, 6 insertions(+)
+
+diff --git a/src/DotRush.Debugging.Mono/DebugSession.cs b/src/DotRush.Debugging.Mono/DebugSession.cs
+index c1276d0..97493fd 100644
+--- a/src/DotRush.Debugging.Mono/DebugSession.cs
++++ b/src/DotRush.Debugging.Mono/DebugSession.cs
+@@ -61,6 +61,12 @@ public class DebugSession : Session {
+         };
+     }
+     #endregion Initialize
++    #region ConfigurationDone
++    // Not advertised, but harmless: clients that send it anyway must not crash the adapter.
++    protected override ConfigurationDoneResponse HandleConfigurationDoneRequest(ConfigurationDoneArguments arguments) {
++        return new ConfigurationDoneResponse();
++    }
++    #endregion ConfigurationDone
+     #region Attach
+     protected override AttachResponse HandleAttachRequest(AttachArguments arguments) {
+         return ServerExtensions.DoSafe(() => {
+-- 
+2.56.0
+

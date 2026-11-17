@@ -6,7 +6,7 @@ import { showSessionNotice } from "../store/sessionFeedbackStore";
 export async function revealDebugSource(file: string, line: number, column = 1, isCurrent = () => true): Promise<boolean> {
   try {
     const solution = useSolution.getState();
-    if (!solution.tabs.some((tab) => tab.fileId === file)) {
+    if (!solution.tabs.some((tab) => tab.kind === "file" && tab.fileId === file)) {
       const { invoke } = await import("@tauri-apps/api/core");
       const stats = await invoke<{ exists: boolean; readable: boolean }[]>("stat_files", { paths: [file] });
       if (!isCurrent()) return false;

@@ -221,7 +221,7 @@ fn load_solution_from_cln(root_path: &Path, cln_path: &Path) -> Result<Option<Cr
 fn parse_config_entry(v: &toml::Value) -> Option<ConfigEntry> {
     let t = v.as_table()?;
     let name = t.get("name").and_then(|x| x.as_str())?.to_string();
-    Some(ConfigEntry {
+    Some(ConfigEntry { embedded_mono_jit_map:t.get("embedded_mono_jit_map").and_then(|v|v.as_bool()).unwrap_or(false),
         name,
         best_fit: false,
         related_projects: vec![],
@@ -617,7 +617,9 @@ pub fn save_solution(root: String, solution: CraiddSolution) -> Result<(), Strin
     for cfg in &solution.configs {
         if cfg.origin == "inferred" { continue; }
         text.push('\n');
+        if cfg.embedded_mono_jit_map&&(cfg.kind!="run"||cfg.slots.is_some()){return Err("Experimental Mono JIT maps belong to a concrete run configuration".into());}
         text.push_str("[[config]]\n");
+        if cfg.embedded_mono_jit_map{text.push_str("embedded_mono_jit_map = true\n");}
         text.push_str(&format!("name = \"{}\"\n", escape(&cfg.name)));
         text.push_str(&format!("kind = \"{}\"\n", escape(&cfg.kind)));
         text.push_str(&format!("target = \"{}\"\n", escape(&cfg.target)));
@@ -682,6 +684,13 @@ pub fn save_solution(root: String, solution: CraiddSolution) -> Result<(), Strin
         }
     }
 
+    // Profiling settings have their own owner/editor; preserve the current table
+    // even when this older solution object predates a settings-list save.
+    if file_path.exists(){
+        let old=fs::read_to_string(&file_path).map_err(|e|e.to_string())?;
+        let old:toml_edit::Document=old.parse().map_err(|e|format!("Invalid existing solution: {e}"))?;
+        if let Some(profiling)=old.get("profiling"){let mut next:toml_edit::Document=text.parse().map_err(|e|format!("Invalid generated solution: {e}"))?;next["profiling"]=profiling.clone();text=next.to_string();}
+    }
     fs::write(&file_path, text).map_err(|e| e.to_string())?;
     Ok(())
 }
@@ -738,7 +747,9 @@ pub fn save_solution_configs(cln_path: String, configs: Vec<ConfigEntry>, defaul
         if !["run", "build", "debug", "test"].contains(&cfg.kind.as_str()) {
             return Err(format!("Unsupported configuration kind: {}", cfg.kind));
         }
+        if cfg.embedded_mono_jit_map&&(cfg.kind!="run"||cfg.slots.is_some()){return Err("Experimental Mono JIT maps belong to a concrete run configuration".into());}
         let mut item = Table::new();
+        if cfg.embedded_mono_jit_map{item.insert("embedded_mono_jit_map",value(true));}
         item.insert("name", value(name));
         item.insert("kind", value(&cfg.kind));
         item.insert("target", value(&cfg.target));
@@ -865,7 +876,7 @@ mod config_editor_tests {
         fs::create_dir_all(&dir).unwrap();
         let file = dir.join("sample.cln");
         fs::write(&file, "# keep this comment\n[solution]\nname = \"sample\"\nprojects = []\n\n[extra]\nflag = true\n").unwrap();
-        let config = ConfigEntry {
+        let config = ConfigEntry { embedded_mono_jit_map:false,
             name: "My solution".into(), kind: "run".into(), target: ".".into(),
             origin: "user".into(), best_fit: false, related_projects: vec![],
             slots: Some(ConfigSlots { run: Some("Run app".into()), build: None, debug: None }),
@@ -874,7 +885,7 @@ mod config_editor_tests {
         };
         let mut env = std::collections::BTreeMap::new();
         env.insert("MODE".into(), "test".into());
-        let run = ConfigEntry {
+        let run = ConfigEntry { embedded_mono_jit_map:false,
             name: "Run app".into(), kind: "run".into(), target: ".".into(),
             origin: "user".into(), best_fit: false, related_projects: vec![], slots: None,
             method: Some("shell".into()), command: Some("echo hello".into()), cwd: None,
@@ -1502,4 +1513,16 @@ pub fn edit_cln_repoint_entry(
     let out = toml::to_string(&parsed).map_err(|e| e.to_string())?;
     fs::write(&cln_path, out).map_err(|e| e.to_string())?;
     Ok(())
+}
+
+#[cfg(test)]
+mod mono_configuration_tests{
+ use super::*;
+ #[test]
+ fn mono_opt_in_round_trips_and_other_solution_saves_keep_symbol_settings(){
+  let dir=std::env::temp_dir().join(format!("mono-config-{}-{}",std::process::id(),std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_nanos()));fs::create_dir_all(&dir).unwrap();let file=dir.join("sample.cln");fs::write(&file,"[solution]\nname='sample'\nversion='1.0'\nprojects=[]\n[profiling]\ndebug_symbol_locations=['../symbols'] # preserve\n[[config]]\nname='Run'\nkind='run'\ntarget='.'\nmethod='shell'\ncommand='true'\nembedded_mono_jit_map=true\n").unwrap();
+  let solution=load_solution_named(dir.to_string_lossy().into(),"sample.cln".into()).unwrap().unwrap().solution;assert!(solution.configs[0].embedded_mono_jit_map);let config=solution.configs[0].clone();save_solution(dir.to_string_lossy().into(),solution).unwrap();let text=fs::read_to_string(&file).unwrap();assert!(text.contains("embedded_mono_jit_map = true")&&text.contains("# preserve"));assert_eq!(crate::perf_symbols::locations(&file).unwrap(),vec!["../symbols"]);
+  let loaded=load_solution_named(dir.to_string_lossy().into(),"sample.cln".into()).unwrap().unwrap().solution;let mut invalid=config.clone();invalid.kind="build".into();assert!(save_solution_configs(file.to_string_lossy().into(),vec![invalid],loaded.default_config.clone(),loaded.configs.clone(),loaded.default_config.clone()).is_err());assert_eq!(fs::read_to_string(&file).unwrap(),text);
+  let mut disabled=config;disabled.embedded_mono_jit_map=false;save_solution_configs(file.to_string_lossy().into(),vec![disabled],loaded.default_config.clone(),loaded.configs,loaded.default_config).unwrap();let loaded=load_solution_named(dir.to_string_lossy().into(),"sample.cln".into()).unwrap().unwrap().solution;assert!(!loaded.configs[0].embedded_mono_jit_map);assert!(!serde_json::to_value(&loaded.configs[0]).unwrap().as_object().unwrap().contains_key("embeddedMonoJitMap"));assert_eq!(crate::perf_symbols::locations(&file).unwrap(),vec!["../symbols"]);fs::remove_dir_all(dir).unwrap();
+ }
 }

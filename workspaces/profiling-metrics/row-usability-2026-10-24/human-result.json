@@ -1,0 +1,21 @@
+{
+  "round": 1,
+  "result": "FAIL",
+  "finding": "HA-METRIC-003",
+  "feedback": "confused. I did what you did tho, this confuses me; see video.",
+  "gates": {
+    "import": "PASS",
+    "humanOrientation": "FAIL",
+    "targetFileUnchanged": "PASS",
+    "humanWindowClosure": "NOT TESTED"
+  },
+  "observations": [
+    "Correct server-metrics.csv imported; graph displayed without render exception.",
+    "Panning and zooming led to original rows 13751\u201316250 (2500 rows).",
+    "Row identities clipped; footer describes rendered/filtered rows without clear scope; row lookup still displays 1.",
+    "Native text selection appears during Output panel resize in video around 54\u201358 s."
+  ],
+  "recordingLimit": "Video captures the original 1600x1000 owned window region. Later window growth can exceed that capture region; no inference of product clipping from the video\u2019s right edge. User-provided row screenshot independently shows clipped row identities.",
+  "reviewMethod": "Timestamped extracted video frames plus source inspection and desktop regression. No continuous live-observer claim.",
+  "video": "round-01.mkv"
+}

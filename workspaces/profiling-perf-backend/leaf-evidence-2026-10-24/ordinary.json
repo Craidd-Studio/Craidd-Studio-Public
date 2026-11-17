@@ -1,0 +1,481 @@
+{
+  "machine": "sk27",
+  "kernel": "7.2.11-arch1-1",
+  "binary": {
+    "path": "/home/skira24/.codex/worktrees/9b33/Craidd-Studio/src-tauri/target/debug/craidd-studio",
+    "sha256": "74358cf2b6b4d5cc7a7dbfa16f4666e3075cea10e706c5f071fc18a5e4036eb3"
+  },
+  "fixture": {
+    "build": "/tmp/craidd-gr004-matched-20261023-v2",
+    "target": {
+      "pid": 448845,
+      "birth": 4231748,
+      "parent": 448834,
+      "state": "S"
+    }
+  },
+  "capture": {
+    "options": {
+      "durationSeconds": 2,
+      "unwind": {
+        "stackBytes": 8192,
+        "kind": "dwarf"
+      },
+      "frequency": 999
+    },
+    "stderr": "[ perf record: Woken up 58 times to write data ]\n[ perf record: Captured and wrote 14.334 MB /home/skira24/.codex/worktrees/9b33/Craidd-Studio/test-results/ui/2026-10-24T00-16-03-020Z/perf-leaf-coverage/home/.cache/com.skira24.craidd-studio/profiling/perf/e13180ae33801181707216dbb75001e11fc9b9032f6f4c793d621c3a07755d5b/capture-1792800964803-448852-1/perf.data ]\n",
+    "reasons": [
+      "Timed duration completed"
+    ],
+    "solution": "/tmp/craidd-perf-leaf-ui-etw7fA/Leaf.cln",
+    "rawSha256": "b5ab78db8d8a8cc136ca14893c2090eccf403075fffac36adbf469b64f2e13ce",
+    "id": "capture-1792800964803-448852-1",
+    "moduleIdentityMs": 136,
+    "jitMap": {
+      "path": "/tmp/perf-448845.map",
+      "sha256": "4062a1d522f071b49e29b9d4fadd7ffc1c45eb4a6a669a5be0a0355169040a66",
+      "state": "matched",
+      "bytes": 9763,
+      "basis": "Names reported by perf from the PID map; no ELF build-ID or source-line verification"
+    },
+    "profileId": "448845-4231748-1792800964673635319",
+    "recordArgv": [
+      "record",
+      "--no-buildid-cache",
+      "--clockid",
+      "mono",
+      "--timestamp",
+      "--per-thread",
+      "--no-inherit",
+      "--user-callchains",
+      "-e",
+      "cpu-clock:u",
+      "-F",
+      "999",
+      "--call-graph",
+      "dwarf,8192",
+      "-t",
+      "448845,448846,448847",
+      "-o",
+      "/home/skira24/.codex/worktrees/9b33/Craidd-Studio/test-results/ui/2026-10-24T00-16-03-020Z/perf-leaf-coverage/home/.cache/com.skira24.craidd-studio/profiling/perf/e13180ae33801181707216dbb75001e11fc9b9032f6f4c793d621c3a07755d5b/capture-1792800964803-448852-1/perf.data"
+    ],
+    "collectorIdentity": {
+      "birth": 4231926,
+      "pid": 449072
+    },
+    "pinned": false,
+    "lossScanMs": 1,
+    "version": 1,
+    "decodeAndParseMs": 266,
+    "parserCpuMs": 44,
+    "coverage": {
+      "unknownRecords": 0,
+      "emptyChains": 1770,
+      "lossScanComplete": true,
+      "lostSampleRecords": 0,
+      "lostSampleCount": 0,
+      "retainedSamples": 1783,
+      "unparsedLossRecords": 0,
+      "truncatedStacks": 0,
+      "mismatchedChains": 0,
+      "lostRecords": 0,
+      "diagnostics": [],
+      "lostCount": 0,
+      "parsedSamples": 1783,
+      "omittedSamples": 0
+    },
+    "clockMapping": null,
+    "state": "partial",
+    "generation": 1,
+    "rawLimit": 536870912,
+    "collectorSignal": 2,
+    "attributionValid": true,
+    "collectorExit": null,
+    "omittedThreadObservations": 0,
+    "label": "perf \u00b7 PID 448845",
+    "rawBytes": 15067012,
+    "threadPollMs": 100,
+    "summary": {
+      "unwindCoverage": {
+        "byThread": {
+          "448845": {
+            "samples": 1783,
+            "empty": 1770,
+            "chainWeight": 13013013,
+            "mismatch": 0,
+            "weight": 1784784783,
+            "truncated": 0,
+            "chainSamples": 13
+          }
+        },
+        "total": {
+          "samples": 1783,
+          "empty": 1770,
+          "chainWeight": 13013013,
+          "mismatch": 0,
+          "weight": 1784784783,
+          "truncated": 0,
+          "chainSamples": 13
+        },
+        "byLeafModule": {
+          "/usr/lib/libc.so.6": {
+            "samples": 4,
+            "empty": 0,
+            "chainWeight": 4004004,
+            "mismatch": 0,
+            "weight": 4004004,
+            "truncated": 0,
+            "chainSamples": 4
+          },
+          "/tmp/perf-448845.map": {
+            "samples": 1770,
+            "empty": 1770,
+            "chainWeight": 0,
+            "mismatch": 0,
+            "weight": 1771771770,
+            "truncated": 0,
+            "chainSamples": 0
+          },
+          "/usr/lib/libmonosgen-2.0.so.1.0.0": {
+            "samples": 9,
+            "empty": 0,
+            "chainWeight": 9009009,
+            "mismatch": 0,
+            "weight": 9009009,
+            "truncated": 0,
+            "chainSamples": 9
+          }
+        },
+        "basis": "Available means perf supplied a chain, not proof of complete unwinding; truncated chains include recovered callers only."
+      },
+      "threads": {
+        "448845": "host"
+      },
+      "units": "sampled cpu-clock event period (ns); not exact function time",
+      "lastMonotonicNs": 42321270011515,
+      "attributionBasis": "Self: all retained sampled leaves. Inclusive: recovered chains only; completeness is not proven.",
+      "coverage": {
+        "unknownRecords": 0,
+        "emptyChains": 1770,
+        "lossScanComplete": true,
+        "lostSampleRecords": 0,
+        "lostSampleCount": 0,
+        "retainedSamples": 1783,
+        "unparsedLossRecords": 0,
+        "truncatedStacks": 0,
+        "mismatchedChains": 0,
+        "lostRecords": 0,
+        "diagnostics": [],
+        "lostCount": 0,
+        "parsedSamples": 1783,
+        "omittedSamples": 0
+      },
+      "lossAccounting": "LOST and LOST_SAMPLES are separate reports and may overlap; never summed",
+      "firstMonotonicNs": 42319486142051,
+      "frameCount": 46,
+      "retention": {
+        "samples": 500000,
+        "frames": 100000,
+        "stackReferences": 8000000
+      }
+    },
+    "threadsAtStart": [
+      {
+        "tid": 448845,
+        "birth": 4231748,
+        "name": "host"
+      },
+      {
+        "tid": 448846,
+        "birth": 4231748,
+        "name": "SGen worker"
+      },
+      {
+        "tid": 448847,
+        "birth": 4231748,
+        "name": "Finalizer"
+      }
+    ],
+    "clockDomain": "CLOCK_MONOTONIC",
+    "buildIds": [
+      {
+        "debugFiles": [],
+        "state": "matched",
+        "currentBuildId": "d320029ad1a23be2f4bce117fd321cbd23a2014b",
+        "module": "/usr/lib/libc.so.6",
+        "capturedBuildId": "d320029ad1a23be2f4bce117fd321cbd23a2014b"
+      },
+      {
+        "debugFiles": [],
+        "state": "matched",
+        "currentBuildId": "0251fdbd2d63327d4c79994baff1b733e9449833",
+        "module": "/usr/lib/libmonosgen-2.0.so.1.0.0",
+        "capturedBuildId": "0251fdbd2d63327d4c79994baff1b733e9449833"
+      }
+    ],
+    "target": {
+      "birth": 4231748,
+      "pid": 448845
+    },
+    "perfVersion": "perf version 7.2.11-1",
+    "sourceKind": "nativeStackSamples",
+    "host": {
+      "birth": 4231750,
+      "pid": 448852
+    },
+    "event": "cpu-clock:u",
+    "createdMs": 1792800964803,
+    "estimatedRawBytes": 51302646,
+    "threadsGained": [],
+    "omittedStderrBytes": 0,
+    "owner": "workspace-1"
+  },
+  "tree": {
+    "moduleFilterBasis": "samples containing this exact module; complete calling context retained",
+    "childCount": 14,
+    "children": [
+      {
+        "inclusiveWeight": 0,
+        "frameId": 3,
+        "selfWeight": 1768768767,
+        "sampleCount": 1767,
+        "sampledEventSharePct": 0,
+        "selfEventSharePct": 99.10263600673024,
+        "frame": {
+          "resolved": true,
+          "symbolOrigin": "perfMap",
+          "address": "404602df",
+          "source": null,
+          "module": "/tmp/perf-448845.map",
+          "symbol": "EmbeddedHot:KnownManagedHot (ulong)"
+        }
+      },
+      {
+        "inclusiveWeight": 2002002,
+        "frameId": 4,
+        "selfWeight": 2002002,
+        "sampleCount": 2,
+        "sampledEventSharePct": 0.11217049915872125,
+        "selfEventSharePct": 0.11217049915872125,
+        "frame": {
+          "resolved": false,
+          "symbolOrigin": "unresolved",
+          "address": "7fee15914f4a",
+          "source": null,
+          "module": "/usr/lib/libmonosgen-2.0.so.1.0.0",
+          "symbol": "/usr/lib/libmonosgen-2.0.so.1.0.0+address 0x7fee15914f4a"
+        }
+      },
+      {
+        "inclusiveWeight": 0,
+        "frameId": 6,
+        "selfWeight": 2002002,
+        "sampleCount": 2,
+        "sampledEventSharePct": 0,
+        "selfEventSharePct": 0.11217049915872125,
+        "frame": {
+          "resolved": true,
+          "symbolOrigin": "perfMap",
+          "address": "40460a6d",
+          "source": null,
+          "module": "/tmp/perf-448845.map",
+          "symbol": "intptr:op_Inequality (intptr,intptr)"
+        }
+      },
+      {
+        "inclusiveWeight": 2002002,
+        "frameId": 10,
+        "selfWeight": 2002002,
+        "sampleCount": 2,
+        "sampledEventSharePct": 0.11217049915872125,
+        "selfEventSharePct": 0.11217049915872125,
+        "frame": {
+          "resolved": true,
+          "symbolOrigin": "elfBuildId",
+          "address": "7fee1591a250",
+          "source": null,
+          "module": "/usr/lib/libmonosgen-2.0.so.1.0.0",
+          "symbol": "monoeg_g_utf16_to_utf8"
+        }
+      },
+      {
+        "inclusiveWeight": 1001001,
+        "frameId": 0,
+        "selfWeight": 1001001,
+        "sampleCount": 1,
+        "sampledEventSharePct": 0.056085249579360626,
+        "selfEventSharePct": 0.056085249579360626,
+        "frame": {
+          "resolved": false,
+          "symbolOrigin": "unresolved",
+          "address": "7fee1579fa13",
+          "source": null,
+          "module": "/usr/lib/libmonosgen-2.0.so.1.0.0",
+          "symbol": "/usr/lib/libmonosgen-2.0.so.1.0.0+address 0x7fee1579fa13"
+        }
+      },
+      {
+        "inclusiveWeight": 1001001,
+        "frameId": 1,
+        "selfWeight": 1001001,
+        "sampleCount": 1,
+        "sampledEventSharePct": 0.056085249579360626,
+        "selfEventSharePct": 0.056085249579360626,
+        "frame": {
+          "resolved": false,
+          "symbolOrigin": "unresolved",
+          "address": "7fee156cf990",
+          "source": null,
+          "module": "/usr/lib/libmonosgen-2.0.so.1.0.0",
+          "symbol": "/usr/lib/libmonosgen-2.0.so.1.0.0+address 0x7fee156cf990"
+        }
+      },
+      {
+        "inclusiveWeight": 1001001,
+        "frameId": 2,
+        "selfWeight": 1001001,
+        "sampleCount": 1,
+        "sampledEventSharePct": 0.056085249579360626,
+        "selfEventSharePct": 0.056085249579360626,
+        "frame": {
+          "resolved": false,
+          "symbolOrigin": "unresolved",
+          "address": "7fee1581ef2d",
+          "source": null,
+          "module": "/usr/lib/libmonosgen-2.0.so.1.0.0",
+          "symbol": "/usr/lib/libmonosgen-2.0.so.1.0.0+address 0x7fee1581ef2d"
+        }
+      },
+      {
+        "inclusiveWeight": 1001001,
+        "frameId": 5,
+        "selfWeight": 1001001,
+        "sampleCount": 1,
+        "sampledEventSharePct": 0.056085249579360626,
+        "selfEventSharePct": 0.056085249579360626,
+        "frame": {
+          "resolved": false,
+          "symbolOrigin": "unresolved",
+          "address": "7fee1583c98d",
+          "source": null,
+          "module": "/usr/lib/libmonosgen-2.0.so.1.0.0",
+          "symbol": "/usr/lib/libmonosgen-2.0.so.1.0.0+address 0x7fee1583c98d"
+        }
+      },
+      {
+        "inclusiveWeight": 1001001,
+        "frameId": 7,
+        "selfWeight": 1001001,
+        "sampleCount": 1,
+        "sampledEventSharePct": 0.056085249579360626,
+        "selfEventSharePct": 0.056085249579360626,
+        "frame": {
+          "resolved": false,
+          "symbolOrigin": "unresolved",
+          "address": "7fee15d8a517",
+          "source": null,
+          "module": "/usr/lib/libc.so.6",
+          "symbol": "/usr/lib/libc.so.6+address 0x7fee15d8a517"
+        }
+      },
+      {
+        "inclusiveWeight": 1001001,
+        "frameId": 8,
+        "selfWeight": 1001001,
+        "sampleCount": 1,
+        "sampledEventSharePct": 0.056085249579360626,
+        "selfEventSharePct": 0.056085249579360626,
+        "frame": {
+          "resolved": false,
+          "symbolOrigin": "unresolved",
+          "address": "7fee15d8a512",
+          "source": null,
+          "module": "/usr/lib/libc.so.6",
+          "symbol": "/usr/lib/libc.so.6+address 0x7fee15d8a512"
+        }
+      },
+      {
+        "inclusiveWeight": 1001001,
+        "frameId": 9,
+        "selfWeight": 1001001,
+        "sampleCount": 1,
+        "sampledEventSharePct": 0.056085249579360626,
+        "selfEventSharePct": 0.056085249579360626,
+        "frame": {
+          "resolved": false,
+          "symbolOrigin": "unresolved",
+          "address": "7fee15d8a4cc",
+          "source": null,
+          "module": "/usr/lib/libc.so.6",
+          "symbol": "/usr/lib/libc.so.6+address 0x7fee15d8a4cc"
+        }
+      },
+      {
+        "inclusiveWeight": 0,
+        "frameId": 11,
+        "selfWeight": 1001001,
+        "sampleCount": 1,
+        "sampledEventSharePct": 0,
+        "selfEventSharePct": 0.056085249579360626,
+        "frame": {
+          "resolved": true,
+          "symbolOrigin": "perfMap",
+          "address": "40465e6a",
+          "source": null,
+          "module": "/tmp/perf-448845.map",
+          "symbol": "System.Number:ParseInt32 (System.ReadOnlySpan`1<char>,System.Globalization.NumberStyles,System.Globalization.NumberFormatInfo)"
+        }
+      },
+      {
+        "inclusiveWeight": 1001001,
+        "frameId": 12,
+        "selfWeight": 1001001,
+        "sampleCount": 1,
+        "sampledEventSharePct": 0.056085249579360626,
+        "selfEventSharePct": 0.056085249579360626,
+        "frame": {
+          "resolved": false,
+          "symbolOrigin": "unresolved",
+          "address": "7fee157cb40d",
+          "source": null,
+          "module": "/usr/lib/libmonosgen-2.0.so.1.0.0",
+          "symbol": "/usr/lib/libmonosgen-2.0.so.1.0.0+address 0x7fee157cb40d"
+        }
+      },
+      {
+        "inclusiveWeight": 1001001,
+        "frameId": 13,
+        "selfWeight": 1001001,
+        "sampleCount": 1,
+        "sampledEventSharePct": 0.056085249579360626,
+        "selfEventSharePct": 0.056085249579360626,
+        "frame": {
+          "resolved": false,
+          "symbolOrigin": "unresolved",
+          "address": "7fee15d8a50d",
+          "source": null,
+          "module": "/usr/lib/libc.so.6",
+          "symbol": "/usr/lib/libc.so.6+address 0x7fee15d8a50d"
+        }
+      }
+    ],
+    "omittedChildren": 0,
+    "chainWeight": 13013013,
+    "selectedSamples": 1783,
+    "pathWeight": 1784784783,
+    "clock": "elapsed ns from first retained monotonic sample; no session clock mapping",
+    "attributionBasis": "Self includes every retained leaf. Inclusive includes recovered chains only; both shares use all selected event weight.",
+    "totalWeight": 1784784783,
+    "chainSamples": 13
+  },
+  "gates": {
+    "desktopCoverage": "PASS",
+    "managedLeafNamesAndSelf": "PASS",
+    "allSelfWeight": "PASS",
+    "targetSurvival": "PASS",
+    "humanAcceptance": "NOT TESTED",
+    "screenshot": "PARTIAL"
+  },
+  "display": "ordinary",
+  "screenshotDiagnostic": "Ordinary-display WebDriver screenshot timed out; profiler assertions completed and were recorded beforehand. Xvfb screenshot succeeds."
+}

@@ -1,0 +1,259 @@
+{
+  "scope": "Fixture-only dlsym initialization path; not production launch support",
+  "machine": "sk27",
+  "kernel": "7.2.11-arch1-1",
+  "mono": "Mono JIT compiler version 6.12.0 (makepkg/0cbf0e290c3 Sat Mar  9 11:37:33 UTC 2024)",
+  "fixture": {
+    "/tmp/craidd-gr004-matched-20261023-v2/host": "1480e1f9d6b695f315f5ff9ac76f8fb8c146136fa4d497f38a509e81e0fc44f6",
+    "/tmp/craidd-gr004-matched-20261023-v2/Hot.exe": "0f0349b50231e56ad200e8e6ffac5153be38a07163349fbe6e39e7a2991ac898",
+    "/tmp/craidd-gr004-matched-20261023-v2/helper.so": "6fd907f292a08877a94d9661c7846049d45cc7fac57dc2a9e6a3f1454647b86d",
+    "/tmp/craidd-gr004-matched-20261023-v2/missing.so": "f57ee340f50941679208742c9f563f612d877c6ee3c970350f9007abe4562243"
+  },
+  "cases": [
+    {
+      "mode": "without",
+      "pid": 314603,
+      "exit": 0,
+      "elapsedMs": 191.383,
+      "workPerSecond": 10450.248977181882,
+      "iterations": 2000,
+      "stdout": "HOT_RANGE 411f1280 89\nMANAGED_DONE 16628460932212460998\nELAPSED_MS 191.383\n",
+      "stderr": "",
+      "mapEntries": 0,
+      "knownHotEntries": 0,
+      "mapMode": null,
+      "mapSha256": null
+    },
+    {
+      "mode": "enabled",
+      "pid": 314606,
+      "exit": 0,
+      "elapsedMs": 192.028,
+      "workPerSecond": 10415.147790947154,
+      "iterations": 2000,
+      "stdout": "HOT_RANGE 40caf280 89\nMANAGED_DONE 16628460932212460998\nELAPSED_MS 192.028\n",
+      "stderr": "",
+      "mapEntries": 580,
+      "knownHotEntries": 2,
+      "mapMode": "0o600",
+      "mapSha256": "121395842d41bd184295d15288efec926c2d5e25546b1d4a487f9246a3925f33"
+    },
+    {
+      "mode": "missing-export",
+      "pid": 314609,
+      "exit": 0,
+      "elapsedMs": 192.754,
+      "workPerSecond": 10375.919565871527,
+      "iterations": 2000,
+      "stdout": "HOT_RANGE 4121b280 89\nMANAGED_DONE 16628460932212460998\nELAPSED_MS 192.754\n",
+      "stderr": "[craidd fixture] Mono map helper unavailable; required export missing or map refused\n",
+      "mapEntries": 0,
+      "knownHotEntries": 0,
+      "mapMode": null,
+      "mapSha256": null
+    }
+  ],
+  "matchedOverhead": {
+    "pairs": [
+      {
+        "order": [
+          "without",
+          "enabled"
+        ],
+        "cases": {
+          "without": {
+            "mode": "without",
+            "pid": 314622,
+            "exit": 0,
+            "elapsedMs": 1814.25,
+            "workPerSecond": 11023.839051949843,
+            "iterations": 20000,
+            "stdout": "HOT_RANGE 41086280 89\nMANAGED_DONE 16670523951273190820\nELAPSED_MS 1814.25\n",
+            "stderr": "",
+            "mapEntries": 0,
+            "knownHotEntries": 0,
+            "mapMode": null,
+            "mapSha256": null
+          },
+          "enabled": {
+            "mode": "enabled",
+            "pid": 314643,
+            "exit": 0,
+            "elapsedMs": 1841.57,
+            "workPerSecond": 10860.298549607129,
+            "iterations": 20000,
+            "stdout": "HOT_RANGE 40029280 89\nMANAGED_DONE 16670523951273190820\nELAPSED_MS 1841.57\n",
+            "stderr": "",
+            "mapEntries": 580,
+            "knownHotEntries": 2,
+            "mapMode": "0o600",
+            "mapSha256": "d58c28de5cbb28228e73d5280b28b86d76f524ac857ae9f82aeba9e8f78c9359"
+          }
+        },
+        "slowdownPct": 1.4835167818763373
+      },
+      {
+        "order": [
+          "enabled",
+          "without"
+        ],
+        "cases": {
+          "enabled": {
+            "mode": "enabled",
+            "pid": 314677,
+            "exit": 0,
+            "elapsedMs": 1812.84,
+            "workPerSecond": 11032.413230069946,
+            "iterations": 20000,
+            "stdout": "HOT_RANGE 40c99280 89\nMANAGED_DONE 16670523951273190820\nELAPSED_MS 1812.84\n",
+            "stderr": "",
+            "mapEntries": 580,
+            "knownHotEntries": 2,
+            "mapMode": "0o600",
+            "mapSha256": "8f66f99c1355880e082bc4c7087751fb9509dce14e4e9c11f3f1023a708a74b5"
+          },
+          "without": {
+            "mode": "without",
+            "pid": 314687,
+            "exit": 0,
+            "elapsedMs": 1844.83,
+            "workPerSecond": 10841.107310700716,
+            "iterations": 20000,
+            "stdout": "HOT_RANGE 413d5280 89\nMANAGED_DONE 16670523951273190820\nELAPSED_MS 1844.83\n",
+            "stderr": "",
+            "mapEntries": 0,
+            "knownHotEntries": 0,
+            "mapMode": null,
+            "mapSha256": null
+          }
+        },
+        "slowdownPct": -1.7646344961496752
+      },
+      {
+        "order": [
+          "without",
+          "enabled"
+        ],
+        "cases": {
+          "without": {
+            "mode": "without",
+            "pid": 314777,
+            "exit": 0,
+            "elapsedMs": 1857.14,
+            "workPerSecond": 10769.247337303595,
+            "iterations": 20000,
+            "stdout": "HOT_RANGE 41b77280 89\nMANAGED_DONE 16670523951273190820\nELAPSED_MS 1857.14\n",
+            "stderr": "",
+            "mapEntries": 0,
+            "knownHotEntries": 0,
+            "mapMode": null,
+            "mapSha256": null
+          },
+          "enabled": {
+            "mode": "enabled",
+            "pid": 314802,
+            "exit": 0,
+            "elapsedMs": 1858.55,
+            "workPerSecond": 10761.0771838261,
+            "iterations": 20000,
+            "stdout": "HOT_RANGE 41c6e280 89\nMANAGED_DONE 16670523951273190820\nELAPSED_MS 1858.55\n",
+            "stderr": "",
+            "mapEntries": 580,
+            "knownHotEntries": 2,
+            "mapMode": "0o600",
+            "mapSha256": "64fecb7d1b9133943fecb5561effe2c54bd5dfb6954c940fff684de047e6a539"
+          }
+        },
+        "slowdownPct": 0.07586559414597405
+      },
+      {
+        "order": [
+          "enabled",
+          "without"
+        ],
+        "cases": {
+          "enabled": {
+            "mode": "enabled",
+            "pid": 314922,
+            "exit": 0,
+            "elapsedMs": 1890.57,
+            "workPerSecond": 10578.82014418932,
+            "iterations": 20000,
+            "stdout": "HOT_RANGE 40b00280 89\nMANAGED_DONE 16670523951273190820\nELAPSED_MS 1890.57\n",
+            "stderr": "",
+            "mapEntries": 580,
+            "knownHotEntries": 2,
+            "mapMode": "0o600",
+            "mapSha256": "f59a5ca1670d33cf19cf3db1cb55c4e706c798f0e4589bc341d2c8edc21b172c"
+          },
+          "without": {
+            "mode": "without",
+            "pid": 314957,
+            "exit": 0,
+            "elapsedMs": 1849.11,
+            "workPerSecond": 10816.01419061062,
+            "iterations": 20000,
+            "stdout": "HOT_RANGE 40f31280 89\nMANAGED_DONE 16670523951273190820\nELAPSED_MS 1849.11\n",
+            "stderr": "",
+            "mapEntries": 0,
+            "knownHotEntries": 0,
+            "mapMode": null,
+            "mapSha256": null
+          }
+        },
+        "slowdownPct": 2.192989415890456
+      },
+      {
+        "order": [
+          "without",
+          "enabled"
+        ],
+        "cases": {
+          "without": {
+            "mode": "without",
+            "pid": 315246,
+            "exit": 0,
+            "elapsedMs": 1834.2,
+            "workPerSecond": 10903.936321011885,
+            "iterations": 20000,
+            "stdout": "HOT_RANGE 40f18280 89\nMANAGED_DONE 16670523951273190820\nELAPSED_MS 1834.2\n",
+            "stderr": "",
+            "mapEntries": 0,
+            "knownHotEntries": 0,
+            "mapMode": null,
+            "mapSha256": null
+          },
+          "enabled": {
+            "mode": "enabled",
+            "pid": 315265,
+            "exit": 0,
+            "elapsedMs": 1816.64,
+            "workPerSecond": 11009.335916857495,
+            "iterations": 20000,
+            "stdout": "HOT_RANGE 409b9280 89\nMANAGED_DONE 16670523951273190820\nELAPSED_MS 1816.64\n",
+            "stderr": "",
+            "mapEntries": 580,
+            "knownHotEntries": 2,
+            "mapMode": "0o600",
+            "mapSha256": "eb0bc7a1cd59f70e15b1ccc8bb37f5c10d368262d7058f5c3374f6a495429f3c"
+          }
+        },
+        "slowdownPct": -0.9666196935000926
+      }
+    ],
+    "medianSlowdownPct": 0.07586559414597405,
+    "minSlowdownPct": -1.7646344961496752,
+    "maxSlowdownPct": 2.192989415890456,
+    "basis": "host steady-clock around mono_jit_exec, equal 20,000 known-hot invocations per run; includes execution/JIT and excludes host setup; no perf collector; no significance claim"
+  },
+  "gates": {
+    "withoutMap": "PASS",
+    "knownHotMap": "PASS",
+    "mapPermissions": "PASS",
+    "missingExportSurvival": "PASS",
+    "matchedOverheadMeasurement": "PASS",
+    "sampledWeightNaming": "NOT TESTED",
+    "desktopLaunchOption": "NOT TESTED",
+    "productionAttachIsolation": "NOT TESTED"
+  }
+}

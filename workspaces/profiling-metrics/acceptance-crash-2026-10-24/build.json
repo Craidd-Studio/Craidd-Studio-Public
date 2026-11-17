@@ -1,0 +1,9 @@
+{
+  "path": "/tmp/craidd-profiler-review-61aa03ffed8e/craidd-studio",
+  "sha256": "61aa03ffed8e6b4111ae2aa9b3fd2107ee424c830bb4715e764b603800ce78f0",
+  "sourceBase": "0193e842c8efdbebac2ae70e7341d1dd4e083245",
+  "sourceFile": "src/components/panels/MetricImportPanel.tsx",
+  "sourceSha256": "8dce57ac2b4491802cb22687fe43ac5f76bb6cb7681c6ffc3b620569c839cd21",
+  "compilerResult": "PASS release build",
+  "humanRetry": "NOT TESTED"
+}

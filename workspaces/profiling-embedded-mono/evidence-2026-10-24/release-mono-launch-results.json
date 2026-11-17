@@ -1,0 +1,275 @@
+{
+  "machine": "sk27",
+  "kernel": "7.2.11-arch1-1",
+  "binary": {
+    "path": "/tmp/craidd-release-audit-f6d4-release/release/craidd-studio",
+    "sha256": "a7f1f63f40e79624608214833e4f0e210c48ef9a0d2d9c39ff88d9baf0a24b09"
+  },
+  "fixture": "/tmp/craidd-gr004-product-20261024-first",
+  "solution": "/tmp/craidd-mono-launch-ui-TeUZQE/Mono.cln",
+  "target": {
+    "pid": 701717,
+    "birth": 9047792,
+    "parent": 701443,
+    "state": "R"
+  },
+  "capture": {
+    "options": {
+      "durationSeconds": 2,
+      "unwind": {
+        "stackBytes": 8192,
+        "kind": "dwarf"
+      },
+      "frequency": 999
+    },
+    "stderr": "[ perf record: Woken up 65 times to write data ]\n[ perf record: Captured and wrote 16.013 MB /home/skira24/.codex/worktrees/9b33/Craidd-Studio/test-results/ui/2026-10-24T13-38-41-281Z/mono-helper-launch/home/.cache/com.skira24.craidd-studio/profiling/perf/b0d494d29b8abb1f81f56c4b897b5f5b7a6ee03004dbf989903beb4469d8b3fb/capture-1792849124457-701443-1/perf.data ]\n",
+    "reasons": [
+      "Timed duration completed",
+      "Unwind coverage: 1983 empty, 0 truncated, 0 mismatched chains; sampled leaves retained for self attribution"
+    ],
+    "solution": "/tmp/craidd-mono-launch-ui-TeUZQE/Mono.cln",
+    "rawSha256": "268a235e06a6e7386e9f2776597a3a69f11025624a5ddaa5f977e069154fb098",
+    "decodeRevision": 1,
+    "id": "capture-1792849124457-701443-1",
+    "moduleIdentityMs": 151,
+    "jitMap": {
+      "path": "/tmp/perf-701717.map",
+      "sha256": "21d3b4623ec2a3031d31ac2eea9099d933e3af47c705dfc5c897c82a1b96ea5a",
+      "state": "matched",
+      "bytes": 9763,
+      "basis": "Names reported by perf from the PID map; no ELF build-ID or source-line verification"
+    },
+    "profileId": "701717-9047792-1792849123769490678",
+    "collectorIdentity": {
+      "birth": 9047891,
+      "pid": 701732
+    },
+    "pinned": false,
+    "recordArgv": [
+      "record",
+      "--no-buildid-cache",
+      "--clockid",
+      "mono",
+      "--timestamp",
+      "--per-thread",
+      "--no-inherit",
+      "--user-callchains",
+      "-e",
+      "cpu-clock:u",
+      "-F",
+      "999",
+      "--call-graph",
+      "dwarf,8192",
+      "-t",
+      "701717,701721,701722",
+      "-o",
+      "/home/skira24/.codex/worktrees/9b33/Craidd-Studio/test-results/ui/2026-10-24T13-38-41-281Z/mono-helper-launch/home/.cache/com.skira24.craidd-studio/profiling/perf/b0d494d29b8abb1f81f56c4b897b5f5b7a6ee03004dbf989903beb4469d8b3fb/capture-1792849124457-701443-1/perf.data"
+    ],
+    "lossScanMs": 0,
+    "version": 1,
+    "decodeAndParseMs": 60,
+    "parserCpuMs": 4,
+    "coverage": {
+      "unknownRecords": 0,
+      "emptyChains": 1983,
+      "lossScanComplete": true,
+      "lostSampleRecords": 0,
+      "lostSampleCount": 0,
+      "retainedSamples": 1992,
+      "unparsedLossRecords": 0,
+      "truncatedStacks": 0,
+      "mismatchedChains": 0,
+      "lostRecords": 0,
+      "diagnostics": [],
+      "lostCount": 0,
+      "parsedSamples": 1992,
+      "omittedSamples": 0
+    },
+    "launchHelper": {
+      "helper": {
+        "sha256": "f358701122fdd6e8fcf2983cb838436da1df63e5b05a45f25067a5e5720423fc",
+        "activationBasis": "Requested for this launched process family; activation/map fingerprint observed separately. Map names are not verified source or inclusive time.",
+        "startupCoverageIncomplete": true,
+        "path": "/home/skira24/.codex/worktrees/9b33/Craidd-Studio/test-results/ui/2026-10-24T13-38-41-281Z/mono-helper-launch/home/.cache/com.skira24.craidd-studio/profiling/mono-helper/f358701122fdd6e8fcf2983cb838436da1df63e5b05a45f25067a5e5720423fc/libcraidd_mono_map.so",
+        "target": "linux-x86_64-gnu",
+        "version": "1.0.0"
+      },
+      "root": {
+        "birth": 9047792,
+        "pid": 701717
+      },
+      "owner": "workspace-1"
+    },
+    "clockMapping": null,
+    "generation": 1,
+    "rawLimit": 536870912,
+    "collectorSignal": 2,
+    "symbolSearch": {
+      "sealed": true,
+      "withheldModules": {},
+      "locations": [],
+      "privateCache": "/home/skira24/.codex/worktrees/9b33/Craidd-Studio/test-results/ui/2026-10-24T13-38-41-281Z/mono-helper-launch/home/.cache/com.skira24.craidd-studio/profiling/perf/b0d494d29b8abb1f81f56c4b897b5f5b7a6ee03004dbf989903beb4469d8b3fb/capture-1792849124457-701443-1/symbol-cache",
+      "index": {
+        "diagnostics": [],
+        "elfFiles": 0,
+        "entries": 0,
+        "incomplete": false,
+        "elapsedMs": 0
+      },
+      "served": []
+    },
+    "attributionValid": true,
+    "collectorExit": null,
+    "omittedThreadObservations": 0,
+    "label": "perf · PID 701717",
+    "rawBytes": 16828236,
+    "threadPollMs": 100,
+    "summary": {
+      "unwindCoverage": {
+        "byThread": {
+          "701717": {
+            "samples": 1992,
+            "empty": 1983,
+            "chainWeight": 9009009,
+            "mismatch": 0,
+            "weight": 1993993992,
+            "truncated": 0,
+            "chainSamples": 9
+          }
+        },
+        "total": {
+          "samples": 1992,
+          "empty": 1983,
+          "chainWeight": 9009009,
+          "mismatch": 0,
+          "weight": 1993993992,
+          "truncated": 0,
+          "chainSamples": 9
+        },
+        "byLeafModule": {
+          "/usr/lib/libc.so.6": {
+            "samples": 1,
+            "empty": 0,
+            "chainWeight": 1001001,
+            "mismatch": 0,
+            "weight": 1001001,
+            "truncated": 0,
+            "chainSamples": 1
+          },
+          "/tmp/perf-701717.map": {
+            "samples": 1983,
+            "empty": 1983,
+            "chainWeight": 0,
+            "mismatch": 0,
+            "weight": 1984984983,
+            "truncated": 0,
+            "chainSamples": 0
+          },
+          "/usr/lib/libmonosgen-2.0.so.1.0.0": {
+            "samples": 8,
+            "empty": 0,
+            "chainWeight": 8008008,
+            "mismatch": 0,
+            "weight": 8008008,
+            "truncated": 0,
+            "chainSamples": 8
+          }
+        },
+        "basis": "Available means perf supplied a chain, not proof of complete unwinding; truncated chains include recovered callers only."
+      },
+      "threads": {
+        "701717": "mono-editor-fix"
+      },
+      "units": "sampled cpu-clock event period (ns); not exact function time",
+      "lastMonotonicNs": 90480921143244,
+      "attributionBasis": "Self: all retained sampled leaves. Inclusive: recovered chains only; completeness is not proven.",
+      "coverage": {
+        "unknownRecords": 0,
+        "emptyChains": 1983,
+        "lossScanComplete": true,
+        "lostSampleRecords": 0,
+        "lostSampleCount": 0,
+        "retainedSamples": 1992,
+        "unparsedLossRecords": 0,
+        "truncatedStacks": 0,
+        "mismatchedChains": 0,
+        "lostRecords": 0,
+        "diagnostics": [],
+        "lostCount": 0,
+        "parsedSamples": 1992,
+        "omittedSamples": 0
+      },
+      "lossAccounting": "LOST and LOST_SAMPLES are separate reports and may overlap; never summed",
+      "firstMonotonicNs": 90478927971540,
+      "frameCount": 17,
+      "retention": {
+        "samples": 500000,
+        "frames": 100000,
+        "stackReferences": 8000000
+      }
+    },
+    "threadsAtStart": [
+      {
+        "tid": 701717,
+        "birth": 9047792,
+        "name": "mono-editor-fix"
+      },
+      {
+        "tid": 701721,
+        "birth": 9047792,
+        "name": "SGen worker"
+      },
+      {
+        "tid": 701722,
+        "birth": 9047792,
+        "name": "Finalizer"
+      }
+    ],
+    "state": "partial",
+    "clockDomain": "CLOCK_MONOTONIC",
+    "buildIds": [
+      {
+        "debugFiles": [],
+        "state": "matched",
+        "currentBuildId": "d320029ad1a23be2f4bce117fd321cbd23a2014b",
+        "module": "/usr/lib/libc.so.6",
+        "capturedBuildId": "d320029ad1a23be2f4bce117fd321cbd23a2014b"
+      },
+      {
+        "debugFiles": [],
+        "state": "matched",
+        "currentBuildId": "0251fdbd2d63327d4c79994baff1b733e9449833",
+        "module": "/usr/lib/libmonosgen-2.0.so.1.0.0",
+        "capturedBuildId": "0251fdbd2d63327d4c79994baff1b733e9449833"
+      }
+    ],
+    "target": {
+      "birth": 9047792,
+      "pid": 701717
+    },
+    "perfVersion": "perf version 7.2.11-1",
+    "sourceKind": "nativeStackSamples",
+    "host": {
+      "birth": 9047576,
+      "pid": 701443
+    },
+    "createdMs": 1792849124457,
+    "event": "cpu-clock:u",
+    "estimatedRawBytes": 51302646,
+    "threadsGained": [],
+    "omittedStderrBytes": 0,
+    "owner": "workspace-1"
+  },
+  "externalEnvironmentBefore": "5949dd6d5e7487917a3ba8a299e8c04bc28c8b4a269bf8098859e0a8fdf0c829",
+  "externalEnvironmentAfter": "5949dd6d5e7487917a3ba8a299e8c04bc28c8b4a269bf8098859e0a8fdf0c829",
+  "gates": {
+    "offByDefaultAndExplicitRunOptIn": "PASS",
+    "savedConfiguration": "PASS",
+    "launchedTargetNames": "PASS",
+    "versionHashAndStartupCoverage": "PASS",
+    "attachHasNoOption": "PASS",
+    "externalAttachEnvironmentUnchanged": "PASS",
+    "captureTargetSurvival": "PASS",
+    "humanAcceptance": "NOT TESTED"
+  }
+}

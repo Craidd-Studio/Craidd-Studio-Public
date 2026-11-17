@@ -78,7 +78,9 @@ export interface FileNode {
 
 export type DiskState = "inSync" | "deleted" | "newer";
 
-export interface EditorTab {
+export interface FileEditorTab {
+  kind: "file";
+  id: string;
   fileId: string;
   name: string;
   language: Language | "plaintext";
@@ -92,6 +94,19 @@ export interface EditorTab {
   readOnly?: boolean;
 }
 
+export interface ProfilerEditorTab {
+  kind: "profiler";
+  id: typeof PROFILER_TAB_ID;
+  name: "Profiling";
+}
+
+export const PROFILER_TAB_ID = "workspace:profiler";
+export type EditorTab = FileEditorTab | ProfilerEditorTab;
+export const isFileTab = (tab: EditorTab): tab is FileEditorTab => tab.kind === "file";
+export function findFileTab(tabs: EditorTab[], fileId: string | null | undefined): FileEditorTab | undefined {
+  return tabs.find((tab): tab is FileEditorTab => tab.kind === "file" && tab.fileId === fileId);
+}
+
 export interface Manifest {
   kind: "cargo" | "npm" | "dotnet" | "cmake";
   path: string;      // absolute path to the manifest file
@@ -103,6 +118,7 @@ export type ConfigKind = "run" | "build" | "debug" | "test";
 export type ConfigOrigin = "user" | "inferred";
 
 export interface ConfigEntry {
+  embeddedMonoJitMap?: boolean;
   name: string;
   kind: ConfigKind;
   target: string;              // path to the target .craidd, "." for whole solution

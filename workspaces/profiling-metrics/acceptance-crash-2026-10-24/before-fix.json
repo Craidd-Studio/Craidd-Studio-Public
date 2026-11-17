@@ -1,0 +1,10 @@
+{
+  "machine": "sk27",
+  "kernel": "7.2.11-arch1-1",
+  "binary": {
+    "path": "/tmp/craidd-profiler-review-a7f1f63f40e7/craidd-studio",
+    "sha256": "a7f1f63f40e79624608214833e4f0e210c48ef9a0d2d9c39ff88d9baf0a24b09"
+  },
+  "gate": "FAIL",
+  "dom": "This IDE window could not render\n\nYour files on disk are unaffected. Reload this window to try again.\n\nundefined is not an object (evaluating 'n.columns')\nReload window"
+}

@@ -1,0 +1,1277 @@
+{
+  "baseline": "8bac01edf9bf1f0a0b84b55441b5638bc1233a29",
+  "machine": {
+    "uname": [
+      "Linux",
+      "sk27",
+      "7.2.11-arch1-1",
+      "#1 SMP PREEMPT_DYNAMIC Fri, 16 Oct 2026 00:28:58 +0000",
+      "x86_64",
+      ""
+    ],
+    "cpu": "AMD Ryzen 9 9950X3D 16-Core Processor",
+    "memTotal": "MemTotal:       63297788 kB"
+  },
+  "versions": {
+    "rustc": "rustc 1.99.1 (58cf8f9c3 2026-10-13) (Arch Linux rust 1:1.99.1-1)",
+    "cargo": "cargo 1.99.1 (5f94df478 2026-08-27) (Arch Linux rust 1:1.99.1-1)",
+    "node": "v24.21.0",
+    "npm": "11.19.0"
+  },
+  "sourceSha256": {
+    "src-tauri/src/metric_csv.rs": "e6eda14efba3b93e559d06c9d47d4927b48f5fcd98573f60cd326fc4955bbbc3",
+    "src-tauri/src/commands/metrics.rs": "b629b0f694c3405a667dadec7691345f2847802c66817140b416b2b285366de7",
+    "src-tauri/src/lib.rs": "bc4e8af5f90a1ed26c1789f471256c3d8462d464196059ddd7ac387bed122b69",
+    "src/components/panels/MetricImportPanel.tsx": "1e71c20f6c2672f7a01137ee9e699ec60f404d88911abb006a09891d87130109",
+    "src/components/panels/ProfilerPanel.tsx": "11c5f22bfc3289589acb9a8e6ed20ee2778d300b4396b887b29764294e8b5ad1",
+    "src/types/profileSource.ts": "c116e7a58998f8f7d89f187372e3897b873d216ebfab954e51f9e8e2039754a7",
+    "src/store/metricStore.ts": "252d12e5224df0ef203e7040d1c2c34ba0cd463a2f7c7f2ba28954bef04595ae",
+    "src/assets/styles/index.css": "13afcfa33d9f8e9348d630ea9c5a98782c9e177a60a83f85122d8e6c0d177c36",
+    "tests/ui/metric-import.test.mjs": "0bad02892500863cb28ab9415ca7eaf48e8bbb188066d710718f5bc5524db636",
+    "workspaces/profiling-metrics/src/main.rs": "e188a5d183defefcddaa77915aca9043c6e32118c173f4001df820b63599f794",
+    "workspaces/profiling-metrics/generate.py": "180cac7f93e97ef05d2b562d20c35cbcf6d46a5b66f47bc614dc5b35b5c39ec7",
+    "src/components/layout/ResizeHandle.tsx": "3739a12cb1a724cb18e6fe38f98438a204057083c553225b718a9b07b62c2164",
+    "tests/resizeHandle.test.mjs": "72ecb71bd403ea1dea2d648bb7fe7cad0085b096788436838cba0855aaaeae1e",
+    "tests/ui/metric-ux.test.mjs": "a282f0d9dbabc227a1483810c95b41f3ddd54032dbe93b9043c4be710a8f4327",
+    "tests/ui/metric-release-acceptance.test.mjs": "fa26a827540d7f7fa199e21e14d7996898de8563c647bcf8cdf2c667824e4035",
+    "workspaces/profiling-metrics/fixtures/run.csv": "422b0d6ba4fbaa9ca3549092181e57258266330dc4c3f55dda73316584772001",
+    "workspaces/profiling-metrics/fixtures/run-sections.csv": "168aa73d491f4857f78d26ee343d2d16137cac1fb12196ddfedaba8cac9330db",
+    "package.json": "83d45911c01443e1525249d17993fbd285decbef325e6fc5b7f1a9127c106f2f"
+  },
+  "binarySha256": {
+    "embeddedDebug": "74836988a98eb6665f69fcf9ac26c5e07289c0b5cbaa13110c331fba052e546b",
+    "standaloneRelease": "3b81db09176cf5293587675acdefc38f76f04cbc9aebfb9cba83e3f99738ef85",
+    "embeddedRelease": "d16a9b8bc1030285fc4108f8b57f4ca6a633b35238b03f2641e3d5cbeb7f5792",
+    "reviewRelease": "c33acbc29fe79f3cd89fcded97a3839f5299e0ca13fa0da1cf3cd9e91881c664"
+  },
+  "parser": {
+    "file": "/tmp/craidd-gr001-million.csv",
+    "graphQueries": [
+      {
+        "column": 1,
+        "end": 1000000,
+        "ms": 2.729583,
+        "points": 600,
+        "start": 0
+      },
+      {
+        "column": 2,
+        "end": 750000,
+        "ms": 1.337082,
+        "points": 600,
+        "start": 250000
+      },
+      {
+        "column": 3,
+        "end": 750000,
+        "ms": 0.65129,
+        "points": 600,
+        "start": 500000
+      }
+    ],
+    "parseMs": 1107.863225,
+    "progressCallbacks": 245,
+    "retainedBytes": 185729024,
+    "rowCells": 22,
+    "rowInspectionMs": 0.00191,
+    "rows": 1000000,
+    "sha256": "2816464b330512f766376e1fa3f9a1e557357a65571ce1809ac3145cbc5c4864",
+    "size": 153890865,
+    "worstMs": 1.616772,
+    "worstRows": 20,
+    "wallMs": 1119.8824690000038,
+    "peakRssBytes": 185790464,
+    "peakRssFileRatio": 1.2072871511899033,
+    "build": "release standalone production parser; warm filesystem cache; fresh process"
+  },
+  "desktop": {
+    "evidence": "/home/skira24/.codex/worktrees/9b33/Craidd-Studio/test-results/ui/2026-10-20T21-22-44-626Z/metric-snapshot-reopen",
+    "scale": {
+      "firstViewMs": 9679.060597,
+      "progressSeen": true,
+      "graphVisible": true,
+      "baselineRssBytes": 1252442112,
+      "peakProcessTreeRssBytes": 1519353856,
+      "peakIncrementalRssBytes": 266911744,
+      "memorySamples": 132,
+      "heartbeat": {
+        "last": 11797,
+        "ticks": 518,
+        "maxGap": 26
+      },
+      "interactions": [
+        {
+          "interaction": "Zoom in",
+          "ms": 34
+        },
+        {
+          "interaction": "Pan right",
+          "ms": 33
+        },
+        {
+          "interaction": "Pan left",
+          "ms": 32
+        },
+        {
+          "interaction": "Zoom out",
+          "ms": 40
+        },
+        {
+          "interaction": "Series toggle",
+          "ms": 32
+        },
+        {
+          "interaction": "Row inspection",
+          "ms": 20
+        }
+      ],
+      "repeatedSeries": [
+        {
+          "column": 1,
+          "ms": 32
+        },
+        {
+          "column": 2,
+          "ms": 32
+        },
+        {
+          "column": 1,
+          "ms": 33
+        },
+        {
+          "column": 2,
+          "ms": 32
+        },
+        {
+          "column": 1,
+          "ms": 32
+        },
+        {
+          "column": 2,
+          "ms": 33
+        }
+      ],
+      "nativeRoundTrips": [
+        {
+          "ms": 6,
+          "op": "craidd.metrics.graph"
+        },
+        {
+          "ms": 5,
+          "op": "craidd.metrics.graph"
+        },
+        {
+          "ms": 5,
+          "op": "craidd.metrics.graph"
+        },
+        {
+          "ms": 7,
+          "op": "craidd.metrics.graph"
+        },
+        {
+          "ms": 7,
+          "op": "craidd.metrics.graph"
+        },
+        {
+          "ms": 7,
+          "op": "craidd.metrics.graph"
+        },
+        {
+          "ms": 7,
+          "op": "craidd.metrics.graph"
+        },
+        {
+          "ms": 7,
+          "op": "craidd.metrics.graph"
+        },
+        {
+          "ms": 8,
+          "op": "craidd.metrics.graph"
+        },
+        {
+          "ms": 7,
+          "op": "craidd.metrics.graph"
+        },
+        {
+          "ms": 6,
+          "op": "craidd.metrics.graph"
+        },
+        {
+          "ms": 1,
+          "op": "craidd.metrics.row"
+        }
+      ],
+      "source": {
+        "bytesRead": 153890865,
+        "totalBytes": 153890865,
+        "tables": [
+          {
+            "originalRange": null,
+            "snapshot": false,
+            "interpretationRevision": 1,
+            "sourceId": "metrics-907465-2:0",
+            "size": 153890865,
+            "sha256": "2816464b330512f766376e1fa3f9a1e557357a65571ce1809ac3145cbc5c4864",
+            "columns": [
+              {
+                "unit": "s",
+                "name": "elapsed_s",
+                "meaning": "unknown",
+                "numeric": true
+              },
+              {
+                "unit": "ms",
+                "name": "metric_0_ms",
+                "meaning": "unknown",
+                "numeric": true
+              },
+              {
+                "unit": "ms",
+                "name": "metric_1_ms",
+                "meaning": "unknown",
+                "numeric": true
+              },
+              {
+                "unit": "ms",
+                "name": "metric_2_ms",
+                "meaning": "unknown",
+                "numeric": true
+              },
+              {
+                "unit": "ms",
+                "name": "metric_3_ms",
+                "meaning": "unknown",
+                "numeric": true
+              },
+              {
+                "unit": "ms",
+                "name": "metric_4_ms",
+                "meaning": "unknown",
+                "numeric": true
+              },
+              {
+                "unit": "ms",
+                "name": "metric_5_ms",
+                "meaning": "unknown",
+                "numeric": true
+              },
+              {
+                "unit": "ms",
+                "name": "metric_6_ms",
+                "meaning": "unknown",
+                "numeric": true
+              },
+              {
+                "unit": "ms",
+                "name": "metric_7_ms",
+                "meaning": "unknown",
+                "numeric": true
+              },
+              {
+                "unit": "ms",
+                "name": "metric_8_ms",
+                "meaning": "unknown",
+                "numeric": true
+              },
+              {
+                "unit": "ms",
+                "name": "metric_9_ms",
+                "meaning": "unknown",
+                "numeric": true
+              },
+              {
+                "unit": "ms",
+                "name": "metric_10_ms",
+                "meaning": "unknown",
+                "numeric": true
+              },
+              {
+                "unit": "ms",
+                "name": "metric_11_ms",
+                "meaning": "unknown",
+                "numeric": true
+              },
+              {
+                "unit": "ms",
+                "name": "metric_12_ms",
+                "meaning": "unknown",
+                "numeric": true
+              },
+              {
+                "unit": "ms",
+                "name": "metric_13_ms",
+                "meaning": "unknown",
+                "numeric": true
+              },
+              {
+                "unit": "ms",
+                "name": "metric_14_ms",
+                "meaning": "unknown",
+                "numeric": true
+              },
+              {
+                "unit": "ms",
+                "name": "metric_15_ms",
+                "meaning": "unknown",
+                "numeric": true
+              },
+              {
+                "unit": "ms",
+                "name": "metric_16_ms",
+                "meaning": "unknown",
+                "numeric": true
+              },
+              {
+                "unit": "ms",
+                "name": "metric_17_ms",
+                "meaning": "unknown",
+                "numeric": true
+              },
+              {
+                "unit": "ms",
+                "name": "metric_18_ms",
+                "meaning": "unknown",
+                "numeric": true
+              },
+              {
+                "unit": "ms",
+                "name": "metric_19_ms",
+                "meaning": "unknown",
+                "numeric": true
+              },
+              {
+                "unit": "unitless",
+                "name": "phase",
+                "meaning": "unknown",
+                "numeric": false
+              }
+            ],
+            "axis": {
+              "column": null,
+              "kind": "ordinal",
+              "windowSeconds": null
+            },
+            "schemaSidecar": null,
+            "coverage": {
+              "emptyCells": 0,
+              "retained": 1000000,
+              "missingColumns": 0,
+              "unsupported": 0,
+              "records": 1000000,
+              "examples": [],
+              "unterminated": 0,
+              "invalid": 0
+            },
+            "completion": "complete",
+            "modifiedMs": 1792530545949,
+            "generation": 1,
+            "path": "/tmp/craidd-gr001-million.csv"
+          }
+        ],
+        "maxMemoryBytes": 536870912,
+        "maxSets": 2,
+        "id": "metrics-907465-2",
+        "maxRows": 2000000,
+        "error": null,
+        "memoryBytes": 185729024,
+        "state": "complete",
+        "maxFileBytes": 1073741824,
+        "joins": [],
+        "kind": "importedMetrics",
+        "rows": [
+          1000000
+        ]
+      },
+      "method": "sum process-tree RSS sampled every ~50 ms; shared pages double-counted; visible graph/inspector event-to-two-RAF timings; warm file cache; embedded debug build"
+    }
+  },
+  "checks": {
+    "productionBuild": "PASS",
+    "coreTests": {
+      "pass": 14
+    },
+    "nativeTests": {
+      "pass": 184,
+      "ignored": 6
+    },
+    "profilingRegressions": {
+      "pass": 28
+    },
+    "workspaceRegressions": {
+      "pass": 5
+    },
+    "workspaceDesktop": "PASS",
+    "metricDesktop": "PASS",
+    "humanAcceptance": "NOT TESTED",
+    "interactionLatency": "PASS: ordinary p95 31-33 ms; Xvfb p95 30-31 ms; 20 observations each of 6 operations; no >=100ms outliers",
+    "releaseDesktop": "PASS",
+    "publicUx": "PASS, scoped",
+    "resizeHandlerRegressions": {
+      "pass": 3
+    },
+    "totalMemory": "SEPARATE OPEN ISSUE: historical total-memory starting target superseded by accepted incremental gate",
+    "incrementalMemory": "PASS: ordinary 1.93x, Xvfb 1.87x; earlier final release 2.08x",
+    "owningWindowClose": "PASS: ordinary and Xvfb, actual native Window Manager close, cancellation/storage/FD/RSS release and fresh visible import",
+    "automatedM1": "PASS"
+  },
+  "earlierVisibleRun": {
+    "evidence": "/home/skira24/.codex/worktrees/9b33/Craidd-Studio/test-results/ui/2026-10-20T21-19-12-532Z/metric-snapshot-reopen",
+    "scale": {
+      "firstViewMs": 9665.695925,
+      "progressSeen": true,
+      "graphVisible": true,
+      "baselineRssBytes": 1256112128,
+      "peakProcessTreeRssBytes": 1555398656,
+      "peakIncrementalRssBytes": 299286528,
+      "memorySamples": 124,
+      "heartbeat": {
+        "last": 11652,
+        "ticks": 517,
+        "maxGap": 22
+      },
+      "interactions": [
+        {
+          "interaction": "Zoom in",
+          "ms": 23
+        },
+        {
+          "interaction": "Pan right",
+          "ms": 30
+        },
+        {
+          "interaction": "Pan left",
+          "ms": 71
+        },
+        {
+          "interaction": "Zoom out",
+          "ms": 98
+        },
+        {
+          "interaction": "Series toggle",
+          "ms": 199
+        },
+        {
+          "interaction": "Row inspection",
+          "ms": 23
+        }
+      ],
+      "source": {
+        "bytesRead": 153890865,
+        "totalBytes": 153890865,
+        "tables": [
+          {
+            "originalRange": null,
+            "snapshot": false,
+            "interpretationRevision": 1,
+            "sourceId": "metrics-902996-2:0",
+            "size": 153890865,
+            "sha256": "2816464b330512f766376e1fa3f9a1e557357a65571ce1809ac3145cbc5c4864",
+            "columns": [
+              {
+                "unit": "s",
+                "name": "elapsed_s",
+                "meaning": "unknown",
+                "numeric": true
+              },
+              {
+                "unit": "ms",
+                "name": "metric_0_ms",
+                "meaning": "unknown",
+                "numeric": true
+              },
+              {
+                "unit": "ms",
+                "name": "metric_1_ms",
+                "meaning": "unknown",
+                "numeric": true
+              },
+              {
+                "unit": "ms",
+                "name": "metric_2_ms",
+                "meaning": "unknown",
+                "numeric": true
+              },
+              {
+                "unit": "ms",
+                "name": "metric_3_ms",
+                "meaning": "unknown",
+                "numeric": true
+              },
+              {
+                "unit": "ms",
+                "name": "metric_4_ms",
+                "meaning": "unknown",
+                "numeric": true
+              },
+              {
+                "unit": "ms",
+                "name": "metric_5_ms",
+                "meaning": "unknown",
+                "numeric": true
+              },
+              {
+                "unit": "ms",
+                "name": "metric_6_ms",
+                "meaning": "unknown",
+                "numeric": true
+              },
+              {
+                "unit": "ms",
+                "name": "metric_7_ms",
+                "meaning": "unknown",
+                "numeric": true
+              },
+              {
+                "unit": "ms",
+                "name": "metric_8_ms",
+                "meaning": "unknown",
+                "numeric": true
+              },
+              {
+                "unit": "ms",
+                "name": "metric_9_ms",
+                "meaning": "unknown",
+                "numeric": true
+              },
+              {
+                "unit": "ms",
+                "name": "metric_10_ms",
+                "meaning": "unknown",
+                "numeric": true
+              },
+              {
+                "unit": "ms",
+                "name": "metric_11_ms",
+                "meaning": "unknown",
+                "numeric": true
+              },
+              {
+                "unit": "ms",
+                "name": "metric_12_ms",
+                "meaning": "unknown",
+                "numeric": true
+              },
+              {
+                "unit": "ms",
+                "name": "metric_13_ms",
+                "meaning": "unknown",
+                "numeric": true
+              },
+              {
+                "unit": "ms",
+                "name": "metric_14_ms",
+                "meaning": "unknown",
+                "numeric": true
+              },
+              {
+                "unit": "ms",
+                "name": "metric_15_ms",
+                "meaning": "unknown",
+                "numeric": true
+              },
+              {
+                "unit": "ms",
+                "name": "metric_16_ms",
+                "meaning": "unknown",
+                "numeric": true
+              },
+              {
+                "unit": "ms",
+                "name": "metric_17_ms",
+                "meaning": "unknown",
+                "numeric": true
+              },
+              {
+                "unit": "ms",
+                "name": "metric_18_ms",
+                "meaning": "unknown",
+                "numeric": true
+              },
+              {
+                "unit": "ms",
+                "name": "metric_19_ms",
+                "meaning": "unknown",
+                "numeric": true
+              },
+              {
+                "unit": "unitless",
+                "name": "phase",
+                "meaning": "unknown",
+                "numeric": false
+              }
+            ],
+            "axis": {
+              "column": null,
+              "kind": "ordinal",
+              "windowSeconds": null
+            },
+            "schemaSidecar": null,
+            "coverage": {
+              "emptyCells": 0,
+              "retained": 1000000,
+              "missingColumns": 0,
+              "unsupported": 0,
+              "records": 1000000,
+              "examples": [],
+              "unterminated": 0,
+              "invalid": 0
+            },
+            "completion": "complete",
+            "modifiedMs": 1792530545949,
+            "generation": 1,
+            "path": "/tmp/craidd-gr001-million.csv"
+          }
+        ],
+        "maxMemoryBytes": 536870912,
+        "maxSets": 2,
+        "id": "metrics-902996-2",
+        "maxRows": 2000000,
+        "error": null,
+        "memoryBytes": 185729024,
+        "state": "complete",
+        "maxFileBytes": 1073741824,
+        "joins": [],
+        "kind": "importedMetrics",
+        "rows": [
+          1000000
+        ]
+      },
+      "method": "sum process-tree RSS sampled every ~50 ms; shared pages double-counted; visible graph/inspector event-to-two-RAF timings; warm file cache; embedded debug build"
+    }
+  },
+  "diagnosticRerun": {
+    "evidence": "/home/skira24/.codex/worktrees/9b33/Craidd-Studio/test-results/ui/2026-10-20T21-21-16-414Z/metric-snapshot-reopen",
+    "scale": {
+      "firstViewMs": 9625.229675999999,
+      "progressSeen": true,
+      "graphVisible": true,
+      "baselineRssBytes": 1249058816,
+      "peakProcessTreeRssBytes": 1560203264,
+      "peakIncrementalRssBytes": 311144448,
+      "memorySamples": 122,
+      "heartbeat": {
+        "last": 11976,
+        "ticks": 517,
+        "maxGap": 22
+      },
+      "interactions": [
+        {
+          "interaction": "Zoom in",
+          "ms": 27
+        },
+        {
+          "interaction": "Pan right",
+          "ms": 32
+        },
+        {
+          "interaction": "Pan left",
+          "ms": 24
+        },
+        {
+          "interaction": "Zoom out",
+          "ms": 32
+        },
+        {
+          "interaction": "Series toggle",
+          "ms": 42
+        },
+        {
+          "interaction": "Row inspection",
+          "ms": 30
+        }
+      ],
+      "repeatedSeries": [
+        {
+          "column": 1,
+          "ms": 32
+        },
+        {
+          "column": 2,
+          "ms": 32
+        },
+        {
+          "column": 1,
+          "ms": 25
+        },
+        {
+          "column": 2,
+          "ms": 32
+        },
+        {
+          "column": 1,
+          "ms": 33
+        },
+        {
+          "column": 2,
+          "ms": 32
+        }
+      ],
+      "nativeRoundTrips": [],
+      "source": {
+        "bytesRead": 153890865,
+        "totalBytes": 153890865,
+        "tables": [
+          {
+            "originalRange": null,
+            "snapshot": false,
+            "interpretationRevision": 1,
+            "sourceId": "metrics-904546-2:0",
+            "size": 153890865,
+            "sha256": "2816464b330512f766376e1fa3f9a1e557357a65571ce1809ac3145cbc5c4864",
+            "columns": [
+              {
+                "unit": "s",
+                "name": "elapsed_s",
+                "meaning": "unknown",
+                "numeric": true
+              },
+              {
+                "unit": "ms",
+                "name": "metric_0_ms",
+                "meaning": "unknown",
+                "numeric": true
+              },
+              {
+                "unit": "ms",
+                "name": "metric_1_ms",
+                "meaning": "unknown",
+                "numeric": true
+              },
+              {
+                "unit": "ms",
+                "name": "metric_2_ms",
+                "meaning": "unknown",
+                "numeric": true
+              },
+              {
+                "unit": "ms",
+                "name": "metric_3_ms",
+                "meaning": "unknown",
+                "numeric": true
+              },
+              {
+                "unit": "ms",
+                "name": "metric_4_ms",
+                "meaning": "unknown",
+                "numeric": true
+              },
+              {
+                "unit": "ms",
+                "name": "metric_5_ms",
+                "meaning": "unknown",
+                "numeric": true
+              },
+              {
+                "unit": "ms",
+                "name": "metric_6_ms",
+                "meaning": "unknown",
+                "numeric": true
+              },
+              {
+                "unit": "ms",
+                "name": "metric_7_ms",
+                "meaning": "unknown",
+                "numeric": true
+              },
+              {
+                "unit": "ms",
+                "name": "metric_8_ms",
+                "meaning": "unknown",
+                "numeric": true
+              },
+              {
+                "unit": "ms",
+                "name": "metric_9_ms",
+                "meaning": "unknown",
+                "numeric": true
+              },
+              {
+                "unit": "ms",
+                "name": "metric_10_ms",
+                "meaning": "unknown",
+                "numeric": true
+              },
+              {
+                "unit": "ms",
+                "name": "metric_11_ms",
+                "meaning": "unknown",
+                "numeric": true
+              },
+              {
+                "unit": "ms",
+                "name": "metric_12_ms",
+                "meaning": "unknown",
+                "numeric": true
+              },
+              {
+                "unit": "ms",
+                "name": "metric_13_ms",
+                "meaning": "unknown",
+                "numeric": true
+              },
+              {
+                "unit": "ms",
+                "name": "metric_14_ms",
+                "meaning": "unknown",
+                "numeric": true
+              },
+              {
+                "unit": "ms",
+                "name": "metric_15_ms",
+                "meaning": "unknown",
+                "numeric": true
+              },
+              {
+                "unit": "ms",
+                "name": "metric_16_ms",
+                "meaning": "unknown",
+                "numeric": true
+              },
+              {
+                "unit": "ms",
+                "name": "metric_17_ms",
+                "meaning": "unknown",
+                "numeric": true
+              },
+              {
+                "unit": "ms",
+                "name": "metric_18_ms",
+                "meaning": "unknown",
+                "numeric": true
+              },
+              {
+                "unit": "ms",
+                "name": "metric_19_ms",
+                "meaning": "unknown",
+                "numeric": true
+              },
+              {
+                "unit": "unitless",
+                "name": "phase",
+                "meaning": "unknown",
+                "numeric": false
+              }
+            ],
+            "axis": {
+              "column": null,
+              "kind": "ordinal",
+              "windowSeconds": null
+            },
+            "schemaSidecar": null,
+            "coverage": {
+              "emptyCells": 0,
+              "retained": 1000000,
+              "missingColumns": 0,
+              "unsupported": 0,
+              "records": 1000000,
+              "examples": [],
+              "unterminated": 0,
+              "invalid": 0
+            },
+            "completion": "complete",
+            "modifiedMs": 1792530545949,
+            "generation": 1,
+            "path": "/tmp/craidd-gr001-million.csv"
+          }
+        ],
+        "maxMemoryBytes": 536870912,
+        "maxSets": 2,
+        "id": "metrics-904546-2",
+        "maxRows": 2000000,
+        "error": null,
+        "memoryBytes": 185729024,
+        "state": "complete",
+        "maxFileBytes": 1073741824,
+        "joins": [],
+        "kind": "importedMetrics",
+        "rows": [
+          1000000
+        ]
+      },
+      "method": "sum process-tree RSS sampled every ~50 ms; shared pages double-counted; visible graph/inspector event-to-two-RAF timings; warm file cache; embedded debug build"
+    }
+  },
+  "releaseDesktop": {
+    "evidence": "/home/skira24/.codex/worktrees/9b33/Craidd-Studio/test-results/ui/2026-10-20T21-48-15-689Z/metric-snapshot-reopen",
+    "scale": {
+      "firstViewMs": 1313.4172259999996,
+      "progressSeen": true,
+      "graphVisible": true,
+      "baselineRssBytes": 1274716160,
+      "peakProcessTreeRssBytes": 1594589184,
+      "peakIncrementalRssBytes": 319873024,
+      "memorySamples": 23,
+      "heartbeat": {
+        "last": 3269,
+        "ticks": 101,
+        "maxGap": 25
+      },
+      "interactions": [
+        {
+          "interaction": "Zoom in",
+          "ms": 25
+        },
+        {
+          "interaction": "Pan right",
+          "ms": 31
+        },
+        {
+          "interaction": "Pan left",
+          "ms": 31
+        },
+        {
+          "interaction": "Zoom out",
+          "ms": 30
+        },
+        {
+          "interaction": "Series toggle",
+          "ms": 23
+        },
+        {
+          "interaction": "Row inspection",
+          "ms": 21
+        }
+      ],
+      "repeatedSeries": [
+        {
+          "column": 1,
+          "ms": 31
+        },
+        {
+          "column": 2,
+          "ms": 31
+        },
+        {
+          "column": 1,
+          "ms": 31
+        },
+        {
+          "column": 2,
+          "ms": 31
+        },
+        {
+          "column": 1,
+          "ms": 22
+        },
+        {
+          "column": 2,
+          "ms": 31
+        }
+      ],
+      "nativeRoundTrips": [
+        {
+          "ms": 2,
+          "op": "craidd.metrics.graph"
+        },
+        {
+          "ms": 2,
+          "op": "craidd.metrics.graph"
+        },
+        {
+          "ms": 2,
+          "op": "craidd.metrics.graph"
+        },
+        {
+          "ms": 4,
+          "op": "craidd.metrics.graph"
+        },
+        {
+          "ms": 4,
+          "op": "craidd.metrics.graph"
+        },
+        {
+          "ms": 4,
+          "op": "craidd.metrics.graph"
+        },
+        {
+          "ms": 4,
+          "op": "craidd.metrics.graph"
+        },
+        {
+          "ms": 3,
+          "op": "craidd.metrics.graph"
+        },
+        {
+          "ms": 3,
+          "op": "craidd.metrics.graph"
+        },
+        {
+          "ms": 4,
+          "op": "craidd.metrics.graph"
+        },
+        {
+          "ms": 3,
+          "op": "craidd.metrics.graph"
+        },
+        {
+          "ms": 0,
+          "op": "craidd.metrics.row"
+        }
+      ],
+      "source": {
+        "state": "complete",
+        "bytesRead": 153890865,
+        "totalBytes": 153890865,
+        "tables": [
+          {
+            "originalRange": null,
+            "snapshot": false,
+            "interpretationRevision": 1,
+            "sourceId": "metrics-933702-2:0",
+            "size": 153890865,
+            "sha256": "2816464b330512f766376e1fa3f9a1e557357a65571ce1809ac3145cbc5c4864",
+            "columns": [
+              {
+                "unit": "s",
+                "name": "elapsed_s",
+                "meaning": "unknown",
+                "numeric": true
+              },
+              {
+                "unit": "ms",
+                "name": "metric_0_ms",
+                "meaning": "unknown",
+                "numeric": true
+              },
+              {
+                "unit": "ms",
+                "name": "metric_1_ms",
+                "meaning": "unknown",
+                "numeric": true
+              },
+              {
+                "unit": "ms",
+                "name": "metric_2_ms",
+                "meaning": "unknown",
+                "numeric": true
+              },
+              {
+                "unit": "ms",
+                "name": "metric_3_ms",
+                "meaning": "unknown",
+                "numeric": true
+              },
+              {
+                "unit": "ms",
+                "name": "metric_4_ms",
+                "meaning": "unknown",
+                "numeric": true
+              },
+              {
+                "unit": "ms",
+                "name": "metric_5_ms",
+                "meaning": "unknown",
+                "numeric": true
+              },
+              {
+                "unit": "ms",
+                "name": "metric_6_ms",
+                "meaning": "unknown",
+                "numeric": true
+              },
+              {
+                "unit": "ms",
+                "name": "metric_7_ms",
+                "meaning": "unknown",
+                "numeric": true
+              },
+              {
+                "unit": "ms",
+                "name": "metric_8_ms",
+                "meaning": "unknown",
+                "numeric": true
+              },
+              {
+                "unit": "ms",
+                "name": "metric_9_ms",
+                "meaning": "unknown",
+                "numeric": true
+              },
+              {
+                "unit": "ms",
+                "name": "metric_10_ms",
+                "meaning": "unknown",
+                "numeric": true
+              },
+              {
+                "unit": "ms",
+                "name": "metric_11_ms",
+                "meaning": "unknown",
+                "numeric": true
+              },
+              {
+                "unit": "ms",
+                "name": "metric_12_ms",
+                "meaning": "unknown",
+                "numeric": true
+              },
+              {
+                "unit": "ms",
+                "name": "metric_13_ms",
+                "meaning": "unknown",
+                "numeric": true
+              },
+              {
+                "unit": "ms",
+                "name": "metric_14_ms",
+                "meaning": "unknown",
+                "numeric": true
+              },
+              {
+                "unit": "ms",
+                "name": "metric_15_ms",
+                "meaning": "unknown",
+                "numeric": true
+              },
+              {
+                "unit": "ms",
+                "name": "metric_16_ms",
+                "meaning": "unknown",
+                "numeric": true
+              },
+              {
+                "unit": "ms",
+                "name": "metric_17_ms",
+                "meaning": "unknown",
+                "numeric": true
+              },
+              {
+                "unit": "ms",
+                "name": "metric_18_ms",
+                "meaning": "unknown",
+                "numeric": true
+              },
+              {
+                "unit": "ms",
+                "name": "metric_19_ms",
+                "meaning": "unknown",
+                "numeric": true
+              },
+              {
+                "unit": "unitless",
+                "name": "phase",
+                "meaning": "unknown",
+                "numeric": false
+              }
+            ],
+            "axis": {
+              "column": null,
+              "kind": "ordinal",
+              "windowSeconds": null
+            },
+            "schemaSidecar": null,
+            "coverage": {
+              "emptyCells": 0,
+              "retained": 1000000,
+              "missingColumns": 0,
+              "unsupported": 0,
+              "records": 1000000,
+              "examples": [],
+              "unterminated": 0,
+              "invalid": 0
+            },
+            "completion": "complete",
+            "modifiedMs": 1792530545949,
+            "generation": 1,
+            "path": "/tmp/craidd-gr001-million.csv"
+          }
+        ],
+        "maxMemoryBytes": 536870912,
+        "maxSets": 2,
+        "id": "metrics-933702-2",
+        "maxRows": 2000000,
+        "error": null,
+        "memoryBytes": 185729024,
+        "maxFileBytes": 1073741824,
+        "kind": "importedMetrics",
+        "joins": [],
+        "rows": [
+          1000000
+        ],
+        "paths": [
+          "/tmp/craidd-gr001-million.csv"
+        ]
+      },
+      "build": "/tmp/craidd-gr001-target/release/craidd-studio",
+      "display": "x11",
+      "method": "sum process-tree RSS sampled every ~50 ms; shared pages double-counted; visible graph/inspector event-to-two-RAF timings; warm file cache; build path recorded separately"
+    }
+  },
+  "publicUx": {
+    "evidence": "/home/skira24/.codex/worktrees/9b33/Craidd-Studio/test-results/ui/2026-10-20T21-48-01-315Z/metric-ux",
+    "final": {
+      "description": "metric-chart-description",
+      "join": "run.csv [time_s] \u2194 run-sections.csv [time_s] \u00b7 \u00b10.5 s",
+      "clientWidth": 1264,
+      "scrollWidth": 1264,
+      "snapshotScope": "Snapshot scope: rows 2\u20132 in this file; all retained rows in the other file groups. Includes original values, interpretation and provenance."
+    },
+    "result": "PASS",
+    "environment": "serial native GTK/WebKit, private Xvfb X11 display; human and GNOME/Wayland acceptance not established"
+  },
+  "nativeRegressions": {
+    "passed": 184,
+    "ignored": 6,
+    "failed": 0,
+    "environment": "normal-user local sockets outside sandbox; no system policy changes"
+  },
+  "resizeRegression": {
+    "passed": 3,
+    "failed": 0,
+    "reproduction": "private native display: released pointermove with buttons=0 changed sidebar 420 to 318; fixed pointer identity/button lifecycle"
+  },
+  "sourceHashesScope": "M1 review sources and fixtures measured before the local task commit. reviewRelease is the lifecycle-trace build tested on both displays; earlier releaseDesktop retains its earlier binary hash in binarySha256.embeddedRelease.",
+  "standardReleaseRegression": {
+    "result": "PASS",
+    "durationMs": 4834.397683,
+    "environment": "serial native private Xvfb X11, embedded release",
+    "coverage": "real capture, snapshot, sidebar/editor workspace and editable source"
+  },
+  "acceptedReview": {
+    "memoryGate": "incremental import peak RSS <3x file size; baseline separately reported",
+    "interactionGate": "release only, nearest-rank p95 <100ms, 20 observations per operation on ordinary display and Xvfb",
+    "humanAcceptance": "NOT TESTED",
+    "priority": "GR-002 in-IDE timed proposal before M2 then M3; later implementation waits"
+  },
+  "releaseReviewEvidence": {
+    "ordinary": "release-ordinary-2026-10-20.json",
+    "xvfb": "release-xvfb-2026-10-20.json",
+    "recovery": "owner-close-recovery-2026-10-20.json"
+  },
+  "reviewBuild": {
+    "binarySha256": "c33acbc29fe79f3cd89fcded97a3839f5299e0ca13fa0da1cf3cd9e91881c664",
+    "flags": "cargo build --release --offline --features tauri/custom-protocol",
+    "lifecycleTracing": "CRAIDD_METRIC_TRACE=1 enables only native metadata lifecycle logs; unset by default",
+    "gcLogging": "JSC_logGC=1 Basic during release acceptance; installed jsc --options verified; no system policy changes"
+  },
+  "humanFixtureCheck": {
+    "file": "workspaces/profiling-metrics/fixtures/run.csv",
+    "graphQueries": [
+      {
+        "column": 1,
+        "end": 5,
+        "ms": 0.0016300000000000002,
+        "points": 4,
+        "start": 0
+      },
+      {
+        "column": 2,
+        "end": 3,
+        "ms": 0.0003,
+        "points": 2,
+        "start": 1
+      }
+    ],
+    "parseMs": 0.04147,
+    "progressCallbacks": 1,
+    "retainedBytes": 262208,
+    "rowCells": 4,
+    "rowInspectionMs": 0.00063,
+    "rows": 5,
+    "sha256": "422b0d6ba4fbaa9ca3549092181e57258266330dc4c3f55dda73316584772001",
+    "size": 233,
+    "worstMs": 0.0009599999999999999,
+    "worstRows": 4
+  },
+  "humanFixtureRunnerSha256": "89682952c659c8078960eccba50e1a1bd59bb52df218c2fecea6cadb32632365"
+}

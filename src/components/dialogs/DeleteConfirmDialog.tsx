@@ -19,7 +19,7 @@ export default function DeleteConfirmDialog({
   const abs = buildAbs(basePath, node);
   const isFolder = node.kind === "folder";
   const childCount = countChildren(node);
-  const isOpen = tabs.some((t) => t.fileId === abs);
+  const isOpen = tabs.some((t) => t.kind === "file" && t.fileId === abs);
 
   const submit = async () => {
     setError(null);

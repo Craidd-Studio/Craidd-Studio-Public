@@ -1,3 +1,4 @@
+import { isFileTab } from "../../types/project";
 import { useSolution } from "../../store/solutionStore";
 import { usePreferences } from "../../store/preferencesStore";
 import { useBuild } from "../../store/buildStore";
@@ -59,7 +60,7 @@ export default function StatusBar() {
   const solution = useSolution((s) => s.solution);
   const tabs = useSolution((s) => s.tabs);
   const activeFileId = useSolution((s) => s.activeFileId);
-  const active = tabs.find((t) => t.fileId === activeFileId);
+  const active = tabs.filter(isFileTab).find((t) => t.fileId === activeFileId);
   const wordWrap = usePreferences((s) => s.wordWrap);
   const fontSize = usePreferences((s) => s.fontSize);
   const buildProblems = useBuild((s) => s.problems);

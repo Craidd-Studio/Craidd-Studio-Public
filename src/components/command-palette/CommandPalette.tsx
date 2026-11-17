@@ -37,6 +37,7 @@ export default function CommandPalette({
   if (!open) return null;
 
   const commands: Command[] = [
+    { id: "debug.attach", label: "Debug: Attach to Process…", run: () => window.dispatchEvent(new CustomEvent("craidd:attach-process")) },
     { id: "view.wordWrap",  label: "View: Toggle Word Wrap",       shortcut: "Alt+Z",  run: prefs.toggleWordWrap },
     { id: "view.zoomIn",    label: "View: Zoom In",                shortcut: "Ctrl+=", run: prefs.zoomIn },
     { id: "view.zoomOut",   label: "View: Zoom Out",               shortcut: "Ctrl+-", run: prefs.zoomOut },

@@ -9,6 +9,7 @@ import type {
   Manifest,
   ProjectKind,
 } from "../types/project";
+import { findFileTab, isFileTab, PROFILER_TAB_ID } from "../types/project";
 import { languageFromFilename, monacoLanguageForFilename, projectExtensions, projectWellKnownFiles, languageMeta } from "../lib/languages";
 import { seedMainChoices, syncMainChoices } from "./buildStore";
 
@@ -54,7 +55,10 @@ interface SolutionState {
   solutionError: string | null;
   discovery: FileNode | null;
   tabs: EditorTab[];
-  activeFileId: string | null;
+  activeTabId: string | null;
+  /** Compatibility projection of primary selection; never a workspace key. */
+  readonly activeFileId: string | null;
+  lastSourceFileId: string | null;
   navigation: { fileId: string; line: number; column: number; serial: number } | null;
 
   bannerState: BannerState;
@@ -101,11 +105,13 @@ interface SolutionState {
   deleteProject: (projectId: string, deleteFolder: boolean) => Promise<void>;
   deletePath: (path: string, recursive: boolean) => Promise<void>;
 
-  openFile: (absolutePath: string, fileName: string) => Promise<void>;
+  openFile: (absolutePath: string, fileName: string, options?: { activate?: boolean }) => Promise<void>;
   revealFile: (absolutePath: string, line: number, column: number) => Promise<void>;
   /** Open a navigation target outside every project as a read-only tab (decisions 49-51). A tab already open keeps its own editability. */
   revealReadOnly: (absolutePath: string, text: string, line: number, column: number) => void;
-  closeTab: (fileId: string) => void;
+  openProfiler: () => void;
+  setActiveTab: (id: string) => void;
+  closeTab: (id: string) => void;
   setActiveFile: (fileId: string) => void;
 
   updateTabContent: (fileId: string, content: string) => void;
@@ -392,7 +398,22 @@ async function refreshAllProjectTrees(
   syncMainChoices(next);
 }
 
-export const useSolution = create<SolutionState>((set, get) => ({
+export const useSolution = create<SolutionState>((storeSet, get) => {
+  // Primary selection has one writable identity. File-only callers consume its
+  // projection; they can never mistake a workspace view for a filesystem path.
+  const set = (update: Partial<SolutionState> | ((state: SolutionState) => Partial<SolutionState>)) => {
+    storeSet((state) => {
+      const patch = typeof update === "function" ? update(state) : update;
+      const tabs = patch.tabs ?? state.tabs;
+      const id = "activeTabId" in patch ? patch.activeTabId : state.activeTabId;
+      const active = tabs.find((tab) => tab.id === id);
+      const activeFileId = active?.kind === "file" ? active.fileId : null;
+      const remembered = patch.lastSourceFileId === undefined ? state.lastSourceFileId : patch.lastSourceFileId;
+      return { ...patch, activeTabId: active?.id ?? null, activeFileId,
+        lastSourceFileId: activeFileId ?? (findFileTab(tabs, remembered)?.fileId ?? null) };
+    });
+  };
+  return ({
   rootPath: null,
   clnPath: null,
   solution: null,
@@ -400,7 +421,9 @@ export const useSolution = create<SolutionState>((set, get) => ({
   solutionError: null,
   discovery: null,
   tabs: [],
+  activeTabId: null,
   activeFileId: null,
+  lastSourceFileId: null,
   navigation: null,
   bannerState: "none",
   bannerMessage: null,
@@ -419,6 +442,7 @@ export const useSolution = create<SolutionState>((set, get) => ({
   setFocusedTreeTarget: (t) => set({ focusedTreeTarget: t }),
 
   reloadTabFromDisk: async (fileId) => {
+    if (!findFileTab(get().tabs, fileId)) return;
     const { invoke } = await import("@tauri-apps/api/core");
     try {
       const content = await invoke<string>("read_file", { path: fileId });
@@ -428,7 +452,7 @@ export const useSolution = create<SolutionState>((set, get) => ({
       const mtimeAtLastSync = stats[0]?.mtimeMs ?? 0;
       set((s) => ({
         tabs: s.tabs.map((t) =>
-          t.fileId === fileId
+          t.kind === "file" && t.fileId === fileId
             ? { ...t, content, originalContent: content, dirty: false, diskState: "inSync" as const, mtimeAtLastSync }
             : t
         ),
@@ -500,7 +524,7 @@ export const useSolution = create<SolutionState>((set, get) => ({
         clnPath: loaded.clnPath,
         isSolutionLoading: false,
         tabs: [],
-        activeFileId: null,
+        activeTabId: null,
         bannerState: "none",
         bannerMessage: null,
       });
@@ -522,7 +546,7 @@ export const useSolution = create<SolutionState>((set, get) => ({
         solution: null,
         isSolutionLoading: false,
         tabs: [],
-        activeFileId: null,
+        activeTabId: null,
         pendingAncestor: ancestor,
         pendingPath: path,
         bannerState: "none",
@@ -534,7 +558,7 @@ export const useSolution = create<SolutionState>((set, get) => ({
       solution: null,
       isSolutionLoading: false,
       tabs: [],
-      activeFileId: null,
+      activeTabId: null,
       bannerState: "no-solution",
       bannerMessage: null,
     });
@@ -613,7 +637,7 @@ export const useSolution = create<SolutionState>((set, get) => ({
         discovery,
         isSolutionLoading: false,
         tabs: [],
-        activeFileId: null,
+        activeTabId: null,
         bannerState: "none",
         bannerMessage: null,
       });
@@ -714,7 +738,7 @@ export const useSolution = create<SolutionState>((set, get) => ({
   dismissError: () => set({ solutionError: null, bannerState: "none", bannerMessage: null }),
 
   clearSolution: () => set({
-    rootPath: null, solution: null, discovery: null, tabs: [], activeFileId: null,
+    rootPath: null, solution: null, discovery: null, tabs: [], activeTabId: null,
     navigation: null,
     solutionError: null, bannerState: "none", bannerMessage: null,
     pendingAncestor: null, pendingPath: null, bannerAncestor: null,
@@ -736,7 +760,7 @@ export const useSolution = create<SolutionState>((set, get) => ({
           solution: null,
           discovery: null,
           tabs: [],
-          activeFileId: null,
+          activeTabId: null,
           bannerState: "none",
           bannerMessage: null,
         });
@@ -752,7 +776,7 @@ export const useSolution = create<SolutionState>((set, get) => ({
     solution: null,
     discovery: null,
     tabs: [],
-    activeFileId: null,
+    activeTabId: null,
     bannerState: "none",
     bannerMessage: null,
     pendingAncestor: null,
@@ -1505,12 +1529,13 @@ export const useSolution = create<SolutionState>((set, get) => ({
     // Update any open tab that pointed at the old path.
     set((s) => ({
       tabs: s.tabs.map((t) => {
-        if (t.fileId !== oldPath) return t;
+        if (t.kind !== "file" || t.fileId !== oldPath) return t;
         const name = newPath.split(/[\\/]/).pop() ?? t.name;
         const language = languageFromFilename(name);
-        return { ...t, fileId: newPath, name, language };
+        return { ...t, id: newPath, fileId: newPath, name, language };
       }),
-      activeFileId: s.activeFileId === oldPath ? newPath : s.activeFileId,
+      activeTabId: s.activeTabId === oldPath ? newPath : s.activeTabId,
+      lastSourceFileId: s.lastSourceFileId === oldPath ? newPath : s.lastSourceFileId,
     }));
 
     await get().refreshDiscovery();
@@ -1529,10 +1554,10 @@ export const useSolution = create<SolutionState>((set, get) => ({
     await refreshAllProjectTrees(get, set);
   },
 
-  openFile: async (absolutePath, fileName) => {
+  openFile: async (absolutePath, fileName, options) => {
     const state = get();
-    if (state.tabs.some((t) => t.fileId === absolutePath)) {
-      set({ activeFileId: absolutePath });
+    if (state.tabs.some((t) => t.kind === "file" && t.fileId === absolutePath)) {
+      if (options?.activate !== false) set({ activeTabId: absolutePath });
       return;
     }
     const { invoke } = await import("@tauri-apps/api/core");
@@ -1542,6 +1567,7 @@ export const useSolution = create<SolutionState>((set, get) => ({
       const language = languageFromFilename(fileName);
       const monacoLanguage = monacoLanguageForFilename(fileName);
       const tab: EditorTab = {
+        kind: "file", id: absolutePath,
         fileId: absolutePath,
         name: fileName,
         language,
@@ -1552,7 +1578,8 @@ export const useSolution = create<SolutionState>((set, get) => ({
         diskState: "inSync",
         mtimeAtLastSync: stats[0]?.mtimeMs ?? 0,
       };
-      set({ tabs: [...state.tabs, tab], activeFileId: absolutePath });
+      set((latest) => ({ tabs: latest.tabs.some((item) => item.id === absolutePath) ? latest.tabs : [...latest.tabs, tab],
+        ...(options?.activate !== false ? { activeTabId: absolutePath } : {}) }));
     } catch (err) {
       const msg = `Could not open ${absolutePath}: ${String(err)}`;
       logErr(msg);
@@ -1562,9 +1589,9 @@ export const useSolution = create<SolutionState>((set, get) => ({
 
   revealFile: async (absolutePath, line, column) => {
     await get().openFile(absolutePath, absolutePath.split("/").pop() || absolutePath);
-    if (!get().tabs.some((tab) => tab.fileId === absolutePath)) return;
+    if (!get().tabs.some((tab) => tab.kind === "file" && tab.fileId === absolutePath)) return;
     set((state) => ({
-      activeFileId: absolutePath,
+      activeTabId: absolutePath,
       navigation: { fileId: absolutePath, line: Math.max(1, line), column: Math.max(1, column),
         serial: (state.navigation?.serial ?? 0) + 1 },
     }));
@@ -1573,36 +1600,45 @@ export const useSolution = create<SolutionState>((set, get) => ({
   revealReadOnly: (absolutePath, text, line, column) => {
     const name = absolutePath.split("/").pop() || absolutePath;
     set((state) => {
-      const existing = state.tabs.some((t) => t.fileId === absolutePath);
-      const tab: EditorTab = { fileId: absolutePath, name, language: languageFromFilename(name), monacoLanguage: monacoLanguageForFilename(name),
+      const existing = !!findFileTab(state.tabs, absolutePath);
+      const tab: EditorTab = { kind: "file", id: absolutePath, fileId: absolutePath, name, language: languageFromFilename(name), monacoLanguage: monacoLanguageForFilename(name),
         content: text, originalContent: text, dirty: false, diskState: "inSync", mtimeAtLastSync: 0, readOnly: true };
       return {
         tabs: existing ? state.tabs : [...state.tabs, tab],
-        activeFileId: absolutePath,
+        activeTabId: absolutePath,
         navigation: { fileId: absolutePath, line: Math.max(1, line), column: Math.max(1, column), serial: (state.navigation?.serial ?? 0) + 1 },
       };
     });
   },
 
-  closeTab: (fileId) => set((s) => {
-    const tabs = s.tabs.filter((t) => t.fileId !== fileId);
-    let activeFileId = s.activeFileId;
-    if (activeFileId === fileId) activeFileId = tabs.length > 0 ? tabs[tabs.length - 1].fileId : null;
-    return { tabs, activeFileId };
+  openProfiler: () => set((s) => ({
+    tabs: s.tabs.some((tab) => tab.kind === "profiler") ? s.tabs
+      : [...s.tabs, { kind: "profiler", id: PROFILER_TAB_ID, name: "Profiling" }],
+    activeTabId: PROFILER_TAB_ID,
+  })),
+
+  setActiveTab: (id) => {
+    if (!get().tabs.some((tab) => tab.id === id)) return;
+    set({ activeTabId: id });
+    const file = get().activeFileId;
+    if (file) void get().refreshDiskStateFor(file);
+  },
+
+  closeTab: (id) => set((s) => {
+    const tabs = s.tabs.filter((t) => t.id !== id);
+    return { tabs, activeTabId: s.activeTabId === id ? tabs[tabs.length - 1]?.id ?? null : s.activeTabId };
   }),
 
   setActiveFile: (fileId) => {
-    set({ activeFileId: fileId });
-    // Fire-and-forget disk refresh for the newly focused tab.
-    void get().refreshDiskStateFor(fileId);
+    if (findFileTab(get().tabs, fileId)) get().setActiveTab(fileId);
   },
 
   updateTabContent: (fileId, content) => {
-    const current = get().tabs.find((t) => t.fileId === fileId);
+    const current = findFileTab(get().tabs, fileId);
     if (current?.readOnly || current?.content === content) return;
     set((s) => ({
       tabs: s.tabs.map((t) =>
-        t.fileId === fileId
+        t.kind === "file" && t.fileId === fileId
           ? { ...t, content, dirty: content !== t.originalContent }
           : t
       ),
@@ -1611,7 +1647,7 @@ export const useSolution = create<SolutionState>((set, get) => ({
 
   saveFile: async (fileId, force = false) => {
     const state = get();
-    const tab = state.tabs.find((t) => t.fileId === fileId);
+    const tab = findFileTab(state.tabs, fileId);
     if (!tab || tab.readOnly) return "error"; // a read-only navigation target has no save path
     const { invoke } = await import("@tauri-apps/api/core");
 
@@ -1637,7 +1673,7 @@ export const useSolution = create<SolutionState>((set, get) => ({
 
       set((s) => ({
         tabs: s.tabs.map((t) =>
-          t.fileId === fileId
+          t.kind === "file" && t.fileId === fileId
             ? { ...t, originalContent: t.content, dirty: false, diskState: "inSync", mtimeAtLastSync }
             : t
         ),
@@ -1652,10 +1688,10 @@ export const useSolution = create<SolutionState>((set, get) => ({
 
   saveFileAs: async (oldFileId, newPath) => {
     const state = get();
-    const tab = state.tabs.find((t) => t.fileId === oldFileId);
+    const tab = findFileTab(state.tabs, oldFileId);
     if (!tab) throw new Error("The file is no longer open.");
     if (tab.readOnly) throw new Error("This is external source opened read-only for navigation; it cannot be saved.");
-    if (state.tabs.some((t) => t.fileId === newPath && t.fileId !== oldFileId)) {
+    if (state.tabs.some((t) => t.kind === "file" && t.fileId === newPath && t.fileId !== oldFileId)) {
       throw new Error("The destination is already open in another tab.");
     }
     const { invoke } = await import("@tauri-apps/api/core");
@@ -1671,11 +1707,12 @@ export const useSolution = create<SolutionState>((set, get) => ({
 
       set((s) => ({
         tabs: s.tabs.map((t) =>
-          t.fileId === oldFileId
-            ? { ...t, fileId: newPath, name: fileName, language, monacoLanguage: monacoLanguageForFilename(fileName), originalContent: t.content, dirty: false, diskState: "inSync", mtimeAtLastSync }
+          t.kind === "file" && t.fileId === oldFileId
+            ? { ...t, id: newPath, fileId: newPath, name: fileName, language, monacoLanguage: monacoLanguageForFilename(fileName), originalContent: t.content, dirty: false, diskState: "inSync", mtimeAtLastSync }
             : t
         ),
-        activeFileId: s.activeFileId === oldFileId ? newPath : s.activeFileId,
+        activeTabId: s.activeTabId === oldFileId ? newPath : s.activeTabId,
+        lastSourceFileId: s.lastSourceFileId === oldFileId ? newPath : s.lastSourceFileId,
       }));
       await publishSavedSource(newPath);
       await get().refreshDiscovery();
@@ -1695,7 +1732,8 @@ export const useSolution = create<SolutionState>((set, get) => ({
     if (state.tabs.length === 0) return;
     const { invoke } = await import("@tauri-apps/api/core");
     try {
-      const paths = state.tabs.map((t) => t.fileId);
+      const paths = state.tabs.filter(isFileTab).map((t) => t.fileId);
+      if (!paths.length) return;
       const stats = await invoke<{ path: string; exists: boolean; readable: boolean; mtimeMs: number; size: number }[]>(
         "stat_files",
         { paths }
@@ -1703,6 +1741,7 @@ export const useSolution = create<SolutionState>((set, get) => ({
       const byPath = new Map(stats.map((s) => [s.path, s]));
       set((s) => ({
         tabs: s.tabs.map((t) => {
+          if (t.kind !== "file") return t;
           const st = byPath.get(t.fileId);
           if (!st) return t;
           let diskState: "inSync" | "deleted" | "newer" = "inSync";
@@ -1720,7 +1759,7 @@ export const useSolution = create<SolutionState>((set, get) => ({
 
   refreshDiskStateFor: async (fileId) => {
     const state = get();
-    const tab = state.tabs.find((t) => t.fileId === fileId);
+    const tab = findFileTab(state.tabs, fileId);
     if (!tab || tab.readOnly) return;
     const { invoke } = await import("@tauri-apps/api/core");
     try {
@@ -1735,20 +1774,18 @@ export const useSolution = create<SolutionState>((set, get) => ({
       else if (st.readable !== false && st.mtimeMs > tab.mtimeAtLastSync + 1) diskState = "newer";
       if (diskState === tab.diskState) return;
       set((s) => ({
-        tabs: s.tabs.map((t) => (t.fileId === fileId ? { ...t, diskState } : t)),
+        tabs: s.tabs.map((t) => (t.kind === "file" && t.fileId === fileId ? { ...t, diskState } : t)),
       }));
     } catch (err) {
       logErr("refreshDiskStateFor failed:", err);
     }
   },
 
-  discardTab: (fileId) => set((s) => {
-    const tabs = s.tabs.filter((t) => t.fileId !== fileId);
-    let activeFileId = s.activeFileId;
-    if (activeFileId === fileId) activeFileId = tabs.length > 0 ? tabs[tabs.length - 1].fileId : null;
-    return { tabs, activeFileId };
-  }),
-}));
+  discardTab: (fileId) => {
+    if (findFileTab(get().tabs, fileId)) get().closeTab(fileId);
+  },
+  });
+});
 
 function parseCraidd(text: string): {
   name?: string;

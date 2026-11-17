@@ -70,6 +70,8 @@ impl Drop for RunnerManager {
 #[derive(Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct RunSpec {
+    #[serde(default,skip_serializing_if="std::ops::Not::not")]
+    pub embedded_mono_jit_map:bool,
     pub label: String,
     pub program: String,
     #[serde(default)]
@@ -258,6 +260,7 @@ pub async fn start_config_for_label(app: AppHandle, label: String, mut spec: Run
         });
     }
 
+    let helper=if spec.embedded_mono_jit_map {crate::mono_jit_helper::apply(&mut command,&spec.env,&app.path().app_cache_dir().map_err(|e|e.to_string())?,true)?}else{None};
     let id = NEXT_SESSION.fetch_add(1, Ordering::Relaxed);
     let cancelled = Arc::new(AtomicBool::new(false));
     let term_sent = Arc::new(AtomicI32::new(0));
@@ -280,6 +283,7 @@ pub async fn start_config_for_label(app: AppHandle, label: String, mut spec: Run
         }
     };
     let pgid = child.id() as i32;
+    if let (Some(helper),Ok(target))=(helper,crate::perf_capture::identity(pgid)){crate::mono_jit_helper::register(target,label.clone(),helper);}
 
     let (Some(stdout), Some(stderr)) = (child.stdout.take(), child.stderr.take()) else {
         kill_group(pgid);

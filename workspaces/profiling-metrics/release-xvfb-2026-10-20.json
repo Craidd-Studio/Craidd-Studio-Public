@@ -1,0 +1,4947 @@
+{
+  "gcLog": [
+    {
+      "epochMs": 1792533873272,
+      "line": "[GC<0x7fa80d400108>: starting 0.009000ms]"
+    },
+    {
+      "epochMs": 1792533873378,
+      "line": "[GC<0x7fbac4400108>: START M 28798kb => EdenCollection, ca=141.629883kb h=49010.370117kb a=0kb hf=0.000 mu=0.700 v=0kb (C:0 M:0 P1:0 P2:0 P3:0 P4:0 P5:0 P6:0 P7:0) o=12 b=257 i#1:N<CsMsrShDMsm(262)> tp=0.300000ms 0+0 v=31kb (C:1 M:0 P1:0 P2:1 P3:3 P4:4 P5:1 P6:15 P7:2) o=13 b=257 i#2:N<WsOJw>Pbc tp=0.300000ms 0+0 v=31kb (C:1 M:0 P1:0 P2:1 P3:3 P4:4 P5:1 P6:15 P7:2) o=13 b=257 i#3:P<Msm(0)ShMsrCsDCbDomoWsOJw>Pbc => 25304kb, p=0.929000ms (max 2.003000), cycle 0.910000ms END]"
+    },
+    {
+      "epochMs": 1792533873378,
+      "line": "GC END!"
+    },
+    {
+      "epochMs": 1792533873378,
+      "line": "[GC<0x7fbac4400108>: finalize 0.026000ms]"
+    },
+    {
+      "epochMs": 1792533873450,
+      "line": "[GC<0x7fa80d400108>: START M 18450kb => EdenCollection, ca=29167.310547kb h=19984.689453kb a=0kb hf=0.000 mu=0.700 v=0kb (C:0 M:0 P1:0 P2:0 P3:0 P4:0 P5:0 P6:0 P7:0) o=0 b=0 i#1:N<CsMsrShDMsm(0)> tp=0.300000ms 0+0 p=0.765000ms (max 0.765000)...]"
+    },
+    {
+      "epochMs": 1792533873454,
+      "line": "[GC<0x7fa80d400108>: M a=0kb hf=0.000 mu=0.700 v=13667kb (C:1397 M:0 P1:1159 P2:926 P3:1534 P4:3607 P5:1208 P6:1565 P7:2269) o=12 b=0 i#2:N<WsOJw>Pbc tp=0.300000ms 24+0 v=13683kb (C:1401 M:0 P1:1160 P2:927 P3:1537 P4:3609 P5:1209 P6:1568 P7:2270) o=13 b=0 i#3:P<OWsJwMsr>Pbc tp=0.300000ms 0+0 v=13683kb (C:1401 M:0 P1:1160 P2:927 P3:1537 P4:3609 P5:1209 P6:1568 P7:2270) o=13 b=0 i#4:P<WsOJwShMsrCsDMsm(0)CbDomo>Pbc => 27697kb, p=2.383000ms (max 2.383000), cycle 4.570000ms END]"
+    },
+    {
+      "epochMs": 1792533873454,
+      "line": "GC END!"
+    },
+    {
+      "epochMs": 1792533873454,
+      "line": "[GC<0x7fa80d400108>: finalize 0.065000ms]"
+    },
+    {
+      "epochMs": 1792533873774,
+      "line": "[GC<0x7fa80d400108>: START M 32369kb => FullCollection, ca=1528.234375kb h=47623.765625kb a=0kb hf=0.000 mu=0.700 v=0kb (C:0 M:0 P1:0 P2:0 P3:0 P4:0 P5:0 P6:0 P7:0) o=0 b=2010 i#1:N<CsMsrShDMsm(0)> tp=0.300000ms 0+0 p=0.459000ms (max 2.383000)...]"
+    },
+    {
+      "epochMs": 1792533873778,
+      "line": "[GC<0x7fa80d400108>: M a=0kb hf=0.000 mu=0.700 v=13976kb (C:1635 M:0 P1:1492 P2:2396 P3:2563 P4:1384 P5:1266 P6:1694 P7:1543) o=11 b=0 i#2:N<WsOJw>Pbc tp=0.300000ms 14+0 v=13992kb (C:1637 M:0 P1:1495 P2:2399 P3:2563 P4:1386 P5:1268 P6:1696 P7:1546) o=12 b=0 i#3:P<OWsJwMsr>Pbc tp=0.300000ms 0+0 v=13992kb (C:1637 M:0 P1:1495 P2:2399 P3:2563 P4:1386 P5:1268 P6:1696 P7:1546) o=12 b=0 i#4:P<WsOJwShMsrCsDMsm(0)CbDomo>Pbc => 28825kb, p=2.141000ms (max 2.383000), cycle 3.836000ms END]"
+    },
+    {
+      "epochMs": 1792533873778,
+      "line": "GC END!"
+    },
+    {
+      "epochMs": 1792533873778,
+      "line": "[GC<0x7fa80d400108>: finalize 0.903000ms]"
+    },
+    {
+      "epochMs": 1792533873815,
+      "line": "[GC<0x7fa80d400108>: START M 33246kb => EdenCollection, ca=616.196289kb h=128978.493652kb a=0kb hf=0.000 mu=0.700 v=0kb (C:0 M:0 P1:0 P2:0 P3:0 P4:0 P5:0 P6:0 P7:0) o=12 b=919 i#1:N<CsMsrShDMsm(919)> tp=0.300000ms 0+0 v=256kb (C:3 M:0 P1:129 P2:1 P3:4 P4:21 P5:7 P6:87 P7:0) o=12 b=919 i#2:N<WsOJw>Pbc tp=0.300000ms 3+0 v=257kb (C:3 M:0 P1:129 P2:1 P3:4 P4:21 P5:7 P6:87 P7:0) o=12 b=919 i#3:P<JwWsOMsm(0)ShMsrCsDCbDomo>Pbc => 29327kb, p=1.271000ms (max 2.383000), cycle 1.262000ms END]"
+    },
+    {
+      "epochMs": 1792533873815,
+      "line": "GC END!"
+    },
+    {
+      "epochMs": 1792533873815,
+      "line": "[GC<0x7fa80d400108>: finalize 0.011000ms]"
+    },
+    {
+      "epochMs": 1792533873874,
+      "line": "[GC<0x7fa80d400108>: START M 33571kb => EdenCollection, ca=470.816406kb h=129123.873535kb a=0kb hf=0.000 mu=0.700 v=0kb (C:0 M:0 P1:0 P2:0 P3:0 P4:0 P5:0 P6:0 P7:0) o=12 b=617 i#1:N<CsMsrShDMsm(623)> tp=0.300000ms 0+0 v=182kb (C:9 M:0 P1:43 P2:51 P3:2 P4:33 P5:34 P6:7 P7:0) o=13 b=617 i#2:N<WsOJw>Pbc tp=0.300000ms 0+0 v=182kb (C:9 M:0 P1:43 P2:51 P3:2 P4:33 P5:34 P6:7 P7:0) o=13 b=617 i#3:P<WsJwOMsm(0)ShMsrCsDCbDomo>Pbc => 29778kb, p=1.027000ms (max 2.383000), cycle 1.021000ms END]"
+    },
+    {
+      "epochMs": 1792533873874,
+      "line": "GC END!"
+    },
+    {
+      "epochMs": 1792533873874,
+      "line": "[GC<0x7fa80d400108>: finalize 0.007000ms]"
+    },
+    {
+      "epochMs": 1792533873928,
+      "line": "[GC<0x7fa80d400108>: START M 33951kb => EdenCollection, ca=339.255859kb h=129255.434082kb a=0kb hf=0.000 mu=0.700 v=0kb (C:0 M:0 P1:0 P2:0 P3:0 P4:0 P5:0 P6:0 P7:0) o=13 b=1171 i#1:N<CsMsrShDMsm(1172)> tp=0.300000ms 0+0 v=222kb (C:44 M:0 P1:10 P2:3 P3:4 P4:19 P5:50 P6:4 P7:84) o=17 b=1171 i#2:N<WsOJw>Pbc tp=0.300000ms 0+0 v=222kb (C:44 M:0 P1:10 P2:3 P3:4 P4:19 P5:50 P6:4 P7:84) o=17 b=1171 i#3:P<JwWsOMsm(0)ShMsrCsDCbDomo>Pbc => 30146kb, p=1.329000ms (max 2.383000), cycle 1.316000ms END]"
+    },
+    {
+      "epochMs": 1792533873928,
+      "line": "GC END!"
+    },
+    {
+      "epochMs": 1792533873928,
+      "line": "[GC<0x7fa80d400108>: finalize 0.007000ms]"
+    },
+    {
+      "epochMs": 1792533873975,
+      "line": "[GC<0x7fa80d400108>: START M 34161kb => EdenCollection, ca=148.164062kb h=129446.525879kb a=0kb hf=0.000 mu=0.700 v=0kb (C:0 M:0 P1:0 P2:0 P3:0 P4:0 P5:0 P6:0 P7:0) o=17 b=565 i#1:N<CsMsrShDMsm(567)> tp=0.300000ms 0+0 v=110kb (C:15 M:0 P1:5 P2:0 P3:18 P4:2 P5:42 P6:10 P7:14) o=17 b=565 i#2:N<WsOJw>Pbc tp=0.300000ms 0+0 v=110kb (C:15 M:0 P1:5 P2:0 P3:18 P4:2 P5:42 P6:10 P7:14) o=17 b=565 i#3:P<JwWsOMsm(0)ShMsrCsDCbDomo>Pbc => 30274kb, p=0.877000ms (max 2.383000), cycle 0.867000ms END]"
+    },
+    {
+      "epochMs": 1792533873975,
+      "line": "GC END!"
+    },
+    {
+      "epochMs": 1792533873975,
+      "line": "[GC<0x7fa80d400108>: finalize 0.007000ms]"
+    },
+    {
+      "epochMs": 1792533874076,
+      "line": "[GC<0x7fbac4400108>: START M 28904kb => FullCollection, ca=18.151367kb h=49133.848633kb a=0kb hf=0.000 mu=0.700 v=0kb (C:0 M:0 P1:0 P2:0 P3:0 P4:0 P5:0 P6:0 P7:0) o=0 b=72 i#1:N<CsMsrShDMsm(0)> tp=0.300000ms 0+0 p=0.473000ms (max 2.003000)...]"
+    },
+    {
+      "epochMs": 1792533874076,
+      "line": "[GC<0x7fbac4400108>: M a=0kb hf=0.000 mu=0.700 v=12201kb (C:2583 M:0 P1:720 P2:3185 P3:1274 P4:1064 P5:1161 P6:853 P7:1358) o=10 b=0 i#2:N<WsOJw>Pbc tp=0.300000ms 4+0 v=12216kb (C:2584 M:0 P1:722 P2:3186 P3:1276 P4:1066 P5:1162 P6:855 P7:1360) o=11 b=0 i#3:P<OWsJwMsrShMsm(0)CsDCbDomo>Pbc tp=0.300000ms 0+0 v=12216kb (C:2584 M:0 P1:722 P2:3186 P3:1276 P4:1066 P5:1162 P6:855 P7:1360) o=11 b=0 i#4:P<WsOJwMsrShMsm(0)CsDCbDomo>Pbc => 25287kb, p=1.768000ms (max 2.003000), cycle 3.251000ms END]"
+    },
+    {
+      "epochMs": 1792533874076,
+      "line": "GC END!"
+    },
+    {
+      "epochMs": 1792533874077,
+      "line": "[GC<0x7fbac4400108>: finalize 1.107000ms]"
+    },
+    {
+      "epochMs": 1792533874091,
+      "line": "[GC<0x7fa80d400108>: START M 34345kb => EdenCollection, ca=260.112305kb h=129334.577637kb a=0kb hf=0.000 mu=0.700 v=0kb (C:0 M:0 P1:0 P2:0 P3:0 P4:0 P5:0 P6:0 P7:0) o=17 b=842 i#1:N<CsMsrShDMsm(844)> tp=0.300000ms 9+0 v=145kb (C:12 M:0 P1:47 P2:1 P3:29 P4:6 P5:31 P6:7 P7:7) o=18 b=842 i#2:N<WsOJw>Pbc tp=0.300000ms 0+0 v=145kb (C:12 M:0 P1:47 P2:1 P3:29 P4:6 P5:31 P6:7 P7:7) o=18 b=842 i#3:P<WsJwOMsm(0)ShMsrCsDCbDomo>Pbc => 30484kb, p=1.615000ms (max 2.383000), cycle 1.604000ms END]"
+    },
+    {
+      "epochMs": 1792533874091,
+      "line": "GC END!"
+    },
+    {
+      "epochMs": 1792533874091,
+      "line": "[GC<0x7fa80d400108>: finalize 0.015000ms]"
+    },
+    {
+      "epochMs": 1792533874104,
+      "line": "[GC<0x7fa80d400108>: START M 34419kb => EdenCollection, ca=1.135742kb h=129593.554199kb a=0kb hf=0.000 mu=0.700 v=0kb (C:0 M:0 P1:0 P2:0 P3:0 P4:0 P5:0 P6:0 P7:0) o=18 b=4 i#1:N<CsMsrShDMsm(4)> tp=0.300000ms 0+0 v=0kb (C:0 M:0 P1:0 P2:0 P3:0 P4:0 P5:0 P6:0 P7:0) o=18 b=4 i#2:N<WsOJw>Pbc tp=0.300000ms 0+0 v=0kb (C:0 M:0 P1:0 P2:0 P3:0 P4:0 P5:0 P6:0 P7:0) o=18 b=4 i#3:P<Msm(0)ShMsrCsDCbDomoWsJwO>Pbc => 30486kb, p=1.000000ms (max 2.383000), cycle 0.989000ms END]"
+    },
+    {
+      "epochMs": 1792533874104,
+      "line": "GC END!"
+    },
+    {
+      "epochMs": 1792533874104,
+      "line": "[GC<0x7fa80d400108>: finalize 0.005000ms]"
+    },
+    {
+      "epochMs": 1792533874217,
+      "line": "[GC<0x7fa80d400108>: START M 34420kb => EdenCollection, ca=15.804688kb h=129578.885254kb a=0kb hf=0.000 mu=0.700 v=0kb (C:0 M:0 P1:0 P2:0 P3:0 P4:0 P5:0 P6:0 P7:0) o=18 b=356 i#1:N<CsMsrShDMsm(356)> tp=0.300000ms 0+0 v=9kb (C:0 M:0 P1:0 P2:4 P3:0 P4:1 P5:0 P6:0 P7:1) o=18 b=356 i#2:N<WsOJw>Pbc tp=0.300000ms 0+0 v=9kb (C:0 M:0 P1:0 P2:4 P3:0 P4:1 P5:0 P6:0 P7:1) o=18 b=356 i#3:P<JwWsOMsm(0)ShMsrCsDCbDomo>Pbc => 30497kb, p=1.623000ms (max 2.383000), cycle 1.610000ms END]"
+    },
+    {
+      "epochMs": 1792533874217,
+      "line": "GC END!"
+    },
+    {
+      "epochMs": 1792533874217,
+      "line": "[GC<0x7fa80d400108>: finalize 0.013000ms]"
+    },
+    {
+      "epochMs": 1792533874297,
+      "line": "[GC<0x7fa80d400108>: START M 34422kb => EdenCollection, ca=14.804688kb h=129579.885254kb a=0kb hf=0.000 mu=0.700 v=0kb (C:0 M:0 P1:0 P2:0 P3:0 P4:0 P5:0 P6:0 P7:0) o=18 b=356 i#1:N<CsMsrShDMsm(358)> tp=0.300000ms 0+0 v=8kb (C:0 M:0 P1:1 P2:3 P3:0 P4:1 P5:0 P6:0 P7:2) o=18 b=356 i#2:N<WsOJw>Pbc tp=0.300000ms 0+0 v=8kb (C:0 M:0 P1:1 P2:3 P3:0 P4:1 P5:0 P6:0 P7:2) o=18 b=356 i#3:P<Msm(0)ShMsrCsDCbDomoJwWsO>Pbc => 30507kb, p=1.394000ms (max 2.383000), cycle 1.379000ms END]"
+    },
+    {
+      "epochMs": 1792533874297,
+      "line": "GC END!"
+    },
+    {
+      "epochMs": 1792533874297,
+      "line": "[GC<0x7fa80d400108>: finalize 0.009000ms]"
+    },
+    {
+      "epochMs": 1792533874394,
+      "line": "[GC<0x7fa80d400108>: START M 34422kb => EdenCollection, ca=34.140625kb h=129560.549316kb a=0kb hf=0.000 mu=0.700 v=0kb (C:0 M:0 P1:0 P2:0 P3:0 P4:0 P5:0 P6:0 P7:0) o=18 b=349 i#1:N<CsMsrShDMsm(350)> tp=0.300000ms 0+0 v=11kb (C:0 M:0 P1:0 P2:0 P3:1 P4:8 P5:0 P6:2 P7:0) o=18 b=349 i#2:N<WsOJw>Pbc tp=0.300000ms 0+0 v=12kb (C:0 M:0 P1:0 P2:0 P3:1 P4:9 P5:0 P6:2 P7:0) o=18 b=349 i#3:P<JwWsOMsm(0)ShMsrCsDCbDomo>Pbc => 30521kb, p=1.382000ms (max 2.383000), cycle 1.371000ms END]"
+    },
+    {
+      "epochMs": 1792533874394,
+      "line": "GC END!"
+    },
+    {
+      "epochMs": 1792533874394,
+      "line": "[GC<0x7fa80d400108>: finalize 0.011000ms]"
+    },
+    {
+      "epochMs": 1792533874505,
+      "line": "[GC<0x7fa80d400108>: START M 34425kb => EdenCollection, ca=23.390625kb h=129571.299316kb a=0kb hf=0.000 mu=0.700 v=0kb (C:0 M:0 P1:0 P2:0 P3:0 P4:0 P5:0 P6:0 P7:0) o=18 b=351 i#1:N<CsMsrShDMsm(354)> tp=0.300000ms 0+0 v=8kb (C:0 M:0 P1:0 P2:3 P3:0 P4:1 P5:2 P6:0 P7:0) o=18 b=351 i#2:N<WsOJw>Pbc tp=0.300000ms 0+0 v=8kb (C:0 M:0 P1:0 P2:3 P3:0 P4:1 P5:2 P6:0 P7:0) o=18 b=351 i#3:P<Msm(0)ShMsrCsDCbDomoJwWsO>Pbc => 30530kb, p=1.053000ms (max 2.383000), cycle 1.042000ms END]"
+    },
+    {
+      "epochMs": 1792533874505,
+      "line": "GC END!"
+    },
+    {
+      "epochMs": 1792533874505,
+      "line": "[GC<0x7fa80d400108>: finalize 0.009000ms]"
+    },
+    {
+      "epochMs": 1792533874602,
+      "line": "[GC<0x7fa80d400108>: START M 34425kb => EdenCollection, ca=24.929688kb h=129569.760254kb a=0kb hf=0.000 mu=0.700 v=0kb (C:0 M:0 P1:0 P2:0 P3:0 P4:0 P5:0 P6:0 P7:0) o=18 b=356 i#1:N<CsMsrShDMsm(357)> tp=0.300000ms 0+0 v=8kb (C:1 M:0 P1:1 P2:0 P3:0 P4:0 P5:0 P6:0 P7:2) o=18 b=356 i#2:N<WsOJw>Pbc tp=0.300000ms 0+0 v=8kb (C:1 M:0 P1:1 P2:0 P3:0 P4:0 P5:0 P6:0 P7:2) o=18 b=356 i#3:P<Msm(0)ShMsrCsDCbDomoJwWsO>Pbc => 30539kb, p=1.110000ms (max 2.383000), cycle 1.100000ms END]"
+    },
+    {
+      "epochMs": 1792533874602,
+      "line": "GC END!"
+    },
+    {
+      "epochMs": 1792533874602,
+      "line": "[GC<0x7fa80d400108>: finalize 0.009000ms]"
+    },
+    {
+      "epochMs": 1792533874617,
+      "line": "[GC<0x7fa80d400108>: START M 34425kb => EdenCollection, ca=1.335938kb h=129593.354004kb a=0kb hf=0.000 mu=0.700 v=0kb (C:0 M:0 P1:0 P2:0 P3:0 P4:0 P5:0 P6:0 P7:0) o=18 b=20 i#1:N<CsMsrShDMsm(20)> tp=0.300000ms 0+0 v=0kb (C:0 M:0 P1:0 P2:0 P3:0 P4:0 P5:0 P6:0 P7:0) o=18 b=20 i#2:N<WsOJw>Pbc tp=0.300000ms 0+0 v=0kb (C:0 M:0 P1:0 P2:0 P3:0 P4:0 P5:0 P6:0 P7:0) o=18 b=20 i#3:P<Msm(0)ShMsrCsDCbDomoJwWsO>Pbc => 30539kb, p=0.645000ms (max 2.383000), cycle 0.639000ms END]"
+    },
+    {
+      "epochMs": 1792533874617,
+      "line": "GC END!"
+    },
+    {
+      "epochMs": 1792533874617,
+      "line": "[GC<0x7fa80d400108>: finalize 0.003000ms]"
+    },
+    {
+      "epochMs": 1792533879992,
+      "line": "Requesting GC because bytes allocated this cycle: 88472138 exceed bytes allowed: 88469975 normal bytes: 88272842 oversized bytes: 199296 last oversized: 199296"
+    },
+    {
+      "epochMs": 1792533879993,
+      "line": "[GC<0x7fa80d400108>: START M 112912kb => EdenCollection, ca=86398.572266kb h=43199.286133kb a=0kb hf=0.000 mu=0.700 v=0kb (C:0 M:0 P1:0 P2:0 P3:0 P4:0 P5:0 P6:0 P7:0) o=18 b=851 i#1:N<CsMsrShDMsm(851)> tp=0.300000ms 26+0 p=0.536000ms (max 2.383000)...]"
+    },
+    {
+      "epochMs": 1792533879995,
+      "line": "[GC<0x7fa80d400108>: M a=0kb hf=0.000 mu=0.700 v=1053kb (C:231 M:0 P1:75 P2:250 P3:115 P4:200 P5:133 P6:22 P7:24) o=368 b=0 i#2:N<WsOJw>Pbc tp=0.300000ms 1+0 v=1054kb (C:231 M:0 P1:75 P2:250 P3:115 P4:200 P5:133 P6:22 P7:24) o=368 b=0 i#3:P<OWsJwShMsm(0)CsMsrDCbDomo>Pbc => 32549kb, p=2.114000ms (max 2.383000), cycle 2.732000ms END]"
+    },
+    {
+      "epochMs": 1792533879995,
+      "line": "GC END!"
+    },
+    {
+      "epochMs": 1792533879995,
+      "line": "[GC<0x7fa80d400108>: finalize 0.075000ms]"
+    },
+    {
+      "epochMs": 1792533880023,
+      "line": "[GC<0x7fa80d400108>: START M 113844kb => EdenCollection, ca=33.438477kb h=129561.251465kb a=0kb hf=0.000 mu=0.700 v=0kb (C:0 M:0 P1:0 P2:0 P3:0 P4:0 P5:0 P6:0 P7:0) o=368 b=1173 i#1:N<CsMsrShDMsm(1183)> tp=0.300000ms 0+0 v=29kb (C:0 M:0 P1:19 P2:1 P3:0 P4:0 P5:0 P6:0 P7:7) o=368 b=1173 i#2:N<WsOJw>Pbc tp=0.300000ms 0+0 v=29kb (C:0 M:0 P1:19 P2:1 P3:0 P4:0 P5:0 P6:0 P7:7) o=368 b=1173 i#3:P<Msm(0)ShCsMsrDCbDomoOWsJw>Pbc => 32592kb, p=1.339000ms (max 2.383000), cycle 1.326000ms END]"
+    },
+    {
+      "epochMs": 1792533880023,
+      "line": "GC END!"
+    },
+    {
+      "epochMs": 1792533880023,
+      "line": "[GC<0x7fa80d400108>: finalize 0.006000ms]"
+    },
+    {
+      "epochMs": 1792533880037,
+      "line": "[GC<0x7fa80d400108>: START M 113859kb => EdenCollection, ca=210.641602kb h=129384.048340kb a=0kb hf=0.000 mu=0.700 v=0kb (C:0 M:0 P1:0 P2:0 P3:0 P4:0 P5:0 P6:0 P7:0) o=368 b=2047 i#1:N<CsMsrShDMsm(2047)> tp=0.300000ms 0+0 v=254kb (C:0 M:0 P1:7 P2:2 P3:66 P4:15 P5:102 P6:59 P7:1) o=368 b=2047 i#2:N<WsOJw>Pbc tp=0.300000ms 0+0 v=254kb (C:0 M:0 P1:7 P2:2 P3:66 P4:15 P5:102 P6:59 P7:1) o=368 b=2047 i#3:P<Msm(0)ShCsMsrDCbDomoOWsJw>Pbc => 32847kb, p=1.309000ms (max 2.383000), cycle 1.294000ms END]"
+    },
+    {
+      "epochMs": 1792533880037,
+      "line": "GC END!"
+    },
+    {
+      "epochMs": 1792533880037,
+      "line": "[GC<0x7fa80d400108>: finalize 0.006000ms]"
+    },
+    {
+      "epochMs": 1792533880061,
+      "line": "[GC<0x7fa80d400108>: START M 113859kb => EdenCollection, ca=290.028320kb h=129304.661621kb a=0kb hf=0.000 mu=0.700 v=0kb (C:0 M:0 P1:0 P2:0 P3:0 P4:0 P5:0 P6:0 P7:0) o=368 b=3229 i#1:N<CsMsrShDMsm(3229)> tp=0.300000ms 0+0 v=245kb (C:1 M:0 P1:2 P2:80 P3:27 P4:70 P5:47 P6:2 P7:13) o=368 b=3229 i#2:N<WsOJw>Pbc tp=0.300000ms 0+0 v=245kb (C:1 M:0 P1:2 P2:80 P3:27 P4:70 P5:47 P6:2 P7:13) o=368 b=3229 i#3:P<Msm(0)ShCsMsrDCbDomoOWsJw>Pbc => 33094kb, p=1.424000ms (max 2.383000), cycle 1.414000ms END]"
+    },
+    {
+      "epochMs": 1792533880061,
+      "line": "GC END!"
+    },
+    {
+      "epochMs": 1792533880061,
+      "line": "[GC<0x7fa80d400108>: finalize 0.005000ms]"
+    },
+    {
+      "epochMs": 1792533880093,
+      "line": "[GC<0x7fa80d400108>: START M 113859kb => EdenCollection, ca=579.555664kb h=129015.134277kb a=0kb hf=0.000 mu=0.700 v=0kb (C:0 M:0 P1:0 P2:0 P3:0 P4:0 P5:0 P6:0 P7:0) o=368 b=2627 i#1:N<CsMsrShDMsm(2627)> tp=0.300000ms 0+0 v=394kb (C:4 M:0 P1:51 P2:10 P3:12 P4:32 P5:3 P6:279 P7:0) o=369 b=2627 i#2:N<WsOJw>Pbc tp=0.300000ms 0+0 v=394kb (C:4 M:0 P1:51 P2:10 P3:12 P4:32 P5:3 P6:279 P7:0) o=369 b=2627 i#3:P<Msm(0)ShCsMsrDCbDomoOWsJw>Pbc => 33494kb, p=1.247000ms (max 2.383000), cycle 1.237000ms END]"
+    },
+    {
+      "epochMs": 1792533880093,
+      "line": "GC END!"
+    },
+    {
+      "epochMs": 1792533880093,
+      "line": "[GC<0x7fa80d400108>: finalize 0.007000ms]"
+    },
+    {
+      "epochMs": 1792533880125,
+      "line": "[GC<0x7fa80d400108>: START M 113865kb => EdenCollection, ca=692.370117kb h=128902.319824kb a=0kb hf=0.000 mu=0.700 v=0kb (C:0 M:0 P1:0 P2:0 P3:0 P4:0 P5:0 P6:0 P7:0) o=369 b=2625 i#1:N<CsMsrShDMsm(2625)> tp=0.300000ms 0+0 v=394kb (C:0 M:0 P1:1 P2:1 P3:1 P4:280 P5:14 P6:60 P7:33) o=370 b=2625 i#2:N<WsOJw>Pbc tp=0.300000ms 0+0 v=394kb (C:0 M:0 P1:1 P2:1 P3:1 P4:280 P5:14 P6:60 P7:33) o=370 b=2625 i#3:P<Msm(0)ShCsMsrDCbDomoOWsJw>Pbc => 33904kb, p=1.406000ms (max 2.383000), cycle 1.389000ms END]"
+    },
+    {
+      "epochMs": 1792533880125,
+      "line": "GC END!"
+    },
+    {
+      "epochMs": 1792533880125,
+      "line": "[GC<0x7fa80d400108>: finalize 0.005000ms]"
+    },
+    {
+      "epochMs": 1792533880157,
+      "line": "[GC<0x7fa80d400108>: START M 113881kb => EdenCollection, ca=699.897461kb h=128894.792480kb a=0kb hf=0.000 mu=0.700 v=0kb (C:0 M:0 P1:0 P2:0 P3:0 P4:0 P5:0 P6:0 P7:0) o=370 b=2621 i#1:N<CsMsrShDMsm(2621)> tp=0.300000ms 0+0 v=388kb (C:1 M:0 P1:13 P2:2 P3:2 P4:2 P5:6 P6:302 P7:56) o=371 b=2621 i#2:N<WsOJw>Pbc tp=0.300000ms 0+0 v=388kb (C:1 M:0 P1:13 P2:2 P3:2 P4:2 P5:6 P6:302 P7:56) o=371 b=2621 i#3:P<Msm(0)ShCsMsrDCbDomoOWsJw>Pbc => 34294kb, p=1.380000ms (max 2.383000), cycle 1.367000ms END]"
+    },
+    {
+      "epochMs": 1792533880157,
+      "line": "GC END!"
+    },
+    {
+      "epochMs": 1792533880157,
+      "line": "[GC<0x7fa80d400108>: finalize 0.005000ms]"
+    },
+    {
+      "epochMs": 1792533880189,
+      "line": "[GC<0x7fa80d400108>: START M 113883kb => EdenCollection, ca=666.337891kb h=128928.352051kb a=0kb hf=0.000 mu=0.700 v=0kb (C:0 M:0 P1:0 P2:0 P3:0 P4:0 P5:0 P6:0 P7:0) o=371 b=2623 i#1:N<CsMsrShDMsm(2623)> tp=0.300000ms 0+0 v=391kb (C:0 M:0 P1:3 P2:0 P3:303 P4:1 P5:1 P6:65 P7:14) o=372 b=2623 i#2:N<WsOJw>Pbc tp=0.300000ms 0+0 v=391kb (C:0 M:0 P1:3 P2:0 P3:303 P4:1 P5:1 P6:65 P7:14) o=372 b=2623 i#3:P<Msm(0)ShCsMsrDCbDomoOWsJw>Pbc => 34692kb, p=1.349000ms (max 2.383000), cycle 1.338000ms END]"
+    },
+    {
+      "epochMs": 1792533880189,
+      "line": "GC END!"
+    },
+    {
+      "epochMs": 1792533880189,
+      "line": "[GC<0x7fa80d400108>: finalize 0.006000ms]"
+    },
+    {
+      "epochMs": 1792533880221,
+      "line": "[GC<0x7fa80d400108>: START M 113890kb => EdenCollection, ca=682.938477kb h=128911.751465kb a=0kb hf=0.000 mu=0.700 v=0kb (C:0 M:0 P1:0 P2:0 P3:0 P4:0 P5:0 P6:0 P7:0) o=372 b=2630 i#1:N<CsMsrShDMsm(2630)> tp=0.300000ms 0+0 v=392kb (C:14 M:0 P1:3 P2:1 P3:305 P4:5 P5:46 P6:2 P7:14) o=373 b=2630 i#2:N<WsOJw>Pbc tp=0.300000ms 0+0 v=392kb (C:14 M:0 P1:3 P2:1 P3:305 P4:5 P5:46 P6:2 P7:14) o=373 b=2630 i#3:P<WsOJwMsm(0)ShCsMsrDCbDomo>Pbc => 35092kb, p=1.363000ms (max 2.383000), cycle 1.352000ms END]"
+    },
+    {
+      "epochMs": 1792533880221,
+      "line": "GC END!"
+    },
+    {
+      "epochMs": 1792533880221,
+      "line": "[GC<0x7fa80d400108>: finalize 0.006000ms]"
+    },
+    {
+      "epochMs": 1792533880253,
+      "line": "[GC<0x7fa80d400108>: START M 113896kb => EdenCollection, ca=569.126953kb h=129025.562988kb a=0kb hf=0.000 mu=0.700 v=0kb (C:0 M:0 P1:0 P2:0 P3:0 P4:0 P5:0 P6:0 P7:0) o=373 b=2637 i#1:N<CsMsrShDMsm(2637)> tp=0.300000ms 0+0 v=377kb (C:121 M:0 P1:48 P2:43 P3:10 P4:6 P5:79 P6:62 P7:5) o=373 b=2637 i#2:N<WsOJw>Pbc tp=0.300000ms 0+0 v=377kb (C:121 M:0 P1:48 P2:43 P3:10 P4:6 P5:79 P6:62 P7:5) o=373 b=2637 i#3:P<Msm(0)ShCsMsrDCbDomoWsOJw>Pbc => 35469kb, p=1.244000ms (max 2.383000), cycle 1.228000ms END]"
+    },
+    {
+      "epochMs": 1792533880253,
+      "line": "GC END!"
+    },
+    {
+      "epochMs": 1792533880253,
+      "line": "[GC<0x7fa80d400108>: finalize 0.006000ms]"
+    },
+    {
+      "epochMs": 1792533880285,
+      "line": "[GC<0x7fa80d400108>: START M 113897kb => EdenCollection, ca=568.819336kb h=129025.870605kb a=0kb hf=0.000 mu=0.700 v=0kb (C:0 M:0 P1:0 P2:0 P3:0 P4:0 P5:0 P6:0 P7:0) o=373 b=2625 i#1:N<CsMsrShDMsm(2625)> tp=0.300000ms 0+0 v=394kb (C:3 M:0 P1:18 P2:6 P3:24 P4:55 P5:85 P6:62 P7:138) o=374 b=2625 i#2:N<WsOJw>Pbc tp=0.300000ms 0+0 v=394kb (C:3 M:0 P1:18 P2:6 P3:24 P4:55 P5:85 P6:62 P7:138) o=374 b=2625 i#3:P<Msm(0)ShCsMsrDCbDomoWsOJw>Pbc => 35869kb, p=0.915000ms (max 2.383000), cycle 0.905000ms END]"
+    },
+    {
+      "epochMs": 1792533880285,
+      "line": "GC END!"
+    },
+    {
+      "epochMs": 1792533880285,
+      "line": "[GC<0x7fa80d400108>: finalize 0.003000ms]"
+    },
+    {
+      "epochMs": 1792533880349,
+      "line": "[GC<0x7fa80d400108>: START M 113902kb => EdenCollection, ca=663.820312kb h=128930.869629kb a=0kb hf=0.000 mu=0.700 v=0kb (C:0 M:0 P1:0 P2:0 P3:0 P4:0 P5:0 P6:0 P7:0) o=374 b=2621 i#1:N<CsMsrShDMsm(2621)> tp=0.300000ms 0+0 v=394kb (C:0 M:0 P1:14 P2:63 P3:1 P4:88 P5:213 P6:11 P7:0) o=375 b=2621 i#2:N<WsOJw>Pbc tp=0.300000ms 0+0 v=394kb (C:0 M:0 P1:14 P2:63 P3:1 P4:88 P5:213 P6:11 P7:0) o=375 b=2621 i#3:P<Msm(0)ShCsMsrDCbDomoWsOJw>Pbc => 36268kb, p=1.021000ms (max 2.383000), cycle 1.001000ms END]"
+    },
+    {
+      "epochMs": 1792533880349,
+      "line": "GC END!"
+    },
+    {
+      "epochMs": 1792533880349,
+      "line": "[GC<0x7fa80d400108>: finalize 0.003000ms]"
+    },
+    {
+      "epochMs": 1792533880381,
+      "line": "[GC<0x7fa80d400108>: START M 113907kb => EdenCollection, ca=686.960938kb h=128907.729004kb a=0kb hf=0.000 mu=0.700 v=0kb (C:0 M:0 P1:0 P2:0 P3:0 P4:0 P5:0 P6:0 P7:0) o=375 b=2622 i#1:N<CsMsrShDMsm(2622)> tp=0.300000ms 0+0 v=388kb (C:0 M:0 P1:14 P2:44 P3:28 P4:0 P5:41 P6:101 P7:157) o=376 b=2622 i#2:N<WsOJw>Pbc tp=0.300000ms 0+0 v=388kb (C:0 M:0 P1:14 P2:44 P3:28 P4:0 P5:41 P6:101 P7:157) o=376 b=2622 i#3:P<Msm(0)ShCsMsrDCbDomoWsOJw>Pbc => 36665kb, p=0.990000ms (max 2.383000), cycle 0.977000ms END]"
+    },
+    {
+      "epochMs": 1792533880381,
+      "line": "GC END!"
+    },
+    {
+      "epochMs": 1792533880381,
+      "line": "[GC<0x7fa80d400108>: finalize 0.004000ms]"
+    },
+    {
+      "epochMs": 1792533880446,
+      "line": "[GC<0x7fa80d400108>: START M 113915kb => EdenCollection, ca=700.913086kb h=128893.776855kb a=0kb hf=0.000 mu=0.700 v=0kb (C:0 M:0 P1:0 P2:0 P3:0 P4:0 P5:0 P6:0 P7:0) o=376 b=2623 i#1:N<CsMsrShDMsm(2623)> tp=0.300000ms 0+0 v=391kb (C:1 M:0 P1:15 P2:2 P3:6 P4:33 P5:62 P6:54 P7:215) o=377 b=2623 i#2:N<WsOJw>Pbc tp=0.300000ms 0+0 v=391kb (C:1 M:0 P1:15 P2:2 P3:6 P4:33 P5:62 P6:54 P7:215) o=377 b=2623 i#3:P<Msm(0)ShCsMsrDCbDomoWsOJw>Pbc => 37061kb, p=0.972000ms (max 2.383000), cycle 0.962000ms END]"
+    },
+    {
+      "epochMs": 1792533880446,
+      "line": "GC END!"
+    },
+    {
+      "epochMs": 1792533880446,
+      "line": "[GC<0x7fa80d400108>: finalize 0.003000ms]"
+    },
+    {
+      "epochMs": 1792533880478,
+      "line": "[GC<0x7fa80d400108>: START M 113920kb => EdenCollection, ca=693.911133kb h=128900.778809kb a=0kb hf=0.000 mu=0.700 v=0kb (C:0 M:0 P1:0 P2:0 P3:0 P4:0 P5:0 P6:0 P7:0) o=377 b=2628 i#1:N<CsMsrShDMsm(2628)> tp=0.300000ms 0+0 v=392kb (C:0 M:0 P1:5 P2:11 P3:242 P4:1 P5:50 P6:57 P7:23) o=378 b=2628 i#2:N<WsOJw>Pbc tp=0.300000ms 0+0 v=392kb (C:0 M:0 P1:5 P2:11 P3:242 P4:1 P5:50 P6:57 P7:23) o=378 b=2628 i#3:P<WsOJwMsm(0)ShCsMsrDCbDomo>Pbc => 37457kb, p=0.859000ms (max 2.383000), cycle 0.846000ms END]"
+    },
+    {
+      "epochMs": 1792533880478,
+      "line": "GC END!"
+    },
+    {
+      "epochMs": 1792533880478,
+      "line": "[GC<0x7fa80d400108>: finalize 0.004000ms]"
+    },
+    {
+      "epochMs": 1792533880542,
+      "line": "[GC<0x7fa80d400108>: START M 113923kb => EdenCollection, ca=580.154297kb h=129014.535645kb a=0kb hf=0.000 mu=0.700 v=0kb (C:0 M:0 P1:0 P2:0 P3:0 P4:0 P5:0 P6:0 P7:0) o=378 b=2638 i#1:N<CsMsrShDMsm(2638)> tp=0.300000ms 0+0 v=380kb (C:2 M:0 P1:234 P2:33 P3:11 P4:3 P5:28 P6:64 P7:3) o=378 b=2638 i#2:N<WsOJw>Pbc tp=0.300000ms 0+0 v=380kb (C:2 M:0 P1:234 P2:33 P3:11 P4:3 P5:28 P6:64 P7:3) o=378 b=2638 i#3:P<Msm(0)ShCsMsrDCbDomoWsOJw>Pbc => 37841kb, p=1.142000ms (max 2.383000), cycle 1.129000ms END]"
+    },
+    {
+      "epochMs": 1792533880542,
+      "line": "GC END!"
+    },
+    {
+      "epochMs": 1792533880542,
+      "line": "[GC<0x7fa80d400108>: finalize 0.003000ms]"
+    }
+  ],
+  "gcLogging": "JSC_logGC=1 (installed jsc --options: Basic); stderr arrival epoch timestamps, may be buffered and cannot establish causal attribution",
+  "gate": "PASS",
+  "display": "xvfb",
+  "sessionType": "x11",
+  "build": "/tmp/craidd-gr001-target/release/craidd-studio",
+  "binarySha256": "c33acbc29fe79f3cd89fcded97a3839f5299e0ca13fa0da1cf3cd9e91881c664",
+  "fixture": {
+    "path": "/tmp/craidd-gr001-million.csv",
+    "size": 153890865,
+    "sha256": "2816464b330512f766376e1fa3f9a1e557357a65571ce1809ac3145cbc5c4864"
+  },
+  "owner": "workspace-1",
+  "oneWindow": {
+    "epochMs": 1792533873238,
+    "rssBytes": 799539200,
+    "pssBytes": 364063744,
+    "processes": [
+      {
+        "pid": 949932,
+        "parent": 949929,
+        "rssBytes": 280690688,
+        "cpuTicks": 12,
+        "comm": "craidd-studio",
+        "executable": "/tmp/craidd-gr001-target/release/craidd-studio",
+        "pssBytes": 100115456
+      },
+      {
+        "pid": 949935,
+        "parent": 949932,
+        "rssBytes": 38809600,
+        "cpuTicks": 1,
+        "comm": "craidd-studio",
+        "executable": "/tmp/craidd-gr001-target/release/craidd-studio",
+        "pssBytes": 10138624
+      },
+      {
+        "pid": 950005,
+        "parent": 949932,
+        "rssBytes": 69718016,
+        "cpuTicks": 1,
+        "comm": "WebKitNetworkPr",
+        "executable": "/usr/lib/webkit2gtk-4.1/WebKitNetworkProcess",
+        "pssBytes": 31010816
+      },
+      {
+        "pid": 950089,
+        "parent": 949932,
+        "rssBytes": 410320896,
+        "cpuTicks": 22,
+        "comm": "WebKitWebProces",
+        "executable": "/usr/lib/webkit2gtk-4.1/WebKitWebProcess",
+        "pssBytes": 222798848
+      }
+    ]
+  },
+  "baseline": {
+    "epochMs": 1792533874002,
+    "rssBytes": 1293172736,
+    "pssBytes": 567966720,
+    "processes": [
+      {
+        "pid": 949932,
+        "parent": 949929,
+        "rssBytes": 307646464,
+        "cpuTicks": 18,
+        "comm": "craidd-studio",
+        "executable": "/tmp/craidd-gr001-target/release/craidd-studio",
+        "pssBytes": 112855040
+      },
+      {
+        "pid": 949935,
+        "parent": 949932,
+        "rssBytes": 38809600,
+        "cpuTicks": 1,
+        "comm": "craidd-studio",
+        "executable": "/tmp/craidd-gr001-target/release/craidd-studio",
+        "pssBytes": 10007552
+      },
+      {
+        "pid": 950005,
+        "parent": 949932,
+        "rssBytes": 70041600,
+        "cpuTicks": 1,
+        "comm": "WebKitNetworkPr",
+        "executable": "/usr/lib/webkit2gtk-4.1/WebKitNetworkProcess",
+        "pssBytes": 30160896
+      },
+      {
+        "pid": 950089,
+        "parent": 949932,
+        "rssBytes": 414130176,
+        "cpuTicks": 29,
+        "comm": "WebKitWebProces",
+        "executable": "/usr/lib/webkit2gtk-4.1/WebKitWebProcess",
+        "pssBytes": 186017792
+      },
+      {
+        "pid": 950175,
+        "parent": 949932,
+        "rssBytes": 462544896,
+        "cpuTicks": 43,
+        "comm": "WebKitWebProces",
+        "executable": "/usr/lib/webkit2gtk-4.1/WebKitWebProcess",
+        "pssBytes": 228925440
+      }
+    ]
+  },
+  "peak": {
+    "epochMs": 1792533875563,
+    "rssBytes": 1580646400,
+    "pssBytes": 854046720,
+    "processes": [
+      {
+        "pid": 949932,
+        "parent": 949929,
+        "rssBytes": 600391680,
+        "cpuTicks": 145,
+        "comm": "craidd-studio",
+        "executable": "/tmp/craidd-gr001-target/release/craidd-studio",
+        "pssBytes": 406098944
+      },
+      {
+        "pid": 949935,
+        "parent": 949932,
+        "rssBytes": 38809600,
+        "cpuTicks": 1,
+        "comm": "craidd-studio",
+        "executable": "/tmp/craidd-gr001-target/release/craidd-studio",
+        "pssBytes": 9997312
+      },
+      {
+        "pid": 950005,
+        "parent": 949932,
+        "rssBytes": 70041600,
+        "cpuTicks": 1,
+        "comm": "WebKitNetworkPr",
+        "executable": "/usr/lib/webkit2gtk-4.1/WebKitNetworkProcess",
+        "pssBytes": 30156800
+      },
+      {
+        "pid": 950089,
+        "parent": 949932,
+        "rssBytes": 413057024,
+        "cpuTicks": 31,
+        "comm": "WebKitWebProces",
+        "executable": "/usr/lib/webkit2gtk-4.1/WebKitWebProcess",
+        "pssBytes": 185030656
+      },
+      {
+        "pid": 950175,
+        "parent": 949932,
+        "rssBytes": 458346496,
+        "cpuTicks": 56,
+        "comm": "WebKitWebProces",
+        "executable": "/usr/lib/webkit2gtk-4.1/WebKitWebProcess",
+        "pssBytes": 222763008
+      }
+    ]
+  },
+  "incrementalRssBytes": 287473664,
+  "incrementalRatio": 1.8680359227300465,
+  "memorySamples": [
+    {
+      "epochMs": 1792533874133,
+      "rssBytes": 1303412736,
+      "pssBytes": 577484800,
+      "processes": [
+        {
+          "pid": 949932,
+          "parent": 949929,
+          "rssBytes": 316760064,
+          "cpuTicks": 22,
+          "comm": "craidd-studio",
+          "executable": "/tmp/craidd-gr001-target/release/craidd-studio",
+          "pssBytes": 123374592
+        },
+        {
+          "pid": 949935,
+          "parent": 949932,
+          "rssBytes": 38809600,
+          "cpuTicks": 1,
+          "comm": "craidd-studio",
+          "executable": "/tmp/craidd-gr001-target/release/craidd-studio",
+          "pssBytes": 10007552
+        },
+        {
+          "pid": 950005,
+          "parent": 949932,
+          "rssBytes": 70041600,
+          "cpuTicks": 1,
+          "comm": "WebKitNetworkPr",
+          "executable": "/usr/lib/webkit2gtk-4.1/WebKitNetworkProcess",
+          "pssBytes": 30160896
+        },
+        {
+          "pid": 950089,
+          "parent": 949932,
+          "rssBytes": 414130176,
+          "cpuTicks": 31,
+          "comm": "WebKitWebProces",
+          "executable": "/usr/lib/webkit2gtk-4.1/WebKitWebProcess",
+          "pssBytes": 186255360
+        },
+        {
+          "pid": 950175,
+          "parent": 949932,
+          "rssBytes": 463671296,
+          "cpuTicks": 45,
+          "comm": "WebKitWebProces",
+          "executable": "/usr/lib/webkit2gtk-4.1/WebKitWebProcess",
+          "pssBytes": 227686400
+        }
+      ]
+    },
+    {
+      "epochMs": 1792533874232,
+      "rssBytes": 1321656320,
+      "pssBytes": 595748864,
+      "processes": [
+        {
+          "pid": 949932,
+          "parent": 949929,
+          "rssBytes": 340328448,
+          "cpuTicks": 32,
+          "comm": "craidd-studio",
+          "executable": "/tmp/craidd-gr001-target/release/craidd-studio",
+          "pssBytes": 146791424
+        },
+        {
+          "pid": 949935,
+          "parent": 949932,
+          "rssBytes": 38809600,
+          "cpuTicks": 1,
+          "comm": "craidd-studio",
+          "executable": "/tmp/craidd-gr001-target/release/craidd-studio",
+          "pssBytes": 10007552
+        },
+        {
+          "pid": 950005,
+          "parent": 949932,
+          "rssBytes": 70041600,
+          "cpuTicks": 1,
+          "comm": "WebKitNetworkPr",
+          "executable": "/usr/lib/webkit2gtk-4.1/WebKitNetworkProcess",
+          "pssBytes": 30156800
+        },
+        {
+          "pid": 950089,
+          "parent": 949932,
+          "rssBytes": 414130176,
+          "cpuTicks": 31,
+          "comm": "WebKitWebProces",
+          "executable": "/usr/lib/webkit2gtk-4.1/WebKitWebProcess",
+          "pssBytes": 186255360
+        },
+        {
+          "pid": 950175,
+          "parent": 949932,
+          "rssBytes": 458346496,
+          "cpuTicks": 46,
+          "comm": "WebKitWebProces",
+          "executable": "/usr/lib/webkit2gtk-4.1/WebKitWebProcess",
+          "pssBytes": 222537728
+        }
+      ]
+    },
+    {
+      "epochMs": 1792533874330,
+      "rssBytes": 1346277376,
+      "pssBytes": 619341824,
+      "processes": [
+        {
+          "pid": 949932,
+          "parent": 949929,
+          "rssBytes": 366280704,
+          "cpuTicks": 43,
+          "comm": "craidd-studio",
+          "executable": "/tmp/craidd-gr001-target/release/craidd-studio",
+          "pssBytes": 171817984
+        },
+        {
+          "pid": 949935,
+          "parent": 949932,
+          "rssBytes": 38809600,
+          "cpuTicks": 1,
+          "comm": "craidd-studio",
+          "executable": "/tmp/craidd-gr001-target/release/craidd-studio",
+          "pssBytes": 10007552
+        },
+        {
+          "pid": 950005,
+          "parent": 949932,
+          "rssBytes": 70041600,
+          "cpuTicks": 1,
+          "comm": "WebKitNetworkPr",
+          "executable": "/usr/lib/webkit2gtk-4.1/WebKitNetworkProcess",
+          "pssBytes": 30156800
+        },
+        {
+          "pid": 950089,
+          "parent": 949932,
+          "rssBytes": 414130176,
+          "cpuTicks": 31,
+          "comm": "WebKitWebProces",
+          "executable": "/usr/lib/webkit2gtk-4.1/WebKitWebProcess",
+          "pssBytes": 186226688
+        },
+        {
+          "pid": 950175,
+          "parent": 949932,
+          "rssBytes": 457015296,
+          "cpuTicks": 47,
+          "comm": "WebKitWebProces",
+          "executable": "/usr/lib/webkit2gtk-4.1/WebKitWebProcess",
+          "pssBytes": 221132800
+        }
+      ]
+    },
+    {
+      "epochMs": 1792533874430,
+      "rssBytes": 1368862720,
+      "pssBytes": 645457920,
+      "processes": [
+        {
+          "pid": 949932,
+          "parent": 949929,
+          "rssBytes": 390799360,
+          "cpuTicks": 52,
+          "comm": "craidd-studio",
+          "executable": "/tmp/craidd-gr001-target/release/craidd-studio",
+          "pssBytes": 199941120
+        },
+        {
+          "pid": 949935,
+          "parent": 949932,
+          "rssBytes": 38809600,
+          "cpuTicks": 1,
+          "comm": "craidd-studio",
+          "executable": "/tmp/craidd-gr001-target/release/craidd-studio",
+          "pssBytes": 10007552
+        },
+        {
+          "pid": 950005,
+          "parent": 949932,
+          "rssBytes": 70041600,
+          "cpuTicks": 1,
+          "comm": "WebKitNetworkPr",
+          "executable": "/usr/lib/webkit2gtk-4.1/WebKitNetworkProcess",
+          "pssBytes": 30156800
+        },
+        {
+          "pid": 950089,
+          "parent": 949932,
+          "rssBytes": 413057024,
+          "cpuTicks": 31,
+          "comm": "WebKitWebProces",
+          "executable": "/usr/lib/webkit2gtk-4.1/WebKitWebProcess",
+          "pssBytes": 185042944
+        },
+        {
+          "pid": 950175,
+          "parent": 949932,
+          "rssBytes": 456155136,
+          "cpuTicks": 48,
+          "comm": "WebKitWebProces",
+          "executable": "/usr/lib/webkit2gtk-4.1/WebKitWebProcess",
+          "pssBytes": 220309504
+        }
+      ]
+    },
+    {
+      "epochMs": 1792533874513,
+      "rssBytes": 1388482560,
+      "pssBytes": 661301248,
+      "processes": [
+        {
+          "pid": 949932,
+          "parent": 949929,
+          "rssBytes": 412106752,
+          "cpuTicks": 61,
+          "comm": "craidd-studio",
+          "executable": "/tmp/craidd-gr001-target/release/craidd-studio",
+          "pssBytes": 217562112
+        },
+        {
+          "pid": 949935,
+          "parent": 949932,
+          "rssBytes": 38809600,
+          "cpuTicks": 1,
+          "comm": "craidd-studio",
+          "executable": "/tmp/craidd-gr001-target/release/craidd-studio",
+          "pssBytes": 10007552
+        },
+        {
+          "pid": 950005,
+          "parent": 949932,
+          "rssBytes": 70041600,
+          "cpuTicks": 1,
+          "comm": "WebKitNetworkPr",
+          "executable": "/usr/lib/webkit2gtk-4.1/WebKitNetworkProcess",
+          "pssBytes": 30156800
+        },
+        {
+          "pid": 950089,
+          "parent": 949932,
+          "rssBytes": 413057024,
+          "cpuTicks": 31,
+          "comm": "WebKitWebProces",
+          "executable": "/usr/lib/webkit2gtk-4.1/WebKitWebProcess",
+          "pssBytes": 185030656
+        },
+        {
+          "pid": 950175,
+          "parent": 949932,
+          "rssBytes": 454467584,
+          "cpuTicks": 48,
+          "comm": "WebKitWebProces",
+          "executable": "/usr/lib/webkit2gtk-4.1/WebKitWebProcess",
+          "pssBytes": 218544128
+        }
+      ]
+    },
+    {
+      "epochMs": 1792533874601,
+      "rssBytes": 1409736704,
+      "pssBytes": 682682368,
+      "processes": [
+        {
+          "pid": 949932,
+          "parent": 949929,
+          "rssBytes": 433991680,
+          "cpuTicks": 70,
+          "comm": "craidd-studio",
+          "executable": "/tmp/craidd-gr001-target/release/craidd-studio",
+          "pssBytes": 239377408
+        },
+        {
+          "pid": 949935,
+          "parent": 949932,
+          "rssBytes": 38809600,
+          "cpuTicks": 1,
+          "comm": "craidd-studio",
+          "executable": "/tmp/craidd-gr001-target/release/craidd-studio",
+          "pssBytes": 10007552
+        },
+        {
+          "pid": 950005,
+          "parent": 949932,
+          "rssBytes": 70041600,
+          "cpuTicks": 1,
+          "comm": "WebKitNetworkPr",
+          "executable": "/usr/lib/webkit2gtk-4.1/WebKitNetworkProcess",
+          "pssBytes": 30156800
+        },
+        {
+          "pid": 950089,
+          "parent": 949932,
+          "rssBytes": 413057024,
+          "cpuTicks": 31,
+          "comm": "WebKitWebProces",
+          "executable": "/usr/lib/webkit2gtk-4.1/WebKitWebProcess",
+          "pssBytes": 185030656
+        },
+        {
+          "pid": 950175,
+          "parent": 949932,
+          "rssBytes": 453836800,
+          "cpuTicks": 48,
+          "comm": "WebKitWebProces",
+          "executable": "/usr/lib/webkit2gtk-4.1/WebKitWebProcess",
+          "pssBytes": 218109952
+        }
+      ]
+    },
+    {
+      "epochMs": 1792533874687,
+      "rssBytes": 1429463040,
+      "pssBytes": 706324480,
+      "processes": [
+        {
+          "pid": 949932,
+          "parent": 949929,
+          "rssBytes": 455979008,
+          "cpuTicks": 79,
+          "comm": "craidd-studio",
+          "executable": "/tmp/craidd-gr001-target/release/craidd-studio",
+          "pssBytes": 265358336
+        },
+        {
+          "pid": 949935,
+          "parent": 949932,
+          "rssBytes": 38809600,
+          "cpuTicks": 1,
+          "comm": "craidd-studio",
+          "executable": "/tmp/craidd-gr001-target/release/craidd-studio",
+          "pssBytes": 10007552
+        },
+        {
+          "pid": 950005,
+          "parent": 949932,
+          "rssBytes": 70041600,
+          "cpuTicks": 1,
+          "comm": "WebKitNetworkPr",
+          "executable": "/usr/lib/webkit2gtk-4.1/WebKitNetworkProcess",
+          "pssBytes": 30156800
+        },
+        {
+          "pid": 950089,
+          "parent": 949932,
+          "rssBytes": 413057024,
+          "cpuTicks": 31,
+          "comm": "WebKitWebProces",
+          "executable": "/usr/lib/webkit2gtk-4.1/WebKitWebProcess",
+          "pssBytes": 185030656
+        },
+        {
+          "pid": 950175,
+          "parent": 949932,
+          "rssBytes": 451575808,
+          "cpuTicks": 49,
+          "comm": "WebKitWebProces",
+          "executable": "/usr/lib/webkit2gtk-4.1/WebKitWebProcess",
+          "pssBytes": 215771136
+        }
+      ]
+    },
+    {
+      "epochMs": 1792533874791,
+      "rssBytes": 1460539392,
+      "pssBytes": 733177856,
+      "processes": [
+        {
+          "pid": 949932,
+          "parent": 949929,
+          "rssBytes": 485281792,
+          "cpuTicks": 89,
+          "comm": "craidd-studio",
+          "executable": "/tmp/craidd-gr001-target/release/craidd-studio",
+          "pssBytes": 290696192
+        },
+        {
+          "pid": 949935,
+          "parent": 949932,
+          "rssBytes": 38809600,
+          "cpuTicks": 1,
+          "comm": "craidd-studio",
+          "executable": "/tmp/craidd-gr001-target/release/craidd-studio",
+          "pssBytes": 10007552
+        },
+        {
+          "pid": 950005,
+          "parent": 949932,
+          "rssBytes": 70041600,
+          "cpuTicks": 1,
+          "comm": "WebKitNetworkPr",
+          "executable": "/usr/lib/webkit2gtk-4.1/WebKitNetworkProcess",
+          "pssBytes": 30156800
+        },
+        {
+          "pid": 950089,
+          "parent": 949932,
+          "rssBytes": 413057024,
+          "cpuTicks": 31,
+          "comm": "WebKitWebProces",
+          "executable": "/usr/lib/webkit2gtk-4.1/WebKitWebProcess",
+          "pssBytes": 185030656
+        },
+        {
+          "pid": 950175,
+          "parent": 949932,
+          "rssBytes": 453349376,
+          "cpuTicks": 50,
+          "comm": "WebKitWebProces",
+          "executable": "/usr/lib/webkit2gtk-4.1/WebKitWebProcess",
+          "pssBytes": 217286656
+        }
+      ]
+    },
+    {
+      "epochMs": 1792533874901,
+      "rssBytes": 1480269824,
+      "pssBytes": 752678912,
+      "processes": [
+        {
+          "pid": 949932,
+          "parent": 949929,
+          "rssBytes": 504750080,
+          "cpuTicks": 100,
+          "comm": "craidd-studio",
+          "executable": "/tmp/craidd-gr001-target/release/craidd-studio",
+          "pssBytes": 310242304
+        },
+        {
+          "pid": 949935,
+          "parent": 949932,
+          "rssBytes": 38809600,
+          "cpuTicks": 1,
+          "comm": "craidd-studio",
+          "executable": "/tmp/craidd-gr001-target/release/craidd-studio",
+          "pssBytes": 10007552
+        },
+        {
+          "pid": 950005,
+          "parent": 949932,
+          "rssBytes": 70041600,
+          "cpuTicks": 1,
+          "comm": "WebKitNetworkPr",
+          "executable": "/usr/lib/webkit2gtk-4.1/WebKitNetworkProcess",
+          "pssBytes": 30156800
+        },
+        {
+          "pid": 950089,
+          "parent": 949932,
+          "rssBytes": 413057024,
+          "cpuTicks": 31,
+          "comm": "WebKitWebProces",
+          "executable": "/usr/lib/webkit2gtk-4.1/WebKitWebProcess",
+          "pssBytes": 185030656
+        },
+        {
+          "pid": 950175,
+          "parent": 949932,
+          "rssBytes": 453611520,
+          "cpuTicks": 50,
+          "comm": "WebKitWebProces",
+          "executable": "/usr/lib/webkit2gtk-4.1/WebKitWebProcess",
+          "pssBytes": 217241600
+        }
+      ]
+    },
+    {
+      "epochMs": 1792533875008,
+      "rssBytes": 1503035392,
+      "pssBytes": 775428096,
+      "processes": [
+        {
+          "pid": 949932,
+          "parent": 949929,
+          "rssBytes": 528068608,
+          "cpuTicks": 111,
+          "comm": "craidd-studio",
+          "executable": "/tmp/craidd-gr001-target/release/craidd-studio",
+          "pssBytes": 333536256
+        },
+        {
+          "pid": 949935,
+          "parent": 949932,
+          "rssBytes": 38809600,
+          "cpuTicks": 1,
+          "comm": "craidd-studio",
+          "executable": "/tmp/craidd-gr001-target/release/craidd-studio",
+          "pssBytes": 10007552
+        },
+        {
+          "pid": 950005,
+          "parent": 949932,
+          "rssBytes": 70041600,
+          "cpuTicks": 1,
+          "comm": "WebKitNetworkPr",
+          "executable": "/usr/lib/webkit2gtk-4.1/WebKitNetworkProcess",
+          "pssBytes": 30156800
+        },
+        {
+          "pid": 950089,
+          "parent": 949932,
+          "rssBytes": 413057024,
+          "cpuTicks": 31,
+          "comm": "WebKitWebProces",
+          "executable": "/usr/lib/webkit2gtk-4.1/WebKitWebProcess",
+          "pssBytes": 185030656
+        },
+        {
+          "pid": 950175,
+          "parent": 949932,
+          "rssBytes": 453058560,
+          "cpuTicks": 51,
+          "comm": "WebKitWebProces",
+          "executable": "/usr/lib/webkit2gtk-4.1/WebKitWebProcess",
+          "pssBytes": 216696832
+        }
+      ]
+    },
+    {
+      "epochMs": 1792533875106,
+      "rssBytes": 1534746624,
+      "pssBytes": 807434240,
+      "processes": [
+        {
+          "pid": 949932,
+          "parent": 949929,
+          "rssBytes": 560574464,
+          "cpuTicks": 121,
+          "comm": "craidd-studio",
+          "executable": "/tmp/craidd-gr001-target/release/craidd-studio",
+          "pssBytes": 365976576
+        },
+        {
+          "pid": 949935,
+          "parent": 949932,
+          "rssBytes": 38809600,
+          "cpuTicks": 1,
+          "comm": "craidd-studio",
+          "executable": "/tmp/craidd-gr001-target/release/craidd-studio",
+          "pssBytes": 10007552
+        },
+        {
+          "pid": 950005,
+          "parent": 949932,
+          "rssBytes": 70041600,
+          "cpuTicks": 1,
+          "comm": "WebKitNetworkPr",
+          "executable": "/usr/lib/webkit2gtk-4.1/WebKitNetworkProcess",
+          "pssBytes": 30156800
+        },
+        {
+          "pid": 950089,
+          "parent": 949932,
+          "rssBytes": 413057024,
+          "cpuTicks": 31,
+          "comm": "WebKitWebProces",
+          "executable": "/usr/lib/webkit2gtk-4.1/WebKitWebProcess",
+          "pssBytes": 185030656
+        },
+        {
+          "pid": 950175,
+          "parent": 949932,
+          "rssBytes": 452263936,
+          "cpuTicks": 51,
+          "comm": "WebKitWebProces",
+          "executable": "/usr/lib/webkit2gtk-4.1/WebKitWebProcess",
+          "pssBytes": 216262656
+        }
+      ]
+    },
+    {
+      "epochMs": 1792533875206,
+      "rssBytes": 1558642688,
+      "pssBytes": 831277056,
+      "processes": [
+        {
+          "pid": 949932,
+          "parent": 949929,
+          "rssBytes": 584470528,
+          "cpuTicks": 131,
+          "comm": "craidd-studio",
+          "executable": "/tmp/craidd-gr001-target/release/craidd-studio",
+          "pssBytes": 389856256
+        },
+        {
+          "pid": 949935,
+          "parent": 949932,
+          "rssBytes": 38809600,
+          "cpuTicks": 1,
+          "comm": "craidd-studio",
+          "executable": "/tmp/craidd-gr001-target/release/craidd-studio",
+          "pssBytes": 10007552
+        },
+        {
+          "pid": 950005,
+          "parent": 949932,
+          "rssBytes": 70041600,
+          "cpuTicks": 1,
+          "comm": "WebKitNetworkPr",
+          "executable": "/usr/lib/webkit2gtk-4.1/WebKitNetworkProcess",
+          "pssBytes": 30156800
+        },
+        {
+          "pid": 950089,
+          "parent": 949932,
+          "rssBytes": 413057024,
+          "cpuTicks": 31,
+          "comm": "WebKitWebProces",
+          "executable": "/usr/lib/webkit2gtk-4.1/WebKitWebProcess",
+          "pssBytes": 185030656
+        },
+        {
+          "pid": 950175,
+          "parent": 949932,
+          "rssBytes": 452263936,
+          "cpuTicks": 52,
+          "comm": "WebKitWebProces",
+          "executable": "/usr/lib/webkit2gtk-4.1/WebKitWebProcess",
+          "pssBytes": 216225792
+        }
+      ]
+    },
+    {
+      "epochMs": 1792533875305,
+      "rssBytes": 1574035456,
+      "pssBytes": 847104000,
+      "processes": [
+        {
+          "pid": 949932,
+          "parent": 949929,
+          "rssBytes": 600129536,
+          "cpuTicks": 141,
+          "comm": "craidd-studio",
+          "executable": "/tmp/craidd-gr001-target/release/craidd-studio",
+          "pssBytes": 405601280
+        },
+        {
+          "pid": 949935,
+          "parent": 949932,
+          "rssBytes": 38809600,
+          "cpuTicks": 1,
+          "comm": "craidd-studio",
+          "executable": "/tmp/craidd-gr001-target/release/craidd-studio",
+          "pssBytes": 10007552
+        },
+        {
+          "pid": 950005,
+          "parent": 949932,
+          "rssBytes": 70041600,
+          "cpuTicks": 1,
+          "comm": "WebKitNetworkPr",
+          "executable": "/usr/lib/webkit2gtk-4.1/WebKitNetworkProcess",
+          "pssBytes": 30156800
+        },
+        {
+          "pid": 950089,
+          "parent": 949932,
+          "rssBytes": 413057024,
+          "cpuTicks": 31,
+          "comm": "WebKitWebProces",
+          "executable": "/usr/lib/webkit2gtk-4.1/WebKitWebProcess",
+          "pssBytes": 185030656
+        },
+        {
+          "pid": 950175,
+          "parent": 949932,
+          "rssBytes": 451997696,
+          "cpuTicks": 52,
+          "comm": "WebKitWebProces",
+          "executable": "/usr/lib/webkit2gtk-4.1/WebKitWebProcess",
+          "pssBytes": 216307712
+        }
+      ]
+    },
+    {
+      "epochMs": 1792533875392,
+      "rssBytes": 1574236160,
+      "pssBytes": 847058944,
+      "processes": [
+        {
+          "pid": 949932,
+          "parent": 949929,
+          "rssBytes": 600391680,
+          "cpuTicks": 144,
+          "comm": "craidd-studio",
+          "executable": "/tmp/craidd-gr001-target/release/craidd-studio",
+          "pssBytes": 405920768
+        },
+        {
+          "pid": 949935,
+          "parent": 949932,
+          "rssBytes": 38809600,
+          "cpuTicks": 1,
+          "comm": "craidd-studio",
+          "executable": "/tmp/craidd-gr001-target/release/craidd-studio",
+          "pssBytes": 10007552
+        },
+        {
+          "pid": 950005,
+          "parent": 949932,
+          "rssBytes": 70041600,
+          "cpuTicks": 1,
+          "comm": "WebKitNetworkPr",
+          "executable": "/usr/lib/webkit2gtk-4.1/WebKitNetworkProcess",
+          "pssBytes": 30156800
+        },
+        {
+          "pid": 950089,
+          "parent": 949932,
+          "rssBytes": 413057024,
+          "cpuTicks": 31,
+          "comm": "WebKitWebProces",
+          "executable": "/usr/lib/webkit2gtk-4.1/WebKitWebProcess",
+          "pssBytes": 185030656
+        },
+        {
+          "pid": 950175,
+          "parent": 949932,
+          "rssBytes": 451936256,
+          "cpuTicks": 53,
+          "comm": "WebKitWebProces",
+          "executable": "/usr/lib/webkit2gtk-4.1/WebKitWebProcess",
+          "pssBytes": 215943168
+        }
+      ]
+    },
+    {
+      "epochMs": 1792533875479,
+      "rssBytes": 1580384256,
+      "pssBytes": 853870592,
+      "processes": [
+        {
+          "pid": 949932,
+          "parent": 949929,
+          "rssBytes": 600391680,
+          "cpuTicks": 145,
+          "comm": "craidd-studio",
+          "executable": "/tmp/craidd-gr001-target/release/craidd-studio",
+          "pssBytes": 406098944
+        },
+        {
+          "pid": 949935,
+          "parent": 949932,
+          "rssBytes": 38809600,
+          "cpuTicks": 1,
+          "comm": "craidd-studio",
+          "executable": "/tmp/craidd-gr001-target/release/craidd-studio",
+          "pssBytes": 9997312
+        },
+        {
+          "pid": 950005,
+          "parent": 949932,
+          "rssBytes": 70041600,
+          "cpuTicks": 1,
+          "comm": "WebKitNetworkPr",
+          "executable": "/usr/lib/webkit2gtk-4.1/WebKitNetworkProcess",
+          "pssBytes": 30156800
+        },
+        {
+          "pid": 950089,
+          "parent": 949932,
+          "rssBytes": 413057024,
+          "cpuTicks": 31,
+          "comm": "WebKitWebProces",
+          "executable": "/usr/lib/webkit2gtk-4.1/WebKitWebProcess",
+          "pssBytes": 185030656
+        },
+        {
+          "pid": 950175,
+          "parent": 949932,
+          "rssBytes": 458084352,
+          "cpuTicks": 56,
+          "comm": "WebKitWebProces",
+          "executable": "/usr/lib/webkit2gtk-4.1/WebKitWebProcess",
+          "pssBytes": 222586880
+        }
+      ]
+    },
+    {
+      "epochMs": 1792533875563,
+      "rssBytes": 1580646400,
+      "pssBytes": 854046720,
+      "processes": [
+        {
+          "pid": 949932,
+          "parent": 949929,
+          "rssBytes": 600391680,
+          "cpuTicks": 145,
+          "comm": "craidd-studio",
+          "executable": "/tmp/craidd-gr001-target/release/craidd-studio",
+          "pssBytes": 406098944
+        },
+        {
+          "pid": 949935,
+          "parent": 949932,
+          "rssBytes": 38809600,
+          "cpuTicks": 1,
+          "comm": "craidd-studio",
+          "executable": "/tmp/craidd-gr001-target/release/craidd-studio",
+          "pssBytes": 9997312
+        },
+        {
+          "pid": 950005,
+          "parent": 949932,
+          "rssBytes": 70041600,
+          "cpuTicks": 1,
+          "comm": "WebKitNetworkPr",
+          "executable": "/usr/lib/webkit2gtk-4.1/WebKitNetworkProcess",
+          "pssBytes": 30156800
+        },
+        {
+          "pid": 950089,
+          "parent": 949932,
+          "rssBytes": 413057024,
+          "cpuTicks": 31,
+          "comm": "WebKitWebProces",
+          "executable": "/usr/lib/webkit2gtk-4.1/WebKitWebProcess",
+          "pssBytes": 185030656
+        },
+        {
+          "pid": 950175,
+          "parent": 949932,
+          "rssBytes": 458346496,
+          "cpuTicks": 56,
+          "comm": "WebKitWebProces",
+          "executable": "/usr/lib/webkit2gtk-4.1/WebKitWebProcess",
+          "pssBytes": 222763008
+        }
+      ]
+    }
+  ],
+  "firstViewMs": 1454.047126,
+  "progressSeen": true,
+  "operations": {
+    "Zoom in": {
+      "n": 20,
+      "p50": 31,
+      "p95": 31,
+      "max": 31
+    },
+    "Pan right": {
+      "n": 20,
+      "p50": 30,
+      "p95": 31,
+      "max": 31
+    },
+    "Pan left": {
+      "n": 20,
+      "p50": 30,
+      "p95": 31,
+      "max": 31
+    },
+    "Zoom out": {
+      "n": 20,
+      "p50": 30,
+      "p95": 31,
+      "max": 31
+    },
+    "Series toggle": {
+      "n": 20,
+      "p50": 30,
+      "p95": 31,
+      "max": 34
+    },
+    "Row inspection": {
+      "n": 20,
+      "p50": 21,
+      "p95": 30,
+      "max": 30
+    }
+  },
+  "observations": [
+    {
+      "operation": "Zoom in",
+      "frame1Ms": 9,
+      "ms": 31,
+      "end": 2373,
+      "uiMutationMs": 6,
+      "heap": null,
+      "target": null,
+      "start": 2342,
+      "timerGaps": [
+        {
+          "start": 2330,
+          "end": 2352,
+          "gap": 22
+        },
+        {
+          "start": 2352,
+          "end": 2370,
+          "gap": 18
+        }
+      ],
+      "afterMutationMs": 25,
+      "native": [
+        {
+          "type": "measure",
+          "start": 2343,
+          "ms": 2,
+          "name": "craidd.metrics.graph"
+        }
+      ],
+      "round": 1
+    },
+    {
+      "operation": "Pan right",
+      "frame1Ms": 9,
+      "ms": 31,
+      "end": 2405,
+      "uiMutationMs": 6,
+      "heap": null,
+      "target": null,
+      "start": 2374,
+      "timerGaps": [
+        {
+          "start": 2370,
+          "end": 2390,
+          "gap": 20
+        }
+      ],
+      "afterMutationMs": 25,
+      "native": [
+        {
+          "type": "measure",
+          "start": 2375,
+          "ms": 2,
+          "name": "craidd.metrics.graph"
+        }
+      ],
+      "round": 1
+    },
+    {
+      "operation": "Pan left",
+      "frame1Ms": 4,
+      "ms": 21,
+      "end": 2469,
+      "uiMutationMs": 5,
+      "heap": null,
+      "target": null,
+      "start": 2448,
+      "timerGaps": [
+        {
+          "start": 2430,
+          "end": 2450,
+          "gap": 20
+        }
+      ],
+      "afterMutationMs": 16,
+      "native": [
+        {
+          "type": "measure",
+          "start": 2448,
+          "ms": 2,
+          "name": "craidd.metrics.graph"
+        }
+      ],
+      "round": 1
+    },
+    {
+      "operation": "Zoom out",
+      "frame1Ms": 8,
+      "ms": 30,
+      "end": 2501,
+      "uiMutationMs": 6,
+      "heap": null,
+      "target": null,
+      "start": 2471,
+      "timerGaps": [
+        {
+          "start": 2470,
+          "end": 2490,
+          "gap": 20
+        }
+      ],
+      "afterMutationMs": 24,
+      "native": [
+        {
+          "type": "measure",
+          "start": 2472,
+          "ms": 2,
+          "name": "craidd.metrics.graph"
+        }
+      ],
+      "round": 1
+    },
+    {
+      "operation": "Series toggle",
+      "frame1Ms": 8,
+      "ms": 30,
+      "end": 2533,
+      "uiMutationMs": 6,
+      "heap": null,
+      "target": 1,
+      "start": 2503,
+      "timerGaps": [
+        {
+          "start": 2490,
+          "end": 2512,
+          "gap": 22
+        },
+        {
+          "start": 2512,
+          "end": 2530,
+          "gap": 18
+        }
+      ],
+      "afterMutationMs": 24,
+      "native": [
+        {
+          "type": "measure",
+          "start": 2504,
+          "ms": 2,
+          "name": "craidd.metrics.graph"
+        }
+      ],
+      "round": 1
+    },
+    {
+      "operation": "Row inspection",
+      "frame1Ms": 5,
+      "ms": 20,
+      "end": 2598,
+      "uiMutationMs": 2,
+      "heap": null,
+      "target": 500001,
+      "start": 2578,
+      "timerGaps": [
+        {
+          "start": 2570,
+          "end": 2590,
+          "gap": 20
+        }
+      ],
+      "afterMutationMs": 18,
+      "native": [
+        {
+          "type": "measure",
+          "start": 2579,
+          "ms": 1,
+          "name": "craidd.metrics.row"
+        }
+      ],
+      "round": 1
+    },
+    {
+      "operation": "Zoom in",
+      "frame1Ms": 9,
+      "ms": 31,
+      "end": 2630,
+      "uiMutationMs": 6,
+      "heap": null,
+      "target": null,
+      "start": 2599,
+      "timerGaps": [
+        {
+          "start": 2590,
+          "end": 2610,
+          "gap": 20
+        }
+      ],
+      "afterMutationMs": 25,
+      "native": [
+        {
+          "type": "measure",
+          "start": 2600,
+          "ms": 2,
+          "name": "craidd.metrics.graph"
+        }
+      ],
+      "round": 2
+    },
+    {
+      "operation": "Pan right",
+      "frame1Ms": 9,
+      "ms": 31,
+      "end": 2662,
+      "uiMutationMs": 6,
+      "heap": null,
+      "target": null,
+      "start": 2631,
+      "timerGaps": [
+        {
+          "start": 2630,
+          "end": 2650,
+          "gap": 20
+        }
+      ],
+      "afterMutationMs": 25,
+      "native": [
+        {
+          "type": "measure",
+          "start": 2632,
+          "ms": 2,
+          "name": "craidd.metrics.graph"
+        }
+      ],
+      "round": 2
+    },
+    {
+      "operation": "Pan left",
+      "frame1Ms": 10,
+      "ms": 31,
+      "end": 2694,
+      "uiMutationMs": 5,
+      "heap": null,
+      "target": null,
+      "start": 2663,
+      "timerGaps": [
+        {
+          "start": 2650,
+          "end": 2672,
+          "gap": 22
+        },
+        {
+          "start": 2672,
+          "end": 2690,
+          "gap": 18
+        }
+      ],
+      "afterMutationMs": 26,
+      "native": [
+        {
+          "type": "measure",
+          "start": 2664,
+          "ms": 2,
+          "name": "craidd.metrics.graph"
+        }
+      ],
+      "round": 2
+    },
+    {
+      "operation": "Zoom out",
+      "frame1Ms": 9,
+      "ms": 30,
+      "end": 2726,
+      "uiMutationMs": 5,
+      "heap": null,
+      "target": null,
+      "start": 2696,
+      "timerGaps": [
+        {
+          "start": 2690,
+          "end": 2712,
+          "gap": 22
+        }
+      ],
+      "afterMutationMs": 25,
+      "native": [
+        {
+          "type": "measure",
+          "start": 2696,
+          "ms": 2,
+          "name": "craidd.metrics.graph"
+        }
+      ],
+      "round": 2
+    },
+    {
+      "operation": "Series toggle",
+      "frame1Ms": 8,
+      "ms": 30,
+      "end": 2758,
+      "uiMutationMs": 6,
+      "heap": null,
+      "target": 2,
+      "start": 2728,
+      "timerGaps": [
+        {
+          "start": 2712,
+          "end": 2730,
+          "gap": 18
+        },
+        {
+          "start": 2730,
+          "end": 2750,
+          "gap": 20
+        }
+      ],
+      "afterMutationMs": 24,
+      "native": [
+        {
+          "type": "measure",
+          "start": 2728,
+          "ms": 3,
+          "name": "craidd.metrics.graph"
+        }
+      ],
+      "round": 2
+    },
+    {
+      "operation": "Row inspection",
+      "frame1Ms": 2,
+      "ms": 20,
+      "end": 2822,
+      "uiMutationMs": 2,
+      "heap": null,
+      "target": 500002,
+      "start": 2802,
+      "timerGaps": [
+        {
+          "start": 2790,
+          "end": 2810,
+          "gap": 20
+        }
+      ],
+      "afterMutationMs": 18,
+      "native": [
+        {
+          "type": "measure",
+          "start": 2803,
+          "ms": 0,
+          "name": "craidd.metrics.row"
+        }
+      ],
+      "round": 2
+    },
+    {
+      "operation": "Zoom in",
+      "frame1Ms": 10,
+      "ms": 31,
+      "end": 2854,
+      "uiMutationMs": 5,
+      "heap": null,
+      "target": null,
+      "start": 2823,
+      "timerGaps": [
+        {
+          "start": 2810,
+          "end": 2832,
+          "gap": 22
+        },
+        {
+          "start": 2832,
+          "end": 2850,
+          "gap": 18
+        }
+      ],
+      "afterMutationMs": 26,
+      "native": [
+        {
+          "type": "measure",
+          "start": 2824,
+          "ms": 2,
+          "name": "craidd.metrics.graph"
+        }
+      ],
+      "round": 3
+    },
+    {
+      "operation": "Pan right",
+      "frame1Ms": 9,
+      "ms": 31,
+      "end": 2887,
+      "uiMutationMs": 5,
+      "heap": null,
+      "target": null,
+      "start": 2856,
+      "timerGaps": [
+        {
+          "start": 2850,
+          "end": 2870,
+          "gap": 20
+        }
+      ],
+      "afterMutationMs": 26,
+      "native": [
+        {
+          "type": "measure",
+          "start": 2857,
+          "ms": 1,
+          "name": "craidd.metrics.graph"
+        }
+      ],
+      "round": 3
+    },
+    {
+      "operation": "Pan left",
+      "frame1Ms": 4,
+      "ms": 22,
+      "end": 2951,
+      "uiMutationMs": 5,
+      "heap": null,
+      "target": null,
+      "start": 2929,
+      "timerGaps": [
+        {
+          "start": 2910,
+          "end": 2930,
+          "gap": 20
+        },
+        {
+          "start": 2930,
+          "end": 2950,
+          "gap": 20
+        }
+      ],
+      "afterMutationMs": 17,
+      "native": [
+        {
+          "type": "measure",
+          "start": 2929,
+          "ms": 2,
+          "name": "craidd.metrics.graph"
+        }
+      ],
+      "round": 3
+    },
+    {
+      "operation": "Zoom out",
+      "frame1Ms": 9,
+      "ms": 31,
+      "end": 2983,
+      "uiMutationMs": 6,
+      "heap": null,
+      "target": null,
+      "start": 2952,
+      "timerGaps": [
+        {
+          "start": 2950,
+          "end": 2970,
+          "gap": 20
+        }
+      ],
+      "afterMutationMs": 25,
+      "native": [
+        {
+          "type": "measure",
+          "start": 2953,
+          "ms": 2,
+          "name": "craidd.metrics.graph"
+        }
+      ],
+      "round": 3
+    },
+    {
+      "operation": "Series toggle",
+      "frame1Ms": 9,
+      "ms": 30,
+      "end": 3015,
+      "uiMutationMs": 5,
+      "heap": null,
+      "target": 1,
+      "start": 2985,
+      "timerGaps": [
+        {
+          "start": 2970,
+          "end": 2995,
+          "gap": 25
+        },
+        {
+          "start": 2995,
+          "end": 3014,
+          "gap": 19
+        }
+      ],
+      "afterMutationMs": 25,
+      "native": [
+        {
+          "type": "measure",
+          "start": 2985,
+          "ms": 2,
+          "name": "craidd.metrics.graph"
+        }
+      ],
+      "round": 3
+    },
+    {
+      "operation": "Row inspection",
+      "frame1Ms": 11,
+      "ms": 28,
+      "end": 3047,
+      "uiMutationMs": 1,
+      "heap": null,
+      "target": 500003,
+      "start": 3019,
+      "timerGaps": [
+        {
+          "start": 3014,
+          "end": 3034,
+          "gap": 20
+        }
+      ],
+      "afterMutationMs": 27,
+      "native": [
+        {
+          "type": "measure",
+          "start": 3019,
+          "ms": 1,
+          "name": "craidd.metrics.row"
+        }
+      ],
+      "round": 3
+    },
+    {
+      "operation": "Zoom in",
+      "frame1Ms": 9,
+      "ms": 30,
+      "end": 3079,
+      "uiMutationMs": 5,
+      "heap": null,
+      "target": null,
+      "start": 3049,
+      "timerGaps": [
+        {
+          "start": 3034,
+          "end": 3058,
+          "gap": 24
+        },
+        {
+          "start": 3058,
+          "end": 3074,
+          "gap": 16
+        }
+      ],
+      "afterMutationMs": 25,
+      "native": [
+        {
+          "type": "measure",
+          "start": 3049,
+          "ms": 2,
+          "name": "craidd.metrics.graph"
+        }
+      ],
+      "round": 4
+    },
+    {
+      "operation": "Pan right",
+      "frame1Ms": 4,
+      "ms": 21,
+      "end": 3143,
+      "uiMutationMs": 5,
+      "heap": null,
+      "target": null,
+      "start": 3122,
+      "timerGaps": [
+        {
+          "start": 3114,
+          "end": 3134,
+          "gap": 20
+        }
+      ],
+      "afterMutationMs": 16,
+      "native": [
+        {
+          "type": "measure",
+          "start": 3123,
+          "ms": 1,
+          "name": "craidd.metrics.graph"
+        }
+      ],
+      "round": 4
+    },
+    {
+      "operation": "Pan left",
+      "frame1Ms": 9,
+      "ms": 31,
+      "end": 3176,
+      "uiMutationMs": 5,
+      "heap": null,
+      "target": null,
+      "start": 3145,
+      "timerGaps": [
+        {
+          "start": 3134,
+          "end": 3154,
+          "gap": 20
+        },
+        {
+          "start": 3154,
+          "end": 3174,
+          "gap": 20
+        }
+      ],
+      "afterMutationMs": 26,
+      "native": [
+        {
+          "type": "measure",
+          "start": 3146,
+          "ms": 2,
+          "name": "craidd.metrics.graph"
+        }
+      ],
+      "round": 4
+    },
+    {
+      "operation": "Zoom out",
+      "frame1Ms": 4,
+      "ms": 23,
+      "end": 3240,
+      "uiMutationMs": 6,
+      "heap": null,
+      "target": null,
+      "start": 3217,
+      "timerGaps": [
+        {
+          "start": 3214,
+          "end": 3234,
+          "gap": 20
+        }
+      ],
+      "afterMutationMs": 17,
+      "native": [
+        {
+          "type": "measure",
+          "start": 3218,
+          "ms": 2,
+          "name": "craidd.metrics.graph"
+        }
+      ],
+      "round": 4
+    },
+    {
+      "operation": "Series toggle",
+      "frame1Ms": 9,
+      "ms": 31,
+      "end": 3272,
+      "uiMutationMs": 6,
+      "heap": null,
+      "target": 2,
+      "start": 3241,
+      "timerGaps": [
+        {
+          "start": 3234,
+          "end": 3254,
+          "gap": 20
+        }
+      ],
+      "afterMutationMs": 25,
+      "native": [
+        {
+          "type": "measure",
+          "start": 3242,
+          "ms": 2,
+          "name": "craidd.metrics.graph"
+        }
+      ],
+      "round": 4
+    },
+    {
+      "operation": "Row inspection",
+      "frame1Ms": 1,
+      "ms": 18,
+      "end": 3336,
+      "uiMutationMs": 1,
+      "heap": null,
+      "target": 500004,
+      "start": 3318,
+      "timerGaps": [
+        {
+          "start": 3314,
+          "end": 3334,
+          "gap": 20
+        }
+      ],
+      "afterMutationMs": 17,
+      "native": [
+        {
+          "type": "measure",
+          "start": 3318,
+          "ms": 1,
+          "name": "craidd.metrics.row"
+        }
+      ],
+      "round": 4
+    },
+    {
+      "operation": "Zoom in",
+      "frame1Ms": 10,
+      "ms": 31,
+      "end": 3368,
+      "uiMutationMs": 5,
+      "heap": null,
+      "target": null,
+      "start": 3337,
+      "timerGaps": [
+        {
+          "start": 3334,
+          "end": 3354,
+          "gap": 20
+        }
+      ],
+      "afterMutationMs": 26,
+      "native": [
+        {
+          "type": "measure",
+          "start": 3338,
+          "ms": 1,
+          "name": "craidd.metrics.graph"
+        }
+      ],
+      "round": 5
+    },
+    {
+      "operation": "Pan right",
+      "frame1Ms": 9,
+      "ms": 30,
+      "end": 3400,
+      "uiMutationMs": 5,
+      "heap": null,
+      "target": null,
+      "start": 3370,
+      "timerGaps": [
+        {
+          "start": 3354,
+          "end": 3379,
+          "gap": 25
+        },
+        {
+          "start": 3379,
+          "end": 3398,
+          "gap": 19
+        }
+      ],
+      "afterMutationMs": 25,
+      "native": [
+        {
+          "type": "measure",
+          "start": 3371,
+          "ms": 1,
+          "name": "craidd.metrics.graph"
+        }
+      ],
+      "round": 5
+    },
+    {
+      "operation": "Pan left",
+      "frame1Ms": 9,
+      "ms": 30,
+      "end": 3432,
+      "uiMutationMs": 5,
+      "heap": null,
+      "target": null,
+      "start": 3402,
+      "timerGaps": [
+        {
+          "start": 3398,
+          "end": 3418,
+          "gap": 20
+        }
+      ],
+      "afterMutationMs": 25,
+      "native": [
+        {
+          "type": "measure",
+          "start": 3403,
+          "ms": 1,
+          "name": "craidd.metrics.graph"
+        }
+      ],
+      "round": 5
+    },
+    {
+      "operation": "Zoom out",
+      "frame1Ms": 8,
+      "ms": 31,
+      "end": 3465,
+      "uiMutationMs": 6,
+      "heap": null,
+      "target": null,
+      "start": 3434,
+      "timerGaps": [
+        {
+          "start": 3418,
+          "end": 3444,
+          "gap": 26
+        },
+        {
+          "start": 3444,
+          "end": 3462,
+          "gap": 18
+        }
+      ],
+      "afterMutationMs": 25,
+      "native": [
+        {
+          "type": "measure",
+          "start": 3435,
+          "ms": 2,
+          "name": "craidd.metrics.graph"
+        }
+      ],
+      "round": 5
+    },
+    {
+      "operation": "Series toggle",
+      "frame1Ms": 10,
+      "ms": 31,
+      "end": 3497,
+      "uiMutationMs": 5,
+      "heap": null,
+      "target": 1,
+      "start": 3466,
+      "timerGaps": [
+        {
+          "start": 3462,
+          "end": 3483,
+          "gap": 21
+        }
+      ],
+      "afterMutationMs": 26,
+      "native": [
+        {
+          "type": "measure",
+          "start": 3466,
+          "ms": 3,
+          "name": "craidd.metrics.graph"
+        }
+      ],
+      "round": 5
+    },
+    {
+      "operation": "Row inspection",
+      "frame1Ms": 3,
+      "ms": 20,
+      "end": 3561,
+      "uiMutationMs": 1,
+      "heap": null,
+      "target": 500005,
+      "start": 3541,
+      "timerGaps": [
+        {
+          "start": 3522,
+          "end": 3543,
+          "gap": 21
+        }
+      ],
+      "afterMutationMs": 19,
+      "native": [
+        {
+          "type": "measure",
+          "start": 3541,
+          "ms": 1,
+          "name": "craidd.metrics.row"
+        }
+      ],
+      "round": 5
+    },
+    {
+      "operation": "Zoom in",
+      "frame1Ms": 10,
+      "ms": 31,
+      "end": 3593,
+      "uiMutationMs": 5,
+      "heap": null,
+      "target": null,
+      "start": 3562,
+      "timerGaps": [
+        {
+          "start": 3543,
+          "end": 3563,
+          "gap": 20
+        },
+        {
+          "start": 3563,
+          "end": 3582,
+          "gap": 19
+        }
+      ],
+      "afterMutationMs": 26,
+      "native": [
+        {
+          "type": "measure",
+          "start": 3563,
+          "ms": 1,
+          "name": "craidd.metrics.graph"
+        }
+      ],
+      "round": 6
+    },
+    {
+      "operation": "Pan right",
+      "frame1Ms": 4,
+      "ms": 22,
+      "end": 3657,
+      "uiMutationMs": 5,
+      "heap": null,
+      "target": null,
+      "start": 3635,
+      "timerGaps": [
+        {
+          "start": 3622,
+          "end": 3644,
+          "gap": 22
+        }
+      ],
+      "afterMutationMs": 17,
+      "native": [
+        {
+          "type": "measure",
+          "start": 3636,
+          "ms": 2,
+          "name": "craidd.metrics.graph"
+        }
+      ],
+      "round": 6
+    },
+    {
+      "operation": "Pan left",
+      "frame1Ms": 10,
+      "ms": 30,
+      "end": 3689,
+      "uiMutationMs": 4,
+      "heap": null,
+      "target": null,
+      "start": 3659,
+      "timerGaps": [
+        {
+          "start": 3644,
+          "end": 3667,
+          "gap": 23
+        },
+        {
+          "start": 3667,
+          "end": 3686,
+          "gap": 19
+        }
+      ],
+      "afterMutationMs": 26,
+      "native": [
+        {
+          "type": "measure",
+          "start": 3660,
+          "ms": 1,
+          "name": "craidd.metrics.graph"
+        }
+      ],
+      "round": 6
+    },
+    {
+      "operation": "Zoom out",
+      "frame1Ms": 9,
+      "ms": 31,
+      "end": 3722,
+      "uiMutationMs": 5,
+      "heap": null,
+      "target": null,
+      "start": 3691,
+      "timerGaps": [
+        {
+          "start": 3686,
+          "end": 3707,
+          "gap": 21
+        }
+      ],
+      "afterMutationMs": 26,
+      "native": [
+        {
+          "type": "measure",
+          "start": 3691,
+          "ms": 2,
+          "name": "craidd.metrics.graph"
+        }
+      ],
+      "round": 6
+    },
+    {
+      "operation": "Series toggle",
+      "frame1Ms": 10,
+      "ms": 31,
+      "end": 3754,
+      "uiMutationMs": 5,
+      "heap": null,
+      "target": 2,
+      "start": 3723,
+      "timerGaps": [
+        {
+          "start": 3707,
+          "end": 3731,
+          "gap": 24
+        },
+        {
+          "start": 3731,
+          "end": 3750,
+          "gap": 19
+        }
+      ],
+      "afterMutationMs": 26,
+      "native": [
+        {
+          "type": "measure",
+          "start": 3723,
+          "ms": 2,
+          "name": "craidd.metrics.graph"
+        }
+      ],
+      "round": 6
+    },
+    {
+      "operation": "Row inspection",
+      "frame1Ms": 11,
+      "ms": 28,
+      "end": 3786,
+      "uiMutationMs": 1,
+      "heap": null,
+      "target": 500006,
+      "start": 3758,
+      "timerGaps": [
+        {
+          "start": 3750,
+          "end": 3771,
+          "gap": 21
+        }
+      ],
+      "afterMutationMs": 27,
+      "native": [
+        {
+          "type": "measure",
+          "start": 3758,
+          "ms": 0,
+          "name": "craidd.metrics.row"
+        }
+      ],
+      "round": 6
+    },
+    {
+      "operation": "Zoom in",
+      "frame1Ms": 10,
+      "ms": 31,
+      "end": 3818,
+      "uiMutationMs": 5,
+      "heap": null,
+      "target": null,
+      "start": 3787,
+      "timerGaps": [
+        {
+          "start": 3771,
+          "end": 3796,
+          "gap": 25
+        },
+        {
+          "start": 3796,
+          "end": 3814,
+          "gap": 18
+        }
+      ],
+      "afterMutationMs": 26,
+      "native": [
+        {
+          "type": "measure",
+          "start": 3788,
+          "ms": 2,
+          "name": "craidd.metrics.graph"
+        }
+      ],
+      "round": 7
+    },
+    {
+      "operation": "Pan right",
+      "frame1Ms": 10,
+      "ms": 31,
+      "end": 3850,
+      "uiMutationMs": 5,
+      "heap": null,
+      "target": null,
+      "start": 3819,
+      "timerGaps": [
+        {
+          "start": 3814,
+          "end": 3836,
+          "gap": 22
+        }
+      ],
+      "afterMutationMs": 26,
+      "native": [
+        {
+          "type": "measure",
+          "start": 3820,
+          "ms": 1,
+          "name": "craidd.metrics.graph"
+        }
+      ],
+      "round": 7
+    },
+    {
+      "operation": "Pan left",
+      "frame1Ms": 10,
+      "ms": 31,
+      "end": 3882,
+      "uiMutationMs": 5,
+      "heap": null,
+      "target": null,
+      "start": 3851,
+      "timerGaps": [
+        {
+          "start": 3836,
+          "end": 3860,
+          "gap": 24
+        },
+        {
+          "start": 3860,
+          "end": 3878,
+          "gap": 18
+        }
+      ],
+      "afterMutationMs": 26,
+      "native": [
+        {
+          "type": "measure",
+          "start": 3852,
+          "ms": 1,
+          "name": "craidd.metrics.graph"
+        }
+      ],
+      "round": 7
+    },
+    {
+      "operation": "Zoom out",
+      "frame1Ms": 9,
+      "ms": 31,
+      "end": 3914,
+      "uiMutationMs": 6,
+      "heap": null,
+      "target": null,
+      "start": 3883,
+      "timerGaps": [
+        {
+          "start": 3878,
+          "end": 3898,
+          "gap": 20
+        }
+      ],
+      "afterMutationMs": 25,
+      "native": [
+        {
+          "type": "measure",
+          "start": 3884,
+          "ms": 2,
+          "name": "craidd.metrics.graph"
+        }
+      ],
+      "round": 7
+    },
+    {
+      "operation": "Series toggle",
+      "frame1Ms": 9,
+      "ms": 30,
+      "end": 3946,
+      "uiMutationMs": 5,
+      "heap": null,
+      "target": 1,
+      "start": 3916,
+      "timerGaps": [
+        {
+          "start": 3898,
+          "end": 3918,
+          "gap": 20
+        },
+        {
+          "start": 3918,
+          "end": 3938,
+          "gap": 20
+        }
+      ],
+      "afterMutationMs": 25,
+      "native": [
+        {
+          "type": "measure",
+          "start": 3916,
+          "ms": 3,
+          "name": "craidd.metrics.graph"
+        }
+      ],
+      "round": 7
+    },
+    {
+      "operation": "Row inspection",
+      "frame1Ms": 3,
+      "ms": 21,
+      "end": 4011,
+      "uiMutationMs": 2,
+      "heap": null,
+      "target": 500007,
+      "start": 3990,
+      "timerGaps": [
+        {
+          "start": 3978,
+          "end": 3998,
+          "gap": 20
+        }
+      ],
+      "afterMutationMs": 19,
+      "native": [
+        {
+          "type": "measure",
+          "start": 3991,
+          "ms": 0,
+          "name": "craidd.metrics.row"
+        }
+      ],
+      "round": 7
+    },
+    {
+      "operation": "Zoom in",
+      "frame1Ms": 10,
+      "ms": 31,
+      "end": 4043,
+      "uiMutationMs": 5,
+      "heap": null,
+      "target": null,
+      "start": 4012,
+      "timerGaps": [
+        {
+          "start": 3998,
+          "end": 4021,
+          "gap": 23
+        },
+        {
+          "start": 4021,
+          "end": 4038,
+          "gap": 17
+        }
+      ],
+      "afterMutationMs": 26,
+      "native": [
+        {
+          "type": "measure",
+          "start": 4013,
+          "ms": 2,
+          "name": "craidd.metrics.graph"
+        }
+      ],
+      "round": 8
+    },
+    {
+      "operation": "Pan right",
+      "frame1Ms": 4,
+      "ms": 23,
+      "end": 4107,
+      "uiMutationMs": 5,
+      "heap": null,
+      "target": null,
+      "start": 4084,
+      "timerGaps": [
+        {
+          "start": 4078,
+          "end": 4098,
+          "gap": 20
+        }
+      ],
+      "afterMutationMs": 18,
+      "native": [
+        {
+          "type": "measure",
+          "start": 4085,
+          "ms": 2,
+          "name": "craidd.metrics.graph"
+        }
+      ],
+      "round": 8
+    },
+    {
+      "operation": "Pan left",
+      "frame1Ms": 9,
+      "ms": 30,
+      "end": 4139,
+      "uiMutationMs": 5,
+      "heap": null,
+      "target": null,
+      "start": 4109,
+      "timerGaps": [
+        {
+          "start": 4098,
+          "end": 4118,
+          "gap": 20
+        },
+        {
+          "start": 4118,
+          "end": 4138,
+          "gap": 20
+        }
+      ],
+      "afterMutationMs": 25,
+      "native": [
+        {
+          "type": "measure",
+          "start": 4109,
+          "ms": 2,
+          "name": "craidd.metrics.graph"
+        }
+      ],
+      "round": 8
+    },
+    {
+      "operation": "Zoom out",
+      "frame1Ms": 3,
+      "ms": 21,
+      "end": 4203,
+      "uiMutationMs": 6,
+      "heap": null,
+      "target": null,
+      "start": 4182,
+      "timerGaps": [
+        {
+          "start": 4178,
+          "end": 4198,
+          "gap": 20
+        }
+      ],
+      "afterMutationMs": 15,
+      "native": [
+        {
+          "type": "measure",
+          "start": 4183,
+          "ms": 2,
+          "name": "craidd.metrics.graph"
+        }
+      ],
+      "round": 8
+    },
+    {
+      "operation": "Series toggle",
+      "frame1Ms": 9,
+      "ms": 30,
+      "end": 4235,
+      "uiMutationMs": 5,
+      "heap": null,
+      "target": 2,
+      "start": 4205,
+      "timerGaps": [
+        {
+          "start": 4198,
+          "end": 4218,
+          "gap": 20
+        }
+      ],
+      "afterMutationMs": 25,
+      "native": [
+        {
+          "type": "measure",
+          "start": 4205,
+          "ms": 2,
+          "name": "craidd.metrics.graph"
+        }
+      ],
+      "round": 8
+    },
+    {
+      "operation": "Row inspection",
+      "frame1Ms": 11,
+      "ms": 28,
+      "end": 4267,
+      "uiMutationMs": 1,
+      "heap": null,
+      "target": 500008,
+      "start": 4239,
+      "timerGaps": [
+        {
+          "start": 4238,
+          "end": 4258,
+          "gap": 20
+        }
+      ],
+      "afterMutationMs": 27,
+      "native": [
+        {
+          "type": "measure",
+          "start": 4239,
+          "ms": 1,
+          "name": "craidd.metrics.row"
+        }
+      ],
+      "round": 8
+    },
+    {
+      "operation": "Zoom in",
+      "frame1Ms": 10,
+      "ms": 31,
+      "end": 4300,
+      "uiMutationMs": 5,
+      "heap": null,
+      "target": null,
+      "start": 4269,
+      "timerGaps": [
+        {
+          "start": 4258,
+          "end": 4278,
+          "gap": 20
+        },
+        {
+          "start": 4278,
+          "end": 4298,
+          "gap": 20
+        }
+      ],
+      "afterMutationMs": 26,
+      "native": [
+        {
+          "type": "measure",
+          "start": 4269,
+          "ms": 2,
+          "name": "craidd.metrics.graph"
+        }
+      ],
+      "round": 9
+    },
+    {
+      "operation": "Pan right",
+      "frame1Ms": 10,
+      "ms": 31,
+      "end": 4332,
+      "uiMutationMs": 5,
+      "heap": null,
+      "target": null,
+      "start": 4301,
+      "timerGaps": [
+        {
+          "start": 4298,
+          "end": 4318,
+          "gap": 20
+        }
+      ],
+      "afterMutationMs": 26,
+      "native": [
+        {
+          "type": "measure",
+          "start": 4302,
+          "ms": 1,
+          "name": "craidd.metrics.graph"
+        }
+      ],
+      "round": 9
+    },
+    {
+      "operation": "Pan left",
+      "frame1Ms": 10,
+      "ms": 31,
+      "end": 4364,
+      "uiMutationMs": 5,
+      "heap": null,
+      "target": null,
+      "start": 4333,
+      "timerGaps": [
+        {
+          "start": 4318,
+          "end": 4342,
+          "gap": 24
+        },
+        {
+          "start": 4342,
+          "end": 4358,
+          "gap": 16
+        }
+      ],
+      "afterMutationMs": 26,
+      "native": [
+        {
+          "type": "measure",
+          "start": 4334,
+          "ms": 2,
+          "name": "craidd.metrics.graph"
+        }
+      ],
+      "round": 9
+    },
+    {
+      "operation": "Zoom out",
+      "frame1Ms": 9,
+      "ms": 31,
+      "end": 4396,
+      "uiMutationMs": 6,
+      "heap": null,
+      "target": null,
+      "start": 4365,
+      "timerGaps": [
+        {
+          "start": 4358,
+          "end": 4378,
+          "gap": 20
+        }
+      ],
+      "afterMutationMs": 25,
+      "native": [
+        {
+          "type": "measure",
+          "start": 4366,
+          "ms": 2,
+          "name": "craidd.metrics.graph"
+        }
+      ],
+      "round": 9
+    },
+    {
+      "operation": "Series toggle",
+      "frame1Ms": 10,
+      "ms": 31,
+      "end": 4428,
+      "uiMutationMs": 5,
+      "heap": null,
+      "target": 1,
+      "start": 4397,
+      "timerGaps": [
+        {
+          "start": 4378,
+          "end": 4398,
+          "gap": 20
+        },
+        {
+          "start": 4398,
+          "end": 4418,
+          "gap": 20
+        }
+      ],
+      "afterMutationMs": 26,
+      "native": [
+        {
+          "type": "measure",
+          "start": 4398,
+          "ms": 2,
+          "name": "craidd.metrics.graph"
+        }
+      ],
+      "round": 9
+    },
+    {
+      "operation": "Row inspection",
+      "frame1Ms": 12,
+      "ms": 29,
+      "end": 4460,
+      "uiMutationMs": 1,
+      "heap": null,
+      "target": 500009,
+      "start": 4431,
+      "timerGaps": [
+        {
+          "start": 4418,
+          "end": 4438,
+          "gap": 20
+        },
+        {
+          "start": 4438,
+          "end": 4458,
+          "gap": 20
+        }
+      ],
+      "afterMutationMs": 28,
+      "native": [
+        {
+          "type": "measure",
+          "start": 4431,
+          "ms": 1,
+          "name": "craidd.metrics.row"
+        }
+      ],
+      "round": 9
+    },
+    {
+      "operation": "Zoom in",
+      "frame1Ms": 11,
+      "ms": 31,
+      "end": 4492,
+      "uiMutationMs": 4,
+      "heap": null,
+      "target": null,
+      "start": 4461,
+      "timerGaps": [
+        {
+          "start": 4458,
+          "end": 4479,
+          "gap": 21
+        }
+      ],
+      "afterMutationMs": 27,
+      "native": [
+        {
+          "type": "measure",
+          "start": 4462,
+          "ms": 1,
+          "name": "craidd.metrics.graph"
+        }
+      ],
+      "round": 10
+    },
+    {
+      "operation": "Pan right",
+      "frame1Ms": 4,
+      "ms": 22,
+      "end": 4556,
+      "uiMutationMs": 6,
+      "heap": null,
+      "target": null,
+      "start": 4534,
+      "timerGaps": [
+        {
+          "start": 4518,
+          "end": 4544,
+          "gap": 26
+        }
+      ],
+      "afterMutationMs": 16,
+      "native": [
+        {
+          "type": "measure",
+          "start": 4535,
+          "ms": 2,
+          "name": "craidd.metrics.graph"
+        }
+      ],
+      "round": 10
+    },
+    {
+      "operation": "Pan left",
+      "frame1Ms": 10,
+      "ms": 31,
+      "end": 4589,
+      "uiMutationMs": 4,
+      "heap": null,
+      "target": null,
+      "start": 4558,
+      "timerGaps": [
+        {
+          "start": 4544,
+          "end": 4566,
+          "gap": 22
+        },
+        {
+          "start": 4566,
+          "end": 4582,
+          "gap": 16
+        }
+      ],
+      "afterMutationMs": 27,
+      "native": [
+        {
+          "type": "measure",
+          "start": 4558,
+          "ms": 2,
+          "name": "craidd.metrics.graph"
+        }
+      ],
+      "round": 10
+    },
+    {
+      "operation": "Zoom out",
+      "frame1Ms": 4,
+      "ms": 23,
+      "end": 4653,
+      "uiMutationMs": 6,
+      "heap": null,
+      "target": null,
+      "start": 4630,
+      "timerGaps": [
+        {
+          "start": 4622,
+          "end": 4642,
+          "gap": 20
+        }
+      ],
+      "afterMutationMs": 17,
+      "native": [
+        {
+          "type": "measure",
+          "start": 4631,
+          "ms": 2,
+          "name": "craidd.metrics.graph"
+        }
+      ],
+      "round": 10
+    },
+    {
+      "operation": "Series toggle",
+      "frame1Ms": 9,
+      "ms": 31,
+      "end": 4685,
+      "uiMutationMs": 6,
+      "heap": null,
+      "target": 2,
+      "start": 4654,
+      "timerGaps": [
+        {
+          "start": 4642,
+          "end": 4663,
+          "gap": 21
+        },
+        {
+          "start": 4663,
+          "end": 4682,
+          "gap": 19
+        }
+      ],
+      "afterMutationMs": 25,
+      "native": [
+        {
+          "type": "measure",
+          "start": 4655,
+          "ms": 2,
+          "name": "craidd.metrics.graph"
+        }
+      ],
+      "round": 10
+    },
+    {
+      "operation": "Row inspection",
+      "frame1Ms": 3,
+      "ms": 21,
+      "end": 4749,
+      "uiMutationMs": 2,
+      "heap": null,
+      "target": 500010,
+      "start": 4728,
+      "timerGaps": [
+        {
+          "start": 4722,
+          "end": 4742,
+          "gap": 20
+        }
+      ],
+      "afterMutationMs": 19,
+      "native": [
+        {
+          "type": "measure",
+          "start": 4728,
+          "ms": 1,
+          "name": "craidd.metrics.row"
+        }
+      ],
+      "round": 10
+    },
+    {
+      "operation": "Zoom in",
+      "frame1Ms": 10,
+      "ms": 31,
+      "end": 4781,
+      "uiMutationMs": 5,
+      "heap": null,
+      "target": null,
+      "start": 4750,
+      "timerGaps": [
+        {
+          "start": 4742,
+          "end": 4762,
+          "gap": 20
+        }
+      ],
+      "afterMutationMs": 26,
+      "native": [
+        {
+          "type": "measure",
+          "start": 4751,
+          "ms": 1,
+          "name": "craidd.metrics.graph"
+        }
+      ],
+      "round": 11
+    },
+    {
+      "operation": "Pan right",
+      "frame1Ms": 9,
+      "ms": 30,
+      "end": 4813,
+      "uiMutationMs": 5,
+      "heap": null,
+      "target": null,
+      "start": 4783,
+      "timerGaps": [
+        {
+          "start": 4782,
+          "end": 4802,
+          "gap": 20
+        }
+      ],
+      "afterMutationMs": 25,
+      "native": [
+        {
+          "type": "measure",
+          "start": 4783,
+          "ms": 2,
+          "name": "craidd.metrics.graph"
+        }
+      ],
+      "round": 11
+    },
+    {
+      "operation": "Pan left",
+      "frame1Ms": 10,
+      "ms": 30,
+      "end": 4845,
+      "uiMutationMs": 4,
+      "heap": null,
+      "target": null,
+      "start": 4815,
+      "timerGaps": [
+        {
+          "start": 4802,
+          "end": 4823,
+          "gap": 21
+        },
+        {
+          "start": 4823,
+          "end": 4842,
+          "gap": 19
+        }
+      ],
+      "afterMutationMs": 26,
+      "native": [
+        {
+          "type": "measure",
+          "start": 4815,
+          "ms": 2,
+          "name": "craidd.metrics.graph"
+        }
+      ],
+      "round": 11
+    },
+    {
+      "operation": "Zoom out",
+      "frame1Ms": 9,
+      "ms": 31,
+      "end": 4878,
+      "uiMutationMs": 6,
+      "heap": null,
+      "target": null,
+      "start": 4847,
+      "timerGaps": [
+        {
+          "start": 4842,
+          "end": 4863,
+          "gap": 21
+        }
+      ],
+      "afterMutationMs": 25,
+      "native": [
+        {
+          "type": "measure",
+          "start": 4848,
+          "ms": 2,
+          "name": "craidd.metrics.graph"
+        }
+      ],
+      "round": 11
+    },
+    {
+      "operation": "Series toggle",
+      "frame1Ms": 10,
+      "ms": 31,
+      "end": 4910,
+      "uiMutationMs": 5,
+      "heap": null,
+      "target": 1,
+      "start": 4879,
+      "timerGaps": [
+        {
+          "start": 4863,
+          "end": 4882,
+          "gap": 19
+        },
+        {
+          "start": 4882,
+          "end": 4902,
+          "gap": 20
+        }
+      ],
+      "afterMutationMs": 26,
+      "native": [
+        {
+          "type": "measure",
+          "start": 4879,
+          "ms": 3,
+          "name": "craidd.metrics.graph"
+        }
+      ],
+      "round": 11
+    },
+    {
+      "operation": "Row inspection",
+      "frame1Ms": 13,
+      "ms": 30,
+      "end": 4942,
+      "uiMutationMs": 1,
+      "heap": null,
+      "target": 500011,
+      "start": 4912,
+      "timerGaps": [
+        {
+          "start": 4902,
+          "end": 4922,
+          "gap": 20
+        }
+      ],
+      "afterMutationMs": 29,
+      "native": [
+        {
+          "type": "measure",
+          "start": 4912,
+          "ms": 1,
+          "name": "craidd.metrics.row"
+        }
+      ],
+      "round": 11
+    },
+    {
+      "operation": "Zoom in",
+      "frame1Ms": 3,
+      "ms": 23,
+      "end": 5006,
+      "uiMutationMs": 5,
+      "heap": null,
+      "target": null,
+      "start": 4983,
+      "timerGaps": [
+        {
+          "start": 4982,
+          "end": 5002,
+          "gap": 20
+        }
+      ],
+      "afterMutationMs": 18,
+      "native": [
+        {
+          "type": "measure",
+          "start": 4984,
+          "ms": 2,
+          "name": "craidd.metrics.graph"
+        }
+      ],
+      "round": 12
+    },
+    {
+      "operation": "Pan right",
+      "frame1Ms": 10,
+      "ms": 31,
+      "end": 5038,
+      "uiMutationMs": 5,
+      "heap": null,
+      "target": null,
+      "start": 5007,
+      "timerGaps": [
+        {
+          "start": 5002,
+          "end": 5022,
+          "gap": 20
+        }
+      ],
+      "afterMutationMs": 26,
+      "native": [
+        {
+          "type": "measure",
+          "start": 5008,
+          "ms": 2,
+          "name": "craidd.metrics.graph"
+        }
+      ],
+      "round": 12
+    },
+    {
+      "operation": "Pan left",
+      "frame1Ms": 4,
+      "ms": 21,
+      "end": 5102,
+      "uiMutationMs": 4,
+      "heap": null,
+      "target": null,
+      "start": 5081,
+      "timerGaps": [
+        {
+          "start": 5062,
+          "end": 5082,
+          "gap": 20
+        },
+        {
+          "start": 5082,
+          "end": 5102,
+          "gap": 20
+        }
+      ],
+      "afterMutationMs": 17,
+      "native": [
+        {
+          "type": "measure",
+          "start": 5081,
+          "ms": 2,
+          "name": "craidd.metrics.graph"
+        }
+      ],
+      "round": 12
+    },
+    {
+      "operation": "Zoom out",
+      "frame1Ms": 9,
+      "ms": 30,
+      "end": 5134,
+      "uiMutationMs": 5,
+      "heap": null,
+      "target": null,
+      "start": 5104,
+      "timerGaps": [
+        {
+          "start": 5102,
+          "end": 5122,
+          "gap": 20
+        }
+      ],
+      "afterMutationMs": 25,
+      "native": [
+        {
+          "type": "measure",
+          "start": 5104,
+          "ms": 2,
+          "name": "craidd.metrics.graph"
+        }
+      ],
+      "round": 12
+    },
+    {
+      "operation": "Series toggle",
+      "frame1Ms": 10,
+      "ms": 31,
+      "end": 5167,
+      "uiMutationMs": 5,
+      "heap": null,
+      "target": 2,
+      "start": 5136,
+      "timerGaps": [
+        {
+          "start": 5122,
+          "end": 5144,
+          "gap": 22
+        },
+        {
+          "start": 5144,
+          "end": 5162,
+          "gap": 18
+        }
+      ],
+      "afterMutationMs": 26,
+      "native": [
+        {
+          "type": "measure",
+          "start": 5136,
+          "ms": 3,
+          "name": "craidd.metrics.graph"
+        }
+      ],
+      "round": 12
+    },
+    {
+      "operation": "Row inspection",
+      "frame1Ms": 13,
+      "ms": 30,
+      "end": 5199,
+      "uiMutationMs": 1,
+      "heap": null,
+      "target": 500012,
+      "start": 5169,
+      "timerGaps": [
+        {
+          "start": 5162,
+          "end": 5182,
+          "gap": 20
+        }
+      ],
+      "afterMutationMs": 29,
+      "native": [
+        {
+          "type": "measure",
+          "start": 5169,
+          "ms": 1,
+          "name": "craidd.metrics.row"
+        }
+      ],
+      "round": 12
+    },
+    {
+      "operation": "Zoom in",
+      "frame1Ms": 11,
+      "ms": 31,
+      "end": 5231,
+      "uiMutationMs": 4,
+      "heap": null,
+      "target": null,
+      "start": 5200,
+      "timerGaps": [
+        {
+          "start": 5182,
+          "end": 5208,
+          "gap": 26
+        },
+        {
+          "start": 5208,
+          "end": 5226,
+          "gap": 18
+        }
+      ],
+      "afterMutationMs": 27,
+      "native": [
+        {
+          "type": "measure",
+          "start": 5200,
+          "ms": 2,
+          "name": "craidd.metrics.graph"
+        }
+      ],
+      "round": 13
+    },
+    {
+      "operation": "Pan right",
+      "frame1Ms": 10,
+      "ms": 31,
+      "end": 5263,
+      "uiMutationMs": 5,
+      "heap": null,
+      "target": null,
+      "start": 5232,
+      "timerGaps": [
+        {
+          "start": 5226,
+          "end": 5246,
+          "gap": 20
+        }
+      ],
+      "afterMutationMs": 26,
+      "native": [
+        {
+          "type": "measure",
+          "start": 5233,
+          "ms": 2,
+          "name": "craidd.metrics.graph"
+        }
+      ],
+      "round": 13
+    },
+    {
+      "operation": "Pan left",
+      "frame1Ms": 10,
+      "ms": 31,
+      "end": 5295,
+      "uiMutationMs": 5,
+      "heap": null,
+      "target": null,
+      "start": 5264,
+      "timerGaps": [
+        {
+          "start": 5246,
+          "end": 5266,
+          "gap": 20
+        },
+        {
+          "start": 5266,
+          "end": 5286,
+          "gap": 20
+        }
+      ],
+      "afterMutationMs": 26,
+      "native": [
+        {
+          "type": "measure",
+          "start": 5265,
+          "ms": 2,
+          "name": "craidd.metrics.graph"
+        }
+      ],
+      "round": 13
+    },
+    {
+      "operation": "Zoom out",
+      "frame1Ms": 9,
+      "ms": 30,
+      "end": 5327,
+      "uiMutationMs": 5,
+      "heap": null,
+      "target": null,
+      "start": 5297,
+      "timerGaps": [
+        {
+          "start": 5286,
+          "end": 5306,
+          "gap": 20
+        },
+        {
+          "start": 5306,
+          "end": 5326,
+          "gap": 20
+        }
+      ],
+      "afterMutationMs": 25,
+      "native": [
+        {
+          "type": "measure",
+          "start": 5297,
+          "ms": 3,
+          "name": "craidd.metrics.graph"
+        }
+      ],
+      "round": 13
+    },
+    {
+      "operation": "Series toggle",
+      "frame1Ms": 9,
+      "ms": 30,
+      "end": 5359,
+      "uiMutationMs": 5,
+      "heap": null,
+      "target": 1,
+      "start": 5329,
+      "timerGaps": [
+        {
+          "start": 5326,
+          "end": 5346,
+          "gap": 20
+        }
+      ],
+      "afterMutationMs": 25,
+      "native": [
+        {
+          "type": "measure",
+          "start": 5330,
+          "ms": 2,
+          "name": "craidd.metrics.graph"
+        }
+      ],
+      "round": 13
+    },
+    {
+      "operation": "Row inspection",
+      "frame1Ms": 3,
+      "ms": 20,
+      "end": 5424,
+      "uiMutationMs": 1,
+      "heap": null,
+      "target": 500013,
+      "start": 5404,
+      "timerGaps": [
+        {
+          "start": 5386,
+          "end": 5406,
+          "gap": 20
+        }
+      ],
+      "afterMutationMs": 19,
+      "native": [
+        {
+          "type": "measure",
+          "start": 5404,
+          "ms": 1,
+          "name": "craidd.metrics.row"
+        }
+      ],
+      "round": 13
+    },
+    {
+      "operation": "Zoom in",
+      "frame1Ms": 10,
+      "ms": 31,
+      "end": 5456,
+      "uiMutationMs": 5,
+      "heap": null,
+      "target": null,
+      "start": 5425,
+      "timerGaps": [
+        {
+          "start": 5406,
+          "end": 5426,
+          "gap": 20
+        },
+        {
+          "start": 5426,
+          "end": 5446,
+          "gap": 20
+        }
+      ],
+      "afterMutationMs": 26,
+      "native": [
+        {
+          "type": "measure",
+          "start": 5426,
+          "ms": 1,
+          "name": "craidd.metrics.graph"
+        }
+      ],
+      "round": 14
+    },
+    {
+      "operation": "Pan right",
+      "frame1Ms": 10,
+      "ms": 31,
+      "end": 5488,
+      "uiMutationMs": 5,
+      "heap": null,
+      "target": null,
+      "start": 5457,
+      "timerGaps": [
+        {
+          "start": 5446,
+          "end": 5466,
+          "gap": 20
+        },
+        {
+          "start": 5466,
+          "end": 5486,
+          "gap": 20
+        }
+      ],
+      "afterMutationMs": 26,
+      "native": [
+        {
+          "type": "measure",
+          "start": 5458,
+          "ms": 2,
+          "name": "craidd.metrics.graph"
+        }
+      ],
+      "round": 14
+    },
+    {
+      "operation": "Pan left",
+      "frame1Ms": 9,
+      "ms": 30,
+      "end": 5520,
+      "uiMutationMs": 5,
+      "heap": null,
+      "target": null,
+      "start": 5490,
+      "timerGaps": [
+        {
+          "start": 5486,
+          "end": 5506,
+          "gap": 20
+        }
+      ],
+      "afterMutationMs": 25,
+      "native": [
+        {
+          "type": "measure",
+          "start": 5491,
+          "ms": 1,
+          "name": "craidd.metrics.graph"
+        }
+      ],
+      "round": 14
+    },
+    {
+      "operation": "Zoom out",
+      "frame1Ms": 9,
+      "ms": 30,
+      "end": 5552,
+      "uiMutationMs": 5,
+      "heap": null,
+      "target": null,
+      "start": 5522,
+      "timerGaps": [
+        {
+          "start": 5506,
+          "end": 5531,
+          "gap": 25
+        },
+        {
+          "start": 5531,
+          "end": 5550,
+          "gap": 19
+        }
+      ],
+      "afterMutationMs": 25,
+      "native": [
+        {
+          "type": "measure",
+          "start": 5522,
+          "ms": 3,
+          "name": "craidd.metrics.graph"
+        }
+      ],
+      "round": 14
+    },
+    {
+      "operation": "Series toggle",
+      "frame1Ms": 9,
+      "ms": 30,
+      "end": 5584,
+      "uiMutationMs": 5,
+      "heap": null,
+      "target": 2,
+      "start": 5554,
+      "timerGaps": [
+        {
+          "start": 5550,
+          "end": 5570,
+          "gap": 20
+        }
+      ],
+      "afterMutationMs": 25,
+      "native": [
+        {
+          "type": "measure",
+          "start": 5554,
+          "ms": 2,
+          "name": "craidd.metrics.graph"
+        }
+      ],
+      "round": 14
+    },
+    {
+      "operation": "Row inspection",
+      "frame1Ms": 10,
+      "ms": 28,
+      "end": 5616,
+      "uiMutationMs": 2,
+      "heap": null,
+      "target": 500014,
+      "start": 5588,
+      "timerGaps": [
+        {
+          "start": 5570,
+          "end": 5591,
+          "gap": 21
+        },
+        {
+          "start": 5591,
+          "end": 5610,
+          "gap": 19
+        }
+      ],
+      "afterMutationMs": 26,
+      "native": [
+        {
+          "type": "measure",
+          "start": 5589,
+          "ms": 0,
+          "name": "craidd.metrics.row"
+        }
+      ],
+      "round": 14
+    },
+    {
+      "operation": "Zoom in",
+      "frame1Ms": 9,
+      "ms": 30,
+      "end": 5648,
+      "uiMutationMs": 5,
+      "heap": null,
+      "target": null,
+      "start": 5618,
+      "timerGaps": [
+        {
+          "start": 5610,
+          "end": 5630,
+          "gap": 20
+        }
+      ],
+      "afterMutationMs": 25,
+      "native": [
+        {
+          "type": "measure",
+          "start": 5618,
+          "ms": 2,
+          "name": "craidd.metrics.graph"
+        }
+      ],
+      "round": 15
+    },
+    {
+      "operation": "Pan right",
+      "frame1Ms": 3,
+      "ms": 23,
+      "end": 5713,
+      "uiMutationMs": 6,
+      "heap": null,
+      "target": null,
+      "start": 5690,
+      "timerGaps": [
+        {
+          "start": 5670,
+          "end": 5690,
+          "gap": 20
+        },
+        {
+          "start": 5690,
+          "end": 5710,
+          "gap": 20
+        }
+      ],
+      "afterMutationMs": 17,
+      "native": [
+        {
+          "type": "measure",
+          "start": 5691,
+          "ms": 2,
+          "name": "craidd.metrics.graph"
+        }
+      ],
+      "round": 15
+    },
+    {
+      "operation": "Pan left",
+      "frame1Ms": 10,
+      "ms": 31,
+      "end": 5745,
+      "uiMutationMs": 5,
+      "heap": null,
+      "target": null,
+      "start": 5714,
+      "timerGaps": [
+        {
+          "start": 5710,
+          "end": 5730,
+          "gap": 20
+        }
+      ],
+      "afterMutationMs": 26,
+      "native": [
+        {
+          "type": "measure",
+          "start": 5715,
+          "ms": 1,
+          "name": "craidd.metrics.graph"
+        }
+      ],
+      "round": 15
+    },
+    {
+      "operation": "Zoom out",
+      "frame1Ms": 8,
+      "ms": 30,
+      "end": 5777,
+      "uiMutationMs": 6,
+      "heap": null,
+      "target": null,
+      "start": 5747,
+      "timerGaps": [
+        {
+          "start": 5730,
+          "end": 5750,
+          "gap": 20
+        },
+        {
+          "start": 5750,
+          "end": 5770,
+          "gap": 20
+        }
+      ],
+      "afterMutationMs": 24,
+      "native": [
+        {
+          "type": "measure",
+          "start": 5747,
+          "ms": 3,
+          "name": "craidd.metrics.graph"
+        }
+      ],
+      "round": 15
+    },
+    {
+      "operation": "Series toggle",
+      "frame1Ms": 4,
+      "ms": 20,
+      "end": 5841,
+      "uiMutationMs": 5,
+      "heap": null,
+      "target": 1,
+      "start": 5821,
+      "timerGaps": [
+        {
+          "start": 5810,
+          "end": 5830,
+          "gap": 20
+        }
+      ],
+      "afterMutationMs": 15,
+      "native": [
+        {
+          "type": "measure",
+          "start": 5821,
+          "ms": 3,
+          "name": "craidd.metrics.graph"
+        }
+      ],
+      "round": 15
+    },
+    {
+      "operation": "Row inspection",
+      "frame1Ms": 2,
+      "ms": 19,
+      "end": 5905,
+      "uiMutationMs": 1,
+      "heap": null,
+      "target": 500015,
+      "start": 5886,
+      "timerGaps": [
+        {
+          "start": 5870,
+          "end": 5890,
+          "gap": 20
+        }
+      ],
+      "afterMutationMs": 18,
+      "native": [
+        {
+          "type": "measure",
+          "start": 5886,
+          "ms": 1,
+          "name": "craidd.metrics.row"
+        }
+      ],
+      "round": 15
+    },
+    {
+      "operation": "Zoom in",
+      "frame1Ms": 10,
+      "ms": 30,
+      "end": 5937,
+      "uiMutationMs": 4,
+      "heap": null,
+      "target": null,
+      "start": 5907,
+      "timerGaps": [
+        {
+          "start": 5890,
+          "end": 5915,
+          "gap": 25
+        },
+        {
+          "start": 5915,
+          "end": 5934,
+          "gap": 19
+        }
+      ],
+      "afterMutationMs": 26,
+      "native": [
+        {
+          "type": "measure",
+          "start": 5907,
+          "ms": 2,
+          "name": "craidd.metrics.graph"
+        }
+      ],
+      "round": 16
+    },
+    {
+      "operation": "Pan right",
+      "frame1Ms": 3,
+      "ms": 22,
+      "end": 6002,
+      "uiMutationMs": 5,
+      "heap": null,
+      "target": null,
+      "start": 5980,
+      "timerGaps": [
+        {
+          "start": 5974,
+          "end": 5994,
+          "gap": 20
+        }
+      ],
+      "afterMutationMs": 17,
+      "native": [
+        {
+          "type": "measure",
+          "start": 5980,
+          "ms": 2,
+          "name": "craidd.metrics.graph"
+        }
+      ],
+      "round": 16
+    },
+    {
+      "operation": "Pan left",
+      "frame1Ms": 10,
+      "ms": 30,
+      "end": 6034,
+      "uiMutationMs": 4,
+      "heap": null,
+      "target": null,
+      "start": 6004,
+      "timerGaps": [
+        {
+          "start": 5994,
+          "end": 6014,
+          "gap": 20
+        }
+      ],
+      "afterMutationMs": 26,
+      "native": [
+        {
+          "type": "measure",
+          "start": 6004,
+          "ms": 2,
+          "name": "craidd.metrics.graph"
+        }
+      ],
+      "round": 16
+    },
+    {
+      "operation": "Zoom out",
+      "frame1Ms": 9,
+      "ms": 30,
+      "end": 6066,
+      "uiMutationMs": 5,
+      "heap": null,
+      "target": null,
+      "start": 6036,
+      "timerGaps": [
+        {
+          "start": 6034,
+          "end": 6054,
+          "gap": 20
+        }
+      ],
+      "afterMutationMs": 25,
+      "native": [
+        {
+          "type": "measure",
+          "start": 6036,
+          "ms": 2,
+          "name": "craidd.metrics.graph"
+        }
+      ],
+      "round": 16
+    },
+    {
+      "operation": "Series toggle",
+      "frame1Ms": 4,
+      "ms": 21,
+      "end": 6130,
+      "uiMutationMs": 6,
+      "heap": null,
+      "target": 2,
+      "start": 6109,
+      "timerGaps": [
+        {
+          "start": 6094,
+          "end": 6119,
+          "gap": 25
+        }
+      ],
+      "afterMutationMs": 15,
+      "native": [
+        {
+          "type": "measure",
+          "start": 6110,
+          "ms": 2,
+          "name": "craidd.metrics.graph"
+        }
+      ],
+      "round": 16
+    },
+    {
+      "operation": "Row inspection",
+      "frame1Ms": 2,
+      "ms": 20,
+      "end": 6194,
+      "uiMutationMs": 2,
+      "heap": null,
+      "target": 500016,
+      "start": 6174,
+      "timerGaps": [
+        {
+          "start": 6158,
+          "end": 6178,
+          "gap": 20
+        }
+      ],
+      "afterMutationMs": 18,
+      "native": [
+        {
+          "type": "measure",
+          "start": 6174,
+          "ms": 1,
+          "name": "craidd.metrics.row"
+        }
+      ],
+      "round": 16
+    },
+    {
+      "operation": "Zoom in",
+      "frame1Ms": 10,
+      "ms": 31,
+      "end": 6226,
+      "uiMutationMs": 5,
+      "heap": null,
+      "target": null,
+      "start": 6195,
+      "timerGaps": [
+        {
+          "start": 6178,
+          "end": 6203,
+          "gap": 25
+        },
+        {
+          "start": 6203,
+          "end": 6222,
+          "gap": 19
+        }
+      ],
+      "afterMutationMs": 26,
+      "native": [
+        {
+          "type": "measure",
+          "start": 6196,
+          "ms": 1,
+          "name": "craidd.metrics.graph"
+        }
+      ],
+      "round": 17
+    },
+    {
+      "operation": "Pan right",
+      "frame1Ms": 4,
+      "ms": 22,
+      "end": 6291,
+      "uiMutationMs": 4,
+      "heap": null,
+      "target": null,
+      "start": 6269,
+      "timerGaps": [
+        {
+          "start": 6262,
+          "end": 6282,
+          "gap": 20
+        }
+      ],
+      "afterMutationMs": 18,
+      "native": [
+        {
+          "type": "measure",
+          "start": 6269,
+          "ms": 1,
+          "name": "craidd.metrics.graph"
+        }
+      ],
+      "round": 17
+    },
+    {
+      "operation": "Pan left",
+      "frame1Ms": 11,
+      "ms": 31,
+      "end": 6323,
+      "uiMutationMs": 4,
+      "heap": null,
+      "target": null,
+      "start": 6292,
+      "timerGaps": [
+        {
+          "start": 6282,
+          "end": 6302,
+          "gap": 20
+        },
+        {
+          "start": 6302,
+          "end": 6322,
+          "gap": 20
+        }
+      ],
+      "afterMutationMs": 27,
+      "native": [
+        {
+          "type": "measure",
+          "start": 6293,
+          "ms": 1,
+          "name": "craidd.metrics.graph"
+        }
+      ],
+      "round": 17
+    },
+    {
+      "operation": "Zoom out",
+      "frame1Ms": 3,
+      "ms": 23,
+      "end": 6387,
+      "uiMutationMs": 6,
+      "heap": null,
+      "target": null,
+      "start": 6364,
+      "timerGaps": [
+        {
+          "start": 6362,
+          "end": 6382,
+          "gap": 20
+        }
+      ],
+      "afterMutationMs": 17,
+      "native": [
+        {
+          "type": "measure",
+          "start": 6365,
+          "ms": 2,
+          "name": "craidd.metrics.graph"
+        }
+      ],
+      "round": 17
+    },
+    {
+      "operation": "Series toggle",
+      "frame1Ms": 9,
+      "ms": 31,
+      "end": 6419,
+      "uiMutationMs": 6,
+      "heap": null,
+      "target": 1,
+      "start": 6388,
+      "timerGaps": [
+        {
+          "start": 6382,
+          "end": 6402,
+          "gap": 20
+        }
+      ],
+      "afterMutationMs": 25,
+      "native": [
+        {
+          "type": "measure",
+          "start": 6389,
+          "ms": 2,
+          "name": "craidd.metrics.graph"
+        }
+      ],
+      "round": 17
+    },
+    {
+      "operation": "Row inspection",
+      "frame1Ms": 2,
+      "ms": 19,
+      "end": 6483,
+      "uiMutationMs": 1,
+      "heap": null,
+      "target": 500017,
+      "start": 6464,
+      "timerGaps": [
+        {
+          "start": 6463,
+          "end": 6482,
+          "gap": 19
+        }
+      ],
+      "afterMutationMs": 18,
+      "native": [
+        {
+          "type": "measure",
+          "start": 6464,
+          "ms": 0,
+          "name": "craidd.metrics.row"
+        }
+      ],
+      "round": 17
+    },
+    {
+      "operation": "Zoom in",
+      "frame1Ms": 10,
+      "ms": 31,
+      "end": 6515,
+      "uiMutationMs": 5,
+      "heap": null,
+      "target": null,
+      "start": 6484,
+      "timerGaps": [
+        {
+          "start": 6482,
+          "end": 6502,
+          "gap": 20
+        }
+      ],
+      "afterMutationMs": 26,
+      "native": [
+        {
+          "type": "measure",
+          "start": 6485,
+          "ms": 2,
+          "name": "craidd.metrics.graph"
+        }
+      ],
+      "round": 18
+    },
+    {
+      "operation": "Pan right",
+      "frame1Ms": 4,
+      "ms": 22,
+      "end": 6580,
+      "uiMutationMs": 4,
+      "heap": null,
+      "target": null,
+      "start": 6558,
+      "timerGaps": [
+        {
+          "start": 6542,
+          "end": 6566,
+          "gap": 24
+        }
+      ],
+      "afterMutationMs": 18,
+      "native": [
+        {
+          "type": "measure",
+          "start": 6558,
+          "ms": 2,
+          "name": "craidd.metrics.graph"
+        }
+      ],
+      "round": 18
+    },
+    {
+      "operation": "Pan left",
+      "frame1Ms": 10,
+      "ms": 31,
+      "end": 6612,
+      "uiMutationMs": 5,
+      "heap": null,
+      "target": null,
+      "start": 6581,
+      "timerGaps": [
+        {
+          "start": 6566,
+          "end": 6582,
+          "gap": 16
+        },
+        {
+          "start": 6582,
+          "end": 6602,
+          "gap": 20
+        }
+      ],
+      "afterMutationMs": 26,
+      "native": [
+        {
+          "type": "measure",
+          "start": 6582,
+          "ms": 1,
+          "name": "craidd.metrics.graph"
+        }
+      ],
+      "round": 18
+    },
+    {
+      "operation": "Zoom out",
+      "frame1Ms": 10,
+      "ms": 31,
+      "end": 6644,
+      "uiMutationMs": 5,
+      "heap": null,
+      "target": null,
+      "start": 6613,
+      "timerGaps": [
+        {
+          "start": 6602,
+          "end": 6622,
+          "gap": 20
+        },
+        {
+          "start": 6622,
+          "end": 6642,
+          "gap": 20
+        }
+      ],
+      "afterMutationMs": 26,
+      "native": [
+        {
+          "type": "measure",
+          "start": 6614,
+          "ms": 2,
+          "name": "craidd.metrics.graph"
+        }
+      ],
+      "round": 18
+    },
+    {
+      "operation": "Series toggle",
+      "frame1Ms": 4,
+      "ms": 34,
+      "end": 6719,
+      "uiMutationMs": 10,
+      "heap": null,
+      "target": 2,
+      "start": 6685,
+      "timerGaps": [
+        {
+          "start": 6682,
+          "end": 6719,
+          "gap": 37
+        }
+      ],
+      "afterMutationMs": 24,
+      "native": [
+        {
+          "type": "measure",
+          "start": 6686,
+          "ms": 2,
+          "name": "craidd.metrics.graph"
+        }
+      ],
+      "round": 18
+    },
+    {
+      "operation": "Row inspection",
+      "frame1Ms": 4,
+      "ms": 22,
+      "end": 6756,
+      "uiMutationMs": 2,
+      "heap": null,
+      "target": 500018,
+      "start": 6734,
+      "timerGaps": [
+        {
+          "start": 6719,
+          "end": 6738,
+          "gap": 19
+        }
+      ],
+      "afterMutationMs": 20,
+      "native": [
+        {
+          "type": "measure",
+          "start": 6734,
+          "ms": 1,
+          "name": "craidd.metrics.row"
+        }
+      ],
+      "round": 18
+    },
+    {
+      "operation": "Zoom in",
+      "frame1Ms": 9,
+      "ms": 30,
+      "end": 6788,
+      "uiMutationMs": 5,
+      "heap": null,
+      "target": null,
+      "start": 6758,
+      "timerGaps": [
+        {
+          "start": 6738,
+          "end": 6759,
+          "gap": 21
+        },
+        {
+          "start": 6759,
+          "end": 6778,
+          "gap": 19
+        }
+      ],
+      "afterMutationMs": 25,
+      "native": [
+        {
+          "type": "measure",
+          "start": 6759,
+          "ms": 1,
+          "name": "craidd.metrics.graph"
+        }
+      ],
+      "round": 19
+    },
+    {
+      "operation": "Pan right",
+      "frame1Ms": 9,
+      "ms": 30,
+      "end": 6820,
+      "uiMutationMs": 5,
+      "heap": null,
+      "target": null,
+      "start": 6790,
+      "timerGaps": [
+        {
+          "start": 6778,
+          "end": 6799,
+          "gap": 21
+        },
+        {
+          "start": 6799,
+          "end": 6818,
+          "gap": 19
+        }
+      ],
+      "afterMutationMs": 25,
+      "native": [
+        {
+          "type": "measure",
+          "start": 6791,
+          "ms": 1,
+          "name": "craidd.metrics.graph"
+        }
+      ],
+      "round": 19
+    },
+    {
+      "operation": "Pan left",
+      "frame1Ms": 9,
+      "ms": 30,
+      "end": 6852,
+      "uiMutationMs": 5,
+      "heap": null,
+      "target": null,
+      "start": 6822,
+      "timerGaps": [
+        {
+          "start": 6818,
+          "end": 6838,
+          "gap": 20
+        }
+      ],
+      "afterMutationMs": 25,
+      "native": [
+        {
+          "type": "measure",
+          "start": 6823,
+          "ms": 2,
+          "name": "craidd.metrics.graph"
+        }
+      ],
+      "round": 19
+    },
+    {
+      "operation": "Zoom out",
+      "frame1Ms": 8,
+      "ms": 31,
+      "end": 6885,
+      "uiMutationMs": 6,
+      "heap": null,
+      "target": null,
+      "start": 6854,
+      "timerGaps": [
+        {
+          "start": 6838,
+          "end": 6864,
+          "gap": 26
+        },
+        {
+          "start": 6864,
+          "end": 6882,
+          "gap": 18
+        }
+      ],
+      "afterMutationMs": 25,
+      "native": [
+        {
+          "type": "measure",
+          "start": 6855,
+          "ms": 2,
+          "name": "craidd.metrics.graph"
+        }
+      ],
+      "round": 19
+    },
+    {
+      "operation": "Series toggle",
+      "frame1Ms": 9,
+      "ms": 31,
+      "end": 6917,
+      "uiMutationMs": 6,
+      "heap": null,
+      "target": 1,
+      "start": 6886,
+      "timerGaps": [
+        {
+          "start": 6882,
+          "end": 6902,
+          "gap": 20
+        }
+      ],
+      "afterMutationMs": 25,
+      "native": [
+        {
+          "type": "measure",
+          "start": 6887,
+          "ms": 2,
+          "name": "craidd.metrics.graph"
+        }
+      ],
+      "round": 19
+    },
+    {
+      "operation": "Row inspection",
+      "frame1Ms": 11,
+      "ms": 29,
+      "end": 6949,
+      "uiMutationMs": 2,
+      "heap": null,
+      "target": 500019,
+      "start": 6920,
+      "timerGaps": [
+        {
+          "start": 6902,
+          "end": 6923,
+          "gap": 21
+        },
+        {
+          "start": 6923,
+          "end": 6942,
+          "gap": 19
+        }
+      ],
+      "afterMutationMs": 27,
+      "native": [
+        {
+          "type": "measure",
+          "start": 6920,
+          "ms": 1,
+          "name": "craidd.metrics.row"
+        }
+      ],
+      "round": 19
+    },
+    {
+      "operation": "Zoom in",
+      "frame1Ms": 10,
+      "ms": 31,
+      "end": 6981,
+      "uiMutationMs": 5,
+      "heap": null,
+      "target": null,
+      "start": 6950,
+      "timerGaps": [
+        {
+          "start": 6942,
+          "end": 6962,
+          "gap": 20
+        }
+      ],
+      "afterMutationMs": 26,
+      "native": [
+        {
+          "type": "measure",
+          "start": 6951,
+          "ms": 1,
+          "name": "craidd.metrics.graph"
+        }
+      ],
+      "round": 20
+    },
+    {
+      "operation": "Pan right",
+      "frame1Ms": 4,
+      "ms": 22,
+      "end": 7045,
+      "uiMutationMs": 4,
+      "heap": null,
+      "target": null,
+      "start": 7023,
+      "timerGaps": [
+        {
+          "start": 7022,
+          "end": 7042,
+          "gap": 20
+        }
+      ],
+      "afterMutationMs": 18,
+      "native": [
+        {
+          "type": "measure",
+          "start": 7024,
+          "ms": 1,
+          "name": "craidd.metrics.graph"
+        }
+      ],
+      "round": 20
+    },
+    {
+      "operation": "Pan left",
+      "frame1Ms": 11,
+      "ms": 31,
+      "end": 7077,
+      "uiMutationMs": 4,
+      "heap": null,
+      "target": null,
+      "start": 7046,
+      "timerGaps": [
+        {
+          "start": 7042,
+          "end": 7063,
+          "gap": 21
+        }
+      ],
+      "afterMutationMs": 27,
+      "native": [
+        {
+          "type": "measure",
+          "start": 7047,
+          "ms": 1,
+          "name": "craidd.metrics.graph"
+        }
+      ],
+      "round": 20
+    },
+    {
+      "operation": "Zoom out",
+      "frame1Ms": 3,
+      "ms": 22,
+      "end": 7141,
+      "uiMutationMs": 6,
+      "heap": null,
+      "target": null,
+      "start": 7119,
+      "timerGaps": [
+        {
+          "start": 7102,
+          "end": 7122,
+          "gap": 20
+        }
+      ],
+      "afterMutationMs": 16,
+      "native": [
+        {
+          "type": "measure",
+          "start": 7120,
+          "ms": 2,
+          "name": "craidd.metrics.graph"
+        }
+      ],
+      "round": 20
+    },
+    {
+      "operation": "Series toggle",
+      "frame1Ms": 10,
+      "ms": 30,
+      "end": 7173,
+      "uiMutationMs": 4,
+      "heap": null,
+      "target": 2,
+      "start": 7143,
+      "timerGaps": [
+        {
+          "start": 7122,
+          "end": 7143,
+          "gap": 21
+        },
+        {
+          "start": 7143,
+          "end": 7162,
+          "gap": 19
+        }
+      ],
+      "afterMutationMs": 26,
+      "native": [
+        {
+          "type": "measure",
+          "start": 7143,
+          "ms": 2,
+          "name": "craidd.metrics.graph"
+        }
+      ],
+      "round": 20
+    },
+    {
+      "operation": "Row inspection",
+      "frame1Ms": 4,
+      "ms": 21,
+      "end": 7238,
+      "uiMutationMs": 1,
+      "heap": null,
+      "target": 500020,
+      "start": 7217,
+      "timerGaps": [
+        {
+          "start": 7202,
+          "end": 7223,
+          "gap": 21
+        }
+      ],
+      "afterMutationMs": 20,
+      "native": [
+        {
+          "type": "measure",
+          "start": 7217,
+          "ms": 1,
+          "name": "craidd.metrics.row"
+        }
+      ],
+      "round": 20
+    }
+  ],
+  "outliers": [],
+  "diagnostics": {
+    "supportedPerformanceEntries": [
+      "event",
+      "first-input",
+      "largest-contentful-paint",
+      "mark",
+      "measure",
+      "navigation",
+      "paint",
+      "resource"
+    ],
+    "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/60.5 Safari/605.1.15",
+    "timeOrigin": 1792533873302,
+    "heapObservable": false,
+    "gcObservable": false
+  },
+  "method": "20 measured observations per operation, nearest-rank p50/p95, scripted application event to changed UI plus two RAFs, visible graph/inspector, warm file cache. Shared RSS pages double-counted; PSS separately sampled. No hardware input/display or GC attribution inferred."
+}

@@ -45,3 +45,21 @@ workspaces/rust-debug-smoke/target/
 # Claude-only working instructions (not shared with other agents)
 CLAUDE.md
 /docs/local
+
+# Lightweight Unity interop fixture; its own ignore excludes caches and binaries.
+!workspaces/unity/
+!workspaces/profiling-metrics/
+!workspaces/profiling-perf-qualification/
+!workspaces/profiling-perf-backend/
+workspaces/profiling-perf-backend/target/
+!workspaces/profiling-perf-managed/
+workspaces/profiling-perf-managed/bin/
+workspaces/profiling-perf-managed/obj/
+workspaces/profiling-perf-managed/__pycache__/
+
+!workspaces/profiling-symbol-locations/
+!workspaces/profiling-embedded-mono/
+workspaces/profiling-symbol-locations/__pycache__/
+workspaces/profiling-embedded-mono/__pycache__/
+
+workspaces/profiling-perf-backend/__pycache__/

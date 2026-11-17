@@ -1,0 +1,2376 @@
+{
+  "machine": "sk27",
+  "kernel": "7.2.11-arch1-1",
+  "perf": "perf version 7.2.11-1",
+  "harness": {
+    "path": "/tmp/craidd-perf-20261024-gr3-target/release/craidd-perf-backend-fixture",
+    "sha256": "5a2a6c85300910fbb18416041c3c0bede3dcf8b9d51c206e9cf7420ce8402573"
+  },
+  "fixture": {
+    "path": "/tmp/craidd-gr003-production-20261024-final/build/fixture",
+    "sha256": "0ab2d981d0ca0081711ece8771ac86172e6e18107b53708f63ee1c7814e95c42",
+    "module": "/tmp/craidd-gr003-production-20261024-final/build/liblocation.so",
+    "moduleSha256": "8ddf6ecab9d6d5ef29713984abc8c803438c348260b3210f5acf4bcb7a56b109",
+    "debug": "/tmp/craidd-gr003-production-20261024-final/sibling-symbols/liblocation.so.debug",
+    "debugSha256": "643d13ae9f43cdefdb160f263fca5f06f2bab30f2b51cc50d8bb06fd0f99532e"
+  },
+  "cases": [
+    {
+      "case": "undeclared",
+      "capture": {
+        "attributionValid": true,
+        "buildIds": [
+          {
+            "capturedBuildId": "2e5074eab755e2fb5151fa184da4a33fadd67e70",
+            "currentBuildId": "2e5074eab755e2fb5151fa184da4a33fadd67e70",
+            "debugFiles": [],
+            "module": "/tmp/craidd-gr003-production-20261024-final/build/fixture",
+            "state": "matched"
+          },
+          {
+            "capturedBuildId": "b844add52a4d587c4b072aad274295c6c0ad66a1",
+            "currentBuildId": "b844add52a4d587c4b072aad274295c6c0ad66a1",
+            "debugFiles": [],
+            "module": "/tmp/craidd-gr003-production-20261024-final/build/liblocation.so",
+            "state": "matched"
+          },
+          {
+            "capturedBuildId": "d320029ad1a23be2f4bce117fd321cbd23a2014b",
+            "currentBuildId": "d320029ad1a23be2f4bce117fd321cbd23a2014b",
+            "debugFiles": [],
+            "module": "/usr/lib/libc.so.6",
+            "state": "matched"
+          },
+          {
+            "capturedBuildId": "5b8d3de442de987b24d0e3679533068f2ae62497",
+            "currentBuildId": "5b8d3de442de987b24d0e3679533068f2ae62497",
+            "debugFiles": [],
+            "module": "/usr/lib/libstdc++.so.6.0.36",
+            "state": "matched"
+          }
+        ],
+        "clockDomain": "CLOCK_MONOTONIC",
+        "clockMapping": null,
+        "collectorExit": null,
+        "collectorIdentity": {
+          "birth": 4321901,
+          "pid": 461423
+        },
+        "collectorSignal": 2,
+        "coverage": {
+          "diagnostics": [],
+          "emptyChains": 0,
+          "lossScanComplete": true,
+          "lostCount": 0,
+          "lostRecords": 0,
+          "lostSampleCount": 0,
+          "lostSampleRecords": 0,
+          "mismatchedChains": 0,
+          "omittedSamples": 0,
+          "parsedSamples": 394,
+          "retainedSamples": 394,
+          "truncatedStacks": 0,
+          "unknownRecords": 0,
+          "unparsedLossRecords": 0
+        },
+        "createdMs": 1792801864557,
+        "decodeAndParseMs": 52,
+        "decodeRevision": 1,
+        "estimatedRawBytes": 5084046,
+        "event": "cpu-clock:u",
+        "generation": 1,
+        "host": {
+          "birth": 4321898,
+          "pid": 461418
+        },
+        "id": "capture-1792801864557-461418-1",
+        "jitMap": null,
+        "label": "perf \u00b7 PID 461414",
+        "lossScanMs": 0,
+        "moduleIdentityMs": 226,
+        "omittedStderrBytes": 0,
+        "omittedThreadObservations": 0,
+        "options": {
+          "durationSeconds": 2,
+          "frequency": 99,
+          "unwind": {
+            "kind": "dwarf",
+            "stackBytes": 8192
+          }
+        },
+        "owner": "probe",
+        "parserCpuMs": 2,
+        "perfVersion": "perf version 7.2.11-1",
+        "pinned": false,
+        "profileId": "probe-profile",
+        "rawBytes": 3362676,
+        "rawLimit": 536870912,
+        "rawSha256": "92948b8dabe4dbebf81ff4d4ef766ef4d936201b8acacebaad86f797e1871c51",
+        "reasons": [
+          "Timed duration completed"
+        ],
+        "recordArgv": [
+          "record",
+          "--no-buildid-cache",
+          "--clockid",
+          "mono",
+          "--timestamp",
+          "--per-thread",
+          "--no-inherit",
+          "--user-callchains",
+          "-e",
+          "cpu-clock:u",
+          "-F",
+          "99",
+          "--call-graph",
+          "dwarf,8192",
+          "-t",
+          "461414,461416,461417",
+          "-o",
+          "/tmp/craidd-gr003-production-20261024-final/undeclared/cache/a70a4884214048bb34cc62e3e88df12c4a0710d81bfa637361fade7a5d53a1e3/capture-1792801864557-461418-1/perf.data"
+        ],
+        "solution": "/tmp/craidd-gr003-production-20261024-final/undeclared/fixture.cln",
+        "sourceKind": "nativeStackSamples",
+        "state": "complete",
+        "stderr": "[ perf record: Woken up 10 times to write data ]\n[ perf record: Captured and wrote 3.172 MB /tmp/craidd-gr003-production-20261024-final/undeclared/cache/a70a4884214048bb34cc62e3e88df12c4a0710d81bfa637361fade7a5d53a1e3/capture-1792801864557-461418-1/perf.data ]\n",
+        "summary": {
+          "attributionBasis": "Self: all retained sampled leaves. Inclusive: recovered chains only; completeness is not proven.",
+          "coverage": {
+            "diagnostics": [],
+            "emptyChains": 0,
+            "lossScanComplete": true,
+            "lostCount": 0,
+            "lostRecords": 0,
+            "lostSampleCount": 0,
+            "lostSampleRecords": 0,
+            "mismatchedChains": 0,
+            "omittedSamples": 0,
+            "parsedSamples": 394,
+            "retainedSamples": 394,
+            "truncatedStacks": 0,
+            "unknownRecords": 0,
+            "unparsedLossRecords": 0
+          },
+          "firstMonotonicNs": 43219037723122,
+          "frameCount": 10,
+          "lastMonotonicNs": 43221017709715,
+          "lossAccounting": "LOST and LOST_SAMPLES are separate reports and may overlap; never summed",
+          "retention": {
+            "frames": 100000,
+            "samples": 500000,
+            "stackReferences": 8000000
+          },
+          "threads": {
+            "461416": "busy-worker",
+            "461417": "busy-worker"
+          },
+          "units": "sampled cpu-clock event period (ns); not exact function time",
+          "unwindCoverage": {
+            "basis": "Available means perf supplied a chain, not proof of complete unwinding; truncated chains include recovered callers only.",
+            "byLeafModule": {
+              "/tmp/craidd-gr003-production-20261024-final/build/liblocation.so": {
+                "chainSamples": 394,
+                "chainWeight": 3979797940,
+                "empty": 0,
+                "mismatch": 0,
+                "samples": 394,
+                "truncated": 0,
+                "weight": 3979797940
+              }
+            },
+            "byThread": {
+              "461416": {
+                "chainSamples": 197,
+                "chainWeight": 1989898970,
+                "empty": 0,
+                "mismatch": 0,
+                "samples": 197,
+                "truncated": 0,
+                "weight": 1989898970
+              },
+              "461417": {
+                "chainSamples": 197,
+                "chainWeight": 1989898970,
+                "empty": 0,
+                "mismatch": 0,
+                "samples": 197,
+                "truncated": 0,
+                "weight": 1989898970
+              }
+            },
+            "total": {
+              "chainSamples": 394,
+              "chainWeight": 3979797940,
+              "empty": 0,
+              "mismatch": 0,
+              "samples": 394,
+              "truncated": 0,
+              "weight": 3979797940
+            }
+          }
+        },
+        "symbolSearch": {
+          "index": {
+            "diagnostics": [],
+            "elapsedMs": 0,
+            "elfFiles": 0,
+            "entries": 0,
+            "incomplete": false
+          },
+          "locations": [],
+          "privateCache": "/tmp/craidd-gr003-production-20261024-final/undeclared/cache/a70a4884214048bb34cc62e3e88df12c4a0710d81bfa637361fade7a5d53a1e3/capture-1792801864557-461418-1/symbol-cache",
+          "sealed": true,
+          "served": [],
+          "withheldModules": {}
+        },
+        "target": {
+          "birth": 4321898,
+          "pid": 461414
+        },
+        "threadPollMs": 100,
+        "threadsAtStart": [
+          {
+            "birth": 4321898,
+            "name": "fixture",
+            "tid": 461414
+          },
+          {
+            "birth": 4321898,
+            "name": "busy-worker",
+            "tid": 461416
+          },
+          {
+            "birth": 4321898,
+            "name": "busy-worker",
+            "tid": 461417
+          }
+        ],
+        "threadsGained": [],
+        "version": 1
+      },
+      "hotEntries": [],
+      "targetSurvived": true
+    },
+    {
+      "case": "sibling",
+      "capture": {
+        "attributionValid": true,
+        "buildIds": [
+          {
+            "capturedBuildId": "2e5074eab755e2fb5151fa184da4a33fadd67e70",
+            "currentBuildId": "2e5074eab755e2fb5151fa184da4a33fadd67e70",
+            "debugFiles": [],
+            "module": "/tmp/craidd-gr003-production-20261024-final/build/fixture",
+            "state": "matched"
+          },
+          {
+            "capturedBuildId": "b844add52a4d587c4b072aad274295c6c0ad66a1",
+            "currentBuildId": "b844add52a4d587c4b072aad274295c6c0ad66a1",
+            "debugFiles": [],
+            "module": "/tmp/craidd-gr003-production-20261024-final/build/liblocation.so",
+            "state": "matched"
+          },
+          {
+            "capturedBuildId": "d320029ad1a23be2f4bce117fd321cbd23a2014b",
+            "currentBuildId": "d320029ad1a23be2f4bce117fd321cbd23a2014b",
+            "debugFiles": [],
+            "module": "/usr/lib/libc.so.6",
+            "state": "matched"
+          },
+          {
+            "capturedBuildId": "5b8d3de442de987b24d0e3679533068f2ae62497",
+            "currentBuildId": "5b8d3de442de987b24d0e3679533068f2ae62497",
+            "debugFiles": [],
+            "module": "/usr/lib/libstdc++.so.6.0.36",
+            "state": "matched"
+          }
+        ],
+        "clockDomain": "CLOCK_MONOTONIC",
+        "clockMapping": null,
+        "collectorExit": null,
+        "collectorIdentity": {
+          "birth": 4322145,
+          "pid": 461486
+        },
+        "collectorSignal": 2,
+        "coverage": {
+          "diagnostics": [],
+          "emptyChains": 0,
+          "lossScanComplete": true,
+          "lostCount": 0,
+          "lostRecords": 0,
+          "lostSampleCount": 0,
+          "lostSampleRecords": 0,
+          "mismatchedChains": 0,
+          "omittedSamples": 0,
+          "parsedSamples": 396,
+          "retainedSamples": 396,
+          "truncatedStacks": 0,
+          "unknownRecords": 0,
+          "unparsedLossRecords": 0
+        },
+        "createdMs": 1792801866998,
+        "decodeAndParseMs": 52,
+        "decodeRevision": 1,
+        "estimatedRawBytes": 5084046,
+        "event": "cpu-clock:u",
+        "generation": 1,
+        "host": {
+          "birth": 4322142,
+          "pid": 461481
+        },
+        "id": "capture-1792801866998-461481-1",
+        "jitMap": null,
+        "label": "perf \u00b7 PID 461414",
+        "lossScanMs": 0,
+        "moduleIdentityMs": 226,
+        "omittedStderrBytes": 0,
+        "omittedThreadObservations": 0,
+        "options": {
+          "durationSeconds": 2,
+          "frequency": 99,
+          "unwind": {
+            "kind": "dwarf",
+            "stackBytes": 8192
+          }
+        },
+        "owner": "probe",
+        "parserCpuMs": 3,
+        "perfVersion": "perf version 7.2.11-1",
+        "pinned": false,
+        "profileId": "probe-profile",
+        "rawBytes": 3379564,
+        "rawLimit": 536870912,
+        "rawSha256": "6de56d04ca7783bd229f7b284d5e36cb2fcb680815504c2dd6db4bdd13e26380",
+        "reasons": [
+          "Timed duration completed"
+        ],
+        "recordArgv": [
+          "record",
+          "--no-buildid-cache",
+          "--clockid",
+          "mono",
+          "--timestamp",
+          "--per-thread",
+          "--no-inherit",
+          "--user-callchains",
+          "-e",
+          "cpu-clock:u",
+          "-F",
+          "99",
+          "--call-graph",
+          "dwarf,8192",
+          "-t",
+          "461414,461416,461417",
+          "-o",
+          "/tmp/craidd-gr003-production-20261024-final/sibling/cache/77b62759792647f6e4439721030e80f403dc1c5c040eda54ea005f4e71e62498/capture-1792801866998-461481-1/perf.data"
+        ],
+        "solution": "/tmp/craidd-gr003-production-20261024-final/sibling/fixture.cln",
+        "sourceKind": "nativeStackSamples",
+        "state": "complete",
+        "stderr": "[ perf record: Woken up 13 times to write data ]\n[ perf record: Captured and wrote 3.188 MB /tmp/craidd-gr003-production-20261024-final/sibling/cache/77b62759792647f6e4439721030e80f403dc1c5c040eda54ea005f4e71e62498/capture-1792801866998-461481-1/perf.data ]\n",
+        "summary": {
+          "attributionBasis": "Self: all retained sampled leaves. Inclusive: recovered chains only; completeness is not proven.",
+          "coverage": {
+            "diagnostics": [],
+            "emptyChains": 0,
+            "lossScanComplete": true,
+            "lostCount": 0,
+            "lostRecords": 0,
+            "lostSampleCount": 0,
+            "lostSampleRecords": 0,
+            "mismatchedChains": 0,
+            "omittedSamples": 0,
+            "parsedSamples": 396,
+            "retainedSamples": 396,
+            "truncatedStacks": 0,
+            "unknownRecords": 0,
+            "unparsedLossRecords": 0
+          },
+          "firstMonotonicNs": 43221468318514,
+          "frameCount": 6,
+          "lastMonotonicNs": 43223458329769,
+          "lossAccounting": "LOST and LOST_SAMPLES are separate reports and may overlap; never summed",
+          "retention": {
+            "frames": 100000,
+            "samples": 500000,
+            "stackReferences": 8000000
+          },
+          "threads": {
+            "461416": "busy-worker",
+            "461417": "busy-worker"
+          },
+          "units": "sampled cpu-clock event period (ns); not exact function time",
+          "unwindCoverage": {
+            "basis": "Available means perf supplied a chain, not proof of complete unwinding; truncated chains include recovered callers only.",
+            "byLeafModule": {
+              "/tmp/craidd-gr003-production-20261024-final/build/liblocation.so": {
+                "chainSamples": 396,
+                "chainWeight": 3999999960,
+                "empty": 0,
+                "mismatch": 0,
+                "samples": 396,
+                "truncated": 0,
+                "weight": 3999999960
+              }
+            },
+            "byThread": {
+              "461416": {
+                "chainSamples": 198,
+                "chainWeight": 1999999980,
+                "empty": 0,
+                "mismatch": 0,
+                "samples": 198,
+                "truncated": 0,
+                "weight": 1999999980
+              },
+              "461417": {
+                "chainSamples": 198,
+                "chainWeight": 1999999980,
+                "empty": 0,
+                "mismatch": 0,
+                "samples": 198,
+                "truncated": 0,
+                "weight": 1999999980
+              }
+            },
+            "total": {
+              "chainSamples": 396,
+              "chainWeight": 3999999960,
+              "empty": 0,
+              "mismatch": 0,
+              "samples": 396,
+              "truncated": 0,
+              "weight": 3999999960
+            }
+          }
+        },
+        "symbolSearch": {
+          "index": {
+            "diagnostics": [],
+            "elapsedMs": 25,
+            "elfFiles": 1,
+            "entries": 1,
+            "incomplete": false
+          },
+          "locations": [
+            "/tmp/craidd-gr003-production-20261024-final/sibling-symbols"
+          ],
+          "privateCache": "/tmp/craidd-gr003-production-20261024-final/sibling/cache/77b62759792647f6e4439721030e80f403dc1c5c040eda54ea005f4e71e62498/capture-1792801866998-461481-1/symbol-cache",
+          "sealed": true,
+          "served": [
+            {
+              "buildId": "b844add52a4d587c4b072aad274295c6c0ad66a1",
+              "cacheDebug": "/tmp/craidd-gr003-production-20261024-final/sibling/cache/77b62759792647f6e4439721030e80f403dc1c5c040eda54ea005f4e71e62498/capture-1792801866998-461481-1/symbol-cache/tmp/craidd-gr003-production-20261024-final/build/liblocation.so/b844add52a4d587c4b072aad274295c6c0ad66a1/debug",
+              "cacheElf": "/tmp/craidd-gr003-production-20261024-final/sibling/cache/77b62759792647f6e4439721030e80f403dc1c5c040eda54ea005f4e71e62498/capture-1792801866998-461481-1/symbol-cache/tmp/craidd-gr003-production-20261024-final/build/liblocation.so/b844add52a4d587c4b072aad274295c6c0ad66a1/elf",
+              "debugFile": {
+                "canonical": "/tmp/craidd-gr003-production-20261024-final/sibling-symbols/liblocation.so.debug",
+                "device": 52,
+                "inode": 243976,
+                "path": "/tmp/craidd-gr003-production-20261024-final/sibling-symbols/liblocation.so.debug",
+                "sha256": "643d13ae9f43cdefdb160f263fca5f06f2bab30f2b51cc50d8bb06fd0f99532e",
+                "size": 10368
+              },
+              "module": "/tmp/craidd-gr003-production-20261024-final/build/liblocation.so",
+              "moduleFile": {
+                "canonical": "/tmp/craidd-gr003-production-20261024-final/build/liblocation.so",
+                "device": 52,
+                "inode": 243975,
+                "path": "/tmp/craidd-gr003-production-20261024-final/build/liblocation.so",
+                "sha256": "8ddf6ecab9d6d5ef29713984abc8c803438c348260b3210f5acf4bcb7a56b109",
+                "size": 14128
+              },
+              "state": "served"
+            }
+          ],
+          "withheldModules": {}
+        },
+        "target": {
+          "birth": 4321898,
+          "pid": 461414
+        },
+        "threadPollMs": 100,
+        "threadsAtStart": [
+          {
+            "birth": 4321898,
+            "name": "fixture",
+            "tid": 461414
+          },
+          {
+            "birth": 4321898,
+            "name": "busy-worker",
+            "tid": 461416
+          },
+          {
+            "birth": 4321898,
+            "name": "busy-worker",
+            "tid": 461417
+          }
+        ],
+        "threadsGained": [],
+        "version": 1
+      },
+      "hotEntries": [
+        {
+          "frame": {
+            "address": "7f9c0ff5e132",
+            "module": "/tmp/craidd-gr003-production-20261024-final/build/liblocation.so",
+            "resolved": true,
+            "source": {
+              "line": 6,
+              "path": "/home/skira24/.codex/worktrees/9b33/Craidd-Studio/workspaces/profiling-symbol-locations/hot.cpp"
+            },
+            "symbol": "hidden_symbol_location_hot(unsigned long)",
+            "symbolOrigin": "elfBuildId"
+          },
+          "frameId": 0,
+          "inclusiveWeight": 3999999960,
+          "sampleCount": 396,
+          "sampledEventSharePct": 100.0,
+          "selfEventSharePct": 100.0,
+          "selfWeight": 3999999960
+        }
+      ],
+      "targetSurvived": true,
+      "served": {
+        "buildId": "b844add52a4d587c4b072aad274295c6c0ad66a1",
+        "cacheDebug": "/tmp/craidd-gr003-production-20261024-final/sibling/cache/77b62759792647f6e4439721030e80f403dc1c5c040eda54ea005f4e71e62498/capture-1792801866998-461481-1/symbol-cache/tmp/craidd-gr003-production-20261024-final/build/liblocation.so/b844add52a4d587c4b072aad274295c6c0ad66a1/debug",
+        "cacheElf": "/tmp/craidd-gr003-production-20261024-final/sibling/cache/77b62759792647f6e4439721030e80f403dc1c5c040eda54ea005f4e71e62498/capture-1792801866998-461481-1/symbol-cache/tmp/craidd-gr003-production-20261024-final/build/liblocation.so/b844add52a4d587c4b072aad274295c6c0ad66a1/elf",
+        "debugFile": {
+          "canonical": "/tmp/craidd-gr003-production-20261024-final/sibling-symbols/liblocation.so.debug",
+          "device": 52,
+          "inode": 243976,
+          "path": "/tmp/craidd-gr003-production-20261024-final/sibling-symbols/liblocation.so.debug",
+          "sha256": "643d13ae9f43cdefdb160f263fca5f06f2bab30f2b51cc50d8bb06fd0f99532e",
+          "size": 10368
+        },
+        "module": "/tmp/craidd-gr003-production-20261024-final/build/liblocation.so",
+        "moduleFile": {
+          "canonical": "/tmp/craidd-gr003-production-20261024-final/build/liblocation.so",
+          "device": 52,
+          "inode": 243975,
+          "path": "/tmp/craidd-gr003-production-20261024-final/build/liblocation.so",
+          "sha256": "8ddf6ecab9d6d5ef29713984abc8c803438c348260b3210f5acf4bcb7a56b109",
+          "size": 14128
+        },
+        "state": "served"
+      },
+      "reopenedRevision": 2,
+      "missingReopen": {
+        "capture": {
+          "attributionValid": true,
+          "buildIds": [
+            {
+              "capturedBuildId": "2e5074eab755e2fb5151fa184da4a33fadd67e70",
+              "currentBuildId": "2e5074eab755e2fb5151fa184da4a33fadd67e70",
+              "debugFiles": [],
+              "module": "/tmp/craidd-gr003-production-20261024-final/build/fixture",
+              "state": "matched"
+            },
+            {
+              "capturedBuildId": "b844add52a4d587c4b072aad274295c6c0ad66a1",
+              "currentBuildId": "b844add52a4d587c4b072aad274295c6c0ad66a1",
+              "debugFiles": [],
+              "module": "/tmp/craidd-gr003-production-20261024-final/build/liblocation.so",
+              "state": "matched"
+            },
+            {
+              "capturedBuildId": "d320029ad1a23be2f4bce117fd321cbd23a2014b",
+              "currentBuildId": "d320029ad1a23be2f4bce117fd321cbd23a2014b",
+              "debugFiles": [],
+              "module": "/usr/lib/libc.so.6",
+              "state": "matched"
+            },
+            {
+              "capturedBuildId": "5b8d3de442de987b24d0e3679533068f2ae62497",
+              "currentBuildId": "5b8d3de442de987b24d0e3679533068f2ae62497",
+              "debugFiles": [],
+              "module": "/usr/lib/libstdc++.so.6.0.36",
+              "state": "matched"
+            }
+          ],
+          "clockDomain": "CLOCK_MONOTONIC",
+          "clockMapping": null,
+          "collectorExit": null,
+          "collectorIdentity": {
+            "birth": 4322145,
+            "pid": 461486
+          },
+          "collectorSignal": 2,
+          "coverage": {
+            "diagnostics": [
+              "/tmp/craidd-gr003-production-20261024-final/build/liblocation.so: withheld: /tmp/craidd-gr003-production-20261024-final/sibling-symbols/liblocation.so.debug: No such file or directory (os error 2)"
+            ],
+            "emptyChains": 0,
+            "lossScanComplete": true,
+            "lostCount": 0,
+            "lostRecords": 0,
+            "lostSampleCount": 0,
+            "lostSampleRecords": 0,
+            "mismatchedChains": 0,
+            "omittedSamples": 0,
+            "parsedSamples": 396,
+            "retainedSamples": 396,
+            "truncatedStacks": 0,
+            "unknownRecords": 1,
+            "unparsedLossRecords": 0
+          },
+          "createdMs": 1792801866998,
+          "decodeAndParseMs": 52,
+          "decodeRevision": 3,
+          "estimatedRawBytes": 5084046,
+          "event": "cpu-clock:u",
+          "generation": 1,
+          "host": {
+            "birth": 4322142,
+            "pid": 461481
+          },
+          "id": "capture-1792801866998-461481-1",
+          "jitMap": null,
+          "label": "perf \u00b7 PID 461414",
+          "lossScanMs": 0,
+          "moduleIdentityMs": 226,
+          "omittedStderrBytes": 0,
+          "omittedThreadObservations": 0,
+          "options": {
+            "durationSeconds": 2,
+            "frequency": 99,
+            "unwind": {
+              "kind": "dwarf",
+              "stackBytes": 8192
+            }
+          },
+          "owner": "probe",
+          "parserCpuMs": 1,
+          "perfVersion": "perf version 7.2.11-1",
+          "pinned": false,
+          "profileId": "probe-profile",
+          "rawBytes": 3379564,
+          "rawLimit": 536870912,
+          "rawSha256": "6de56d04ca7783bd229f7b284d5e36cb2fcb680815504c2dd6db4bdd13e26380",
+          "reasons": [
+            "Timed duration completed"
+          ],
+          "recordArgv": [
+            "record",
+            "--no-buildid-cache",
+            "--clockid",
+            "mono",
+            "--timestamp",
+            "--per-thread",
+            "--no-inherit",
+            "--user-callchains",
+            "-e",
+            "cpu-clock:u",
+            "-F",
+            "99",
+            "--call-graph",
+            "dwarf,8192",
+            "-t",
+            "461414,461416,461417",
+            "-o",
+            "/tmp/craidd-gr003-production-20261024-final/sibling/cache/77b62759792647f6e4439721030e80f403dc1c5c040eda54ea005f4e71e62498/capture-1792801866998-461481-1/perf.data"
+          ],
+          "solution": "/tmp/craidd-gr003-production-20261024-final/sibling/fixture.cln",
+          "sourceKind": "nativeStackSamples",
+          "state": "partial",
+          "stderr": "[ perf record: Woken up 13 times to write data ]\n[ perf record: Captured and wrote 3.188 MB /tmp/craidd-gr003-production-20261024-final/sibling/cache/77b62759792647f6e4439721030e80f403dc1c5c040eda54ea005f4e71e62498/capture-1792801866998-461481-1/perf.data ]\n",
+          "summary": {
+            "attributionBasis": "Self: all retained sampled leaves. Inclusive: recovered chains only; completeness is not proven.",
+            "coverage": {
+              "diagnostics": [
+                "/tmp/craidd-gr003-production-20261024-final/build/liblocation.so: withheld: /tmp/craidd-gr003-production-20261024-final/sibling-symbols/liblocation.so.debug: No such file or directory (os error 2)"
+              ],
+              "emptyChains": 0,
+              "lossScanComplete": true,
+              "lostCount": 0,
+              "lostRecords": 0,
+              "lostSampleCount": 0,
+              "lostSampleRecords": 0,
+              "mismatchedChains": 0,
+              "omittedSamples": 0,
+              "parsedSamples": 396,
+              "retainedSamples": 396,
+              "truncatedStacks": 0,
+              "unknownRecords": 1,
+              "unparsedLossRecords": 0
+            },
+            "firstMonotonicNs": 43221468318514,
+            "frameCount": 10,
+            "lastMonotonicNs": 43223458329769,
+            "lossAccounting": "LOST and LOST_SAMPLES are separate reports and may overlap; never summed",
+            "retention": {
+              "frames": 100000,
+              "samples": 500000,
+              "stackReferences": 8000000
+            },
+            "threads": {
+              "461416": "busy-worker",
+              "461417": "busy-worker"
+            },
+            "units": "sampled cpu-clock event period (ns); not exact function time",
+            "unwindCoverage": {
+              "basis": "Available means perf supplied a chain, not proof of complete unwinding; truncated chains include recovered callers only.",
+              "byLeafModule": {
+                "/tmp/craidd-gr003-production-20261024-final/build/liblocation.so": {
+                  "chainSamples": 396,
+                  "chainWeight": 3999999960,
+                  "empty": 0,
+                  "mismatch": 0,
+                  "samples": 396,
+                  "truncated": 0,
+                  "weight": 3999999960
+                }
+              },
+              "byThread": {
+                "461416": {
+                  "chainSamples": 198,
+                  "chainWeight": 1999999980,
+                  "empty": 0,
+                  "mismatch": 0,
+                  "samples": 198,
+                  "truncated": 0,
+                  "weight": 1999999980
+                },
+                "461417": {
+                  "chainSamples": 198,
+                  "chainWeight": 1999999980,
+                  "empty": 0,
+                  "mismatch": 0,
+                  "samples": 198,
+                  "truncated": 0,
+                  "weight": 1999999980
+                }
+              },
+              "total": {
+                "chainSamples": 396,
+                "chainWeight": 3999999960,
+                "empty": 0,
+                "mismatch": 0,
+                "samples": 396,
+                "truncated": 0,
+                "weight": 3999999960
+              }
+            }
+          },
+          "symbolSearch": {
+            "index": {
+              "diagnostics": [],
+              "elapsedMs": 25,
+              "elfFiles": 1,
+              "entries": 1,
+              "incomplete": false
+            },
+            "locations": [
+              "/tmp/craidd-gr003-production-20261024-final/sibling-symbols"
+            ],
+            "privateCache": "/tmp/craidd-gr003-production-20261024-final/sibling/cache/77b62759792647f6e4439721030e80f403dc1c5c040eda54ea005f4e71e62498/capture-1792801866998-461481-1/symbol-cache",
+            "sealed": true,
+            "served": [
+              {
+                "buildId": "b844add52a4d587c4b072aad274295c6c0ad66a1",
+                "cacheDebug": "/tmp/craidd-gr003-production-20261024-final/sibling/cache/77b62759792647f6e4439721030e80f403dc1c5c040eda54ea005f4e71e62498/capture-1792801866998-461481-1/symbol-cache/tmp/craidd-gr003-production-20261024-final/build/liblocation.so/b844add52a4d587c4b072aad274295c6c0ad66a1/debug",
+                "cacheElf": "/tmp/craidd-gr003-production-20261024-final/sibling/cache/77b62759792647f6e4439721030e80f403dc1c5c040eda54ea005f4e71e62498/capture-1792801866998-461481-1/symbol-cache/tmp/craidd-gr003-production-20261024-final/build/liblocation.so/b844add52a4d587c4b072aad274295c6c0ad66a1/elf",
+                "debugFile": {
+                  "canonical": "/tmp/craidd-gr003-production-20261024-final/sibling-symbols/liblocation.so.debug",
+                  "device": 52,
+                  "inode": 243976,
+                  "path": "/tmp/craidd-gr003-production-20261024-final/sibling-symbols/liblocation.so.debug",
+                  "sha256": "643d13ae9f43cdefdb160f263fca5f06f2bab30f2b51cc50d8bb06fd0f99532e",
+                  "size": 10368
+                },
+                "module": "/tmp/craidd-gr003-production-20261024-final/build/liblocation.so",
+                "moduleFile": {
+                  "canonical": "/tmp/craidd-gr003-production-20261024-final/build/liblocation.so",
+                  "device": 52,
+                  "inode": 243975,
+                  "path": "/tmp/craidd-gr003-production-20261024-final/build/liblocation.so",
+                  "sha256": "8ddf6ecab9d6d5ef29713984abc8c803438c348260b3210f5acf4bcb7a56b109",
+                  "size": 14128
+                },
+                "state": "withheld: /tmp/craidd-gr003-production-20261024-final/sibling-symbols/liblocation.so.debug: No such file or directory (os error 2)"
+              }
+            ],
+            "withheldModules": {}
+          },
+          "target": {
+            "birth": 4321898,
+            "pid": 461414
+          },
+          "threadPollMs": 100,
+          "threadsAtStart": [
+            {
+              "birth": 4321898,
+              "name": "fixture",
+              "tid": 461414
+            },
+            {
+              "birth": 4321898,
+              "name": "busy-worker",
+              "tid": 461416
+            },
+            {
+              "birth": 4321898,
+              "name": "busy-worker",
+              "tid": 461417
+            }
+          ],
+          "threadsGained": [],
+          "version": 1
+        },
+        "tree": {
+          "attributionBasis": "Self includes every retained leaf. Inclusive includes recovered chains only; both shares use all selected event weight.",
+          "chainSamples": 396,
+          "chainWeight": 3999999960,
+          "childCount": 5,
+          "children": [
+            {
+              "frame": {
+                "address": "7f9c0ff5e12b",
+                "module": "/tmp/craidd-gr003-production-20261024-final/build/liblocation.so",
+                "resolved": false,
+                "source": null,
+                "symbol": "/tmp/craidd-gr003-production-20261024-final/build/liblocation.so+address 0x7f9c0ff5e12b",
+                "symbolOrigin": "unresolved"
+              },
+              "frameId": 1,
+              "inclusiveWeight": 2323232300,
+              "sampleCount": 230,
+              "sampledEventSharePct": 58.08080808080808,
+              "selfEventSharePct": 58.08080808080808,
+              "selfWeight": 2323232300
+            },
+            {
+              "frame": {
+                "address": "7f9c0ff5e132",
+                "module": "/tmp/craidd-gr003-production-20261024-final/build/liblocation.so",
+                "resolved": false,
+                "source": null,
+                "symbol": "/tmp/craidd-gr003-production-20261024-final/build/liblocation.so+address 0x7f9c0ff5e132",
+                "symbolOrigin": "unresolved"
+              },
+              "frameId": 0,
+              "inclusiveWeight": 1070707060,
+              "sampleCount": 106,
+              "sampledEventSharePct": 26.767676767676768,
+              "selfEventSharePct": 26.767676767676768,
+              "selfWeight": 1070707060
+            },
+            {
+              "frame": {
+                "address": "7f9c0ff5e135",
+                "module": "/tmp/craidd-gr003-production-20261024-final/build/liblocation.so",
+                "resolved": false,
+                "source": null,
+                "symbol": "/tmp/craidd-gr003-production-20261024-final/build/liblocation.so+address 0x7f9c0ff5e135",
+                "symbolOrigin": "unresolved"
+              },
+              "frameId": 3,
+              "inclusiveWeight": 333333330,
+              "sampleCount": 33,
+              "sampledEventSharePct": 8.333333333333334,
+              "selfEventSharePct": 8.333333333333334,
+              "selfWeight": 333333330
+            },
+            {
+              "frame": {
+                "address": "7f9c0ff5e12e",
+                "module": "/tmp/craidd-gr003-production-20261024-final/build/liblocation.so",
+                "resolved": false,
+                "source": null,
+                "symbol": "/tmp/craidd-gr003-production-20261024-final/build/liblocation.so+address 0x7f9c0ff5e12e",
+                "symbolOrigin": "unresolved"
+              },
+              "frameId": 2,
+              "inclusiveWeight": 212121210,
+              "sampleCount": 21,
+              "sampledEventSharePct": 5.303030303030303,
+              "selfEventSharePct": 5.303030303030303,
+              "selfWeight": 212121210
+            },
+            {
+              "frame": {
+                "address": "7f9c0ff5e127",
+                "module": "/tmp/craidd-gr003-production-20261024-final/build/liblocation.so",
+                "resolved": false,
+                "source": null,
+                "symbol": "/tmp/craidd-gr003-production-20261024-final/build/liblocation.so+address 0x7f9c0ff5e127",
+                "symbolOrigin": "unresolved"
+              },
+              "frameId": 4,
+              "inclusiveWeight": 60606060,
+              "sampleCount": 6,
+              "sampledEventSharePct": 1.5151515151515151,
+              "selfEventSharePct": 1.5151515151515151,
+              "selfWeight": 60606060
+            }
+          ],
+          "clock": "elapsed ns from first retained monotonic sample; no session clock mapping",
+          "moduleFilterBasis": "samples containing this exact module; complete calling context retained",
+          "omittedChildren": 0,
+          "pathWeight": 3999999960,
+          "selectedSamples": 396,
+          "totalWeight": 3999999960
+        }
+      },
+      "changedBytesReopen": {
+        "attributionValid": true,
+        "buildIds": [
+          {
+            "capturedBuildId": "2e5074eab755e2fb5151fa184da4a33fadd67e70",
+            "currentBuildId": "2e5074eab755e2fb5151fa184da4a33fadd67e70",
+            "debugFiles": [],
+            "module": "/tmp/craidd-gr003-production-20261024-final/build/fixture",
+            "state": "matched"
+          },
+          {
+            "capturedBuildId": "b844add52a4d587c4b072aad274295c6c0ad66a1",
+            "currentBuildId": "b844add52a4d587c4b072aad274295c6c0ad66a1",
+            "debugFiles": [],
+            "module": "/tmp/craidd-gr003-production-20261024-final/build/liblocation.so",
+            "state": "matched"
+          },
+          {
+            "capturedBuildId": "d320029ad1a23be2f4bce117fd321cbd23a2014b",
+            "currentBuildId": "d320029ad1a23be2f4bce117fd321cbd23a2014b",
+            "debugFiles": [],
+            "module": "/usr/lib/libc.so.6",
+            "state": "matched"
+          },
+          {
+            "capturedBuildId": "5b8d3de442de987b24d0e3679533068f2ae62497",
+            "currentBuildId": "5b8d3de442de987b24d0e3679533068f2ae62497",
+            "debugFiles": [],
+            "module": "/usr/lib/libstdc++.so.6.0.36",
+            "state": "matched"
+          }
+        ],
+        "clockDomain": "CLOCK_MONOTONIC",
+        "clockMapping": null,
+        "collectorExit": null,
+        "collectorIdentity": {
+          "birth": 4322145,
+          "pid": 461486
+        },
+        "collectorSignal": 2,
+        "coverage": {
+          "diagnostics": [
+            "/tmp/craidd-gr003-production-20261024-final/build/liblocation.so: withheld: Served symbol bytes or identity changed: /tmp/craidd-gr003-production-20261024-final/sibling-symbols/liblocation.so.debug"
+          ],
+          "emptyChains": 0,
+          "lossScanComplete": true,
+          "lostCount": 0,
+          "lostRecords": 0,
+          "lostSampleCount": 0,
+          "lostSampleRecords": 0,
+          "mismatchedChains": 0,
+          "omittedSamples": 0,
+          "parsedSamples": 396,
+          "retainedSamples": 396,
+          "truncatedStacks": 0,
+          "unknownRecords": 1,
+          "unparsedLossRecords": 0
+        },
+        "createdMs": 1792801866998,
+        "decodeAndParseMs": 52,
+        "decodeRevision": 4,
+        "estimatedRawBytes": 5084046,
+        "event": "cpu-clock:u",
+        "generation": 1,
+        "host": {
+          "birth": 4322142,
+          "pid": 461481
+        },
+        "id": "capture-1792801866998-461481-1",
+        "jitMap": null,
+        "label": "perf \u00b7 PID 461414",
+        "lossScanMs": 0,
+        "moduleIdentityMs": 227,
+        "omittedStderrBytes": 0,
+        "omittedThreadObservations": 0,
+        "options": {
+          "durationSeconds": 2,
+          "frequency": 99,
+          "unwind": {
+            "kind": "dwarf",
+            "stackBytes": 8192
+          }
+        },
+        "owner": "probe",
+        "parserCpuMs": 3,
+        "perfVersion": "perf version 7.2.11-1",
+        "pinned": false,
+        "profileId": "probe-profile",
+        "rawBytes": 3379564,
+        "rawLimit": 536870912,
+        "rawSha256": "6de56d04ca7783bd229f7b284d5e36cb2fcb680815504c2dd6db4bdd13e26380",
+        "reasons": [
+          "Timed duration completed"
+        ],
+        "recordArgv": [
+          "record",
+          "--no-buildid-cache",
+          "--clockid",
+          "mono",
+          "--timestamp",
+          "--per-thread",
+          "--no-inherit",
+          "--user-callchains",
+          "-e",
+          "cpu-clock:u",
+          "-F",
+          "99",
+          "--call-graph",
+          "dwarf,8192",
+          "-t",
+          "461414,461416,461417",
+          "-o",
+          "/tmp/craidd-gr003-production-20261024-final/sibling/cache/77b62759792647f6e4439721030e80f403dc1c5c040eda54ea005f4e71e62498/capture-1792801866998-461481-1/perf.data"
+        ],
+        "solution": "/tmp/craidd-gr003-production-20261024-final/sibling/fixture.cln",
+        "sourceKind": "nativeStackSamples",
+        "state": "partial",
+        "stderr": "[ perf record: Woken up 13 times to write data ]\n[ perf record: Captured and wrote 3.188 MB /tmp/craidd-gr003-production-20261024-final/sibling/cache/77b62759792647f6e4439721030e80f403dc1c5c040eda54ea005f4e71e62498/capture-1792801866998-461481-1/perf.data ]\n",
+        "summary": {
+          "attributionBasis": "Self: all retained sampled leaves. Inclusive: recovered chains only; completeness is not proven.",
+          "coverage": {
+            "diagnostics": [
+              "/tmp/craidd-gr003-production-20261024-final/build/liblocation.so: withheld: Served symbol bytes or identity changed: /tmp/craidd-gr003-production-20261024-final/sibling-symbols/liblocation.so.debug"
+            ],
+            "emptyChains": 0,
+            "lossScanComplete": true,
+            "lostCount": 0,
+            "lostRecords": 0,
+            "lostSampleCount": 0,
+            "lostSampleRecords": 0,
+            "mismatchedChains": 0,
+            "omittedSamples": 0,
+            "parsedSamples": 396,
+            "retainedSamples": 396,
+            "truncatedStacks": 0,
+            "unknownRecords": 1,
+            "unparsedLossRecords": 0
+          },
+          "firstMonotonicNs": 43221468318514,
+          "frameCount": 10,
+          "lastMonotonicNs": 43223458329769,
+          "lossAccounting": "LOST and LOST_SAMPLES are separate reports and may overlap; never summed",
+          "retention": {
+            "frames": 100000,
+            "samples": 500000,
+            "stackReferences": 8000000
+          },
+          "threads": {
+            "461416": "busy-worker",
+            "461417": "busy-worker"
+          },
+          "units": "sampled cpu-clock event period (ns); not exact function time",
+          "unwindCoverage": {
+            "basis": "Available means perf supplied a chain, not proof of complete unwinding; truncated chains include recovered callers only.",
+            "byLeafModule": {
+              "/tmp/craidd-gr003-production-20261024-final/build/liblocation.so": {
+                "chainSamples": 396,
+                "chainWeight": 3999999960,
+                "empty": 0,
+                "mismatch": 0,
+                "samples": 396,
+                "truncated": 0,
+                "weight": 3999999960
+              }
+            },
+            "byThread": {
+              "461416": {
+                "chainSamples": 198,
+                "chainWeight": 1999999980,
+                "empty": 0,
+                "mismatch": 0,
+                "samples": 198,
+                "truncated": 0,
+                "weight": 1999999980
+              },
+              "461417": {
+                "chainSamples": 198,
+                "chainWeight": 1999999980,
+                "empty": 0,
+                "mismatch": 0,
+                "samples": 198,
+                "truncated": 0,
+                "weight": 1999999980
+              }
+            },
+            "total": {
+              "chainSamples": 396,
+              "chainWeight": 3999999960,
+              "empty": 0,
+              "mismatch": 0,
+              "samples": 396,
+              "truncated": 0,
+              "weight": 3999999960
+            }
+          }
+        },
+        "symbolSearch": {
+          "index": {
+            "diagnostics": [],
+            "elapsedMs": 25,
+            "elfFiles": 1,
+            "entries": 1,
+            "incomplete": false
+          },
+          "locations": [
+            "/tmp/craidd-gr003-production-20261024-final/sibling-symbols"
+          ],
+          "privateCache": "/tmp/craidd-gr003-production-20261024-final/sibling/cache/77b62759792647f6e4439721030e80f403dc1c5c040eda54ea005f4e71e62498/capture-1792801866998-461481-1/symbol-cache",
+          "sealed": true,
+          "served": [
+            {
+              "buildId": "b844add52a4d587c4b072aad274295c6c0ad66a1",
+              "cacheDebug": "/tmp/craidd-gr003-production-20261024-final/sibling/cache/77b62759792647f6e4439721030e80f403dc1c5c040eda54ea005f4e71e62498/capture-1792801866998-461481-1/symbol-cache/tmp/craidd-gr003-production-20261024-final/build/liblocation.so/b844add52a4d587c4b072aad274295c6c0ad66a1/debug",
+              "cacheElf": "/tmp/craidd-gr003-production-20261024-final/sibling/cache/77b62759792647f6e4439721030e80f403dc1c5c040eda54ea005f4e71e62498/capture-1792801866998-461481-1/symbol-cache/tmp/craidd-gr003-production-20261024-final/build/liblocation.so/b844add52a4d587c4b072aad274295c6c0ad66a1/elf",
+              "debugFile": {
+                "canonical": "/tmp/craidd-gr003-production-20261024-final/sibling-symbols/liblocation.so.debug",
+                "device": 52,
+                "inode": 243976,
+                "path": "/tmp/craidd-gr003-production-20261024-final/sibling-symbols/liblocation.so.debug",
+                "sha256": "643d13ae9f43cdefdb160f263fca5f06f2bab30f2b51cc50d8bb06fd0f99532e",
+                "size": 10368
+              },
+              "module": "/tmp/craidd-gr003-production-20261024-final/build/liblocation.so",
+              "moduleFile": {
+                "canonical": "/tmp/craidd-gr003-production-20261024-final/build/liblocation.so",
+                "device": 52,
+                "inode": 243975,
+                "path": "/tmp/craidd-gr003-production-20261024-final/build/liblocation.so",
+                "sha256": "8ddf6ecab9d6d5ef29713984abc8c803438c348260b3210f5acf4bcb7a56b109",
+                "size": 14128
+              },
+              "state": "withheld: Served symbol bytes or identity changed: /tmp/craidd-gr003-production-20261024-final/sibling-symbols/liblocation.so.debug"
+            }
+          ],
+          "withheldModules": {}
+        },
+        "target": {
+          "birth": 4321898,
+          "pid": 461414
+        },
+        "threadPollMs": 100,
+        "threadsAtStart": [
+          {
+            "birth": 4321898,
+            "name": "fixture",
+            "tid": 461414
+          },
+          {
+            "birth": 4321898,
+            "name": "busy-worker",
+            "tid": 461416
+          },
+          {
+            "birth": 4321898,
+            "name": "busy-worker",
+            "tid": 461417
+          }
+        ],
+        "threadsGained": [],
+        "version": 1
+      }
+    },
+    {
+      "case": "renamed",
+      "capture": {
+        "attributionValid": true,
+        "buildIds": [
+          {
+            "capturedBuildId": "2e5074eab755e2fb5151fa184da4a33fadd67e70",
+            "currentBuildId": "2e5074eab755e2fb5151fa184da4a33fadd67e70",
+            "debugFiles": [],
+            "module": "/tmp/craidd-gr003-production-20261024-final/build/fixture",
+            "state": "matched"
+          },
+          {
+            "capturedBuildId": "b844add52a4d587c4b072aad274295c6c0ad66a1",
+            "currentBuildId": "b844add52a4d587c4b072aad274295c6c0ad66a1",
+            "debugFiles": [],
+            "module": "/tmp/craidd-gr003-production-20261024-final/build/liblocation.so",
+            "state": "matched"
+          },
+          {
+            "capturedBuildId": "d320029ad1a23be2f4bce117fd321cbd23a2014b",
+            "currentBuildId": "d320029ad1a23be2f4bce117fd321cbd23a2014b",
+            "debugFiles": [],
+            "module": "/usr/lib/libc.so.6",
+            "state": "matched"
+          },
+          {
+            "capturedBuildId": "5b8d3de442de987b24d0e3679533068f2ae62497",
+            "currentBuildId": "5b8d3de442de987b24d0e3679533068f2ae62497",
+            "debugFiles": [],
+            "module": "/usr/lib/libstdc++.so.6.0.36",
+            "state": "matched"
+          }
+        ],
+        "clockDomain": "CLOCK_MONOTONIC",
+        "clockMapping": null,
+        "collectorExit": null,
+        "collectorIdentity": {
+          "birth": 4322488,
+          "pid": 461687
+        },
+        "collectorSignal": 2,
+        "coverage": {
+          "diagnostics": [],
+          "emptyChains": 0,
+          "lossScanComplete": true,
+          "lostCount": 0,
+          "lostRecords": 0,
+          "lostSampleCount": 0,
+          "lostSampleRecords": 0,
+          "mismatchedChains": 0,
+          "omittedSamples": 0,
+          "parsedSamples": 394,
+          "retainedSamples": 394,
+          "truncatedStacks": 0,
+          "unknownRecords": 0,
+          "unparsedLossRecords": 0
+        },
+        "createdMs": 1792801870429,
+        "decodeAndParseMs": 52,
+        "decodeRevision": 1,
+        "estimatedRawBytes": 5084046,
+        "event": "cpu-clock:u",
+        "generation": 1,
+        "host": {
+          "birth": 4322485,
+          "pid": 461682
+        },
+        "id": "capture-1792801870429-461682-1",
+        "jitMap": null,
+        "label": "perf \u00b7 PID 461414",
+        "lossScanMs": 0,
+        "moduleIdentityMs": 226,
+        "omittedStderrBytes": 0,
+        "omittedThreadObservations": 0,
+        "options": {
+          "durationSeconds": 2,
+          "frequency": 99,
+          "unwind": {
+            "kind": "dwarf",
+            "stackBytes": 8192
+          }
+        },
+        "owner": "probe",
+        "parserCpuMs": 2,
+        "perfVersion": "perf version 7.2.11-1",
+        "pinned": false,
+        "profileId": "probe-profile",
+        "rawBytes": 3362668,
+        "rawLimit": 536870912,
+        "rawSha256": "72c8f07604e26fbf6d9e7c6e8f1e017e92255e73d885c13b3d5bab1a3bc1d997",
+        "reasons": [
+          "Timed duration completed"
+        ],
+        "recordArgv": [
+          "record",
+          "--no-buildid-cache",
+          "--clockid",
+          "mono",
+          "--timestamp",
+          "--per-thread",
+          "--no-inherit",
+          "--user-callchains",
+          "-e",
+          "cpu-clock:u",
+          "-F",
+          "99",
+          "--call-graph",
+          "dwarf,8192",
+          "-t",
+          "461414,461416,461417",
+          "-o",
+          "/tmp/craidd-gr003-production-20261024-final/renamed/cache/fed5704582d0fcabf3826baaa1d9743b7a7cb852e20d34e08fe00b3090ef508f/capture-1792801870429-461682-1/perf.data"
+        ],
+        "solution": "/tmp/craidd-gr003-production-20261024-final/renamed/fixture.cln",
+        "sourceKind": "nativeStackSamples",
+        "state": "complete",
+        "stderr": "[ perf record: Woken up 11 times to write data ]\n[ perf record: Captured and wrote 3.172 MB /tmp/craidd-gr003-production-20261024-final/renamed/cache/fed5704582d0fcabf3826baaa1d9743b7a7cb852e20d34e08fe00b3090ef508f/capture-1792801870429-461682-1/perf.data ]\n",
+        "summary": {
+          "attributionBasis": "Self: all retained sampled leaves. Inclusive: recovered chains only; completeness is not proven.",
+          "coverage": {
+            "diagnostics": [],
+            "emptyChains": 0,
+            "lossScanComplete": true,
+            "lostCount": 0,
+            "lostRecords": 0,
+            "lostSampleCount": 0,
+            "lostSampleRecords": 0,
+            "mismatchedChains": 0,
+            "omittedSamples": 0,
+            "parsedSamples": 394,
+            "retainedSamples": 394,
+            "truncatedStacks": 0,
+            "unknownRecords": 0,
+            "unparsedLossRecords": 0
+          },
+          "firstMonotonicNs": 43224909895603,
+          "frameCount": 6,
+          "lastMonotonicNs": 43226889725425,
+          "lossAccounting": "LOST and LOST_SAMPLES are separate reports and may overlap; never summed",
+          "retention": {
+            "frames": 100000,
+            "samples": 500000,
+            "stackReferences": 8000000
+          },
+          "threads": {
+            "461416": "busy-worker",
+            "461417": "busy-worker"
+          },
+          "units": "sampled cpu-clock event period (ns); not exact function time",
+          "unwindCoverage": {
+            "basis": "Available means perf supplied a chain, not proof of complete unwinding; truncated chains include recovered callers only.",
+            "byLeafModule": {
+              "/tmp/craidd-gr003-production-20261024-final/build/liblocation.so": {
+                "chainSamples": 394,
+                "chainWeight": 3979797940,
+                "empty": 0,
+                "mismatch": 0,
+                "samples": 394,
+                "truncated": 0,
+                "weight": 3979797940
+              }
+            },
+            "byThread": {
+              "461416": {
+                "chainSamples": 197,
+                "chainWeight": 1989898970,
+                "empty": 0,
+                "mismatch": 0,
+                "samples": 197,
+                "truncated": 0,
+                "weight": 1989898970
+              },
+              "461417": {
+                "chainSamples": 197,
+                "chainWeight": 1989898970,
+                "empty": 0,
+                "mismatch": 0,
+                "samples": 197,
+                "truncated": 0,
+                "weight": 1989898970
+              }
+            },
+            "total": {
+              "chainSamples": 394,
+              "chainWeight": 3979797940,
+              "empty": 0,
+              "mismatch": 0,
+              "samples": 394,
+              "truncated": 0,
+              "weight": 3979797940
+            }
+          }
+        },
+        "symbolSearch": {
+          "index": {
+            "diagnostics": [],
+            "elapsedMs": 25,
+            "elfFiles": 1,
+            "entries": 1,
+            "incomplete": false
+          },
+          "locations": [
+            "/tmp/craidd-gr003-production-20261024-final/elsewhere"
+          ],
+          "privateCache": "/tmp/craidd-gr003-production-20261024-final/renamed/cache/fed5704582d0fcabf3826baaa1d9743b7a7cb852e20d34e08fe00b3090ef508f/capture-1792801870429-461682-1/symbol-cache",
+          "sealed": true,
+          "served": [
+            {
+              "buildId": "b844add52a4d587c4b072aad274295c6c0ad66a1",
+              "cacheDebug": "/tmp/craidd-gr003-production-20261024-final/renamed/cache/fed5704582d0fcabf3826baaa1d9743b7a7cb852e20d34e08fe00b3090ef508f/capture-1792801870429-461682-1/symbol-cache/tmp/craidd-gr003-production-20261024-final/build/liblocation.so/b844add52a4d587c4b072aad274295c6c0ad66a1/debug",
+              "cacheElf": "/tmp/craidd-gr003-production-20261024-final/renamed/cache/fed5704582d0fcabf3826baaa1d9743b7a7cb852e20d34e08fe00b3090ef508f/capture-1792801870429-461682-1/symbol-cache/tmp/craidd-gr003-production-20261024-final/build/liblocation.so/b844add52a4d587c4b072aad274295c6c0ad66a1/elf",
+              "debugFile": {
+                "canonical": "/tmp/craidd-gr003-production-20261024-final/elsewhere/arbitrary-artifact.elf",
+                "device": 52,
+                "inode": 243979,
+                "path": "/tmp/craidd-gr003-production-20261024-final/elsewhere/arbitrary-artifact.elf",
+                "sha256": "643d13ae9f43cdefdb160f263fca5f06f2bab30f2b51cc50d8bb06fd0f99532e",
+                "size": 10368
+              },
+              "module": "/tmp/craidd-gr003-production-20261024-final/build/liblocation.so",
+              "moduleFile": {
+                "canonical": "/tmp/craidd-gr003-production-20261024-final/build/liblocation.so",
+                "device": 52,
+                "inode": 243975,
+                "path": "/tmp/craidd-gr003-production-20261024-final/build/liblocation.so",
+                "sha256": "8ddf6ecab9d6d5ef29713984abc8c803438c348260b3210f5acf4bcb7a56b109",
+                "size": 14128
+              },
+              "state": "served"
+            }
+          ],
+          "withheldModules": {}
+        },
+        "target": {
+          "birth": 4321898,
+          "pid": 461414
+        },
+        "threadPollMs": 100,
+        "threadsAtStart": [
+          {
+            "birth": 4321898,
+            "name": "fixture",
+            "tid": 461414
+          },
+          {
+            "birth": 4321898,
+            "name": "busy-worker",
+            "tid": 461416
+          },
+          {
+            "birth": 4321898,
+            "name": "busy-worker",
+            "tid": 461417
+          }
+        ],
+        "threadsGained": [],
+        "version": 1
+      },
+      "hotEntries": [
+        {
+          "frame": {
+            "address": "7f9c0ff5e12b",
+            "module": "/tmp/craidd-gr003-production-20261024-final/build/liblocation.so",
+            "resolved": true,
+            "source": {
+              "line": 6,
+              "path": "/home/skira24/.codex/worktrees/9b33/Craidd-Studio/workspaces/profiling-symbol-locations/hot.cpp"
+            },
+            "symbol": "hidden_symbol_location_hot(unsigned long)",
+            "symbolOrigin": "elfBuildId"
+          },
+          "frameId": 0,
+          "inclusiveWeight": 3979797940,
+          "sampleCount": 394,
+          "sampledEventSharePct": 100.0,
+          "selfEventSharePct": 100.0,
+          "selfWeight": 3979797940
+        }
+      ],
+      "targetSurvived": true,
+      "served": {
+        "buildId": "b844add52a4d587c4b072aad274295c6c0ad66a1",
+        "cacheDebug": "/tmp/craidd-gr003-production-20261024-final/renamed/cache/fed5704582d0fcabf3826baaa1d9743b7a7cb852e20d34e08fe00b3090ef508f/capture-1792801870429-461682-1/symbol-cache/tmp/craidd-gr003-production-20261024-final/build/liblocation.so/b844add52a4d587c4b072aad274295c6c0ad66a1/debug",
+        "cacheElf": "/tmp/craidd-gr003-production-20261024-final/renamed/cache/fed5704582d0fcabf3826baaa1d9743b7a7cb852e20d34e08fe00b3090ef508f/capture-1792801870429-461682-1/symbol-cache/tmp/craidd-gr003-production-20261024-final/build/liblocation.so/b844add52a4d587c4b072aad274295c6c0ad66a1/elf",
+        "debugFile": {
+          "canonical": "/tmp/craidd-gr003-production-20261024-final/elsewhere/arbitrary-artifact.elf",
+          "device": 52,
+          "inode": 243979,
+          "path": "/tmp/craidd-gr003-production-20261024-final/elsewhere/arbitrary-artifact.elf",
+          "sha256": "643d13ae9f43cdefdb160f263fca5f06f2bab30f2b51cc50d8bb06fd0f99532e",
+          "size": 10368
+        },
+        "module": "/tmp/craidd-gr003-production-20261024-final/build/liblocation.so",
+        "moduleFile": {
+          "canonical": "/tmp/craidd-gr003-production-20261024-final/build/liblocation.so",
+          "device": 52,
+          "inode": 243975,
+          "path": "/tmp/craidd-gr003-production-20261024-final/build/liblocation.so",
+          "sha256": "8ddf6ecab9d6d5ef29713984abc8c803438c348260b3210f5acf4bcb7a56b109",
+          "size": 14128
+        },
+        "state": "served"
+      },
+      "reopenedRevision": 2,
+      "missingReopen": {
+        "capture": {
+          "attributionValid": true,
+          "buildIds": [
+            {
+              "capturedBuildId": "2e5074eab755e2fb5151fa184da4a33fadd67e70",
+              "currentBuildId": "2e5074eab755e2fb5151fa184da4a33fadd67e70",
+              "debugFiles": [],
+              "module": "/tmp/craidd-gr003-production-20261024-final/build/fixture",
+              "state": "matched"
+            },
+            {
+              "capturedBuildId": "b844add52a4d587c4b072aad274295c6c0ad66a1",
+              "currentBuildId": "b844add52a4d587c4b072aad274295c6c0ad66a1",
+              "debugFiles": [],
+              "module": "/tmp/craidd-gr003-production-20261024-final/build/liblocation.so",
+              "state": "matched"
+            },
+            {
+              "capturedBuildId": "d320029ad1a23be2f4bce117fd321cbd23a2014b",
+              "currentBuildId": "d320029ad1a23be2f4bce117fd321cbd23a2014b",
+              "debugFiles": [],
+              "module": "/usr/lib/libc.so.6",
+              "state": "matched"
+            },
+            {
+              "capturedBuildId": "5b8d3de442de987b24d0e3679533068f2ae62497",
+              "currentBuildId": "5b8d3de442de987b24d0e3679533068f2ae62497",
+              "debugFiles": [],
+              "module": "/usr/lib/libstdc++.so.6.0.36",
+              "state": "matched"
+            }
+          ],
+          "clockDomain": "CLOCK_MONOTONIC",
+          "clockMapping": null,
+          "collectorExit": null,
+          "collectorIdentity": {
+            "birth": 4322488,
+            "pid": 461687
+          },
+          "collectorSignal": 2,
+          "coverage": {
+            "diagnostics": [
+              "/tmp/craidd-gr003-production-20261024-final/build/liblocation.so: withheld: /tmp/craidd-gr003-production-20261024-final/elsewhere/arbitrary-artifact.elf: No such file or directory (os error 2)"
+            ],
+            "emptyChains": 0,
+            "lossScanComplete": true,
+            "lostCount": 0,
+            "lostRecords": 0,
+            "lostSampleCount": 0,
+            "lostSampleRecords": 0,
+            "mismatchedChains": 0,
+            "omittedSamples": 0,
+            "parsedSamples": 394,
+            "retainedSamples": 394,
+            "truncatedStacks": 0,
+            "unknownRecords": 1,
+            "unparsedLossRecords": 0
+          },
+          "createdMs": 1792801870429,
+          "decodeAndParseMs": 52,
+          "decodeRevision": 3,
+          "estimatedRawBytes": 5084046,
+          "event": "cpu-clock:u",
+          "generation": 1,
+          "host": {
+            "birth": 4322485,
+            "pid": 461682
+          },
+          "id": "capture-1792801870429-461682-1",
+          "jitMap": null,
+          "label": "perf \u00b7 PID 461414",
+          "lossScanMs": 0,
+          "moduleIdentityMs": 227,
+          "omittedStderrBytes": 0,
+          "omittedThreadObservations": 0,
+          "options": {
+            "durationSeconds": 2,
+            "frequency": 99,
+            "unwind": {
+              "kind": "dwarf",
+              "stackBytes": 8192
+            }
+          },
+          "owner": "probe",
+          "parserCpuMs": 1,
+          "perfVersion": "perf version 7.2.11-1",
+          "pinned": false,
+          "profileId": "probe-profile",
+          "rawBytes": 3362668,
+          "rawLimit": 536870912,
+          "rawSha256": "72c8f07604e26fbf6d9e7c6e8f1e017e92255e73d885c13b3d5bab1a3bc1d997",
+          "reasons": [
+            "Timed duration completed"
+          ],
+          "recordArgv": [
+            "record",
+            "--no-buildid-cache",
+            "--clockid",
+            "mono",
+            "--timestamp",
+            "--per-thread",
+            "--no-inherit",
+            "--user-callchains",
+            "-e",
+            "cpu-clock:u",
+            "-F",
+            "99",
+            "--call-graph",
+            "dwarf,8192",
+            "-t",
+            "461414,461416,461417",
+            "-o",
+            "/tmp/craidd-gr003-production-20261024-final/renamed/cache/fed5704582d0fcabf3826baaa1d9743b7a7cb852e20d34e08fe00b3090ef508f/capture-1792801870429-461682-1/perf.data"
+          ],
+          "solution": "/tmp/craidd-gr003-production-20261024-final/renamed/fixture.cln",
+          "sourceKind": "nativeStackSamples",
+          "state": "partial",
+          "stderr": "[ perf record: Woken up 11 times to write data ]\n[ perf record: Captured and wrote 3.172 MB /tmp/craidd-gr003-production-20261024-final/renamed/cache/fed5704582d0fcabf3826baaa1d9743b7a7cb852e20d34e08fe00b3090ef508f/capture-1792801870429-461682-1/perf.data ]\n",
+          "summary": {
+            "attributionBasis": "Self: all retained sampled leaves. Inclusive: recovered chains only; completeness is not proven.",
+            "coverage": {
+              "diagnostics": [
+                "/tmp/craidd-gr003-production-20261024-final/build/liblocation.so: withheld: /tmp/craidd-gr003-production-20261024-final/elsewhere/arbitrary-artifact.elf: No such file or directory (os error 2)"
+              ],
+              "emptyChains": 0,
+              "lossScanComplete": true,
+              "lostCount": 0,
+              "lostRecords": 0,
+              "lostSampleCount": 0,
+              "lostSampleRecords": 0,
+              "mismatchedChains": 0,
+              "omittedSamples": 0,
+              "parsedSamples": 394,
+              "retainedSamples": 394,
+              "truncatedStacks": 0,
+              "unknownRecords": 1,
+              "unparsedLossRecords": 0
+            },
+            "firstMonotonicNs": 43224909895603,
+            "frameCount": 10,
+            "lastMonotonicNs": 43226889725425,
+            "lossAccounting": "LOST and LOST_SAMPLES are separate reports and may overlap; never summed",
+            "retention": {
+              "frames": 100000,
+              "samples": 500000,
+              "stackReferences": 8000000
+            },
+            "threads": {
+              "461416": "busy-worker",
+              "461417": "busy-worker"
+            },
+            "units": "sampled cpu-clock event period (ns); not exact function time",
+            "unwindCoverage": {
+              "basis": "Available means perf supplied a chain, not proof of complete unwinding; truncated chains include recovered callers only.",
+              "byLeafModule": {
+                "/tmp/craidd-gr003-production-20261024-final/build/liblocation.so": {
+                  "chainSamples": 394,
+                  "chainWeight": 3979797940,
+                  "empty": 0,
+                  "mismatch": 0,
+                  "samples": 394,
+                  "truncated": 0,
+                  "weight": 3979797940
+                }
+              },
+              "byThread": {
+                "461416": {
+                  "chainSamples": 197,
+                  "chainWeight": 1989898970,
+                  "empty": 0,
+                  "mismatch": 0,
+                  "samples": 197,
+                  "truncated": 0,
+                  "weight": 1989898970
+                },
+                "461417": {
+                  "chainSamples": 197,
+                  "chainWeight": 1989898970,
+                  "empty": 0,
+                  "mismatch": 0,
+                  "samples": 197,
+                  "truncated": 0,
+                  "weight": 1989898970
+                }
+              },
+              "total": {
+                "chainSamples": 394,
+                "chainWeight": 3979797940,
+                "empty": 0,
+                "mismatch": 0,
+                "samples": 394,
+                "truncated": 0,
+                "weight": 3979797940
+              }
+            }
+          },
+          "symbolSearch": {
+            "index": {
+              "diagnostics": [],
+              "elapsedMs": 25,
+              "elfFiles": 1,
+              "entries": 1,
+              "incomplete": false
+            },
+            "locations": [
+              "/tmp/craidd-gr003-production-20261024-final/elsewhere"
+            ],
+            "privateCache": "/tmp/craidd-gr003-production-20261024-final/renamed/cache/fed5704582d0fcabf3826baaa1d9743b7a7cb852e20d34e08fe00b3090ef508f/capture-1792801870429-461682-1/symbol-cache",
+            "sealed": true,
+            "served": [
+              {
+                "buildId": "b844add52a4d587c4b072aad274295c6c0ad66a1",
+                "cacheDebug": "/tmp/craidd-gr003-production-20261024-final/renamed/cache/fed5704582d0fcabf3826baaa1d9743b7a7cb852e20d34e08fe00b3090ef508f/capture-1792801870429-461682-1/symbol-cache/tmp/craidd-gr003-production-20261024-final/build/liblocation.so/b844add52a4d587c4b072aad274295c6c0ad66a1/debug",
+                "cacheElf": "/tmp/craidd-gr003-production-20261024-final/renamed/cache/fed5704582d0fcabf3826baaa1d9743b7a7cb852e20d34e08fe00b3090ef508f/capture-1792801870429-461682-1/symbol-cache/tmp/craidd-gr003-production-20261024-final/build/liblocation.so/b844add52a4d587c4b072aad274295c6c0ad66a1/elf",
+                "debugFile": {
+                  "canonical": "/tmp/craidd-gr003-production-20261024-final/elsewhere/arbitrary-artifact.elf",
+                  "device": 52,
+                  "inode": 243979,
+                  "path": "/tmp/craidd-gr003-production-20261024-final/elsewhere/arbitrary-artifact.elf",
+                  "sha256": "643d13ae9f43cdefdb160f263fca5f06f2bab30f2b51cc50d8bb06fd0f99532e",
+                  "size": 10368
+                },
+                "module": "/tmp/craidd-gr003-production-20261024-final/build/liblocation.so",
+                "moduleFile": {
+                  "canonical": "/tmp/craidd-gr003-production-20261024-final/build/liblocation.so",
+                  "device": 52,
+                  "inode": 243975,
+                  "path": "/tmp/craidd-gr003-production-20261024-final/build/liblocation.so",
+                  "sha256": "8ddf6ecab9d6d5ef29713984abc8c803438c348260b3210f5acf4bcb7a56b109",
+                  "size": 14128
+                },
+                "state": "withheld: /tmp/craidd-gr003-production-20261024-final/elsewhere/arbitrary-artifact.elf: No such file or directory (os error 2)"
+              }
+            ],
+            "withheldModules": {}
+          },
+          "target": {
+            "birth": 4321898,
+            "pid": 461414
+          },
+          "threadPollMs": 100,
+          "threadsAtStart": [
+            {
+              "birth": 4321898,
+              "name": "fixture",
+              "tid": 461414
+            },
+            {
+              "birth": 4321898,
+              "name": "busy-worker",
+              "tid": 461416
+            },
+            {
+              "birth": 4321898,
+              "name": "busy-worker",
+              "tid": 461417
+            }
+          ],
+          "threadsGained": [],
+          "version": 1
+        },
+        "tree": {
+          "attributionBasis": "Self includes every retained leaf. Inclusive includes recovered chains only; both shares use all selected event weight.",
+          "chainSamples": 394,
+          "chainWeight": 3979797940,
+          "childCount": 5,
+          "children": [
+            {
+              "frame": {
+                "address": "7f9c0ff5e12b",
+                "module": "/tmp/craidd-gr003-production-20261024-final/build/liblocation.so",
+                "resolved": false,
+                "source": null,
+                "symbol": "/tmp/craidd-gr003-production-20261024-final/build/liblocation.so+address 0x7f9c0ff5e12b",
+                "symbolOrigin": "unresolved"
+              },
+              "frameId": 0,
+              "inclusiveWeight": 2343434320,
+              "sampleCount": 232,
+              "sampledEventSharePct": 58.88324873096447,
+              "selfEventSharePct": 58.88324873096447,
+              "selfWeight": 2343434320
+            },
+            {
+              "frame": {
+                "address": "7f9c0ff5e132",
+                "module": "/tmp/craidd-gr003-production-20261024-final/build/liblocation.so",
+                "resolved": false,
+                "source": null,
+                "symbol": "/tmp/craidd-gr003-production-20261024-final/build/liblocation.so+address 0x7f9c0ff5e132",
+                "symbolOrigin": "unresolved"
+              },
+              "frameId": 3,
+              "inclusiveWeight": 959595950,
+              "sampleCount": 95,
+              "sampledEventSharePct": 24.111675126903553,
+              "selfEventSharePct": 24.111675126903553,
+              "selfWeight": 959595950
+            },
+            {
+              "frame": {
+                "address": "7f9c0ff5e12e",
+                "module": "/tmp/craidd-gr003-production-20261024-final/build/liblocation.so",
+                "resolved": false,
+                "source": null,
+                "symbol": "/tmp/craidd-gr003-production-20261024-final/build/liblocation.so+address 0x7f9c0ff5e12e",
+                "symbolOrigin": "unresolved"
+              },
+              "frameId": 2,
+              "inclusiveWeight": 353535350,
+              "sampleCount": 35,
+              "sampledEventSharePct": 8.883248730964468,
+              "selfEventSharePct": 8.883248730964468,
+              "selfWeight": 353535350
+            },
+            {
+              "frame": {
+                "address": "7f9c0ff5e135",
+                "module": "/tmp/craidd-gr003-production-20261024-final/build/liblocation.so",
+                "resolved": false,
+                "source": null,
+                "symbol": "/tmp/craidd-gr003-production-20261024-final/build/liblocation.so+address 0x7f9c0ff5e135",
+                "symbolOrigin": "unresolved"
+              },
+              "frameId": 1,
+              "inclusiveWeight": 292929290,
+              "sampleCount": 29,
+              "sampledEventSharePct": 7.3604060913705585,
+              "selfEventSharePct": 7.3604060913705585,
+              "selfWeight": 292929290
+            },
+            {
+              "frame": {
+                "address": "7f9c0ff5e127",
+                "module": "/tmp/craidd-gr003-production-20261024-final/build/liblocation.so",
+                "resolved": false,
+                "source": null,
+                "symbol": "/tmp/craidd-gr003-production-20261024-final/build/liblocation.so+address 0x7f9c0ff5e127",
+                "symbolOrigin": "unresolved"
+              },
+              "frameId": 4,
+              "inclusiveWeight": 30303030,
+              "sampleCount": 3,
+              "sampledEventSharePct": 0.7614213197969543,
+              "selfEventSharePct": 0.7614213197969543,
+              "selfWeight": 30303030
+            }
+          ],
+          "clock": "elapsed ns from first retained monotonic sample; no session clock mapping",
+          "moduleFilterBasis": "samples containing this exact module; complete calling context retained",
+          "omittedChildren": 0,
+          "pathWeight": 3979797940,
+          "selectedSamples": 394,
+          "totalWeight": 3979797940
+        }
+      },
+      "changedBytesReopen": {
+        "attributionValid": true,
+        "buildIds": [
+          {
+            "capturedBuildId": "2e5074eab755e2fb5151fa184da4a33fadd67e70",
+            "currentBuildId": "2e5074eab755e2fb5151fa184da4a33fadd67e70",
+            "debugFiles": [],
+            "module": "/tmp/craidd-gr003-production-20261024-final/build/fixture",
+            "state": "matched"
+          },
+          {
+            "capturedBuildId": "b844add52a4d587c4b072aad274295c6c0ad66a1",
+            "currentBuildId": "b844add52a4d587c4b072aad274295c6c0ad66a1",
+            "debugFiles": [],
+            "module": "/tmp/craidd-gr003-production-20261024-final/build/liblocation.so",
+            "state": "matched"
+          },
+          {
+            "capturedBuildId": "d320029ad1a23be2f4bce117fd321cbd23a2014b",
+            "currentBuildId": "d320029ad1a23be2f4bce117fd321cbd23a2014b",
+            "debugFiles": [],
+            "module": "/usr/lib/libc.so.6",
+            "state": "matched"
+          },
+          {
+            "capturedBuildId": "5b8d3de442de987b24d0e3679533068f2ae62497",
+            "currentBuildId": "5b8d3de442de987b24d0e3679533068f2ae62497",
+            "debugFiles": [],
+            "module": "/usr/lib/libstdc++.so.6.0.36",
+            "state": "matched"
+          }
+        ],
+        "clockDomain": "CLOCK_MONOTONIC",
+        "clockMapping": null,
+        "collectorExit": null,
+        "collectorIdentity": {
+          "birth": 4322488,
+          "pid": 461687
+        },
+        "collectorSignal": 2,
+        "coverage": {
+          "diagnostics": [
+            "/tmp/craidd-gr003-production-20261024-final/build/liblocation.so: withheld: Served symbol bytes or identity changed: /tmp/craidd-gr003-production-20261024-final/elsewhere/arbitrary-artifact.elf"
+          ],
+          "emptyChains": 0,
+          "lossScanComplete": true,
+          "lostCount": 0,
+          "lostRecords": 0,
+          "lostSampleCount": 0,
+          "lostSampleRecords": 0,
+          "mismatchedChains": 0,
+          "omittedSamples": 0,
+          "parsedSamples": 394,
+          "retainedSamples": 394,
+          "truncatedStacks": 0,
+          "unknownRecords": 1,
+          "unparsedLossRecords": 0
+        },
+        "createdMs": 1792801870429,
+        "decodeAndParseMs": 51,
+        "decodeRevision": 4,
+        "estimatedRawBytes": 5084046,
+        "event": "cpu-clock:u",
+        "generation": 1,
+        "host": {
+          "birth": 4322485,
+          "pid": 461682
+        },
+        "id": "capture-1792801870429-461682-1",
+        "jitMap": null,
+        "label": "perf \u00b7 PID 461414",
+        "lossScanMs": 0,
+        "moduleIdentityMs": 227,
+        "omittedStderrBytes": 0,
+        "omittedThreadObservations": 0,
+        "options": {
+          "durationSeconds": 2,
+          "frequency": 99,
+          "unwind": {
+            "kind": "dwarf",
+            "stackBytes": 8192
+          }
+        },
+        "owner": "probe",
+        "parserCpuMs": 2,
+        "perfVersion": "perf version 7.2.11-1",
+        "pinned": false,
+        "profileId": "probe-profile",
+        "rawBytes": 3362668,
+        "rawLimit": 536870912,
+        "rawSha256": "72c8f07604e26fbf6d9e7c6e8f1e017e92255e73d885c13b3d5bab1a3bc1d997",
+        "reasons": [
+          "Timed duration completed"
+        ],
+        "recordArgv": [
+          "record",
+          "--no-buildid-cache",
+          "--clockid",
+          "mono",
+          "--timestamp",
+          "--per-thread",
+          "--no-inherit",
+          "--user-callchains",
+          "-e",
+          "cpu-clock:u",
+          "-F",
+          "99",
+          "--call-graph",
+          "dwarf,8192",
+          "-t",
+          "461414,461416,461417",
+          "-o",
+          "/tmp/craidd-gr003-production-20261024-final/renamed/cache/fed5704582d0fcabf3826baaa1d9743b7a7cb852e20d34e08fe00b3090ef508f/capture-1792801870429-461682-1/perf.data"
+        ],
+        "solution": "/tmp/craidd-gr003-production-20261024-final/renamed/fixture.cln",
+        "sourceKind": "nativeStackSamples",
+        "state": "partial",
+        "stderr": "[ perf record: Woken up 11 times to write data ]\n[ perf record: Captured and wrote 3.172 MB /tmp/craidd-gr003-production-20261024-final/renamed/cache/fed5704582d0fcabf3826baaa1d9743b7a7cb852e20d34e08fe00b3090ef508f/capture-1792801870429-461682-1/perf.data ]\n",
+        "summary": {
+          "attributionBasis": "Self: all retained sampled leaves. Inclusive: recovered chains only; completeness is not proven.",
+          "coverage": {
+            "diagnostics": [
+              "/tmp/craidd-gr003-production-20261024-final/build/liblocation.so: withheld: Served symbol bytes or identity changed: /tmp/craidd-gr003-production-20261024-final/elsewhere/arbitrary-artifact.elf"
+            ],
+            "emptyChains": 0,
+            "lossScanComplete": true,
+            "lostCount": 0,
+            "lostRecords": 0,
+            "lostSampleCount": 0,
+            "lostSampleRecords": 0,
+            "mismatchedChains": 0,
+            "omittedSamples": 0,
+            "parsedSamples": 394,
+            "retainedSamples": 394,
+            "truncatedStacks": 0,
+            "unknownRecords": 1,
+            "unparsedLossRecords": 0
+          },
+          "firstMonotonicNs": 43224909895603,
+          "frameCount": 10,
+          "lastMonotonicNs": 43226889725425,
+          "lossAccounting": "LOST and LOST_SAMPLES are separate reports and may overlap; never summed",
+          "retention": {
+            "frames": 100000,
+            "samples": 500000,
+            "stackReferences": 8000000
+          },
+          "threads": {
+            "461416": "busy-worker",
+            "461417": "busy-worker"
+          },
+          "units": "sampled cpu-clock event period (ns); not exact function time",
+          "unwindCoverage": {
+            "basis": "Available means perf supplied a chain, not proof of complete unwinding; truncated chains include recovered callers only.",
+            "byLeafModule": {
+              "/tmp/craidd-gr003-production-20261024-final/build/liblocation.so": {
+                "chainSamples": 394,
+                "chainWeight": 3979797940,
+                "empty": 0,
+                "mismatch": 0,
+                "samples": 394,
+                "truncated": 0,
+                "weight": 3979797940
+              }
+            },
+            "byThread": {
+              "461416": {
+                "chainSamples": 197,
+                "chainWeight": 1989898970,
+                "empty": 0,
+                "mismatch": 0,
+                "samples": 197,
+                "truncated": 0,
+                "weight": 1989898970
+              },
+              "461417": {
+                "chainSamples": 197,
+                "chainWeight": 1989898970,
+                "empty": 0,
+                "mismatch": 0,
+                "samples": 197,
+                "truncated": 0,
+                "weight": 1989898970
+              }
+            },
+            "total": {
+              "chainSamples": 394,
+              "chainWeight": 3979797940,
+              "empty": 0,
+              "mismatch": 0,
+              "samples": 394,
+              "truncated": 0,
+              "weight": 3979797940
+            }
+          }
+        },
+        "symbolSearch": {
+          "index": {
+            "diagnostics": [],
+            "elapsedMs": 25,
+            "elfFiles": 1,
+            "entries": 1,
+            "incomplete": false
+          },
+          "locations": [
+            "/tmp/craidd-gr003-production-20261024-final/elsewhere"
+          ],
+          "privateCache": "/tmp/craidd-gr003-production-20261024-final/renamed/cache/fed5704582d0fcabf3826baaa1d9743b7a7cb852e20d34e08fe00b3090ef508f/capture-1792801870429-461682-1/symbol-cache",
+          "sealed": true,
+          "served": [
+            {
+              "buildId": "b844add52a4d587c4b072aad274295c6c0ad66a1",
+              "cacheDebug": "/tmp/craidd-gr003-production-20261024-final/renamed/cache/fed5704582d0fcabf3826baaa1d9743b7a7cb852e20d34e08fe00b3090ef508f/capture-1792801870429-461682-1/symbol-cache/tmp/craidd-gr003-production-20261024-final/build/liblocation.so/b844add52a4d587c4b072aad274295c6c0ad66a1/debug",
+              "cacheElf": "/tmp/craidd-gr003-production-20261024-final/renamed/cache/fed5704582d0fcabf3826baaa1d9743b7a7cb852e20d34e08fe00b3090ef508f/capture-1792801870429-461682-1/symbol-cache/tmp/craidd-gr003-production-20261024-final/build/liblocation.so/b844add52a4d587c4b072aad274295c6c0ad66a1/elf",
+              "debugFile": {
+                "canonical": "/tmp/craidd-gr003-production-20261024-final/elsewhere/arbitrary-artifact.elf",
+                "device": 52,
+                "inode": 243979,
+                "path": "/tmp/craidd-gr003-production-20261024-final/elsewhere/arbitrary-artifact.elf",
+                "sha256": "643d13ae9f43cdefdb160f263fca5f06f2bab30f2b51cc50d8bb06fd0f99532e",
+                "size": 10368
+              },
+              "module": "/tmp/craidd-gr003-production-20261024-final/build/liblocation.so",
+              "moduleFile": {
+                "canonical": "/tmp/craidd-gr003-production-20261024-final/build/liblocation.so",
+                "device": 52,
+                "inode": 243975,
+                "path": "/tmp/craidd-gr003-production-20261024-final/build/liblocation.so",
+                "sha256": "8ddf6ecab9d6d5ef29713984abc8c803438c348260b3210f5acf4bcb7a56b109",
+                "size": 14128
+              },
+              "state": "withheld: Served symbol bytes or identity changed: /tmp/craidd-gr003-production-20261024-final/elsewhere/arbitrary-artifact.elf"
+            }
+          ],
+          "withheldModules": {}
+        },
+        "target": {
+          "birth": 4321898,
+          "pid": 461414
+        },
+        "threadPollMs": 100,
+        "threadsAtStart": [
+          {
+            "birth": 4321898,
+            "name": "fixture",
+            "tid": 461414
+          },
+          {
+            "birth": 4321898,
+            "name": "busy-worker",
+            "tid": 461416
+          },
+          {
+            "birth": 4321898,
+            "name": "busy-worker",
+            "tid": 461417
+          }
+        ],
+        "threadsGained": [],
+        "version": 1
+      }
+    },
+    {
+      "case": "decoy",
+      "capture": {
+        "attributionValid": true,
+        "buildIds": [
+          {
+            "capturedBuildId": "2e5074eab755e2fb5151fa184da4a33fadd67e70",
+            "currentBuildId": "2e5074eab755e2fb5151fa184da4a33fadd67e70",
+            "debugFiles": [],
+            "module": "/tmp/craidd-gr003-production-20261024-final/build/fixture",
+            "state": "matched"
+          },
+          {
+            "capturedBuildId": "b844add52a4d587c4b072aad274295c6c0ad66a1",
+            "currentBuildId": "b844add52a4d587c4b072aad274295c6c0ad66a1",
+            "debugFiles": [],
+            "module": "/tmp/craidd-gr003-production-20261024-final/build/liblocation.so",
+            "state": "matched"
+          },
+          {
+            "capturedBuildId": "d320029ad1a23be2f4bce117fd321cbd23a2014b",
+            "currentBuildId": "d320029ad1a23be2f4bce117fd321cbd23a2014b",
+            "debugFiles": [],
+            "module": "/usr/lib/libc.so.6",
+            "state": "matched"
+          },
+          {
+            "capturedBuildId": "5b8d3de442de987b24d0e3679533068f2ae62497",
+            "currentBuildId": "5b8d3de442de987b24d0e3679533068f2ae62497",
+            "debugFiles": [],
+            "module": "/usr/lib/libstdc++.so.6.0.36",
+            "state": "matched"
+          }
+        ],
+        "clockDomain": "CLOCK_MONOTONIC",
+        "clockMapping": null,
+        "collectorExit": null,
+        "collectorIdentity": {
+          "birth": 4322831,
+          "pid": 461889
+        },
+        "collectorSignal": 2,
+        "coverage": {
+          "diagnostics": [
+            "Module /tmp/craidd-gr003-production-20261024-final/build/liblocation.so: Candidate /tmp/craidd-gr003-production-20261024-final/decoys/liblocation.so.debug has build ID Some(\"3df57eb430b20b29e10ab9089328b6493dea00db\"); expected b844add52a4d587c4b072aad274295c6c0ad66a1",
+            "Module /tmp/craidd-gr003-production-20261024-final/build/liblocation.so: relevant debug candidate has a mismatched/unverified build ID"
+          ],
+          "emptyChains": 0,
+          "lossScanComplete": true,
+          "lostCount": 0,
+          "lostRecords": 0,
+          "lostSampleCount": 0,
+          "lostSampleRecords": 0,
+          "mismatchedChains": 0,
+          "omittedSamples": 0,
+          "parsedSamples": 394,
+          "retainedSamples": 394,
+          "truncatedStacks": 0,
+          "unknownRecords": 2,
+          "unparsedLossRecords": 0
+        },
+        "createdMs": 1792801873859,
+        "decodeAndParseMs": 52,
+        "decodeRevision": 1,
+        "estimatedRawBytes": 5084046,
+        "event": "cpu-clock:u",
+        "generation": 1,
+        "host": {
+          "birth": 4322828,
+          "pid": 461884
+        },
+        "id": "capture-1792801873859-461884-1",
+        "jitMap": null,
+        "label": "perf \u00b7 PID 461414",
+        "lossScanMs": 0,
+        "moduleIdentityMs": 227,
+        "omittedStderrBytes": 0,
+        "omittedThreadObservations": 0,
+        "options": {
+          "durationSeconds": 2,
+          "frequency": 99,
+          "unwind": {
+            "kind": "dwarf",
+            "stackBytes": 8192
+          }
+        },
+        "owner": "probe",
+        "parserCpuMs": 2,
+        "perfVersion": "perf version 7.2.11-1",
+        "pinned": false,
+        "profileId": "probe-profile",
+        "rawBytes": 3362708,
+        "rawLimit": 536870912,
+        "rawSha256": "6967d738200fb8c7c13d5202adf6440d2823bd98603c221aee61deb176c3fc10",
+        "reasons": [
+          "Timed duration completed"
+        ],
+        "recordArgv": [
+          "record",
+          "--no-buildid-cache",
+          "--clockid",
+          "mono",
+          "--timestamp",
+          "--per-thread",
+          "--no-inherit",
+          "--user-callchains",
+          "-e",
+          "cpu-clock:u",
+          "-F",
+          "99",
+          "--call-graph",
+          "dwarf,8192",
+          "-t",
+          "461414,461416,461417",
+          "-o",
+          "/tmp/craidd-gr003-production-20261024-final/decoy/cache/909d203e851856d8bc22038de904e79ce910f02cc3f17bb30036c381bf1a275b/capture-1792801873859-461884-1/perf.data"
+        ],
+        "solution": "/tmp/craidd-gr003-production-20261024-final/decoy/fixture.cln",
+        "sourceKind": "nativeStackSamples",
+        "state": "partial",
+        "stderr": "[ perf record: Woken up 13 times to write data ]\n[ perf record: Captured and wrote 3.172 MB /tmp/craidd-gr003-production-20261024-final/decoy/cache/909d203e851856d8bc22038de904e79ce910f02cc3f17bb30036c381bf1a275b/capture-1792801873859-461884-1/perf.data ]\n",
+        "summary": {
+          "attributionBasis": "Self: all retained sampled leaves. Inclusive: recovered chains only; completeness is not proven.",
+          "coverage": {
+            "diagnostics": [
+              "Module /tmp/craidd-gr003-production-20261024-final/build/liblocation.so: Candidate /tmp/craidd-gr003-production-20261024-final/decoys/liblocation.so.debug has build ID Some(\"3df57eb430b20b29e10ab9089328b6493dea00db\"); expected b844add52a4d587c4b072aad274295c6c0ad66a1",
+              "Module /tmp/craidd-gr003-production-20261024-final/build/liblocation.so: relevant debug candidate has a mismatched/unverified build ID"
+            ],
+            "emptyChains": 0,
+            "lossScanComplete": true,
+            "lostCount": 0,
+            "lostRecords": 0,
+            "lostSampleCount": 0,
+            "lostSampleRecords": 0,
+            "mismatchedChains": 0,
+            "omittedSamples": 0,
+            "parsedSamples": 394,
+            "retainedSamples": 394,
+            "truncatedStacks": 0,
+            "unknownRecords": 2,
+            "unparsedLossRecords": 0
+          },
+          "firstMonotonicNs": 43228340776998,
+          "frameCount": 10,
+          "lastMonotonicNs": 43230320660520,
+          "lossAccounting": "LOST and LOST_SAMPLES are separate reports and may overlap; never summed",
+          "retention": {
+            "frames": 100000,
+            "samples": 500000,
+            "stackReferences": 8000000
+          },
+          "threads": {
+            "461416": "busy-worker",
+            "461417": "busy-worker"
+          },
+          "units": "sampled cpu-clock event period (ns); not exact function time",
+          "unwindCoverage": {
+            "basis": "Available means perf supplied a chain, not proof of complete unwinding; truncated chains include recovered callers only.",
+            "byLeafModule": {
+              "/tmp/craidd-gr003-production-20261024-final/build/liblocation.so": {
+                "chainSamples": 394,
+                "chainWeight": 3979797940,
+                "empty": 0,
+                "mismatch": 0,
+                "samples": 394,
+                "truncated": 0,
+                "weight": 3979797940
+              }
+            },
+            "byThread": {
+              "461416": {
+                "chainSamples": 197,
+                "chainWeight": 1989898970,
+                "empty": 0,
+                "mismatch": 0,
+                "samples": 197,
+                "truncated": 0,
+                "weight": 1989898970
+              },
+              "461417": {
+                "chainSamples": 197,
+                "chainWeight": 1989898970,
+                "empty": 0,
+                "mismatch": 0,
+                "samples": 197,
+                "truncated": 0,
+                "weight": 1989898970
+              }
+            },
+            "total": {
+              "chainSamples": 394,
+              "chainWeight": 3979797940,
+              "empty": 0,
+              "mismatch": 0,
+              "samples": 394,
+              "truncated": 0,
+              "weight": 3979797940
+            }
+          }
+        },
+        "symbolSearch": {
+          "index": {
+            "diagnostics": [
+              "Module /tmp/craidd-gr003-production-20261024-final/build/liblocation.so: relevant debug candidate has a mismatched/unverified build ID"
+            ],
+            "elapsedMs": 25,
+            "elfFiles": 1,
+            "entries": 1,
+            "incomplete": true
+          },
+          "locations": [
+            "/tmp/craidd-gr003-production-20261024-final/decoys"
+          ],
+          "privateCache": "/tmp/craidd-gr003-production-20261024-final/decoy/cache/909d203e851856d8bc22038de904e79ce910f02cc3f17bb30036c381bf1a275b/capture-1792801873859-461884-1/symbol-cache",
+          "sealed": true,
+          "served": [],
+          "withheldModules": {
+            "/tmp/craidd-gr003-production-20261024-final/build/liblocation.so": "Candidate /tmp/craidd-gr003-production-20261024-final/decoys/liblocation.so.debug has build ID Some(\"3df57eb430b20b29e10ab9089328b6493dea00db\"); expected b844add52a4d587c4b072aad274295c6c0ad66a1"
+          }
+        },
+        "target": {
+          "birth": 4321898,
+          "pid": 461414
+        },
+        "threadPollMs": 100,
+        "threadsAtStart": [
+          {
+            "birth": 4321898,
+            "name": "fixture",
+            "tid": 461414
+          },
+          {
+            "birth": 4321898,
+            "name": "busy-worker",
+            "tid": 461416
+          },
+          {
+            "birth": 4321898,
+            "name": "busy-worker",
+            "tid": 461417
+          }
+        ],
+        "threadsGained": [],
+        "version": 1
+      },
+      "hotEntries": [],
+      "targetSurvived": true
+    }
+  ],
+  "indexBound": {
+    "diagnostics": [
+      "Index enumeration cut short at its entry/time bound"
+    ],
+    "elapsedMs": 15,
+    "elfFiles": 0,
+    "entries": 10000,
+    "incomplete": true
+  },
+  "userDebugCacheUnchanged": true,
+  "declaredFolderUnchanged": true,
+  "gates": {
+    "noLocations": "PASS",
+    "siblingNamesAndLines": "PASS",
+    "renamedNamesAndLines": "PASS",
+    "decoyRefused": "PASS",
+    "sameOwnerReopenActuallyDecodes": "PASS",
+    "movedFileWithheld": "PASS",
+    "changedSameBuildIdBytesWithheld": "PASS",
+    "privateCaches": "PASS",
+    "userCacheAndDeclaredFolderReadOnly": "PASS",
+    "boundedIndex": "PASS",
+    "retentionCleanup": "NOT TESTED",
+    "desktopSettingsAndServedRecord": "NOT TESTED"
+  }
+}

@@ -1,0 +1,60 @@
+{
+  "records": [
+    {
+      "step": "frontend-ready",
+      "at": "2026-10-24T13:18:13.546Z",
+      "origin": "tauri://localhost",
+      "root": true,
+      "ipc": true,
+      "url": "tauri://localhost",
+      "ready": "complete"
+    },
+    {
+      "step": "final-profile",
+      "at": "2026-10-24T13:19:11.028Z",
+      "profile": null
+    }
+  ],
+  "log": [
+    "[GC<0x7fe315400108>: starting 0.013000ms]",
+    "[GC<0x7fa7dd400108>: starting 0.013000ms]",
+    "[GC<0x7fe315400108>: START M 16331kb => EdenCollection, ca=26156.356445kb h=22995.643555kb a=0kb hf=0.000 mu=0.700 v=0kb (C:0 M:0 P1:0 P2:0 P3:0 P4:0 P5:0 P6:0 P7:0) o=0 b=0 i#1:N<CsMsrShDMsm(0)> tp=0.300000ms 0+0 p=0.652000ms (max 0.652000)...]",
+    "[GC<0x7fe315400108>: M a=0kb hf=0.000 mu=0.700 v=12204kb (C:1151 M:0 P1:988 P2:876 P3:1328 P4:791 P5:1088 P6:3530 P7:2448) o=11 b=0 i#2:N<WsOJw>Pbc tp=0.300000ms 14+0 v=12218kb (C:1154 M:0 P1:990 P2:878 P3:1329 P4:792 P5:1091 P6:3531 P7:2450) o=12 b=0 i#3:P<OWsJw>Pbc tp=0.300000ms 0+0 v=12218kb (C:1154 M:0 P1:990 P2:878 P3:1329 P4:792 P5:1091 P6:3531 P7:2450) o=12 b=0 i#4:P<WsOJwMsrShCsDMsm(0)CbDomo>Pbc => 25166kb, p=2.238000ms (max 2.238000), cycle 3.978000ms END]",
+    "GC END!",
+    "[GC<0x7fe315400108>: finalize 0.057000ms]",
+    "[GC<0x7fb267400108>: starting 0.011000ms]",
+    "[GC<0x7fb267400108>: START M 16186kb => EdenCollection, ca=25492.029297kb h=23659.970703kb a=0kb hf=0.000 mu=0.700 v=0kb (C:0 M:0 P1:0 P2:0 P3:0 P4:0 P5:0 P6:0 P7:0) o=0 b=0 i#1:N<CsMsrShDMsm(0)> tp=0.300000ms 0+0 p=0.662000ms (max 0.662000)...]",
+    "[GC<0x7fb267400108>: M a=0kb hf=0.000 mu=0.700 v=12095kb (C:1883 M:0 P1:1314 P2:1018 P3:1538 P4:1127 P5:1629 P6:1336 P7:2246) o=10 b=0 i#2:N<WsOJw>Pbc tp=0.300000ms 8+0 v=12104kb (C:1884 M:0 P1:1316 P2:1019 P3:1540 P4:1129 P5:1629 P6:1338 P7:2247) o=11 b=0 i#3:P<OWsJwMsrSh>Pbc tp=0.300000ms 0+0 v=12104kb (C:1884 M:0 P1:1316 P2:1019 P3:1540 P4:1129 P5:1629 P6:1338 P7:2247) o=11 b=0 i#4:P<WsOJwMsrShCsDMsm(0)CbDomo>Pbc => 24466kb, p=2.442000ms (max 2.442000), cycle 4.391000ms END]",
+    "GC END!",
+    "[GC<0x7fb267400108>: finalize 0.063000ms]",
+    "[GC<0x7fb267400108>: START M 30206kb => FullCollection, ca=5064.235352kb h=44087.764648kb a=0kb hf=0.000 mu=0.700 v=0kb (C:0 M:0 P1:0 P2:0 P3:0 P4:0 P5:0 P6:0 P7:0) o=0 b=873 i#1:N<CsMsrShDMsm(0)> tp=0.300000ms 0+0 v=1997kb (C:285 M:0 P1:245 P2:177 P3:238 P4:418 P5:148 P6:219 P7:250) o=5 b=873 29+0 p=0.791000ms (max 2.442000)...]",
+    "[GC<0x7fb267400108>: M a=0kb hf=0.000 mu=0.700 v=13983kb (C:1617 M:0 P1:1815 P2:2236 P3:2461 P4:1648 P5:1225 P6:1553 P7:1425) o=11 b=0 i#2:N<WsOJw>Pbc tp=0.300000ms 33+0 v=13997kb (C:1620 M:0 P1:1816 P2:2237 P3:2464 P4:1651 P5:1226 P6:1554 P7:1426) o=12 b=0 i#3:P<Ws> tp=0.300000ms 0+0 v=13997kb (C:1620 M:0 P1:1816 P2:2237 P3:2464 P4:1651 P5:1226 P6:1554 P7:1426) o=12 b=0 i#4:P<OWsJwMsrShCsDMsm(0)CbDomo>Pbc => 28829kb, p=2.542000ms (max 2.542000), cycle 4.289000ms END]",
+    "GC END!",
+    "[GC<0x7fb267400108>: finalize 1.026000ms]",
+    "[GC<0x7fe315400108>: START M 28849kb => FullCollection, ca=123.121094kb h=49028.878906kb a=0kb hf=0.000 mu=0.700 v=0kb (C:0 M:0 P1:0 P2:0 P3:0 P4:0 P5:0 P6:0 P7:0) o=0 b=219 i#1:N<CsMsrShDMsm(0)> tp=0.300000ms 0+0 v=2254kb (C:0 M:0 P1:2232 P2:0 P3:0 P4:2 P5:1 P6:6 P7:0) o=1 b=219 510+0 v=4964kb (C:404 M:0 P1:2584 P2:398 P3:338 P4:320 P5:278 P6:344 P7:272) o=1 b=219 0+0 p=1.080000ms (max 2.238000)...]",
+    "[GC<0x7fe315400108>: M a=0kb hf=0.000 mu=0.700 v=12190kb (C:1222 M:0 P1:3715 P2:1421 P3:917 P4:1319 P5:1209 P6:1026 P7:1358) o=10 b=0 i#2:N<WsOJw>Pbc tp=0.300000ms 16+0 v=12207kb (C:1224 M:0 P1:3717 P2:1423 P3:920 P4:1321 P5:1211 P6:1028 P7:1360) o=11 b=0 i#3:P<OWsJwMsrSh>Pbc tp=0.300000ms 0+0 v=12207kb (C:1224 M:0 P1:3717 P2:1423 P3:920 P4:1321 P5:1211 P6:1028 P7:1360) o=11 b=0 i#4:P<WsOJwMsrShCsDMsm(0)CbDomo>Pbc => 25263kb, p=2.194000ms (max 2.238000), cycle 3.989000ms END]",
+    "GC END!",
+    "[GC<0x7fe315400108>: finalize 0.869000ms]",
+    "craidd:metrics {\"bytesRead\":0,\"cancelled\":false,\"epochMs\":1792847895232,\"event\":\"reader-started\",\"id\":\"metrics-685869-1\",\"owner\":\"workspace-1\",\"state\":\"loading\"}",
+    "[GC<0x7fb267400108>: START M 33639kb => EdenCollection, ca=2858.662109kb h=126756.623535kb a=0kb hf=0.000 mu=0.700 v=0kb (C:0 M:0 P1:0 P2:0 P3:0 P4:0 P5:0 P6:0 P7:0) o=12 b=1955 i#1:N<CsMsrShDMsm(1956)> tp=0.300000ms 0+0 v=476kb (C:39 M:0 P1:77 P2:58 P3:58 P4:24 P5:62 P6:66 P7:77) o=21 b=1955 6+0 v=558kb (C:48 M:0 P1:84 P2:62 P3:59 P4:33 P5:105 P6:72 P7:91) o=21 b=1955 i#2:N<WsOJw>Pbc tp=0.300000ms 0+0 v=569kb (C:48 M:0 P1:84 P2:64 P3:59 P4:33 P5:107 P6:80 P7:91) o=21 b=1955 i#3:P<WsOJwMsm(0)ShMsrCsDCbDomo>Pbc => 30371kb, p=1.898000ms (max 2.542000), cycle 1.876000ms END]",
+    "GC END!",
+    "[GC<0x7fb267400108>: finalize 0.050000ms]",
+    "craidd:metrics {\"bytesRead\":153890865,\"cancelled\":false,\"epochMs\":1792847896455,\"event\":\"reader-finished\",\"id\":\"metrics-685869-1\",\"owner\":\"workspace-1\",\"state\":\"complete\"}",
+    "[GC<0x7fb267400108>: START M 37483kb => EdenCollection, ca=4483.218750kb h=125132.066895kb a=0kb hf=0.000 mu=0.700 v=0kb (C:0 M:0 P1:0 P2:0 P3:0 P4:0 P5:0 P6:0 P7:0) o=21 b=692 i#1:N<CsMsrShDMsm(693)> tp=0.300000ms 0+0 p=0.471000ms (max 2.542000)...]",
+    "[GC<0x7fb267400108>: M a=0kb hf=0.000 mu=0.700 v=1540kb (C:326 M:0 P1:117 P2:98 P3:59 P4:375 P5:323 P6:71 P7:168) o=22 b=0 i#2:N<WsOJw>Pbc tp=0.300000ms 0+0 v=1542kb (C:326 M:0 P1:117 P2:98 P3:59 P4:375 P5:324 P6:71 P7:168) o=22 b=0 i#3:P<WsOJwMsm(0)ShMsrCsDCbDomo>Pbc => 32476kb, p=1.073000ms (max 2.542000), cycle 1.651000ms END]",
+    "GC END!",
+    "[GC<0x7fb267400108>: finalize 0.036000ms]",
+    "[GC<0x7fb267400108>: START M 37364kb => EdenCollection, ca=1180.830078kb h=128434.455566kb a=0kb hf=0.000 mu=0.700 v=0kb (C:0 M:0 P1:0 P2:0 P3:0 P4:0 P5:0 P6:0 P7:0) o=22 b=1927 i#1:N<CsMsrShDMsm(1930)> tp=0.300000ms 0+0 v=180kb (C:25 M:0 P1:41 P2:8 P3:8 P4:5 P5:4 P6:14 P7:73) o=23 b=1927 i#2:N<WsOJw>Pbc tp=0.300000ms 0+0 v=182kb (C:25 M:0 P1:41 P2:8 P3:8 P4:6 P5:4 P6:14 P7:73) o=23 b=1927 i#3:P<WsJwOMsm(0)ShMsrCsDCbDomo>Pbc => 32776kb, p=1.513000ms (max 2.542000), cycle 1.486000ms END]",
+    "GC END!",
+    "[GC<0x7fb267400108>: finalize 0.016000ms]",
+    "[GC<0x7fb267400108>: START M 36723kb => EdenCollection, ca=0.000000kb h=129615.285645kb a=0kb hf=0.000 mu=0.700 v=0kb (C:0 M:0 P1:0 P2:0 P3:0 P4:0 P5:0 P6:0 P7:0) o=23 b=3 i#1:N<CsMsrShDMsm(7)> tp=0.300000ms 0+0 v=3kb (C:0 M:0 P1:0 P2:3 P3:0 P4:0 P5:0 P6:0 P7:0) o=23 b=3 i#2:N<WsOJw>Pbc tp=0.300000ms 0+0 v=3kb (C:0 M:0 P1:0 P2:3 P3:0 P4:0 P5:0 P6:0 P7:0) o=23 b=3 i#3:P<Msm(0)ShMsrCsDCbDomoWsJwO>Pbc => 32779kb, p=1.184000ms (max 2.542000), cycle 1.160000ms END]",
+    "GC END!",
+    "[GC<0x7fb267400108>: finalize 0.005000ms]",
+    "[GC<0x7fa7dd400108>: shutdown 12345 0.269000ms]",
+    "[GC<0x7fb267400108>: START M 36750kb => FullCollection, ca=72.765625kb h=129542.520020kb a=0kb hf=0.000 mu=0.700 v=0kb (C:0 M:0 P1:0 P2:0 P3:0 P4:0 P5:0 P6:0 P7:0) o=0 b=6 i#1:N<CsMsrShDMsm(0)> tp=0.300000ms 0+0 v=1348kb (C:198 M:0 P1:102 P2:127 P3:91 P4:193 P5:400 P6:132 P7:89) o=3 b=6 1923+0 p=0.919000ms (max 2.542000)...]",
+    "[GC<0x7fb267400108>: M a=0kb hf=0.000 mu=0.700 v=14030kb (C:1707 M:0 P1:1379 P2:2777 P3:1121 P4:1557 P5:2353 P6:1464 P7:1667) o=11 b=0 i#2:N<WsOJw>Pbc tp=0.300000ms 44+0 v=14084kb (C:1710 M:0 P1:1383 P2:2778 P3:1125 P4:1558 P5:2388 P6:1468 P7:1671) o=12 b=0 i#3:P<OWsJw> tp=0.300000ms 0+0 v=14084kb (C:1710 M:0 P1:1383 P2:2778 P3:1125 P4:1558 P5:2388 P6:1468 P7:1671) o=12 b=0 i#4:P<WsOJwShMsrMsm(0)CsDCbDomo>Pbc => 20313kb, p=2.179000ms (max 2.542000), cycle 4.181000ms END]",
+    "GC END!",
+    "[GC<0x7fb267400108>: finalize 0.117000ms]",
+    "Error serving connection: hyper::Error(IncompleteMessage)"
+  ]
+}

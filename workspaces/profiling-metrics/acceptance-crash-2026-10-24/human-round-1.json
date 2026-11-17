@@ -1,0 +1,10 @@
+{
+  "round": 1,
+  "result": "FAIL",
+  "finding": "HA-METRIC-001",
+  "category": "product render crash",
+  "reportedBy": "user screenshot",
+  "error": "undefined is not an object (evaluating 'n.columns')",
+  "humanInstructionCompleted": false,
+  "retryResult": "NOT TESTED"
+}

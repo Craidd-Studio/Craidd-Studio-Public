@@ -1,7 +1,9 @@
+import { PROFILER_TAB_ID } from "../../types/project";
+import { useSplit } from "../../store/splitStore";
 import { useEffect, useRef, useState } from "react";
 import { usePreferences } from "../../store/preferencesStore";
 import { useSolution } from "../../store/solutionStore";
-import { saveActiveFile, saveActiveFileAs } from "../../lib/fileActions";
+import { saveActiveFile, saveActiveFileAs, saveOpenFile } from "../../lib/fileActions";
 import { choicesForConfig, useBuild } from "../../store/buildStore";
 import { debugKeyViewed, debugOrContinueViewed, startViewedAction, stopViewedAction } from "../../lib/viewedActions";
 import { useDebug } from "../../store/debugStore";
@@ -25,7 +27,10 @@ export default function MenuBar({ openCommandPalette, openPreferences }: { openC
   const [aboutOpen, setAboutOpen] = useState(false);
   const barRef = useRef<HTMLDivElement>(null);
   const prefs = usePreferences();
-  const activeFileId = useSolution((s) => s.activeFileId);
+  const primaryFileId = useSolution((s) => s.activeFileId);
+  const sideFileId = useSplit((s) => s.sideFocused ? s.sideFileId : null);
+  const activeFileId = sideFileId ?? primaryFileId;
+  const profilerActive = useSolution((s) => s.activeTabId === PROFILER_TAB_ID);
   const clnPath = useSolution((s) => s.clnPath);
   const rootPath = useSolution((s) => s.rootPath);
   const selectedConfigName = useBuild((s) => s.selectedConfigName);
@@ -115,8 +120,8 @@ export default function MenuBar({ openCommandPalette, openPreferences }: { openC
         { label: "Get Started…", action: openWelcome },
         { label: "Duplicate Window", disabled: !clnPath, action: () => void duplicateWindow() },
         { separator: true },
-        { label: "Save", shortcut: key("save"), disabled: !activeFileId || (!!viewed && !remoteEditing), action: () => runSave(saveActiveFile) },
-        { label: "Save As…", shortcut: key("saveAs"), disabled: !activeFileId || (!!viewed && !remoteEditing), action: () => runSave(saveActiveFileAs) },
+        { label: "Save", shortcut: key("save"), disabled: !activeFileId || (!!viewed && !remoteEditing), action: () => runSave(() => sideFileId ? saveOpenFile(sideFileId) : saveActiveFile()) },
+        { label: "Save As…", shortcut: key("saveAs"), disabled: !activeFileId || (!!viewed && !remoteEditing), action: () => runSave(() => saveActiveFileAs(activeFileId)) },
         { separator: true },
         { label: "Preferences…", shortcut: key("preferences"), action: openPreferences },
         { separator: true },
@@ -141,7 +146,7 @@ export default function MenuBar({ openCommandPalette, openPreferences }: { openC
         { separator: true },
         { label: "Toggle Solution Sidebar", shortcut: key("toggleSidebar"), action: prefs.toggleSidebar },
         { label: "Toggle Panel", shortcut: key("togglePanel"), action: prefs.toggleBottomPanel },
-        { label: "Toggle Debugger & Profiler Panel", action: prefs.toggleRightPanel },
+        { label: profilerActive ? "Debugger & Profiler Panel (select another primary tab to show)" : "Toggle Debugger & Profiler Panel", disabled: profilerActive, action: prefs.toggleRightPanel },
         { separator: true },
         { label: "Toggle Word Wrap", shortcut: key("wordWrap"), action: prefs.toggleWordWrap },
         { separator: true },
@@ -163,7 +168,8 @@ export default function MenuBar({ openCommandPalette, openPreferences }: { openC
         { label: "Build", shortcut: key("build"), action: () => runViewed("build"), disabled: !canRun("build") || busy },
         { label: "Run Without Debugging", shortcut: key("run"), action: () => runViewed("run"), disabled: !canRun("run") || busy },
         { label: paused ? "Continue" : "Start Debugging", shortcut: key("debugOrContinue"), action: debugKey(debugOrContinueViewed), disabled: paused ? false : !canRun("debug") || busy },
-        { label: "Stop", shortcut: key("stop"), action: stopViewed, disabled: !busy },
+        { label: "Attach to Process…", action: () => window.dispatchEvent(new CustomEvent("craidd:attach-process")), disabled: busy },
+        { label: useDebug.getState().attached && !viewed ? "Detach" : "Stop", shortcut: key("stop"), action: stopViewed, disabled: !busy },
         { separator: true },
         { label: "Pause", shortcut: key("pause"), action: debugKey(() => debugKeyViewed("pause")), disabled: debugState !== "running" },
         { label: "Step Over", shortcut: key("stepOver"), action: debugKey(() => debugKeyViewed("stepOver")), disabled: !paused },

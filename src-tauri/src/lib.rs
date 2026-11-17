@@ -5,6 +5,11 @@ mod lsp;
 mod ownership;
 #[cfg(test)]
 mod test_exec;
+mod metric_csv;
+mod perf_model;
+mod perf_capture;
+mod perf_symbols;
+mod mono_jit_helper;
 
 pub use process_supervisor::entry as process_supervisor_entry;
 
@@ -65,13 +70,23 @@ pub fn run() {
         .manage(RunnerManager::default())
         .manage(commands::tauri_dev::TauriDevServers::default())
         .manage(DebugManager::default())
+        .manage(commands::profiling::ProfileManager::default())
+        .manage(commands::metrics::MetricManager::default())
         .manage(DebugBuildManager::default())
         .manage(commands::ldi::LdiManager::default())
         .manage(commands::native_debug::NativeDebugManager::default())
         .manage(commands::build_order::OrderManager::default())
         .manage(LinkedWindowRegistry::default())
         .manage(lsp::commands::LspManager::default())
+        .setup(|app| {
+            app.manage(perf_capture::PerfManager::new(app.path().app_cache_dir()?.join("profiling/perf")));
+            Ok(())
+        })
         .on_window_event(|window, event| {
+            if matches!(event, tauri::WindowEvent::Destroyed) {
+                window.state::<commands::metrics::MetricManager>().close(window.label());
+                commands::perf::close(window.app_handle(), window.label());
+            }
             if let tauri::WindowEvent::CloseRequested { api, .. } = event {
                 if !prepare_native_close(window) {
                     api.prevent_close();
@@ -84,6 +99,9 @@ pub fn run() {
                     commands::build::cancel_window_build(&closing_window);
                     commands::runner::cancel_window_run(&closing_window);
                     commands::debug::cancel_window_debug(&closing_window);
+                    commands::profiling::stop(&closing_window.app_handle(),closing_window.label(),"Profiling window closed");
+                    closing_window.state::<commands::metrics::MetricManager>().close(closing_window.label());
+                    commands::perf::close(closing_window.app_handle(), closing_window.label());
                 });
                 lsp::commands::close_window(window.app_handle(), window.label());
                 remove_linked_window(window);
@@ -92,6 +110,8 @@ pub fn run() {
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
         .invoke_handler(tauri::generate_handler![
+            commands::metrics::metric_action,
+            commands::perf::perf_action,
             read_file,
             resolve_document_path,
             read_document_image,
@@ -176,6 +196,18 @@ pub fn run() {
             dispatch_linked_window_command,
             load_breakpoints,
             save_breakpoints,
+            commands::profiling::profiling_bridge,
+            commands::profiling::start_profiling,
+            commands::profiling::stop_profiling,
+            commands::profiling::profile_record_again,
+            commands::profiling::get_profile,
+            commands::gold::load_gold,
+            commands::gold::edit_gold,
+            commands::gold::export_gold_instrumentation,
+            commands::processes::list_attach_processes,
+            commands::processes::process_modules,
+            commands::processes::attach_adapter_choices,
+            commands::debug::attach_to_process,
             start_debug,
             commands::tauri_dev::describe_debug_prerequisites,
             debug_control,
@@ -226,8 +258,8 @@ pub fn run() {
         ])
         .build(tauri::generate_context!())
         .expect("error while building tauri application")
-        .run(|_, event| {
-            if matches!(event, tauri::RunEvent::Exit) { process_supervisor::shutdown(); }
+        .run(|app, event| {
+            if matches!(event, tauri::RunEvent::Exit) { commands::perf::shutdown(app); commands::profiling::shutdown(app); process_supervisor::shutdown(); }
         });
     process_supervisor::shutdown();
 }

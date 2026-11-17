@@ -27,7 +27,7 @@ async function openEntry(entry: WorkspaceEntry): Promise<void> {
       for (const path of entry.restoredTabs ?? []) {
         await useSolution.getState().openFile(path, path.split("/").pop() ?? path);
       }
-      if (entry.restoredActiveFile && useSolution.getState().tabs.some((tab) => tab.fileId === entry.restoredActiveFile)) {
+      if (entry.restoredActiveFile && useSolution.getState().tabs.some((tab) => tab.kind === "file" && tab.fileId === entry.restoredActiveFile)) {
         useSolution.getState().setActiveFile(entry.restoredActiveFile);
       }
       await listenToBuildEvents();

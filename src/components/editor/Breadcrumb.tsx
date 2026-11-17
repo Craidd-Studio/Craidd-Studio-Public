@@ -1,12 +1,13 @@
 import { isMarkdown } from "../../lib/docsDiscovery";
 import { useMarkdown } from "../../store/markdownStore";
+import { isFileTab } from "../../types/project";
 import { useSolution } from "../../store/solutionStore";
 
 export default function Breadcrumb() {
   const tabs = useSolution((s) => s.tabs);
   const activeFileId = useSolution((s) => s.activeFileId);
   const mode = useMarkdown((s) => activeFileId ? s.modes[activeFileId] ?? "preview" : "source");
-  const active = tabs.find((t) => t.fileId === activeFileId);
+  const active = tabs.filter(isFileTab).find((t) => t.fileId === activeFileId);
 
   if (!active) {
     return (

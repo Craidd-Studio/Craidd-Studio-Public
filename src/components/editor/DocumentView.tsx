@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { editor } from "monaco-editor";
 import { useSolution } from "../../store/solutionStore";
+import { findFileTab } from "../../types/project";
 import { useMarkdown } from "../../store/markdownStore";
 import { useSplit } from "../../store/splitStore";
 import { setActiveEditor } from "../../lib/activeEditor";
@@ -10,7 +11,7 @@ import CodeView from "./CodeView";
 import MarkdownPreview from "./MarkdownPreview";
 
 export default function DocumentView() {
-  const tab = useSolution((s) => s.tabs.find((item) => item.fileId === s.activeFileId));
+  const tab = useSolution((s) => findFileTab(s.tabs, s.activeFileId));
   const root = useSolution((s) => s.rootPath);
   const navigation = useSolution((s) => s.navigation);
   const mode = useMarkdown((s) => tab ? s.modes[tab.fileId] ?? "preview" : "source");
@@ -65,7 +66,7 @@ export default function DocumentView() {
     {preview && tab && <MarkdownPreview key={tab.fileId} file={tab.fileId} root={root} content={tab.content} ready={ready}
       boundary={boundary} undo={undo} onFocus={focusPreview}
       replace={(start, end, replacement, expected) => {
-        const latest = useSolution.getState().tabs.find((item) => item.fileId === tab.fileId);
+        const latest = findFileTab(useSolution.getState().tabs, tab.fileId);
         if (!latest || latest.content !== expected) throw new Error("This document changed. Reopen the block before editing it.");
         const next = replaceMarkdownRange(expected, start, end, replacement, expected.slice(start, end));
         const current = model();

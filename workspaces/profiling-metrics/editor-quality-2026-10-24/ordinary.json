@@ -1,0 +1,57 @@
+{
+  "machine": "sk27",
+  "kernel": "7.2.11-arch1-1",
+  "binary": {
+    "path": "/home/skira24/.codex/worktrees/9b33/Craidd-Studio/src-tauri/target/debug/craidd-studio",
+    "sha256": "a5ece8389e0a1ef199acb5054d7f480b620442869b1d5936bb035177587e0862"
+  },
+  "gates": {
+    "desktop": "PASS",
+    "responsive": "PASS",
+    "releaseMillionRows": "NOT TESTED",
+    "humanAcceptance": "NOT TESTED"
+  },
+  "layouts": [
+    {
+      "requested": [
+        1920,
+        1080
+      ],
+      "sidebarCsv": false,
+      "chartWidth": 1314,
+      "chartHeight": 306.453125,
+      "viewportHeight": 1080,
+      "width": 1876,
+      "scroll": 1876,
+      "bottom": 656
+    },
+    {
+      "requested": [
+        1280,
+        800
+      ],
+      "sidebarCsv": false,
+      "chartWidth": 674,
+      "chartHeight": 279.953125,
+      "viewportHeight": 800,
+      "width": 1236,
+      "scroll": 1236,
+      "bottom": 629.5
+    },
+    {
+      "requested": [
+        900,
+        800
+      ],
+      "sidebarCsv": false,
+      "chartWidth": 640,
+      "chartHeight": 279.953125,
+      "viewportHeight": 800,
+      "width": 856,
+      "scroll": 856,
+      "bottom": 629.5
+    }
+  ],
+  "display": "ordinary",
+  "sourceBaseline": "a1b30736cf3fd85f811f4123a2b0362bf9b2fb13 plus editor-completion changes"
+}

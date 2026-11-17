@@ -2262,7 +2262,7 @@ mod tests {
             item.selected_config_name = Some(project.into());
             item.status = "running".into();
             item.active_action = Some("run".into());
-            item.specs.insert("run".into(), RunSpec { label: project.into(), program: "cargo".into(),
+            item.specs.insert("run".into(), RunSpec { embedded_mono_jit_map:false, label: project.into(), program: "cargo".into(),
                 args: vec![], env: BTreeMap::new(), cwd: "/tmp".into(), linked: None, order: None });
             targets.push(RestartTarget { window_label: label.into(), instance_id: item.instance_id.clone(),
                 config_name: item.selected_config_name.clone(), profile_name: None, action: "run".into() });
@@ -2335,7 +2335,7 @@ mod tests {
         let debug = registry.windows["A"].specs["run"].clone();
         registry.windows.get_mut("A").unwrap().specs.insert("debug".into(), debug);
         let mut native = participant("/one.cln", "native", "library");
-        native.specs.insert("build".into(), RunSpec { label: "native".into(), program: "cmake".into(),
+        native.specs.insert("build".into(), RunSpec { embedded_mono_jit_map:false, label: "native".into(), program: "cmake".into(),
             args: vec![], env: BTreeMap::new(), cwd: "/tmp".into(), linked: None, order: None });
         registry.windows.insert("B".into(), native);
         registry.actions.get_mut("/one.cln").unwrap().action = "debug".into();
@@ -2367,7 +2367,7 @@ mod tests {
         let mut registry = Registry::default();
         let mut origin = participant("/one.cln", "host", "console");
         let mut native = participant("/one.cln", "native", "library");
-        let spec = |program: &str| RunSpec { label: program.into(), program: program.into(), args: vec![], env: BTreeMap::new(), cwd: "/tmp".into(), linked: None, order: None };
+        let spec = |program: &str| RunSpec { embedded_mono_jit_map:false, label: program.into(), program: program.into(), args: vec![], env: BTreeMap::new(), cwd: "/tmp".into(), linked: None, order: None };
         origin.specs.insert("debug".into(), spec("dotnet"));
         native.specs.insert("build".into(), spec("cmake"));
         registry.windows.insert("A".into(), origin);
@@ -2634,7 +2634,7 @@ mod tests {
         ] {
             let mut item = participant("/one.cln", label, "application");
             item.visible = visible;
-            item.specs.insert("run".into(), RunSpec { label: format!("run {label}"), program: "echo".into(),
+            item.specs.insert("run".into(), RunSpec { embedded_mono_jit_map:false, label: format!("run {label}"), program: "echo".into(),
                 args: vec![], env: BTreeMap::new(), cwd: "/tmp".into(),
                 linked: Some(crate::types::LinkedLaunch { after: vec![], priority, ready_url: ready_url.map(String::from), timeout_ms: 45000 }), order: None });
             registry.windows.insert(label.into(), item);

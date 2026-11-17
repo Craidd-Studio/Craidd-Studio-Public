@@ -1,0 +1,26 @@
+{
+  "version": "1.0.0",
+  "target": "linux-x86_64-gnu",
+  "minimumGlibc": "2.34",
+  "sha256": "f358701122fdd6e8fcf2983cb838436da1df63e5b05a45f25067a5e5720423fc",
+  "sourceSha256": "34542a467af48c9930377f1301089bea957051d2968a68baa34bcce3faeec51b",
+  "compiler": "cc (GCC) 16.2.1 20260810",
+  "flags": [
+    "-std=c11",
+    "-O2",
+    "-g0",
+    "-fPIC",
+    "-fvisibility=hidden",
+    "-shared",
+    "-Wall",
+    "-Wextra",
+    "-Werror",
+    "-Wl,-z,relro,-z,now",
+    "-Wl,--build-id=sha1"
+  ],
+  "mapLimitBytes": 16777216,
+  "nameLimitBytes": 4096,
+  "supportedInitialization": "dlsym(mono_jit_init_version)",
+  "startupCoverage": "incomplete",
+  "runtimeBuild": false
+}

@@ -1,0 +1,453 @@
+{
+ "steps": [
+  {
+   "step": "player endpoint owned by started PID",
+   "passed": true,
+   "pid": 338036,
+   "birth": 3784627,
+   "port": 56841,
+   "listening": [
+    56841
+   ]
+  },
+  {
+   "step": "S1 attach accepted",
+   "passed": true,
+   "message": null
+  },
+  {
+   "step": "S1: C# breakpoint stack/locals",
+   "passed": true,
+   "thread": 1,
+   "top": "[Managed] NativeProbe.Update()",
+   "line": 41,
+   "file": "<repo>/workspaces/unity/Assets/Scripts/NativeProbe.cs",
+   "depth": 1,
+   "scopes": [
+    "Locals"
+   ],
+   "locals": {
+    "this": "CSharp to Cpp Probe (NativeProbe)",
+    "count": "20000",
+    "input": "7"
+   },
+   "seed_field": "7"
+  },
+  {
+   "step": "S1 threads listed",
+   "passed": true,
+   "count": 3
+  },
+  {
+   "step": "S1 step over moves to next C# line",
+   "passed": true,
+   "line": 42,
+   "reason": "pause"
+  },
+  {
+   "step": "S1 repeat: C# breakpoint stack/locals",
+   "passed": true,
+   "thread": 1,
+   "top": "[Managed] NativeProbe.Update()",
+   "line": 41,
+   "file": "<repo>/workspaces/unity/Assets/Scripts/NativeProbe.cs",
+   "depth": 1,
+   "scopes": [
+    "Locals"
+   ],
+   "locals": {
+    "this": "CSharp to Cpp Probe (NativeProbe)",
+    "count": "20000",
+    "input": "8"
+   },
+   "seed_field": "7"
+  },
+  {
+   "step": "S1 continue reaches next Update",
+   "passed": true,
+   "before": 0,
+   "after": 1
+  },
+  {
+   "step": "S1 disconnect(terminateDebuggee:false) acknowledged",
+   "passed": true,
+   "message": null
+  },
+  {
+   "step": "S1 adapter exits after detach; player alive",
+   "passed": true,
+   "adapter_exit": 0
+  },
+  {
+   "step": "S2 reattach accepted",
+   "passed": true,
+   "message": null
+  },
+  {
+   "step": "S2: C# breakpoint stack/locals",
+   "passed": true,
+   "thread": 1,
+   "top": "[Managed] NativeProbe.Update()",
+   "line": 41,
+   "file": "<repo>/workspaces/unity/Assets/Scripts/NativeProbe.cs",
+   "depth": 1,
+   "scopes": [
+    "Locals"
+   ],
+   "locals": {
+    "this": "CSharp to Cpp Probe (NativeProbe)",
+    "count": "20000",
+    "input": "53876"
+   },
+   "seed_field": "7"
+  },
+  {
+   "step": "S2 target ran between sessions",
+   "passed": true,
+   "before": 1,
+   "after": 53869
+  },
+  {
+   "step": "S2 detach while paused acknowledged",
+   "passed": true,
+   "message": null
+  },
+  {
+   "step": "S2 player alive after paused detach",
+   "passed": true,
+   "cpu_ticks_delta": 199
+  },
+  {
+   "step": "S3 attach accepted",
+   "passed": true,
+   "message": null
+  },
+  {
+   "step": "S3: C# breakpoint stack/locals",
+   "passed": true,
+   "thread": 1,
+   "top": "[Managed] NativeProbe.Update()",
+   "line": 41,
+   "file": "<repo>/workspaces/unity/Assets/Scripts/NativeProbe.cs",
+   "depth": 1,
+   "scopes": [
+    "Locals"
+   ],
+   "locals": {
+    "this": "CSharp to Cpp Probe (NativeProbe)",
+    "count": "20000",
+    "input": "131438"
+   },
+   "seed_field": "7"
+  },
+  {
+   "step": "S3 paused detach had resumed Update",
+   "passed": true,
+   "before": 53869,
+   "after": 131431
+  },
+  {
+   "step": "S3 player alive after adapter SIGKILL while paused",
+   "passed": true
+  },
+  {
+   "step": "S4 attach after adapter failure accepted",
+   "passed": true,
+   "message": null
+  },
+  {
+   "step": "S4: C# breakpoint stack/locals",
+   "passed": true,
+   "thread": 1,
+   "top": "[Managed] NativeProbe.Update()",
+   "line": 41,
+   "file": "<repo>/workspaces/unity/Assets/Scripts/NativeProbe.cs",
+   "depth": 1,
+   "scopes": [
+    "Locals"
+   ],
+   "locals": {
+    "this": "CSharp to Cpp Probe (NativeProbe)",
+    "count": "20000",
+    "input": "210270"
+   },
+   "seed_field": "7"
+  },
+  {
+   "step": "S4 target resumed after adapter failure",
+   "passed": true,
+   "before": 131431,
+   "after": 210263
+  },
+  {
+   "step": "S5 owned player end observed by adapter",
+   "passed": true,
+   "event": {
+    "type": "event",
+    "event": "terminated",
+    "body": {},
+    "seq": 198
+   },
+   "adapter_exit": null,
+   "player_exit": 0
+  },
+  {
+   "step": "S5 disconnect after target end",
+   "passed": true,
+   "success": true,
+   "message": null,
+   "adapter_exit": 0
+  },
+  {
+   "step": "player2 endpoint owned by started PID",
+   "passed": true,
+   "pid": 338399,
+   "birth": 3786554,
+   "port": 56823,
+   "listening": [
+    55000,
+    56823
+   ]
+  },
+  {
+   "step": "S6 attach to new incarnation accepted",
+   "passed": true,
+   "previous": [
+    338036,
+    3784627,
+    56841
+   ],
+   "current": [
+    338399,
+    3786554,
+    56823
+   ]
+  },
+  {
+   "step": "S6: C# breakpoint stack/locals",
+   "passed": true,
+   "thread": 1,
+   "top": "[Managed] NativeProbe.Update()",
+   "line": 41,
+   "file": "<repo>/workspaces/unity/Assets/Scripts/NativeProbe.cs",
+   "depth": 1,
+   "scopes": [
+    "Locals"
+   ],
+   "locals": {
+    "this": "CSharp to Cpp Probe (NativeProbe)",
+    "count": "20000",
+    "input": "7754"
+   },
+   "seed_field": "7"
+  },
+  {
+   "step": "S6 detach leaves new incarnation alive",
+   "passed": true,
+   "adapter_exit": 0
+  }
+ ],
+ "foreignBefore": {
+  "51760": {
+   "exe": "/usr/lib/unityhub/unityhub-bin",
+   "birth": 1716148
+  },
+  "51779": {
+   "exe": "/usr/lib/unityhub/unityhub-bin",
+   "birth": 1716167
+  },
+  "51780": {
+   "exe": "/usr/lib/unityhub/unityhub-bin",
+   "birth": 1716168
+  },
+  "51782": {
+   "exe": "/usr/lib/unityhub/unityhub-bin",
+   "birth": 1716170
+  },
+  "51821": {
+   "exe": "/usr/lib/unityhub/unityhub-bin",
+   "birth": 1716227
+  },
+  "51827": {
+   "exe": "/usr/lib/unityhub/unityhub-bin",
+   "birth": 1716228
+  },
+  "51884": {
+   "exe": "/usr/lib/unityhub/unityhub-bin",
+   "birth": 1716238
+  },
+  "51910": {
+   "exe": "/usr/lib/unityhub/UnityLicensingClient_V1/Unity.Licensing.Client",
+   "birth": 1716266
+  },
+  "168668": {
+   "exe": "~/Unity/Hub/Editor/6000.5.10f1/Editor/unityhub-unity-editor-6000.5.10f1",
+   "birth": 2411689
+  },
+  "168706": {
+   "exe": "~/Unity/Hub/Editor/6000.5.10f1/Editor/Data/Resources/Licensing/Client/Unity.Licensing.Client",
+   "birth": 2411693
+  },
+  "168792": {
+   "exe": "~/Unity/Hub/Editor/6000.5.10f1/Editor/Data/Resources/PackageManager/Server/UnityPackageManager",
+   "birth": 2411769
+  },
+  "168936": {
+   "exe": "~/Unity/Hub/Editor/6000.5.10f1/Editor/Data/Tools/BuildPipeline/Compilation/Unity.ILPP.Runner/Unity.ILPP.Runner",
+   "birth": 2411912
+  },
+  "168937": {
+   "exe": "~/Unity/Hub/Editor/6000.5.10f1/Editor/Data/Tools/UnityAutoQuitter",
+   "birth": 2411912
+  },
+  "169022": {
+   "exe": "~/Unity/Hub/Editor/6000.5.10f1/Editor/unityhub-unity-editor-6000.5.10f1",
+   "birth": 2411992
+  },
+  "169023": {
+   "exe": "~/Unity/Hub/Editor/6000.5.10f1/Editor/Data/Tools/UnityAutoQuitter",
+   "birth": 2411992
+  },
+  "169025": {
+   "exe": "~/Unity/Hub/Editor/6000.5.10f1/Editor/Data/Tools/UnityShaderCompiler",
+   "birth": 2411994
+  },
+  "169258": {
+   "exe": "~/Unity/Hub/Editor/6000.5.10f1/Editor/Data/Tools/UnityShaderCompiler",
+   "birth": 2412188
+  },
+  "169292": {
+   "exe": "~/Unity/Hub/Editor/6000.5.10f1/Editor/unityhub-unity-editor-6000.5.10f1",
+   "birth": 2412194
+  },
+  "169293": {
+   "exe": "~/Unity/Hub/Editor/6000.5.10f1/Editor/Data/Tools/UnityAutoQuitter",
+   "birth": 2412194
+  },
+  "169617": {
+   "exe": "~/Unity/Hub/Editor/6000.5.10f1/Editor/Data/Tools/UnityShaderCompiler",
+   "birth": 2412381
+  }
+ },
+ "capabilities": {
+  "supportsFunctionBreakpoints": true,
+  "supportsConditionalBreakpoints": true,
+  "supportsHitConditionalBreakpoints": true,
+  "supportsEvaluateForHovers": true,
+  "exceptionBreakpointFilters": [
+   {
+    "filter": "all",
+    "label": "All Exceptions",
+    "description": "Break when an exception is thrown.",
+    "supportsCondition": true,
+    "conditionDescription": "Comma-separated list of exception types to break on, or if the list starts with '!', a list of exception types to ignore."
+   }
+  ],
+  "supportsSetVariable": true,
+  "supportsGotoTargetsRequest": true,
+  "supportsCompletionsRequest": true,
+  "completionTriggerCharacters": [
+   "."
+  ],
+  "additionalModuleColumns": [],
+  "supportedChecksumAlgorithms": [],
+  "supportsExceptionOptions": true,
+  "supportsExceptionInfoRequest": true,
+  "supportsLogPoints": true,
+  "supportsExceptionFilterOptions": true,
+  "breakpointModes": []
+ },
+ "s1Breakpoints": [
+  {
+   "id": 55695854,
+   "verified": false,
+   "message": "The breakpoint will not currently be hit",
+   "line": 41,
+   "column": 1,
+   "BoundBreakpoints": []
+  }
+ ],
+ "foreignAfter": {
+  "51760": {
+   "exe": "/usr/lib/unityhub/unityhub-bin",
+   "birth": 1716148
+  },
+  "51779": {
+   "exe": "/usr/lib/unityhub/unityhub-bin",
+   "birth": 1716167
+  },
+  "51780": {
+   "exe": "/usr/lib/unityhub/unityhub-bin",
+   "birth": 1716168
+  },
+  "51782": {
+   "exe": "/usr/lib/unityhub/unityhub-bin",
+   "birth": 1716170
+  },
+  "51821": {
+   "exe": "/usr/lib/unityhub/unityhub-bin",
+   "birth": 1716227
+  },
+  "51827": {
+   "exe": "/usr/lib/unityhub/unityhub-bin",
+   "birth": 1716228
+  },
+  "51884": {
+   "exe": "/usr/lib/unityhub/unityhub-bin",
+   "birth": 1716238
+  },
+  "51910": {
+   "exe": "/usr/lib/unityhub/UnityLicensingClient_V1/Unity.Licensing.Client",
+   "birth": 1716266
+  },
+  "168668": {
+   "exe": "~/Unity/Hub/Editor/6000.5.10f1/Editor/unityhub-unity-editor-6000.5.10f1",
+   "birth": 2411689
+  },
+  "168706": {
+   "exe": "~/Unity/Hub/Editor/6000.5.10f1/Editor/Data/Resources/Licensing/Client/Unity.Licensing.Client",
+   "birth": 2411693
+  },
+  "168792": {
+   "exe": "~/Unity/Hub/Editor/6000.5.10f1/Editor/Data/Resources/PackageManager/Server/UnityPackageManager",
+   "birth": 2411769
+  },
+  "168936": {
+   "exe": "~/Unity/Hub/Editor/6000.5.10f1/Editor/Data/Tools/BuildPipeline/Compilation/Unity.ILPP.Runner/Unity.ILPP.Runner",
+   "birth": 2411912
+  },
+  "168937": {
+   "exe": "~/Unity/Hub/Editor/6000.5.10f1/Editor/Data/Tools/UnityAutoQuitter",
+   "birth": 2411912
+  },
+  "169022": {
+   "exe": "~/Unity/Hub/Editor/6000.5.10f1/Editor/unityhub-unity-editor-6000.5.10f1",
+   "birth": 2411992
+  },
+  "169023": {
+   "exe": "~/Unity/Hub/Editor/6000.5.10f1/Editor/Data/Tools/UnityAutoQuitter",
+   "birth": 2411992
+  },
+  "169025": {
+   "exe": "~/Unity/Hub/Editor/6000.5.10f1/Editor/Data/Tools/UnityShaderCompiler",
+   "birth": 2411994
+  },
+  "169258": {
+   "exe": "~/Unity/Hub/Editor/6000.5.10f1/Editor/Data/Tools/UnityShaderCompiler",
+   "birth": 2412188
+  },
+  "169292": {
+   "exe": "~/Unity/Hub/Editor/6000.5.10f1/Editor/unityhub-unity-editor-6000.5.10f1",
+   "birth": 2412194
+  },
+  "169293": {
+   "exe": "~/Unity/Hub/Editor/6000.5.10f1/Editor/Data/Tools/UnityAutoQuitter",
+   "birth": 2412194
+  },
+  "169617": {
+   "exe": "~/Unity/Hub/Editor/6000.5.10f1/Editor/Data/Tools/UnityShaderCompiler",
+   "birth": 2412381
+  }
+ },
+ "foreignSurvived": true
+}

@@ -469,7 +469,16 @@ This is an Alpha requirement, not an implemented or accepted fix. LSP
 checklist 6.1 verified server cleanup separately; that functional pass does
 not close this UX issue.
 
+## Unity profiling usability gate
+
+The [Unity UI/UX harness checklist](unity-profiling-harness-checklist.md) adds
+the master Unity profiling checkbox and U00–U19 acceptance cases. Its
+[initial report](../bugs/16-10-2026/unity-profiling-uiux-report.md) records
+current desktop failures; the [Opus handoff](../handoffs/handoff-unity-profiling-uiux-2026-10-16.md)
+specifies the repair/retest report. This profiling gate remains open and is
+separate from the historical UI sweep results above.
+
 ---
 
-*Last updated: Phase 3.x / Public Release Alpha, 16 November 2026. Author(s): ShinkuKira21.*
+*Last updated: Phase 3.x / 3.5, 17 November 2026. Author(s): ShinkuKira21.*
 *This document is a design.*

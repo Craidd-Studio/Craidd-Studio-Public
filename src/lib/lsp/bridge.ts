@@ -8,6 +8,7 @@ import { locationsToTargets, openTarget, referencesToTargets, type NavigationDep
 import type { Monaco } from "@monaco-editor/react";
 import type { editor, languages, Position, CancellationToken, Uri, IRange, IPosition } from "monaco-editor";
 import { Channel, invoke } from "@tauri-apps/api/core";
+import { isFileTab } from "../../types/project";
 import { useSolution } from "../../store/solutionStore";
 import { useSplit } from "../../store/splitStore";
 import { appendLspOutput, endedDocs, isNavigationOnly, serverName, useLsp, viewWithAttach, viewWithStatus, type LspSessionView } from "../../store/lspStore";
@@ -65,7 +66,7 @@ function fileIdOf(model: editor.ITextModel): string | null {
   const monaco = monacoRef;
   if (!monaco) return null;
   const key = model.uri.toString();
-  return useSolution.getState().tabs.find((tab) => monaco.Uri.parse(tab.fileId).toString() === key)?.fileId ?? null;
+  return useSolution.getState().tabs.filter(isFileTab).find((tab) => monaco.Uri.parse(tab.fileId).toString() === key)?.fileId ?? null;
 }
 
 const tracker = new DocumentTracker(transport, modelFor, {
@@ -115,7 +116,7 @@ const resolving = new Set<string>();
 let attributedFor: unknown = null;
 
 function tabBinding(uri: string): Binding | null {
-  const fileId = useSolution.getState().tabs.find((tab) => fileUri(tab.fileId) === uri)?.fileId;
+  const fileId = useSolution.getState().tabs.filter(isFileTab).find((tab) => fileUri(tab.fileId) === uri)?.fileId;
   return fileId ? tracker.binding(fileId) : null;
 }
 
@@ -146,7 +147,7 @@ function resolveAttributions(): void {
 }
 
 function isOpenUri(uri: string): boolean {
-  return useSolution.getState().tabs.some((tab) => fileUri(tab.fileId) === uri && modelFor(tab.fileId) !== null);
+  return useSolution.getState().tabs.filter(isFileTab).some((tab) => fileUri(tab.fileId) === uri && modelFor(tab.fileId) !== null);
 }
 
 function flushDiagnostics(): void {
@@ -196,7 +197,7 @@ const MARKER_SEVERITY = [8, 8, 4, 2, 1];
 
 function setMarkers(session: number, uri: string, route: Route): void {
   const monaco = monacoRef;
-  const fileId = useSolution.getState().tabs.find((tab) => fileUri(tab.fileId) === uri)?.fileId;
+  const fileId = useSolution.getState().tabs.filter(isFileTab).find((tab) => fileUri(tab.fileId) === uri)?.fileId;
   const model = fileId ? modelFor(fileId) : null;
   if (!monaco || !model) return;
   metrics.markerCall();
@@ -223,7 +224,7 @@ function restoreMarkers(fileId: string): void {
 
 /** Read-only tabs of an ended session say so; every other affected document is refreshed as before. */
 function markEnded(affected: string[], generation: number): void {
-  const ended = endedDocs(affected, useSolution.getState().tabs, generation);
+  const ended = endedDocs(affected, useSolution.getState().tabs.filter(isFileTab), generation);
   if (Object.keys(ended).length > 0) useLsp.setState((state) => ({ docs: { ...state.docs, ...ended } }));
   for (const fileId of affected) if (!(fileId in ended)) refreshDocInfo(fileId);
 }
@@ -234,7 +235,7 @@ function clearSessionDiagnostics(session: number): void {
   publishProblems();
   if (!monaco) return;
   for (const uri of uris) {
-    const fileId = useSolution.getState().tabs.find((tab) => fileUri(tab.fileId) === uri)?.fileId;
+    const fileId = useSolution.getState().tabs.filter(isFileTab).find((tab) => fileUri(tab.fileId) === uri)?.fileId;
     const model = fileId ? modelFor(fileId) : null;
     if (model) for (const route of ["push", "pull"]) monaco.editor.setModelMarkers(model, `lsp:${session}:${route}`, []);
   }
@@ -316,7 +317,7 @@ const pullTransport = {
     sentOpen.set(`${session}\u0000${uri}`, gateOpen(lastStatus.get(session)));
     const reply = await invoke<{ kind: string; report?: PullReport; code?: number; message?: string }>("lsp_pull", { session, uri, previousResultId });
     if (reply.kind === "notReady") {
-      const fileId = useSolution.getState().tabs.find((tab) => fileUri(tab.fileId) === uri)?.fileId;
+      const fileId = useSolution.getState().tabs.filter(isFileTab).find((tab) => fileUri(tab.fileId) === uri)?.fileId;
       if (fileId) awaitingReady.get(session)?.add(fileId) ?? awaitingReady.set(session, new Set([fileId]));
       return { kind: "noResult" };
     }
@@ -431,8 +432,8 @@ function asLocations(monaco: Monaco, targets: Target[]): languages.Location[] {
 /** Ownership comes from the single backend resolver (`lsp_attribute`); the store opens or focuses the tab. */
 function navigationDeps(): NavigationDeps {
   return {
-    isOpen: (path) => useSolution.getState().tabs.some((tab) => tab.fileId === path),
-    isReadOnly: (path) => useSolution.getState().tabs.find((tab) => tab.fileId === path)?.readOnly === true,
+    isOpen: (path) => useSolution.getState().tabs.filter(isFileTab).some((tab) => tab.fileId === path),
+    isReadOnly: (path) => useSolution.getState().tabs.filter(isFileTab).find((tab) => tab.fileId === path)?.readOnly === true,
     owner: async (path) => {
       const solution = useSolution.getState().solution;
       if (!solution) return null;
@@ -446,13 +447,13 @@ function navigationDeps(): NavigationDeps {
       const binding = origin ? tracker.binding(origin) : null;
       const held = tracker.binding(path);
       // Already open here and held by the navigating session (and not ended): focus it, nothing to rebind.
-      if (binding && held?.session === binding.session && useSolution.getState().tabs.some((tab) => tab.fileId === path)) {
+      if (binding && held?.session === binding.session && useSolution.getState().tabs.filter(isFileTab).some((tab) => tab.fileId === path)) {
         await useSolution.getState().revealFile(path, line, column);
         return;
       }
       if (!binding) {
         // No live session to read or bind through: an already-open read-only tab is still focused (its `ended` note stays).
-        if (useSolution.getState().tabs.some((tab) => tab.fileId === path)) await useSolution.getState().revealFile(path, line, column);
+        if (useSolution.getState().tabs.filter(isFileTab).some((tab) => tab.fileId === path)) await useSolution.getState().revealFile(path, line, column);
         else appendLspOutput([{ session: 0, severity: 3, text: `[lsp] ${path} is outside the solution's projects and there is no language-server session to read it through` }]);
         return;
       }
@@ -577,7 +578,7 @@ const gate = new LaunchGate(scheduleIdle, (reason) => void attachActive(reason),
 function onActive(): void {
   const fileId = useSolution.getState().activeFileId;
   // A read-only navigation tab is bound only by navigation from a live session (decision 51), never by routing.
-  if (fileId && isNavigationOnly(useSolution.getState().tabs, fileId)) return;
+  if (fileId && isNavigationOnly(useSolution.getState().tabs.filter(isFileTab), fileId)) return;
   const binding = fileId ? tracker.binding(fileId) : null;
   const outcome = gate.onActive(fileId, {
     enabled: useLsp.getState().enabled,
@@ -601,7 +602,7 @@ async function attachActive(reason: "idle" | "timeout"): Promise<void> {
   try { reply = await invoke<AttachReply>("lsp_attach", { file: fileId, solution, languages, reason }); }
   catch (error) { console.warn("[lsp] attach failed:", error); return; }
   // Revalidate after the await: same solution, tab still open.
-  if (key !== solutionKey || !useSolution.getState().tabs.some((t) => t.fileId === fileId)) return;
+  if (key !== solutionKey || !useSolution.getState().tabs.filter(isFileTab).some((t) => t.fileId === fileId)) return;
   if (reply.kind === "disabled") return;
   if (reply.kind !== "routed") {
     const info = reply.kind === "skipped" ? { kind: "none" as const } : { kind: reply.kind, reason: reply.reason };
@@ -693,9 +694,9 @@ export async function startupComplete(): Promise<void> {
   useSolution.subscribe((state, previous) => {
     const key = state.clnPath ?? state.rootPath;
     if (key !== solutionKey) { solutionKey = key; closeSolution(); }
-    if (state.tabs !== previous.tabs) {
-      const open = new Set(state.tabs.map((t) => t.fileId));
-      for (const tab of previous.tabs) if (!open.has(tab.fileId)) void tracker.close(tab.fileId);
+    if (state.tabs !== previous.tabs.filter(isFileTab)) {
+      const open = new Set(state.tabs.filter(isFileTab).map((t) => t.fileId));
+      for (const tab of previous.tabs.filter(isFileTab)) if (!open.has(tab.fileId)) void tracker.close(tab.fileId);
     }
     if (state.activeFileId !== previous.activeFileId) onActive();
   });
@@ -704,9 +705,9 @@ export async function startupComplete(): Promise<void> {
   window.addEventListener("focus", () => { for (const scheduler of schedulers.values()) scheduler.focused(); });
   // Decision 21: a manifest Craidd saved or reloaded from disk (its saved content changed).
   useSolution.subscribe((state, previous) => {
-    for (const tab of state.tabs) {
+    for (const tab of state.tabs.filter(isFileTab)) {
       if (!tab.fileId.endsWith("/Cargo.toml")) continue;
-      const before = previous.tabs.find((t) => t.fileId === tab.fileId);
+      const before = previous.tabs.filter(isFileTab).find((t) => t.fileId === tab.fileId);
       if (before && before.originalContent !== tab.originalContent) {
         void invoke<{ reloaded: number[]; restarted: number[] }>("lsp_manifest_changed", { path: tab.fileId })
           // Decision 33: a moved workspace root is a new identity; the backend stopped the old session.
@@ -732,7 +733,7 @@ function afterRestart(generation: number): void {
   useLsp.setState((state) => {
     const docs = { ...state.docs };
     for (const [fileId, info] of Object.entries(docs)) if (info.kind === "bound" && info.session === generation) delete docs[fileId];
-    return { docs: { ...docs, ...endedDocs(affected, useSolution.getState().tabs, generation) } };
+    return { docs: { ...docs, ...endedDocs(affected, useSolution.getState().tabs.filter(isFileTab), generation) } };
   });
   gate.scheduleLaunch();
 }

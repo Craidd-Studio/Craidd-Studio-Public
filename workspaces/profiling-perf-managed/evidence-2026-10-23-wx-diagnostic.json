@@ -1,0 +1,455 @@
+{
+  "machine": "sk27",
+  "kernel": "7.2.11-arch1-1",
+  "uid": 1000,
+  "perfVersion": "perf version 7.2.11-1",
+  "harness": {
+    "path": "/tmp/craidd-perf-20261023-backend-target/release/craidd-perf-backend-fixture",
+    "bytes": 3873472,
+    "sha256": "d4e6f57368af0ab40813d45daa5b15bf90ee7da612c41fd146a8faf45ebb2172"
+  },
+  "sourceFiles": [
+    {
+      "path": "/home/skira24/.codex/worktrees/9b33/Craidd-Studio/workspaces/profiling-perf-managed/qualify_maps.py",
+      "bytes": 10325,
+      "sha256": "4af50a83f53fd49a9635473c32b1657d51dd9320a70b47bff20174025cd53ece"
+    },
+    {
+      "path": "/home/skira24/.codex/worktrees/9b33/Craidd-Studio/workspaces/profiling-perf-managed/Program.cs",
+      "bytes": 1514,
+      "sha256": "2bead60eee9bedf866b408162e724d24f0c85eac54ea3f3c54c785e1f830a972"
+    },
+    {
+      "path": "/home/skira24/.codex/worktrees/9b33/Craidd-Studio/src-tauri/src/perf_capture.rs",
+      "bytes": 57180,
+      "sha256": "6392404d2e0f64f83b738dd1d814da73f0ccd63d8e58dfdd3594bc149b55fba7"
+    },
+    {
+      "path": "/home/skira24/.codex/worktrees/9b33/Craidd-Studio/src-tauri/src/perf_model.rs",
+      "bytes": 34721,
+      "sha256": "4cfb744e19dedbc900a34a3e8af26866e384e17470db53d00de4c68e546f12a9"
+    }
+  ],
+  "fixture": [
+    {
+      "path": "/tmp/craidd-perf-20261023-managed-build/dotnet/ManagedPerfFixture.dll",
+      "bytes": 5632,
+      "sha256": "05b88c0934b4e15fbd4e6aaaca8aa376b4ec5bf3e74f3fdf125ec9c21681eb9c"
+    },
+    {
+      "path": "/tmp/craidd-perf-20261023-managed-build/ManagedPerfFixture.exe",
+      "bytes": 4096,
+      "sha256": "277844c6a3b62aa1341a7fb6ade2b3e7f4f4a5b0e6361a90b7a730c79dbb01d7"
+    }
+  ],
+  "runtimeVersions": {
+    "dotnetSdk": "10.0.113",
+    "dotnetRuntimes": "Microsoft.AspNetCore.App 10.0.13 [/usr/share/dotnet/shared/Microsoft.AspNetCore.App]\nMicrosoft.NETCore.App 10.0.13 [/usr/share/dotnet/shared/Microsoft.NETCore.App]\n",
+    "mono": "Mono JIT compiler version 6.12.0 (makepkg/0cbf0e290c3 Sat Mar  9 11:37:33 UTC 2024)\nCopyright (C) 2002-2014 Novell, Inc, Xamarin Inc and Contributors. www.mono-project.com\n\tTLS:           __thread\n\tSIGSEGV:       altstack\n\tNotifications: epoll\n\tArchitecture:  amd64\n\tDisabled:      none\n\tMisc:          softdebug \n\tInterpreter:   yes\n\tLLVM:          supported, not enabled.\n\tSuspend:       hybrid\n\tGC:            sgen (concurrent by default)\n"
+  },
+  "cases": [
+    {
+      "runtime": "dotnet",
+      "mapEnabled": true,
+      "diagnosticOnly": true,
+      "command": [
+        "dotnet",
+        "/tmp/craidd-perf-20261023-managed-build/dotnet/ManagedPerfFixture.dll"
+      ],
+      "environmentOverrides": {
+        "DOTNET_PerfMapEnabled": "1",
+        "DEBUGINFOD_URLS": "",
+        "DOTNET_EnableWriteXorExecute": "0"
+      },
+      "mapBeforeCapture": {
+        "path": "/tmp/perf-34155.map",
+        "bytes": 9264,
+        "sha256": "58fe81698f9320f94f3cc67d4f3cdb80cd29ae13967ad964ec2087b51690534d"
+      },
+      "pid": 34155,
+      "doublemapperMappings": [],
+      "product": {
+        "bottomUp": {
+          "childCount": 1,
+          "children": [
+            {
+              "frame": {
+                "address": "7fc247472937",
+                "module": "/tmp/perf-34155.map",
+                "resolved": true,
+                "source": null,
+                "symbol": "int64 [ManagedPerfFixture] ManagedPerfFixture::KnownJitHot(int64)[OptimizedTier1]",
+                "symbolOrigin": "perfMap"
+              },
+              "frameId": 0,
+              "inclusiveWeight": 3959595920,
+              "sampleCount": 392,
+              "sampledEventSharePct": 100.0,
+              "selfWeight": 3959595920
+            }
+          ],
+          "clock": "elapsed ns from first retained monotonic sample; no session clock mapping",
+          "moduleFilterBasis": "samples containing this exact module; complete calling context retained",
+          "omittedChildren": 0,
+          "pathWeight": 3959595920,
+          "selectedSamples": 392,
+          "totalWeight": 3959595920
+        },
+        "capture": {
+          "attributionValid": true,
+          "buildIds": [
+            {
+              "capturedBuildId": "d320029ad1a23be2f4bce117fd321cbd23a2014b",
+              "currentBuildId": "d320029ad1a23be2f4bce117fd321cbd23a2014b",
+              "debugFiles": [],
+              "module": "/usr/lib/libc.so.6",
+              "state": "matched"
+            },
+            {
+              "capturedBuildId": "8a5d1b4e02259934810ebee057affcd86a1c89d2",
+              "currentBuildId": "8a5d1b4e02259934810ebee057affcd86a1c89d2",
+              "debugFiles": [],
+              "module": "/usr/share/dotnet/shared/Microsoft.NETCore.App/10.0.13/libcoreclr.so",
+              "state": "matched"
+            }
+          ],
+          "clockDomain": "CLOCK_MONOTONIC",
+          "clockMapping": null,
+          "collectorExit": null,
+          "collectorIdentity": {
+            "birth": 432680,
+            "pid": 34197
+          },
+          "collectorSignal": 2,
+          "coverage": {
+            "diagnostics": [],
+            "lossScanComplete": true,
+            "lostCount": 0,
+            "lostRecords": 0,
+            "lostSampleCount": 0,
+            "lostSampleRecords": 0,
+            "omittedSamples": 0,
+            "parsedSamples": 392,
+            "retainedSamples": 392,
+            "truncatedStacks": 0,
+            "unknownRecords": 0,
+            "unparsedLossRecords": 0
+          },
+          "createdMs": 1792762972348,
+          "decodeAndParseMs": 25,
+          "estimatedRawBytes": 431640,
+          "event": "cpu-clock:u",
+          "generation": 1,
+          "host": {
+            "birth": 432677,
+            "pid": 34192
+          },
+          "id": "capture-1792762972348-34192-1",
+          "jitMap": {
+            "basis": "Names reported by perf from the PID map; no ELF build-ID or source-line verification",
+            "bytes": 9264,
+            "path": "/tmp/perf-34155.map",
+            "sha256": "58fe81698f9320f94f3cc67d4f3cdb80cd29ae13967ad964ec2087b51690534d",
+            "state": "matched"
+          },
+          "label": "perf \u00b7 PID 34155",
+          "lossScanMs": 0,
+          "moduleIdentityMs": 126,
+          "omittedStderrBytes": 0,
+          "omittedThreadObservations": 0,
+          "options": {
+            "durationSeconds": 2,
+            "frequency": 99,
+            "unwind": {
+              "kind": "fp"
+            }
+          },
+          "owner": "harness",
+          "parserCpuMs": 2,
+          "perfVersion": "perf version 7.2.11-1",
+          "pinned": false,
+          "profileId": "profile-fixture",
+          "rawBytes": 98740,
+          "rawLimit": 536870912,
+          "rawSha256": "70f8c6a92239329f5bd56463d27e0e1ba3491598e6a31adcd0ce8424c743d9b3",
+          "reasons": [
+            "Timed duration completed"
+          ],
+          "recordArgv": [
+            "record",
+            "--no-buildid-cache",
+            "--clockid",
+            "mono",
+            "--timestamp",
+            "--per-thread",
+            "--no-inherit",
+            "--user-callchains",
+            "-e",
+            "cpu-clock:u",
+            "-F",
+            "99",
+            "--call-graph",
+            "fp",
+            "-t",
+            "34155,34156,34157,34158,34159,34160,34161,34162,34163,34164",
+            "-o",
+            "/tmp/craidd-perf-20261023-wx-diagnostic/dotnet-map/capture/cache/05cc959d03761276cacb2d111388898cfdb246725469761f8a9bbbf3368b7132/capture-1792762972348-34192-1/perf.data"
+          ],
+          "solution": "/tmp/craidd-perf-20261023-wx-diagnostic/dotnet-map/capture/fixture.cln",
+          "sourceKind": "nativeStackSamples",
+          "state": "complete",
+          "stderr": "[ perf record: Woken up 1 times to write data ]\n[ perf record: Captured and wrote 0.059 MB /tmp/craidd-perf-20261023-wx-diagnostic/dotnet-map/capture/cache/05cc959d03761276cacb2d111388898cfdb246725469761f8a9bbbf3368b7132/capture-1792762972348-34192-1/perf.data ]\n",
+          "summary": {
+            "coverage": {
+              "diagnostics": [],
+              "lossScanComplete": true,
+              "lostCount": 0,
+              "lostRecords": 0,
+              "lostSampleCount": 0,
+              "lostSampleRecords": 0,
+              "omittedSamples": 0,
+              "parsedSamples": 392,
+              "retainedSamples": 392,
+              "truncatedStacks": 0,
+              "unknownRecords": 0,
+              "unparsedLossRecords": 0
+            },
+            "firstMonotonicNs": 4326836798042,
+            "frameCount": 11,
+            "lastMonotonicNs": 4328806951252,
+            "lossAccounting": "LOST and LOST_SAMPLES are separate reports and may overlap; never summed",
+            "retention": {
+              "frames": 100000,
+              "samples": 500000,
+              "stackReferences": 8000000
+            },
+            "threads": {
+              "34162": "jit-hot-0",
+              "34163": "jit-hot-1"
+            },
+            "units": "sampled cpu-clock event period (ns); not exact function time"
+          },
+          "target": {
+            "birth": 432475,
+            "pid": 34155
+          },
+          "threadPollMs": 100,
+          "threadsAtStart": [
+            {
+              "birth": 432475,
+              "name": "dotnet",
+              "tid": 34155
+            },
+            {
+              "birth": 432475,
+              "name": ".NET SynchManag",
+              "tid": 34156
+            },
+            {
+              "birth": 432475,
+              "name": ".NET EventPipe",
+              "tid": 34157
+            },
+            {
+              "birth": 432475,
+              "name": ".NET DebugPipe",
+              "tid": 34158
+            },
+            {
+              "birth": 432475,
+              "name": ".NET Debugger",
+              "tid": 34159
+            },
+            {
+              "birth": 432475,
+              "name": ".NET Finalizer",
+              "tid": 34160
+            },
+            {
+              "birth": 432475,
+              "name": ".NET Tiered Com",
+              "tid": 34161
+            },
+            {
+              "birth": 432476,
+              "name": "jit-hot-0",
+              "tid": 34162
+            },
+            {
+              "birth": 432476,
+              "name": "jit-hot-1",
+              "tid": 34163
+            },
+            {
+              "birth": 432476,
+              "name": ".NET SigHandler",
+              "tid": 34164
+            }
+          ],
+          "threadsGained": [],
+          "version": 1
+        }
+      },
+      "captureDecodeGate": "PASS",
+      "methodNamesGate": "PASS",
+      "raw": {
+        "path": "/tmp/craidd-perf-20261023-wx-diagnostic/dotnet-map/capture/cache/05cc959d03761276cacb2d111388898cfdb246725469761f8a9bbbf3368b7132/capture-1792762972348-34192-1/perf.data",
+        "bytes": 98740,
+        "sha256": "70f8c6a92239329f5bd56463d27e0e1ba3491598e6a31adcd0ce8424c743d9b3"
+      },
+      "decodedSamples": 392,
+      "unknownLines": [],
+      "totalSampledWeight": 3959595920,
+      "perfFixtureMethodWeight": 3959595920,
+      "perfFixtureMethodSharePct": 100.0,
+      "perfMapMethodWeight": 3959595920,
+      "perfMapMethodSharePct": 100.0,
+      "productFixtureMethodWeight": 3959595920,
+      "productFixtureMethodSharePct": 100.0,
+      "productOmittedTreeChildren": 0,
+      "perfMethodExamples": [
+        {
+          "tid": 34162,
+          "period": 10101010,
+          "symbol": "int64 [ManagedPerfFixture] ManagedPerfFixture::KnownJitHot(int64)[OptimizedTier1]",
+          "module": "/tmp/perf-34155.map",
+          "ip": "7fc247472937"
+        },
+        {
+          "tid": 34163,
+          "period": 10101010,
+          "symbol": "int64 [ManagedPerfFixture] ManagedPerfFixture::KnownJitHot(int64)[OptimizedTier1]",
+          "module": "/tmp/perf-34155.map",
+          "ip": "7fc247472937"
+        },
+        {
+          "tid": 34163,
+          "period": 10101010,
+          "symbol": "int64 [ManagedPerfFixture] ManagedPerfFixture::KnownJitHot(int64)[OptimizedTier1]",
+          "module": "/tmp/perf-34155.map",
+          "ip": "7fc247472937"
+        },
+        {
+          "tid": 34162,
+          "period": 10101010,
+          "symbol": "int64 [ManagedPerfFixture] ManagedPerfFixture::KnownJitHot(int64)[OptimizedTier1]",
+          "module": "/tmp/perf-34155.map",
+          "ip": "7fc247472937"
+        },
+        {
+          "tid": 34163,
+          "period": 10101010,
+          "symbol": "int64 [ManagedPerfFixture] ManagedPerfFixture::KnownJitHot(int64)[OptimizedTier1]",
+          "module": "/tmp/perf-34155.map",
+          "ip": "7fc247472937"
+        },
+        {
+          "tid": 34162,
+          "period": 10101010,
+          "symbol": "int64 [ManagedPerfFixture] ManagedPerfFixture::KnownJitHot(int64)[OptimizedTier1]",
+          "module": "/tmp/perf-34155.map",
+          "ip": "7fc247472937"
+        },
+        {
+          "tid": 34163,
+          "period": 10101010,
+          "symbol": "int64 [ManagedPerfFixture] ManagedPerfFixture::KnownJitHot(int64)[OptimizedTier1]",
+          "module": "/tmp/perf-34155.map",
+          "ip": "7fc247472937"
+        },
+        {
+          "tid": 34162,
+          "period": 10101010,
+          "symbol": "int64 [ManagedPerfFixture] ManagedPerfFixture::KnownJitHot(int64)[OptimizedTier1]",
+          "module": "/tmp/perf-34155.map",
+          "ip": "7fc247472937"
+        }
+      ],
+      "moduleExamples": [
+        "/tmp/perf-34155.map"
+      ],
+      "mapAfterDecode": {
+        "path": "/tmp/perf-34155.map",
+        "bytes": 9264,
+        "sha256": "58fe81698f9320f94f3cc67d4f3cdb80cd29ae13967ad964ec2087b51690534d"
+      },
+      "targetSurvived": true,
+      "mapContainsSampledFixtureIpExamples": [
+        {
+          "ip": "7fc247472937",
+          "method": "int64 [ManagedPerfFixture] ManagedPerfFixture::KnownJitHot(int64)[OptimizedTier1]"
+        },
+        {
+          "ip": "7fc247472937",
+          "method": "int64 [ManagedPerfFixture] ManagedPerfFixture::KnownJitHot(int64)[OptimizedTier1]"
+        },
+        {
+          "ip": "7fc247472937",
+          "method": "int64 [ManagedPerfFixture] ManagedPerfFixture::KnownJitHot(int64)[OptimizedTier1]"
+        },
+        {
+          "ip": "7fc247472937",
+          "method": "int64 [ManagedPerfFixture] ManagedPerfFixture::KnownJitHot(int64)[OptimizedTier1]"
+        },
+        {
+          "ip": "7fc247472937",
+          "method": "int64 [ManagedPerfFixture] ManagedPerfFixture::KnownJitHot(int64)[OptimizedTier1]"
+        },
+        {
+          "ip": "7fc247472937",
+          "method": "int64 [ManagedPerfFixture] ManagedPerfFixture::KnownJitHot(int64)[OptimizedTier1]"
+        },
+        {
+          "ip": "7fc247472937",
+          "method": "int64 [ManagedPerfFixture] ManagedPerfFixture::KnownJitHot(int64)[OptimizedTier1]"
+        },
+        {
+          "ip": "7fc247472937",
+          "method": "int64 [ManagedPerfFixture] ManagedPerfFixture::KnownJitHot(int64)[OptimizedTier1]"
+        }
+      ],
+      "normalFixtureExit": 0
+    }
+  ],
+  "formatVersion": 1,
+  "recordedUtc": "2026-10-23T13:49:41.357024+00:00",
+  "baselineRevision": "96caae67d6c04a034eca0e4fd953b995c150ba08",
+  "originalResult": {
+    "path": "/tmp/craidd-perf-20261023-wx-diagnostic/results.json",
+    "bytes": 15030,
+    "sha256": "75810c8dd197a16bc46eb758b441a3c926471a251b848e40f8283cc1e4794d2f"
+  },
+  "scope": "Single explicitly authorized .NET enabled-map W^X-off diagnostic; no product setting or automatic fallback",
+  "normalConfigurationGate": "FAIL",
+  "diagnosticGate": "PASS",
+  "comparisonBaseline": "workspaces/profiling-perf-managed/evidence-2026-10-22.json",
+  "numberOfDiagnosticCaptures": 1,
+  "hostObservationAfterRuns": {
+    "observedUtc": "2026-10-23T13:52:07.943393+00:00",
+    "uid": 1000,
+    "credentials": [
+      "CapEff:\t0000000000000000",
+      "NoNewPrivs:\t0",
+      "Seccomp:\t0"
+    ],
+    "settings": {
+      "perfEventParanoid": "2",
+      "kptrRestrict": "0",
+      "ptraceScope": "1"
+    },
+    "parentDotnetWriteXorExecute": null,
+    "fixtureProcessPresenceAfterRuns": {
+      "34155": false,
+      "38087": false,
+      "38517": false,
+      "38090": false,
+      "43713": false
+    }
+  },
+  "mappingSnapshot": {
+    "path": "/tmp/craidd-perf-20261023-wx-diagnostic/dotnet-map/target.maps",
+    "sha256": "01b44694b96fe7c99d00d6a089f9f28015469418e97c6daf16845ff7d98cf8fd",
+    "bytes": 18142,
+    "doublemapperLineCount": 0
+  }
+}
