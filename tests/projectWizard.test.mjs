@@ -99,3 +99,30 @@ test('automatic reload updates an unchanged clean file and never reloads read-on
     assert.deepEqual(calls, []);
   } finally { delete globalThis.__craiddWizardTestInvoke; }
 });
+
+for (const saveAs of [false, true]) test(`edits during ${saveAs ? 'Save As' : 'Save'} remain dirty against the bytes actually written`, async () => {
+  const tab = { kind: 'file', id: '/lab/pending.rs', fileId: '/lab/pending.rs', name: 'pending.rs', content: 'submitted version', originalContent: 'old disk', dirty: true, mtimeAtLastSync: 1 };
+  let finishWrite, started;
+  const writing = new Promise(resolve => { started = resolve; });
+  const pendingWrite = new Promise(resolve => { finishWrite = resolve; });
+  const writes = [];
+  globalThis.window = new EventTarget();
+  globalThis.__craiddWizardTestInvoke = (command, args) => {
+    if (command === 'overwrite_file') { writes.push(args); started(); return pendingWrite; }
+    if (command === 'stat_files') return [{ mtimeMs: writes.length ? 2 : 1 }];
+    throw new Error(command);
+  };
+  try {
+    useSolution.setState({ rootPath: null, solution: null, tabs: [tab], activeTabId: tab.id, activeFileId: tab.fileId });
+    const pending = saveAs ? useSolution.getState().saveFileAs(tab.fileId, '/lab/new.rs') : useSolution.getState().saveFile(tab.fileId);
+    await writing;
+    useSolution.getState().updateTabContent(tab.fileId, 'newer unsaved typing');
+    finishWrite(); await pending;
+    const current = useSolution.getState().tabs[0];
+    assert.equal(writes[0].content, 'submitted version');
+    assert.equal(current.originalContent, 'submitted version');
+    assert.equal(current.content, 'newer unsaved typing');
+    assert.equal(current.dirty, true);
+    assert.equal(current.fileId, saveAs ? '/lab/new.rs' : tab.fileId);
+  } finally { delete globalThis.__craiddWizardTestInvoke; }
+});

@@ -1,0 +1,14 @@
+✔ Exit → This Application closes every window, including a hidden one (3628.132971ms)
+✔ explorer menus stay inside a small window at every corner (4172.10711ms)
+✔ Metric editor overview, independent selection, hover, virtual rows and interpretation (7162.480654ms)
+✔ Human metric findings: complete row identities, clear scope, honest jump field, selection-free dividers (4105.16003ms)
+✔ Profiling workspace preserves real capture and inspection beside editable source (4777.711596ms)
+✔ solution windows reach the canonical title after registering (3746.337826ms)
+ℹ tests 6
+ℹ suites 0
+ℹ pass 6
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 27785.345207

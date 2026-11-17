@@ -48,6 +48,13 @@ the files and portable evidence. No original worktree was reset or cleaned.
   the tab is unchanged across the asynchronous read. Edits arriving during that
   read survive; launch pauses with a message if unsaved text remains. Explicit
   user-requested reload retains its separate discard behavior.
+- Save and Save As track the exact submitted content as the disk baseline.
+  Typing arriving while the write is pending stays dirty rather than being
+  falsely marked saved and becoming eligible for automatic disk reload.
+- Editor registration restores the owning tab's explicit read-only mode even
+  when React mounts after the preview-protection microtask. The first native
+  Markdown/Profiler round trip failed on this race; fix `541e879` passed the
+  repeated native scenario and the real-Monaco protection probe.
 
 The reload race is covered by a new regression. It is a source-backed defect,
 not a claim that every reported disk/editor/diagnostics issue has been resolved.
@@ -62,8 +69,25 @@ Profiler workspace coexisting without write-through or lost identity.
   `ldi_pair_requires_selected_managed_debug_and_library_build_slots` because
   the host lacks the required installed debugger (`netcoredbg`). This failure
   also occurred on the IntelliSense baseline. It is not a C# debugger pass.
-- Native cleanup, embedded build and desktop checks: being qualified; record
-  exact outcomes below rather than inheriting passes from source branches.
+- Native cleanup: 7 PASS, 1 ignored.
+- Embedded debug build: PASS. Frozen `541e879` executable SHA-256
+  `5ceaf380093f37070406cc41fe7d6e2e28e22a6118c68735160ca8215374fe2b`.
+- Private-display native desktop suite: 6/6 PASS, including Markdown/Profiler
+  edit/save, real process capture, metric inspection and small-window tables,
+  menu bounds, canonical titles and owned-host exit.
+- Native wizard: PASS for actual review/create controls, generated Rust
+  build/run and refusal to reuse an occupied destination. Other template
+  languages and native file choosers are not qualified by that smoke.
+- Real-Monaco buffer probe: all seven reported checks PASS.
+- Sustained Unity gate: RUNNING on the frozen `541e879` binary. Record its
+  exact outcome rather than inheriting passes from source branches.
+
+Portable current results and source hashes are in
+[the integration record](../releases/evidence/2026-11-17/prerelease-integration.json).
+These debug/native checks do not qualify optimized release performance or
+clean-machine installation. The Save/Save As follow-up is separately covered
+by deterministic pending-write regressions; its final native build will be
+recorded after the sustained collection run, avoiding build load during it.
 
 Temporary detailed logs use `/tmp/craidd-prerelease-*.log`. Historical reports
 keep their original dates, binaries, failures and scopes. Their PASS rows do

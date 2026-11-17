@@ -1682,7 +1682,7 @@ export const useSolution = create<SolutionState>((storeSet, get) => {
       set((s) => ({
         tabs: s.tabs.map((t) =>
           t.kind === "file" && t.fileId === fileId
-            ? { ...t, originalContent: t.content, dirty: false, diskState: "inSync", mtimeAtLastSync }
+            ? { ...t, originalContent: tab.content, dirty: t.content !== tab.content, diskState: "inSync", mtimeAtLastSync }
             : t
         ),
       }));
@@ -1716,7 +1716,7 @@ export const useSolution = create<SolutionState>((storeSet, get) => {
       set((s) => ({
         tabs: s.tabs.map((t) =>
           t.kind === "file" && t.fileId === oldFileId
-            ? { ...t, id: newPath, fileId: newPath, name: fileName, language, monacoLanguage: monacoLanguageForFilename(fileName), originalContent: t.content, dirty: false, diskState: "inSync", mtimeAtLastSync }
+            ? { ...t, id: newPath, fileId: newPath, name: fileName, language, monacoLanguage: monacoLanguageForFilename(fileName), originalContent: tab.content, dirty: t.content !== tab.content, diskState: "inSync", mtimeAtLastSync }
             : t
         ),
         activeTabId: s.activeTabId === oldFileId ? newPath : s.activeTabId,

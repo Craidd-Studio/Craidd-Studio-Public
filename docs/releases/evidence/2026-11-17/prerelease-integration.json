@@ -1,0 +1,55 @@
+{
+  "status": "internal candidate; no public-release approval",
+  "sourceCommit": "541e879",
+  "sourceRefs": {
+    "master": "d13d07cb0ff109baaf471f6888da19cf65095cd1",
+    "feat/intellisense-ws": "d13d07cb0ff109baaf471f6888da19cf65095cd1",
+    "codex/profiling-profiler-ui": "48e9c4d3bda6ef47e2777c43ca64f53d1b60b514",
+    "feat/unity/feat/csv-profiling": "84794af3bed9a38ec9adce7bd04626192132fffc",
+    "feat/unity/debug-a-to-p": "8bac01edf9bf1f0a0b84b55441b5638bc1233a29",
+    "uiux/ui-harness": "280b1d835e2b6aa9b93fbf4b3e55b5991e00a71d",
+    "verify/lsp-1c-step7-results": "b1358bd23363ca741f57d294ed70db5ddc578ee5"
+  },
+  "binary": {
+    "path": "/mnt/ext_drives/GamesDev/.codex/.worktrees/ad33/Craidd-Studio/test-results/prerelease/541e879/craidd-studio",
+    "sha256": "5ceaf380093f37070406cc41fe7d6e2e28e22a6118c68735160ca8215374fe2b",
+    "configuration": "embedded debug, not optimized release"
+  },
+  "checks": {
+    "frontendBuild": "PASS",
+    "nodeTestFiles": {
+      "passed": 37,
+      "failed": 0
+    },
+    "rustLibrary": {
+      "passed": 341,
+      "failed": 1,
+      "ignored": 13,
+      "failure": "ldi_pair_requires_selected_managed_debug_and_library_build_slots; installed debugger missing"
+    },
+    "processCleanup": {
+      "passed": 7,
+      "failed": 0,
+      "ignored": 1
+    },
+    "monacoBufferProbe": "all seven checks pass",
+    "nativeDesktop": {
+      "passed": 6,
+      "failed": 0,
+      "display": "private Xvfb, scratch HOME"
+    },
+    "nativeWizardRust": "PASS: review/create/build/run/occupied-destination refusal",
+    "unitySustained": "RUNNING"
+  },
+  "initialNativeFailure": {
+    "binarySha256": "4e2bf5359b27926e1480afa5c6756947c047aa8c464eb5fc8cc6ea5d440f1710",
+    "test": "Markdown/Profiler edit/save round trip",
+    "cause": "create-editor protection ran before delayed React editor mount; primary editor stayed read-only",
+    "fix": "541e879",
+    "recheck": "PASS"
+  },
+  "humanAcceptance": "NOT TESTED",
+  "optimizedReleasePerformance": "NOT TESTED",
+  "cleanMachinePackage": "NOT TESTED",
+  "published": false
+}

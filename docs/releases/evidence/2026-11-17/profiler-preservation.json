@@ -1,0 +1,22 @@
+{
+  "workspaces/profiling-metrics/row-usability-2026-10-24/windowed/before.json": "6aadcf7f8440a3ff3868be4a0fb67096f82838d25b5f3f8932c95ca19dfbcac0",
+  "workspaces/profiling-metrics/row-usability-2026-10-24/windowed/before.png": "92028f7654ab2db3b0ebf833118261bdd13fb84ac1b0108ce7805ae763d259b7",
+  "workspaces/profiling-metrics/row-usability-2026-10-24/windowed/build.json": "a4ae318ae778f62aecde71291ae1022a0d379fd0e7e8e3c76d109a0cb7c09bc1",
+  "workspaces/profiling-metrics/row-usability-2026-10-24/windowed/debug-1280.png": "cd45bc3bad161c93e9aff6bc581ad98d2c1dc23709c2568fbc76b4ac4e384b2c",
+  "workspaces/profiling-metrics/row-usability-2026-10-24/windowed/debug-900.png": "d10c6f46996169e94932b50f88280715c269548370afb32cddd562a9d964fadb",
+  "workspaces/profiling-metrics/row-usability-2026-10-24/windowed/debug-normal.png": "8e405dad360c33444b6506602111293a117551d13a192ff1b6ad3681eb32e15a",
+  "workspaces/profiling-metrics/row-usability-2026-10-24/windowed/debug.json": "666a93e75577add41c0ec4a6f1b73af437a8b79b1d8b005d759a58d02380d28f",
+  "workspaces/profiling-metrics/row-usability-2026-10-24/windowed/release-1280.png": "a02c91759a097b1545f38d1f06f1bf131d62a07fdce5db8291fc9411c2cb966d",
+  "workspaces/profiling-metrics/row-usability-2026-10-24/windowed/release-900.png": "c7c0b18c2e69b52311d4b78dad8704263b64ff95c4bec71c91a3538678cf52ce",
+  "workspaces/profiling-metrics/row-usability-2026-10-24/windowed/release-normal.png": "5e168cdfa0abdf7dff5c0e1e79b385609ecab97ed655025c5b9dbadb91e012e1",
+  "workspaces/profiling-metrics/row-usability-2026-10-24/windowed/release-transition.json": "8090e7fad384d9e9ffde0542c368e6637959f48fc3c3ca2073c2812893826a60",
+  "workspaces/profiling-metrics/row-usability-2026-10-24/windowed/release-workflow.json": "e465bc61e2c7153ceeffea9077fb7246639431e3cfa8f231607bd1f5e391d5f6",
+  "workspaces/profiling-metrics/row-usability-2026-10-24/windowed/release.json": "768f3ceaae81fb3c59a6ad66964b1d2da46fdac38737a4553317a084d9fd12af",
+  "docs/feats/profiling/design-metric-inspection-editor.md": "9d4290dba5d480988033cd4bd94844141575f1fc2842a683950ee146e4378f26",
+  "docs/feats/profiling/revisions/gr-001-m1-results.md": "150fa3551ee5f1fb8145069a5f9b732151c35b724bb30ed5c1664592198bd2d6",
+  "docs/feats/profiling/revisions/gr-001-m1-uiux.md": "a4ebfe250a732823080c9b52d41129b3ec68c6516ae17808c567452825dc0c4c",
+  "docs/feats/profiling/revisions/metric-row-usability-findings.md": "3af9dabbd076c48d27d9075abaed946982b15f3c6234262cf4b8be22b307c156",
+  "src/assets/styles/index.css": "d43aaf2e85e40d2a59fe69924e9debe9732ca702eede5021a0abd2f6fc40d118",
+  "src/components/panels/MetricImportPanel.tsx": "57c475927cbe8c6e37f3c2bac89f535920a52b74d8a7ac7bcf33ca140ca053c3",
+  "tests/ui/metric-row-usability.test.mjs": "38f1edff62d1e85d6c72d08ac2c3239bd5c7967352d785f561a3f21b3983fee7"
+}
