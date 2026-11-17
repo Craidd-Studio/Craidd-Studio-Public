@@ -156,6 +156,10 @@ struct Registry {
     actions: HashMap<String, GroupAction>,
     next_id: u64,
     restarting: HashSet<String>,
+    /// Solution path → (window label, instance id) of the managed window the user
+    /// declared as LDI origin by setting a Blue there. Only consulted when several
+    /// managed windows make the origin otherwise ambiguous.
+    ldi_origins: HashMap<String, (String, String)>,
     sequence: u64,
 }
 
@@ -206,6 +210,8 @@ pub struct LinkedSnapshot {
     pub active_action_id: Option<u64>,
     pub active_count: usize,
     pub problems: Vec<LinkedProblem>,
+    /// Declared LDI origin, published only while several managed windows share the solution.
+    pub ldi_origin_label: Option<String>,
 }
 
 #[derive(Clone, Serialize)]
@@ -312,10 +318,75 @@ fn ldi_pair(registry: &Registry, solution: &str) -> Option<(String, Vec<String>)
     let selected = registry.windows.iter().filter(|(_, item)| item.solution_path == solution && item.project_path.is_some());
     let managed = selected.clone().filter(|(_, item)| ldi_role(item) == Some("managed")).map(|(label, _)| label).collect::<Vec<_>>();
     let native = selected.filter(|(_, item)| ldi_role(item) == Some("native-library")).map(|(label, _)| label).collect::<Vec<_>>();
-    if managed.len() != 1 || native.is_empty() { return None; }
+    if native.is_empty() { return None; }
+    let origin = match managed.as_slice() {
+        [only] => (*only).clone(),
+        _ => declared_ldi_origin(registry, solution)?,
+    };
     let mut native = native.into_iter().cloned().collect::<Vec<_>>();
     native.sort();
-    Some((managed[0].clone(), native))
+    Some((origin, native))
+}
+
+/// The user's declared origin, only while that exact window instance is still a
+/// managed window of this solution. Never inferred from order, focus or config.
+fn declared_ldi_origin(registry: &Registry, solution: &str) -> Option<String> {
+    let (label, instance) = registry.ldi_origins.get(solution)?;
+    registry.windows.get(label).filter(|item| item.solution_path == solution && item.project_path.is_some()
+        && &item.instance_id == instance && ldi_role(item) == Some("managed")).map(|_| label.clone())
+}
+
+fn prune_ldi_origins(registry: &mut Registry) {
+    let stale = registry.ldi_origins.keys().filter(|solution| declared_ldi_origin(registry, solution).is_none())
+        .cloned().collect::<Vec<_>>();
+    for solution in stale { registry.ldi_origins.remove(&solution); }
+}
+
+fn managed_count(registry: &Registry, solution: &str) -> usize {
+    registry.windows.values().filter(|item| item.solution_path == solution && item.project_path.is_some()
+        && ldi_role(item) == Some("managed")).count()
+}
+
+/// Another managed window of `origin`'s solution that currently holds the LDI
+/// origin declaration, as (label, window id). `None` when `origin` already holds
+/// it, nobody does, or `origin` is the only managed window.
+pub(crate) fn competing_ldi_origin(app: &AppHandle, origin: &str) -> Result<Option<(String, u32)>, String> {
+    let state = app.state::<LinkedWindowRegistry>();
+    let registry = state.0.lock().map_err(|error| error.to_string())?;
+    let item = registry.windows.get(origin).ok_or("Managed window is no longer open")?;
+    if ldi_role(item) != Some("managed") || managed_count(&registry, &item.solution_path) < 2 { return Ok(None); }
+    Ok(declared_ldi_origin(&registry, &item.solution_path).filter(|label| label != origin)
+        .map(|label| { let window_id = registry.windows[&label].window_id; (label, window_id) }))
+}
+
+/// Previous declaration of one solution, kept so a failed Blue can restore it.
+pub(crate) type LdiOriginUndo = (String, Option<(String, String)>);
+
+/// Records `origin` as its solution's LDI origin. Returns the undo when it changed.
+pub(crate) fn declare_ldi_origin(app: &AppHandle, origin: &str) -> Result<Option<LdiOriginUndo>, String> {
+    let state = app.state::<LinkedWindowRegistry>();
+    let mut registry = state.0.lock().map_err(|error| error.to_string())?;
+    let item = registry.windows.get(origin).ok_or("Managed window is no longer open")?;
+    if ldi_role(item) != Some("managed") { return Ok(None); }
+    let solution = item.solution_path.clone();
+    let claim = (origin.to_owned(), item.instance_id.clone());
+    if registry.ldi_origins.get(&solution) == Some(&claim) { return Ok(None); }
+    let previous = registry.ldi_origins.insert(solution.clone(), claim);
+    registry.sequence += 1;
+    broadcast(app, &registry);
+    Ok(Some((solution, previous)))
+}
+
+/// Undoes `declare_ldi_origin` after the Blue it was made for failed.
+pub(crate) fn restore_ldi_origin(app: &AppHandle, (solution, previous): LdiOriginUndo) {
+    let state = app.state::<LinkedWindowRegistry>();
+    let Ok(mut registry) = state.0.lock() else { return; };
+    match previous {
+        Some(claim) => { registry.ldi_origins.insert(solution, claim); }
+        None => { registry.ldi_origins.remove(&solution); }
+    }
+    registry.sequence += 1;
+    broadcast(app, &registry);
 }
 
 fn ldi_members(registry: &Registry, solution: &str, origin: &str, partners: &[String]) -> Vec<String> {
@@ -389,10 +460,8 @@ pub(crate) fn ldi_origin_selection(app: &AppHandle, origin: &str) -> Result<LdiS
     if ldi_role(item) != Some("managed") {
         return Err("Select a C# Debug Power configuration to preview native calls".into());
     }
-    if registry.windows.values().filter(|candidate|
-        candidate.solution_path == item.solution_path && ldi_role(candidate) == Some("managed")).count() != 1 {
-        return Err("LDI needs one selected C# Debug window in this solution".into());
-    }
+    // Previews stay per-window so duplicated C# windows still show ghost Blues and the
+    // needs-window ring; pairing (ldi_pair) needs one managed window or a declared origin.
     let spec = item.specs.get("debug").ok_or("C# Debug configuration is unavailable")?;
     Ok(LdiSelection { label: origin.into(), instance_id: item.instance_id.clone(),
         configuration: item.selected_config_name.clone(), profile: item.selected_profile_name.clone(),
@@ -430,7 +499,7 @@ fn snapshot(registry: &Registry, label: &str) -> LinkedSnapshot {
     let Some(window) = registry.windows.get(label) else {
         return LinkedSnapshot { sequence: registry.sequence, linked: false, members: vec![], windows: vec![],
             can_build: false, can_run: false, can_debug: false, debug_adapter_available: false, busy: false, active_action: None, active_action_id: None, active_count: 0,
-            problems: vec![] };
+            problems: vec![], ldi_origin_label: None };
     };
     let pair = ldi_pair(registry, &window.solution_path);
     let members = pair.as_ref().map(|(a, b)| ldi_members(registry, &window.solution_path, a, b))
@@ -481,6 +550,8 @@ fn snapshot(registry: &Registry, label: &str) -> LinkedSnapshot {
                 project_name: participant.project_name.clone().unwrap_or_else(|| member.clone()),
                 problem: problem.clone(),
             })).collect() } else { vec![] },
+        ldi_origin_label: (managed_count(registry, &window.solution_path) > 1)
+            .then(|| declared_ldi_origin(registry, &window.solution_path)).flatten(),
     }
 }
 
@@ -606,6 +677,7 @@ pub fn stop_solution_sessions(window: WebviewWindow, app: AppHandle, state: taur
 }
 
 fn reconcile(registry: &mut Registry) {
+    prune_ldi_origins(registry);
     let finished = registry.actions.values().filter(|action| action.pending.is_empty() && action.unfinished.is_empty())
         .flat_map(|action| action.members.iter().cloned()).collect::<Vec<_>>();
     registry.actions.retain(|_, action| {
@@ -2423,6 +2495,38 @@ mod tests {
         other_managed.specs.insert("debug".into(), spec("dotnet"));
         registry.windows.insert("E".into(), other_managed);
         assert!(ldi_pair(&registry, "/one.cln").is_none(), "Never guess between managed origins");
+    }
+
+    #[test]
+    fn ldi_pair_obeys_declared_origin_between_duplicated_managed_windows() {
+        let mut registry = Registry::default();
+        let spec = |program: &str| RunSpec { label: program.into(), program: program.into(), args: vec![], env: BTreeMap::new(), cwd: "/tmp".into(), linked: None, order: None };
+        for label in ["A", "D"] {
+            let mut managed = participant("/one.cln", "host", "console");
+            managed.instance_id = format!("{label}-instance");
+            managed.specs.insert("debug".into(), spec("dotnet"));
+            registry.windows.insert(label.into(), managed);
+        }
+        let mut native = participant("/one.cln", "native", "library");
+        native.specs.insert("build".into(), spec("cmake"));
+        registry.windows.insert("B".into(), native);
+        assert!(ldi_pair(&registry, "/one.cln").is_none(), "undeclared duplicates stay ambiguous");
+        assert_eq!(snapshot(&registry, "A").ldi_origin_label, None);
+
+        registry.ldi_origins.insert("/one.cln".into(), ("D".into(), "D-instance".into()));
+        assert_eq!(ldi_pair(&registry, "/one.cln"), Some(("D".into(), vec!["B".into()])));
+        assert_eq!(snapshot(&registry, "A").ldi_origin_label.as_deref(), Some("D"));
+
+        registry.windows.get_mut("D").unwrap().instance_id = "reopened".into();
+        assert!(ldi_pair(&registry, "/one.cln").is_none(), "a reopened window must declare again");
+        registry.windows.get_mut("D").unwrap().instance_id = "D-instance".into();
+
+        registry.windows.get_mut("D").unwrap().specs.insert("debug".into(), spec("cargo"));
+        reconcile(&mut registry);
+        assert!(registry.ldi_origins.is_empty(), "leaving the managed role clears the declaration");
+        assert_eq!(ldi_pair(&registry, "/one.cln"), Some(("A".into(), vec!["B".into()])),
+            "one managed window left needs no declaration");
+        assert_eq!(snapshot(&registry, "A").ldi_origin_label, None);
     }
 
     #[test]

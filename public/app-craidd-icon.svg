@@ -1,0 +1,54 @@
+<svg version="1.2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+	<defs>
+		<clipPath clipPathUnits="userSpaceOnUse" id="cp1">
+			<path d="m224 28h576c108.25 0 196 87.75 196 196v576c0 108.25-87.75 196-196 196h-576c-108.25 0-196-87.75-196-196v-576c0-108.25 87.75-196 196-196z"/>
+		</clipPath>
+		<linearGradient id="g1" x2="1" gradientUnits="userSpaceOnUse" gradientTransform="matrix(968,968,-968,968,28,28)">
+			<stop offset="0" stop-color="#103a80"/>
+			<stop offset=".35" stop-color="#091633"/>
+			<stop offset=".68" stop-color="#080c22"/>
+			<stop offset="1" stop-color="#321044"/>
+		</linearGradient>
+		<radialGradient id="g2" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="matrix(968,0,0,968,28,28)">
+			<stop offset="0" stop-color="#007cff" stop-opacity=".38"/>
+			<stop offset="1" stop-color="#007cff" stop-opacity="0"/>
+		</radialGradient>
+		<radialGradient id="g3" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="matrix(968,0,0,968,996,996)">
+			<stop offset="0" stop-color="#c500d8" stop-opacity=".34"/>
+			<stop offset="1" stop-color="#c500d8" stop-opacity="0"/>
+		</radialGradient>
+		<linearGradient id="g4" x2="1" gradientUnits="userSpaceOnUse" gradientTransform="matrix(968,722,-1376.027,1844.867,28,28)">
+			<stop offset="0" stop-color="#ffffff" stop-opacity=".09"/>
+			<stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+		</linearGradient>
+		<linearGradient id="g5" x2="1" gradientUnits="userSpaceOnUse" gradientTransform="matrix(956,956,-956,956,34,34)">
+			<stop offset="0" stop-color="#00e8ff"/>
+			<stop offset=".42" stop-color="#296bff"/>
+			<stop offset=".74" stop-color="#8a3bff"/>
+			<stop offset="1" stop-color="#fa39dc"/>
+		</linearGradient>
+		<image width="600" height="480" id="img1" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMDAgMjQwIiByb2xlPSJpbWciIGFyaWEtbGFiZWw9IkNyYWlkZCBTdHVkaW8gQyBhbmQgaGVhcnQgbG9nbyI+CiA8ZGVmcz4KICA8bGluZWFyR3JhZGllbnQgaWQ9InJpYmJvbiIgeDE9IjAiIHkxPSIwIiB4Mj0iMSIgeTI9IjEiIGdyYWRpZW50VW5pdHM9Im9iamVjdEJvdW5kaW5nQm94Ij48c3RvcCBzdG9wLWNvbG9yPSIjMDBlYWZmIi8+PHN0b3Agb2Zmc2V0PSIuMzYiIHN0b3AtY29sb3I9IiMwODZiZmYiLz48c3RvcCBvZmZzZXQ9Ii43MyIgc3RvcC1jb2xvcj0iIzc5MzRmZiIvPjxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iI2VlMThkOSIvPjwvbGluZWFyR3JhZGllbnQ+CiAgPGxpbmVhckdyYWRpZW50IGlkPSJ1cHBlciIgeDE9IjAiIHkxPSIwIiB4Mj0iMSIgeTI9Ii4zIj48c3RvcCBzdG9wLWNvbG9yPSIjMDBmMWY2Ii8+PHN0b3Agb2Zmc2V0PSIuNTIiIHN0b3AtY29sb3I9IiMyNzliZmYiLz48c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiNlZjgxZWMiLz48L2xpbmVhckdyYWRpZW50PgogIDxsaW5lYXJHcmFkaWVudCBpZD0ibG93ZXIiIHgxPSIwIiB5MT0iMCIgeDI9IjEiIHkyPSIxIj48c3RvcCBzdG9wLWNvbG9yPSIjMTc2M2ZhIi8+PHN0b3Agb2Zmc2V0PSIuNDUiIHN0b3AtY29sb3I9IiM3NTM2ZmYiLz48c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiNmYTBlY2YiLz48L2xpbmVhckdyYWRpZW50PgogIDxsaW5lYXJHcmFkaWVudCBpZD0iaGVhcnQiIHgxPSIwIiB5MT0iMCIgeDI9Ii44IiB5Mj0iMSI+PHN0b3Agc3RvcC1jb2xvcj0iI2MzNGFmZiIvPjxzdG9wIG9mZnNldD0iLjQ3IiBzdG9wLWNvbG9yPSIjZjAzZGU1Ii8+PHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjZmY3YWE1Ii8+PC9saW5lYXJHcmFkaWVudD4KIDwvZGVmcz4KIDwhLS0gQnJvYWQgQyBzaWxob3VldHRlIC0tPgogPHBhdGggZmlsbD0idXJsKCNyaWJib24pIiBkPSJNMjE5IDI1IFEyMjQgMjAgMjE3IDE2IEMxNjUgNyAxMTIgMTMgNzggMzkgQzQzIDY2IDI2IDEwNyAzNyAxNDkgQzQ4IDE4OSA4NyAyMTEgMTMzIDIxOCBDMTY5IDIyNCAyMDIgMjE5IDIxNiAyMDggUTIyMSAyMDQgMjE1IDIwMCBMMTkwIDE3OCBRMTg3IDE3NSAxODEgMTc3IEMxNTAgMTgzIDExOSAxNzUgMTAxIDE1NyBDNzkgMTM2IDgwIDEwMiAxMDAgNzkgQzExOSA1NiAxNTAgNTAgMTgyIDU0IFExODkgNTUgMTkzIDUxIFoiLz4KIDwhLS0gTHVtaW5vdXMgdG9wIHN1cmZhY2UgLS0+CiA8cGF0aCBmaWxsPSJ1cmwoI3VwcGVyKSIgZD0iTTM3IDE0OSBDMjQgMTA2IDQ0IDY1IDc4IDM5IEMxMTQgMTEgMTY4IDcgMjE3IDE2IFEyMjQgMjAgMjE5IDI1IEwxOTMgNTEgUTE4OSA1NSAxODIgNTQgQzEzOSA0OCAxMDUgNjEgNzggOTEgQzU1IDExNyA0MyAxNDIgMzcgMTQ5WiIvPgogPCEtLSBGb2xkIC8gaW5uZXIgcmliYm9uIHNoYWRpbmcgLS0+CiA8cGF0aCBmaWxsPSIjMDAzYmRjIiBvcGFjaXR5PSIuNDgiIGQ9Ik0zNyAxNDkgQzU1IDEwNSA3OSA3OCAxMDkgNjQgQzEyOCA1NSAxNDYgNTMgMTY3IDUzIEMxMTcgNzIgOTQgMTA4IDEwMCAxNDEgQzEwNSAxNjggMTM0IDE4MyAxODEgMTc3IEMxNDUgMTg0IDExOCAxNzQgMTAxIDE1NyBDNzkgMTM2IDgwIDEwMiAxMDAgNzkgQzcyIDExMCA1OSAxNTAgNjUgMTkwIEM1MSAxNzggNDMgMTY0IDM3IDE0OVoiLz4KIDwhLS0gTHVtaW5vdXMgYm90dG9tIHN1cmZhY2UgLS0+CiA8cGF0aCBmaWxsPSJ1cmwoI2xvd2VyKSIgZD0iTTM3IDE0OSBDNDggMTg5IDg3IDIxMSAxMzMgMjE4IEMxNjkgMjI0IDIwMiAyMTkgMjE2IDIwOCBRMjIxIDIwNCAyMTUgMjAwIEwxOTAgMTc4IFExODcgMTc1IDE4MSAxNzcgQzE0MiAxODUgMTA4IDE2NiAxMDAgMTQxIEM5MyAxMTIgMTE0IDc1IDE2NyA1MyBDMTE5IDY3IDgyIDEwNyA2NyAxNDkgQzYxIDE2NiA2MSAxODEgNjUgMTkwIEM1MSAxNzggNDMgMTY0IDM3IDE0OVoiLz4KIDwhLS0gSGVhcnQgLS0+CiA8cGF0aCBmaWxsPSJ1cmwoI2hlYXJ0KSIgZD0iTTIxMSAxNzcgQzIwNyAxNzcgMjA1IDE3MyAyMDEgMTcwIEwxNjYgMTM1IEMxNTEgMTIwIDE1MSA5OCAxNjUgODcgQzE4MCA3NSAxOTggODMgMjExIDk5IEMyMjQgODMgMjQyIDc1IDI1NyA4NyBDMjcxIDk4IDI3MSAxMjAgMjU2IDEzNSBMMjIxIDE3MCBDMjE3IDE3NCAyMTUgMTc3IDIxMSAxNzdaIi8+Cjwvc3ZnPgo="/>
+	</defs>
+	<style>
+		tspan { white-space:pre } 
+		.s0 { fill: url(#g1) } 
+		.s1 { fill: url(#g2) } 
+		.s2 { fill: url(#g3) } 
+		.s3 { fill: url(#g4) } 
+		.s4 { fill: none;stroke: url(#g5);stroke-width: 12 } 
+		.s5 { opacity: .25;fill: none;stroke: #c5d7ff;stroke-width: 3 } 
+	</style>
+	<g id="Clip-Path: Clip-Path" clip-path="url(#cp1)">
+		<g id="Clip-Path">
+			<g>
+				<path fill-rule="evenodd" class="s0" d="m28 28h968v968h-968z"/>
+				<path fill-rule="evenodd" class="s1" d="m28 28h968v968h-968z"/>
+				<path fill-rule="evenodd" class="s2" d="m28 28h968v968h-968z"/>
+				<path class="s3" d="m28 310l352-282h616l-968 722z"/>
+			</g>
+		</g>
+	</g>
+	<path fill-rule="evenodd" class="s4" d="m224 34h576c104.93 0 190 85.07 190 190v576c0 104.93-85.07 190-190 190h-576c-104.93 0-190-85.07-190-190v-576c0-104.93 85.07-190 190-190z"/>
+	<path fill-rule="evenodd" class="s5" d="m224 49h576c96.65 0 175 78.35 175 175v576c0 96.65-78.35 175-175 175h-576c-96.65 0-175-78.35-175-175v-576c0-96.65 78.35-175 175-175z"/>
+	<use id="CHeart" href="#img1" transform="matrix(1.558,0,0,1.558,138.97,150.037)"/>
+</svg>

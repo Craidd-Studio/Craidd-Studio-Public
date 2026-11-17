@@ -64,7 +64,7 @@ export default function GetStarted({ startup, initialError, onOpen, onStartProje
     <main className="h-screen overflow-y-auto text-zinc-200" style={{ background: "radial-gradient(circle at 90% 5%, rgba(66, 158, 237, 0.07), transparent 34%), var(--color-zinc-950)" }}>
       <div className="max-w-[1050px] mx-auto px-8 py-9 md:px-12 md:py-10">
         <header className="flex items-center gap-4 pb-7 border-b border-zinc-800">
-          <div className="w-12 h-12 rounded-xl bg-zinc-900/80 border border-zinc-800 flex items-center justify-center shrink-0"><img src="/craidd-icon.png" alt="" className="w-10 h-10" /></div>
+          <img src="/app-craidd-icon.svg" alt="" className="w-12 h-12 shrink-0" />
           <div>
             <h1 className="text-[25px] leading-7 font-semibold tracking-tight text-zinc-100">Craidd Studio</h1>
             <p className="text-sm text-zinc-500 mt-0.5">Get started with a project or solution</p>

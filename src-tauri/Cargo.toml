@@ -29,6 +29,7 @@ tauri-plugin-dialog = "2.7.3"
 libc = "0.2"
 regex = "1"
 sha2 = "0.10"
+glib = "0.18"
 
 
 # Read the optimization guideline for more details: https://tauri.app/concept/size/#cargo-configuration

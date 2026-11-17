@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 240" role="img" aria-label="Craidd Studio C and heart logo">
+ <defs>
+  <linearGradient id="ribbon" x1="0" y1="0" x2="1" y2="1" gradientUnits="objectBoundingBox"><stop stop-color="#00eaff"/><stop offset=".36" stop-color="#086bff"/><stop offset=".73" stop-color="#7934ff"/><stop offset="1" stop-color="#ee18d9"/></linearGradient>
+  <linearGradient id="upper" x1="0" y1="0" x2="1" y2=".3"><stop stop-color="#00f1f6"/><stop offset=".52" stop-color="#279bff"/><stop offset="1" stop-color="#ef81ec"/></linearGradient>
+  <linearGradient id="lower" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#1763fa"/><stop offset=".45" stop-color="#7536ff"/><stop offset="1" stop-color="#fa0ecf"/></linearGradient>
+  <linearGradient id="heart" x1="0" y1="0" x2=".8" y2="1"><stop stop-color="#c34aff"/><stop offset=".47" stop-color="#f03de5"/><stop offset="1" stop-color="#ff7aa5"/></linearGradient>
+ </defs>
+ <!-- Broad C silhouette -->
+ <path fill="url(#ribbon)" d="M219 25 Q224 20 217 16 C165 7 112 13 78 39 C43 66 26 107 37 149 C48 189 87 211 133 218 C169 224 202 219 216 208 Q221 204 215 200 L190 178 Q187 175 181 177 C150 183 119 175 101 157 C79 136 80 102 100 79 C119 56 150 50 182 54 Q189 55 193 51 Z"/>
+ <!-- Luminous top surface -->
+ <path fill="url(#upper)" d="M37 149 C24 106 44 65 78 39 C114 11 168 7 217 16 Q224 20 219 25 L193 51 Q189 55 182 54 C139 48 105 61 78 91 C55 117 43 142 37 149Z"/>
+ <!-- Fold / inner ribbon shading -->
+ <path fill="#003bdc" opacity=".48" d="M37 149 C55 105 79 78 109 64 C128 55 146 53 167 53 C117 72 94 108 100 141 C105 168 134 183 181 177 C145 184 118 174 101 157 C79 136 80 102 100 79 C72 110 59 150 65 190 C51 178 43 164 37 149Z"/>
+ <!-- Luminous bottom surface -->
+ <path fill="url(#lower)" d="M37 149 C48 189 87 211 133 218 C169 224 202 219 216 208 Q221 204 215 200 L190 178 Q187 175 181 177 C142 185 108 166 100 141 C93 112 114 75 167 53 C119 67 82 107 67 149 C61 166 61 181 65 190 C51 178 43 164 37 149Z"/>
+ <!-- Heart -->
+ <path fill="url(#heart)" d="M211 177 C207 177 205 173 201 170 L166 135 C151 120 151 98 165 87 C180 75 198 83 211 99 C224 83 242 75 257 87 C271 98 271 120 256 135 L221 170 C217 174 215 177 211 177Z"/>
+</svg>
