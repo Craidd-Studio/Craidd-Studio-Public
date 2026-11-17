@@ -59,10 +59,10 @@ debug package is an internal testing artifact.
 ## Contributing
 
 Code, documentation, testing and design contributions are welcome. Use
-[GitHub Issues](https://github.com/Craidd-Studio/Craidd-Studio-Public/issues) to
-report bugs or discuss substantial changes. Include your build/commit, Linux
-environment, tool versions and reproduction steps; redact private project data
-and secrets from shared logs. See the [working protocol](docs/working-protocol.md)
-for the project's collaboration approach.
+[GitHub Issues](https://github.com/Craidd-Studio/Craidd-Studio-Public/issues) for
+bug reports and user feedback. Include your build/commit, Linux environment,
+tool versions and reproduction steps; redact private data from shared logs.
+For design proposals and code contributions, see the
+[contribution and fork policy](docs/forks/).
 
 Licensed under [Apache 2.0](LICENSE).

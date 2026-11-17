@@ -2,7 +2,8 @@
 
 This folder contains reviewable Markdown source for the Craidd Studio GitHub
 Wiki. It is not automatically synchronized with the wiki's separate Git repository.
-No wiki or public-repository push was performed to create these pages.
+The application repository and the wiki have separate Git histories; updating
+this folder alone does not publish the wiki.
 
 Start with `Home.md`. Guides use GitHub Wiki page links such as
 `[Getting Started](Getting-Started)`. `_Sidebar.md` and `_Footer.md` are rendering

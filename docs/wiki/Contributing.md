@@ -4,12 +4,24 @@ Developers, testers, designers and technical writers are welcome. Useful
 contributions include focused fixes, reproducible bugs, clearer user guides,
 accessibility findings and test evidence with precise scope.
 
-## Discuss and implement
+## Propose a contribution
 
-For a substantial change, use [GitHub Issues](https://github.com/Craidd-Studio/Craidd-Studio-Public/issues) to discuss the problem,
-proposed behavior and trade-offs. Read [AGENT.md](https://github.com/Craidd-Studio/Craidd-Studio-Public/blob/master/AGENT.md) and the
-[working protocol](https://github.com/Craidd-Studio/Craidd-Studio-Public/blob/master/docs/working-protocol.md) before changing code or
-architecture. Preserve user work and existing design/evidence attribution.
+Read the [contribution and fork policy](https://github.com/Craidd-Studio/Craidd-Studio-Public/tree/master/docs/forks).
+Users can report bugs and feedback through [GitHub Issues](https://github.com/Craidd-Studio/Craidd-Studio-Public/issues).
+Contributors do not have to open an issue before presenting a reasoned plan.
+
+- **Aligned improvements:** submit a normal PR that refines the current design
+  or its implementation, with the reason for the change.
+- **Divergent proposals:** declare the idea in `docs/forks/<name>/`. Explain what
+  changes, why the current model cannot hold it, and the cost of merging it.
+- **Design-only contributions** and **design plus code** are welcome. Code-only
+  submissions are held until their rationale is supplied.
+
+Maintainers decide whether a divergent proposal is promoted into `docs/feats/`.
+Preserve substantive claims and their uncertainty when refining documentation.
+Before implementation, read [AGENT.md](https://github.com/Craidd-Studio/Craidd-Studio-Public/blob/master/AGENT.md) and the
+[working protocol](https://github.com/Craidd-Studio/Craidd-Studio-Public/blob/master/docs/working-protocol.md) for the repository's
+collaboration conventions; the fork policy is the public contribution entry point.
 
 Keep source and generated files distinct. Craidd discovers/delegates to external
 tools; do not silently install tools, rewrite user manifests or change process
