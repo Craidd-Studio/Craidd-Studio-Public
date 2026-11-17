@@ -99,7 +99,7 @@ test("every model is watched, existing and future, and embedded editors become r
   created.editors[0](main); created.editors[0](preview);
   markCraiddEditor(main);                                 // the creator registers right after create
   await Promise.resolve();
-  assert.equal(main.options, null, "Craidd's own editor stays editable");
+  assert.equal(main.options.readOnly, false, "Craidd's own editor stays editable");
   assert.equal(preview.options.readOnly, true, "an embedded preview is read-only");
   assert.match(preview.options.readOnlyMessage.value, /Read-only/);
 });
@@ -107,10 +107,26 @@ test("every model is watched, existing and future, and embedded editors become r
 test("both editors register as Craidd's and neither routes edits through a captured file id", async () => {
   for (const file of ["src/components/editor/CodeView.tsx", "src/components/editor/SideEditor.tsx"]) {
     const text = await readFile(new URL(`../${file}`, import.meta.url), "utf8");
-    assert.match(text, /markCraiddEditor\(instance\)/, file);
+    assert.match(text, /markCraiddEditor\(instance,/, file);
     assert.match(text, /attachEditorSync\(monaco as unknown as MonacoLike, editorRouting\(monaco\)\)/, file);
     assert.doesNotMatch(text, /onChange=|updateTabContent/, `${file} no longer sends changes by a captured file id`);
   }
   const store = await readFile(new URL("../src/store/solutionStore.ts", import.meta.url), "utf8");
   assert.match(store.slice(store.indexOf("saveFileAs: async"), store.indexOf("saveFileAs: async") + 400), /tab\.readOnly\) throw/);
+});
+
+test('an owning editor registered after the creation microtask restores its tab mode; previews stay locked', async () => {
+  let created;
+  const monaco = { editor: { getModels: () => [], onDidCreateModel: () => ({}), onDidCreateEditor: listener => { created = listener; return {}; } } };
+  const makeEditor = () => ({ options: {}, updateOptions(options) { Object.assign(this.options, options); } });
+  const main = makeEditor(), external = makeEditor(), preview = makeEditor();
+  attachEditorSync(monaco, { tabs: () => [], uriOf: x => x, update() {} });
+  for (const editor of [main, external, preview]) created(editor);
+  await Promise.resolve();
+  assert.equal(main.options.readOnly, true, 'protected until its creator identifies it');
+  markCraiddEditor(main, false);
+  markCraiddEditor(external, true);
+  assert.equal(main.options.readOnly, false, 'editable primary source is restored after a delayed React mount');
+  assert.equal(external.options.readOnly, true, 'external owning tab keeps its own restriction');
+  assert.equal(preview.options.readOnly, true, 'unregistered References preview remains locked');
 });

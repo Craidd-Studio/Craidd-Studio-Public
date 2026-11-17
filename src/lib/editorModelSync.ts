@@ -52,7 +52,12 @@ export interface MonacoLike {
 
 const craiddEditors = new WeakSet<object>();
 /** Craidd's own main and side editors register themselves; every other editor is an embedded widget. */
-export function markCraiddEditor(editor: object): void { craiddEditors.add(editor); }
+export function markCraiddEditor(editor: EditorLike, readOnly = false): void {
+  craiddEditors.add(editor);
+  // React's onMount can run after the create-editor microtask protected this
+  // instance as an unregistered preview. Restore the owning tab's actual mode.
+  editor.updateOptions({ readOnly });
+}
 
 let attached: WeakSet<object> | null = null;
 
@@ -60,6 +65,7 @@ let attached: WeakSet<object> | null = null;
  * Once per Monaco: route every model's changes (existing and future) through `routeModelChange`, and make every
  * editor Craidd did not create (the References / Peek preview and other embedded widgets) read-only. Editors are
  * created before their creator can register them, so the check runs a microtask later.
+ * A later markCraiddEditor restores the explicit owning-tab mode after React mounts it.
  */
 export function attachEditorSync(monaco: MonacoLike, deps: RoutingDeps, readOnlyMessage = "Read-only preview"): void {
   attached ??= new WeakSet();

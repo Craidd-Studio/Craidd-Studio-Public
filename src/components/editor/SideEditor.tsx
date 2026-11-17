@@ -56,7 +56,7 @@ export default function SideEditor() {
         beforeMount={defineCraiddDarkTheme}
         onMount={(instance, monaco) => {
           instanceRef.current = instance;
-          markCraiddEditor(instance);
+          markCraiddEditor(instance, tab.readOnly === true);
           attachEditorSync(monaco as unknown as MonacoLike, editorRouting(monaco));
           attachMonaco(monaco);
           if (instance.hasTextFocus()) { useSplit.getState().setSideFocused(true); setActiveEditor(instance, () => fileId); }

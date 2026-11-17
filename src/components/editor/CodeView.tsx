@@ -296,7 +296,7 @@ function CodeView({ onReady }: { onReady?: (instance: editor.IStandaloneCodeEdit
         beforeMount={defineCraiddDarkTheme}
         onMount={(instance: editor.IStandaloneCodeEditor, monaco: Monaco) => {
           editorRef.current = instance;
-          markCraiddEditor(instance);
+          markCraiddEditor(instance, activeReadOnly);
           attachEditorSync(monaco as unknown as MonacoLike, editorRouting(monaco));
           attachMonaco(monaco);
           onReady?.(instance);
