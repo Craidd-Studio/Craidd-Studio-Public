@@ -119,3 +119,26 @@ test('Show routing reveals the sidebar or existing primary tab without mutating 
   assert.equal(useLinkedWindows.getState().remoteEditing, true);
   assert.equal(calls.length, 0);
 });
+
+test('Profiler navigation preserves read-only source and dirty editable buffer identities', async () => {
+  const state = useSolution.getState();
+  await state.openFile('/test/main.rs', 'main.rs');
+  state.updateTabContent('/test/main.rs', 'unsaved main');
+  state.revealReadOnly('/sdk/map.rs', 'external source', 3, 2);
+  openProfilerWorkspace();
+  state.updateTabContent('/sdk/map.rs', 'attempted external edit');
+  state.markReadOnlyIfClean('/test/main.rs');
+  assert.equal(await state.saveFile('/sdk/map.rs'), 'error');
+  await assert.rejects(state.saveFileAs('/sdk/map.rs', '/test/copied.rs'), /read-only/);
+  const current = useSolution.getState();
+  assert.equal(current.activeTabId, PROFILER_TAB_ID);
+  assert.equal(current.activeFileId, null);
+  assert.equal(current.tabs.find(tab => tab.id === '/test/main.rs').content, 'unsaved main');
+  assert.equal(current.tabs.find(tab => tab.id === '/test/main.rs').dirty, true);
+  assert.equal(current.tabs.find(tab => tab.id === '/test/main.rs').readOnly, undefined);
+  const external = current.tabs.find(tab => tab.id === '/sdk/map.rs');
+  assert.equal(external.content, 'external source');
+  assert.equal(external.dirty, false);
+  assert.equal(external.readOnly, true);
+  assert.ok(!calls.some(call => /write|overwrite/.test(call.command)));
+});

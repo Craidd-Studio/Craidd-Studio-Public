@@ -34,7 +34,7 @@ export async function invoke(command,args) { return globalThis.${mockName}.invok
 const FILE = "/lab/fx/src/main.rs";
 const solution = url(`import {create} from ${JSON.stringify(zustand)};
 export const useSolution=create(()=>({solution:{name:'fx'},clnPath:'/lab/fx/fx.cln',rootPath:'/lab/fx',
-  tabs:[{fileId:${JSON.stringify(FILE)},name:'main.rs',language:'rust',content:'fn main() {}',originalContent:'fn main() {}'}],
+  tabs:[{kind:"file",id:${JSON.stringify(FILE)},fileId:${JSON.stringify(FILE)},name:'main.rs',language:'rust',content:'fn main() {}',originalContent:'fn main() {}'}],
   activeFileId:${JSON.stringify(FILE)}}));`);
 const split = url(`import {create} from ${JSON.stringify(zustand)}; export const useSplit=create(()=>({sideFileId:null}));`);
 // Server rendering reads a store's initial-state snapshot; this `create` makes it the live state.
@@ -62,13 +62,15 @@ async function fresh() {
   const hover = await load("../src/lib/lsp/hover.ts", { "./protocol.ts": protocol });
   const languages = await load("../src/lib/languages.ts", {});
   const store = await load("../src/store/lspStore.ts", { zustand: liveZustand });
+  const types = await load("../src/types/project.ts", {});
   const bridge = await load("../src/lib/lsp/bridge.ts", {
-    "@tauri-apps/api/core": core, "../../store/solutionStore": solution, "../../store/splitStore": split,
+    "../../types/project": types, "@tauri-apps/api/core": core, "../../store/solutionStore": solution, "../../store/splitStore": split,
     "../../store/lspStore": store, "../languages": languages, "./documents": documents, "./diagnostics": diagnostics,
     "./pulls": pulls, "./protocol": protocol, "./metrics": metrics, "./launch": launch, "./requests.ts": requests, "./providers.ts": providersMod, "./hover.ts": hover, "./symbols.ts": symbols, "./navigation.ts": navigation, "./completion.ts": completion, "./completionAccept.ts": completionAccept,
   });
   const boundary = await load("../src/components/layout/ChipBoundary.tsx", {});
   const statusBar = await load("../src/components/layout/StatusBar.tsx", {
+    "../../types/project": types,
     "../../store/solutionStore": solution, "../../store/preferencesStore": prefs, "../../store/buildStore": build,
     "../../store/lspStore": store, "../../lib/lsp/bridge": bridge, "./ChipBoundary": boundary,
   });
@@ -233,9 +235,9 @@ test("an ended session leaves its read-only tabs open, unbound and saying so (de
   assert.match(markup, /language server: not connected; navigate from a live session to reconnect/);
   assert.doesNotMatch(markup, /Restart/);
   const bridge = await readFile(new URL("../src/lib/lsp/bridge.ts", import.meta.url), "utf8");
-  assert.match(bridge, /isNavigationOnly\(useSolution\.getState\(\)\.tabs, fileId\)\) return;/, "routing never re-attaches a read-only tab");
+  assert.match(bridge, /isNavigationOnly\(useSolution\.getState\(\)\.tabs\.filter\(isFileTab\), fileId\)\) return;/, "routing never re-attaches a read-only tab");
   assert.match(bridge, /markEnded\(tracker\.sessionEnded\(generation\), generation\)/, "the terminal-status path marks them");
-  assert.match(bridge, /endedDocs\(affected, useSolution\.getState\(\)\.tabs, generation\)/, "so does the restart path");
+  assert.match(bridge, /endedDocs\(affected, useSolution\.getState\(\)\.tabs\.filter\(isFileTab\), generation\)/, "so does the restart path");
 });
 
 test("the ended note is sticky: routing never attaches a read-only tab, however the attach is started (decision 51)", async () => {
@@ -250,7 +252,7 @@ test("the ended note is sticky: routing never attaches a read-only tab, however 
   assert.match(attach, /if \(isNavigationOnly\(tabs, fileId\)\) return;/, "attachActive, which gate.scheduleLaunch() calls after a restart, skips it before anything is written");
   assert.ok(attach.indexOf("isNavigationOnly") < attach.indexOf('kind: "waiting"'), "and before the 'waiting' entry would replace `ended`");
   const onActive = bridge.slice(bridge.indexOf("function onActive"), bridge.indexOf("async function attachActive"));
-  assert.match(onActive, /isNavigationOnly\(useSolution\.getState\(\)\.tabs, fileId\)\) return;/);
+  assert.match(onActive, /isNavigationOnly\(useSolution\.getState\(\)\.tabs\.filter\(isFileTab\), fileId\)\) return;/);
 });
 
 test("closing the solution clears the ended sessions' Monaco markers on every model, not only on models a tab still maps to (design: Semantics)", async () => {

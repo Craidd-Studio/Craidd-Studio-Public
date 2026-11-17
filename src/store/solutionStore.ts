@@ -124,7 +124,7 @@ interface SolutionState {
   setFocusedTreeTarget: (t: { path: string; source: TreeSource } | null) => void;
   pendingSave: { fileId: string; kind: "deleted" | "newer" } | null;
   setPendingSave: (v: { fileId: string; kind: "deleted" | "newer" } | null) => void;
-  reloadTabFromDisk: (fileId: string) => Promise<void>;
+  reloadTabFromDisk: (fileId: string, options?: { ifClean?: boolean }) => Promise<void>;
   saveFile: (fileId: string, force?: boolean) => Promise<"saved" | "conflict" | "error">;
   saveFileAs: (fileId: string, newPath: string) => Promise<void>;
   refreshDiskStates: () => Promise<void>;
@@ -443,8 +443,9 @@ export const useSolution = create<SolutionState>((storeSet, get) => {
   clearRenameRequest: () => set({ renamingRequest: null }),
   setFocusedTreeTarget: (t) => set({ focusedTreeTarget: t }),
 
-  reloadTabFromDisk: async (fileId) => {
-    if (!findFileTab(get().tabs, fileId)) return;
+  reloadTabFromDisk: async (fileId, options) => {
+    const before = findFileTab(get().tabs, fileId);
+    if (!before || before.readOnly || (options?.ifClean && before.dirty)) return;
     const { invoke } = await import("@tauri-apps/api/core");
     try {
       const content = await invoke<string>("read_file", { path: fileId });
@@ -454,7 +455,8 @@ export const useSolution = create<SolutionState>((storeSet, get) => {
       const mtimeAtLastSync = stats[0]?.mtimeMs ?? 0;
       set((s) => ({
         tabs: s.tabs.map((t) =>
-          t.kind === "file" && t.fileId === fileId
+          t.kind === "file" && t.fileId === fileId && !t.readOnly
+            && (!options?.ifClean || (t === before && !t.dirty))
             ? { ...t, content, originalContent: content, dirty: false, diskState: "inSync" as const, mtimeAtLastSync }
             : t
         ),

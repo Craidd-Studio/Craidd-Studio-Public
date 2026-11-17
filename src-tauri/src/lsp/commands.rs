@@ -19,7 +19,7 @@ use super::delivery::StatusRecord;
 use super::documents::{DocError, DocView};
 use super::protocol::{LogLine, Outcome};
 use super::registry::{LaunchDecision, LspRegistry};
-use super::router::{project_ref, route, route_attach, AttachRoute, NotRouted, Route, SYMLINK_REASON};
+use super::router::{project_ref, route_attach, AttachRoute, NotRouted, Route, SYMLINK_REASON};
 use super::rust_adapter::RustAdapter;
 use super::providers::ProviderKind;
 use super::session::{Batch, Limits, ProviderError, PullError, RequestError, Session};

@@ -700,7 +700,7 @@ export async function startupComplete(): Promise<void> {
   useSolution.subscribe((state, previous) => {
     const key = state.clnPath ?? state.rootPath;
     if (key !== solutionKey) { solutionKey = key; closeSolution(); }
-    if (state.tabs !== previous.tabs.filter(isFileTab)) {
+    if (state.tabs !== previous.tabs) {
       const open = new Set(state.tabs.filter(isFileTab).map((t) => t.fileId));
       for (const tab of previous.tabs.filter(isFileTab)) if (!open.has(tab.fileId)) void tracker.close(tab.fileId);
     }

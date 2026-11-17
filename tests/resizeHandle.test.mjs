@@ -11,7 +11,7 @@ function fixture(orientation='vertical'){
   const deltas=[],captures=[],releases=[];
   const currentTarget={setPointerCapture:id=>captures.push(id),releasePointerCapture:id=>releases.push(id)};
   const props=ResizeHandle({orientation,onDrag:delta=>deltas.push(delta)}).props;
-  const event=patch=>({pointerId:7,isPrimary:true,button:0,buttons:1,clientX:100,clientY:100,currentTarget,target:{},...patch});
+  const event=patch=>({pointerId:7,isPrimary:true,button:0,buttons:1,clientX:100,clientY:100,currentTarget,target:{},preventDefault(){},...patch});
   return {props,event,deltas,captures,releases};
 }
 test('A zero-button move after a valid drag never changes panel size',()=>{

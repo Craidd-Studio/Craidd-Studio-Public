@@ -386,7 +386,14 @@ export const useBuild = create<BuildState>((set, get) => ({
     // corresponding to the new executable; dirty copies were checked above.
     await useSolution.getState().refreshDiskStates();
     for (const tab of useSolution.getState().tabs.filter(isFileTab).filter((tab) => !tab.dirty && tab.diskState === "newer")) {
-      await useSolution.getState().reloadTabFromDisk(tab.fileId);
+      await useSolution.getState().reloadTabFromDisk(tab.fileId, { ifClean: true });
+    }
+
+    // Edits may arrive while the disk refresh awaits IPC. Keep them intact and
+    // require another launch instead of building a different source silently.
+    if (useSolution.getState().tabs.filter(isFileTab).some((tab) => tab.dirty)) {
+      set({ status: "failed", output: "Source changed while preparing launch. Your edits were preserved; review and launch again.\n" });
+      return;
     }
 
     const spec = resolveSpec(chosen, rootPath, solution, state.selectedProfileName, useSolution.getState().clnPath);
