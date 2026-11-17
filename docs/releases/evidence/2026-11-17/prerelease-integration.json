@@ -1,6 +1,6 @@
 {
   "status": "internal candidate; no public-release approval",
-  "sourceCommit": "541e879",
+  "sourceCommit": "285c301",
   "sourceRefs": {
     "master": "d13d07cb0ff109baaf471f6888da19cf65095cd1",
     "feat/intellisense-ws": "d13d07cb0ff109baaf471f6888da19cf65095cd1",
@@ -9,11 +9,6 @@
     "feat/unity/debug-a-to-p": "8bac01edf9bf1f0a0b84b55441b5638bc1233a29",
     "uiux/ui-harness": "280b1d835e2b6aa9b93fbf4b3e55b5991e00a71d",
     "verify/lsp-1c-step7-results": "b1358bd23363ca741f57d294ed70db5ddc578ee5"
-  },
-  "binary": {
-    "path": "/mnt/ext_drives/GamesDev/.codex/.worktrees/ad33/Craidd-Studio/test-results/prerelease/541e879/craidd-studio",
-    "sha256": "5ceaf380093f37070406cc41fe7d6e2e28e22a6118c68735160ca8215374fe2b",
-    "configuration": "embedded debug, not optimized release"
   },
   "checks": {
     "frontendBuild": "PASS",
@@ -34,12 +29,33 @@
     },
     "monacoBufferProbe": "all seven checks pass",
     "nativeDesktop": {
-      "passed": 6,
+      "passed": 7,
       "failed": 0,
-      "display": "private Xvfb, scratch HOME"
+      "display": "private Xvfb, scratch HOME",
+      "binary": "standalone 285c301"
     },
     "nativeWizardRust": "PASS: review/create/build/run/occupied-destination refusal",
-    "unitySustained": "RUNNING"
+    "unitySustained": {
+      "result": "PASS",
+      "sourceCommit": "541e879",
+      "durationMs": 634352.957182,
+      "rolloverMs": 616064.229339,
+      "sampleCount": 2400,
+      "agedSamples": 1,
+      "evictedCaptures": 10018806,
+      "sourceGaps": 0,
+      "rejectedEvents": 0,
+      "disconnects": 0,
+      "dropped": 0,
+      "postRolloverReplay": "PASS",
+      "finalSourceDifference": "subsequent source changes affect Save/Save As only; collector source unchanged; long gate was not repeated on the final save-only binary"
+    },
+    "packagedPayloadNative": {
+      "result": "PASS",
+      "passed": 7,
+      "failed": 0,
+      "method": "extracted package executable, same-host private Xvfb; not installed"
+    }
   },
   "initialNativeFailure": {
     "binarySha256": "4e2bf5359b27926e1480afa5c6756947c047aa8c464eb5fc8cc6ea5d440f1710",
@@ -51,5 +67,26 @@
   "humanAcceptance": "NOT TESTED",
   "optimizedReleasePerformance": "NOT TESTED",
   "cleanMachinePackage": "NOT TESTED",
-  "published": false
+  "published": false,
+  "collectorBinary": {
+    "path": "/mnt/ext_drives/GamesDev/.codex/.worktrees/ad33/Craidd-Studio/test-results/prerelease/541e879/craidd-studio",
+    "sha256": "5ceaf380093f37070406cc41fe7d6e2e28e22a6118c68735160ca8215374fe2b",
+    "configuration": "embedded debug, not optimized release"
+  },
+  "finalBinary": {
+    "sourceCommit": "285c301",
+    "configuration": "embedded debug; internal testing only",
+    "binarySha256": "252fc53f4eadca71455d78d9f9694e8c43fed56dc54632121cbac696ec7f2133",
+    "packagedBinarySha256": "bbed8e54213a0f1dcf7a0afb3001f4918f6edfab381262ad4a345309c86735c2",
+    "packageSha256": "d4b6a14e83c370e5449b61019c74ef8303e8bcec947a5599a890c0e00aafb33a",
+    "binaryBytes": 358366424,
+    "packagedBinaryBytes": 358366424,
+    "packagePayloadMatchesStandalone": false,
+    "packagePath": "/mnt/ext_drives/GamesDev/.codex/.worktrees/ad33/Craidd-Studio/test-results/prerelease/285c301/CraiddStudio-internal-alpha-285c301.deb",
+    "binaryPath": "/mnt/ext_drives/GamesDev/.codex/.worktrees/ad33/Craidd-Studio/test-results/prerelease/285c301/craidd-studio",
+    "packagedBinaryPath": "/mnt/ext_drives/GamesDev/.codex/.worktrees/ad33/Craidd-Studio/test-results/prerelease/285c301/package-root/usr/bin/craidd-studio",
+    "cleanMachineInstallation": "NOT TESTED",
+    "payloadDifference": "exactly three bytes: Tauri bundle-type marker changes from UNK to DEB",
+    "packagedPayloadRuntime": "pending separate smoke"
+  }
 }

@@ -1,5 +1,9 @@
 # Release assessments
 
+Current internal candidate: [17 November integration record](evidence/2026-11-17/prerelease-integration.json)
+and [Phase 3 / 3.x / 3.5 handoff](../handoffs/handoff-phase-3-prerelease-integration.md).
+Master promotion, public packaging and human acceptance remain open.
+
 **Roadmap track:** Wider Linux IDE release gate.
 **Status:** Assessment index, 23 October 2026. No public-release sign-off.
 
@@ -19,5 +23,5 @@ roadmaps and UI sweep results keep their original scope.
 
 ---
 
-*Last updated: 23 October 2026. Author(s): ShinkuKira21.*
+*Last updated: 17 November 2026. Author(s): ShinkuKira21.*
 *This document is a record.*

@@ -1,0 +1,15 @@
+✔ Exit → This Application closes every window, including a hidden one (3623.561417ms)
+✔ explorer menus stay inside a small window at every corner (4414.319997ms)
+✔ Metric editor overview, independent selection, hover, virtual rows and interpretation (7067.659835ms)
+✔ Human metric findings: complete row identities, clear scope, honest jump field, selection-free dividers (4646.818817ms)
+✔ native wizard reviews and creates a buildable Rust console without overwriting it (2739.672692ms)
+✔ Profiling workspace preserves real capture and inspection beside editable source (5652.163105ms)
+✔ solution windows reach the canonical title after registering (3967.034609ms)
+ℹ tests 7
+ℹ suites 0
+ℹ pass 7
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 32338.070277

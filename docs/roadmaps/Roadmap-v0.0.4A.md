@@ -1,8 +1,11 @@
 # Roadmap v0.0.4A: thread debugging and a dependable Linux IDE
 
-**Status:** Current direction, 7 October 2026. Supersedes [v0.0.3A](archive/Roadmap-v0.0.3A.md).
+**Status:** Current direction, 7 October 2026; integration status reviewed 17 November 2026. Supersedes [v0.0.3A](archive/Roadmap-v0.0.3A.md).
 
-**Current work:** Phase 3.x — debugger reliability, ordinary multi-thread debugging, then bounded MT with LDI.
+**Current work:** Phase 3 / 3.x / 3.5 prerelease integration: Rust language
+intelligence, debugger reliability, profiling and project-creation workflows.
+The internal candidate is on `codex/prerelease-integration`; this is not public
+release or human acceptance. See the [integration handoff](../handoffs/handoff-phase-3-prerelease-integration.md).
 
 **Release checkpoint, 23 October 2026:** use the
 [public-release assessment](../releases/public-release-readiness-2026-10-23.md)
@@ -34,13 +37,13 @@ These labels retain the project's existing named tracks. `3.x` and `3.y` are
 track labels, not decimal release versions. The delivery order below governs
 priority; a larger-looking label does not imply that another track has passed.
 
-| Phase / track | Meaning | Position on 7 October 2026 |
+| Phase / track | Meaning | Position reviewed 17 November 2026 |
 | --- | --- | --- |
 | Phases 1–2 | Project declarations, editor/files, configurations, containment and window foundations | Existing foundation; historical milestones are archived |
-| Phase 3 | Language intelligence through discovered external language servers | Planned; no LSP client found in current source |
+| Phase 3 | Language intelligence through discovered external language servers | Rust Stage 1 implementation integrated experimentally; human acceptance incomplete |
 | Phase 3.x | DAP/debugger reliability, ordinary MT, linked native debugging and MT with LDI | Active; implementations and labs exist, acceptance remains scoped |
 | Phase 3.y | Integrated terminal | Deferred design; separate from external-terminal launch |
-| Phase 3.5 | Profiling tools and profile markers | Proposed; runtime profiling is separate from thread-row elapsed time |
+| Phase 3.5 | Profiling tools and profile markers | Native/Unity/Gold profiling, CSV metrics and timed perf integrated experimentally; release gates open |
 | Phase 4 | Find and Replace Batch | Existing future plan; preview, conflict and undo decisions must be settled before implementation |
 | Later, unassigned | Request debugging, concurrent LDI invocation coordination, shared native consumers, Git workspaces, assistant/AI panel, Python/ML and GPU expansion | Designs or investigations; no delivery phase or completion claim assigned |
 
@@ -107,8 +110,8 @@ debugger or LSP support.
 
 Shared Rust/C# native contexts and truly concurrent LDI invocations need their
 own ownership, arbitration and lifecycle work after single-consumer flows are
-stable. Git workspaces are proposals. Profiling, the integrated terminal and
-batch replace retain their separate tracks and must not be reported as delivered.
+stable. Git workspaces are proposals. Profiling now has an experimental integration candidate with separate acceptance
+gates. The integrated terminal and batch replace remain separate future tracks.
 
 **Release evidence:** A clean supported Linux setup, discovered-tool failures,
 editing/LSP/build/debug for the gate languages, packaged editor smoke tests,

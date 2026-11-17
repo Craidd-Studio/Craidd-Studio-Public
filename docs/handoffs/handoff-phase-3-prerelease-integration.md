@@ -79,15 +79,27 @@ Profiler workspace coexisting without write-through or lost identity.
   build/run and refusal to reuse an occupied destination. Other template
   languages and native file choosers are not qualified by that smoke.
 - Real-Monaco buffer probe: all seven reported checks PASS.
-- Sustained Unity gate: RUNNING on the frozen `541e879` binary. Record its
-  exact outcome rather than inheriting passes from source branches.
+- Sustained Unity gate on frozen `541e879`: PASS in 634.35 s. At rollover:
+  616.064 s, 2,400 retained samples, 1 aged sample, 10,018,806 ordinary captures
+  evicted; source gaps, rejected events, disconnects and dropped all zero.
+  Post-rollover allocation/snapshot/Record again/free and Play restart passed.
+  This is one passing run; the historical intermittent failure remains recorded.
+- Final source `285c301` adds only the Save/Save As baseline correction after
+  that collector run. Its standalone native smoke passes 7/7; the long run was
+  not repeated on this final save-only revision. Full exact-build release
+  qualification still needs its own frozen optimized candidate.
+- A local internal-test Debian package is built. Its extracted executable passed
+  all seven native smoke tests on this host. The package is not installed or published.
 
 Portable current results and source hashes are in
 [the integration record](../releases/evidence/2026-11-17/prerelease-integration.json).
 These debug/native checks do not qualify optimized release performance or
-clean-machine installation. The Save/Save As follow-up is separately covered
-by deterministic pending-write regressions; its final native build will be
-recorded after the sustained collection run, avoiding build load during it.
+clean-machine installation. The Save/Save As follow-up passes deterministic
+pending-write regressions and is included in the final native smoke build.
+See [package inspection](../releases/evidence/2026-11-17/package-inspection.json)
+for exact standalone, packaged-payload and archive hashes. Tauri changes three
+bundle-marker bytes from UNK to DEB when packaging; the payload therefore has
+its own hash and a separate runtime check.
 
 Temporary detailed logs use `/tmp/craidd-prerelease-*.log`. Historical reports
 keep their original dates, binaries, failures and scopes. Their PASS rows do
@@ -97,7 +109,7 @@ not qualify this combined candidate.
 
 Human buffer-safety/navigation re-check; dirty buffer and external disk conflict
 behavior; LSP freshness/linked-window acceptance; metric orientation retry and
-million-row performance; sustained Unity source-loss/rollover/replay; last-
+million-row performance; robustness follow-up for historical intermittent Unity loss; last-
 solution Getting Started behavior; native chooser/scaling/accessibility;
 clean-machine packaged startup; and the full supported-language journey.
 Unity managed attach and Mono symbol naming retain their experimental limits.

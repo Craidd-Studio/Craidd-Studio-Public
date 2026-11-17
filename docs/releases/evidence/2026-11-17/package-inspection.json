@@ -1,0 +1,16 @@
+{
+  "sourceCommit": "285c301",
+  "configuration": "embedded debug; internal testing only",
+  "binarySha256": "252fc53f4eadca71455d78d9f9694e8c43fed56dc54632121cbac696ec7f2133",
+  "packagedBinarySha256": "bbed8e54213a0f1dcf7a0afb3001f4918f6edfab381262ad4a345309c86735c2",
+  "packageSha256": "d4b6a14e83c370e5449b61019c74ef8303e8bcec947a5599a890c0e00aafb33a",
+  "binaryBytes": 358366424,
+  "packagedBinaryBytes": 358366424,
+  "packagePayloadMatchesStandalone": false,
+  "packagePath": "/mnt/ext_drives/GamesDev/.codex/.worktrees/ad33/Craidd-Studio/test-results/prerelease/285c301/CraiddStudio-internal-alpha-285c301.deb",
+  "binaryPath": "/mnt/ext_drives/GamesDev/.codex/.worktrees/ad33/Craidd-Studio/test-results/prerelease/285c301/craidd-studio",
+  "packagedBinaryPath": "/mnt/ext_drives/GamesDev/.codex/.worktrees/ad33/Craidd-Studio/test-results/prerelease/285c301/package-root/usr/bin/craidd-studio",
+  "cleanMachineInstallation": "NOT TESTED",
+  "payloadDifference": "exactly three bytes: Tauri bundle-type marker changes from UNK to DEB",
+  "packagedPayloadRuntime": "PASS: seven native smoke tests on extracted executable, private Xvfb, same host"
+}

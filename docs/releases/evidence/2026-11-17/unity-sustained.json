@@ -1,0 +1,886 @@
+{
+  "binarySha256": "5ceaf380093f37070406cc41fe7d6e2e28e22a6118c68735160ca8215374fe2b",
+  "sourceCommit": "541e879",
+  "gate": "PASS",
+  "durationMs": 634352.957182,
+  "rawEvidence": "test-results/ui/2026-11-17T01-38-08-017Z/unity-uncapped/record.json",
+  "scope": "one private-display disposable Unity Editor, uncapped native profiling; historical intermittent loss remains recorded",
+  "steps": [
+    {
+      "step": "environment",
+      "at": "2026-11-17T01:38:17.058Z",
+      "unityVersion": "6000.5.10f1",
+      "editor": "/home/skira24/Unity/Hub/Editor/6000.5.10f1/Editor/Unity",
+      "editorPid": 9446,
+      "project": "/tmp/cui-yLqtK1/workspaces/unity",
+      "namespace": "unity-uncapped-8a400a9a-7e87-4b4a-9751-e0e8a367288f",
+      "requestedFps": -1
+    },
+    {
+      "step": "uncapped-sustained",
+      "at": "2026-11-17T01:38:22.282Z",
+      "unity": {
+        "pid": 9446,
+        "playing": true,
+        "changing": false,
+        "nativeLiveBytes": 0,
+        "frames": 41141,
+        "overlayDraws": 0,
+        "lastCommand": 5,
+        "menuExecuted": true,
+        "error": ""
+      },
+      "profile": {
+        "id": "9446-3511570-1794879498226176033",
+        "active": true,
+        "observedAtMs": 4046.1464740000006,
+        "counters": {
+          "evictedCaptures": 41599,
+          "agedSamples": 0,
+          "rejectedEvents": 0,
+          "disconnects": 0,
+          "sourceGaps": 0
+        },
+        "dropped": 0,
+        "batch": 2,
+        "playGeneration": 1,
+        "reason": ""
+      },
+      "sampleCount": 16,
+      "captureCount": 132
+    },
+    {
+      "step": "long-counter-sample",
+      "at": "2026-11-17T01:38:22.293Z",
+      "observedAtMs": 4058.121035,
+      "counters": {
+        "evictedCaptures": 41779,
+        "agedSamples": 0,
+        "rejectedEvents": 0,
+        "disconnects": 0,
+        "sourceGaps": 0
+      },
+      "dropped": 0,
+      "samples": 16,
+      "captures": 132,
+      "batch": 2,
+      "generation": 1
+    },
+    {
+      "step": "long-counter-sample",
+      "at": "2026-11-17T01:38:37.443Z",
+      "observedAtMs": 19207.415963,
+      "counters": {
+        "evictedCaptures": 289301,
+        "agedSamples": 0,
+        "rejectedEvents": 0,
+        "disconnects": 0,
+        "sourceGaps": 0
+      },
+      "dropped": 0,
+      "samples": 75,
+      "captures": 132,
+      "batch": 2,
+      "generation": 1
+    },
+    {
+      "step": "long-counter-sample",
+      "at": "2026-11-17T01:38:52.631Z",
+      "observedAtMs": 34395.816093999994,
+      "counters": {
+        "evictedCaptures": 539408,
+        "agedSamples": 0,
+        "rejectedEvents": 0,
+        "disconnects": 0,
+        "sourceGaps": 0
+      },
+      "dropped": 0,
+      "samples": 135,
+      "captures": 132,
+      "batch": 2,
+      "generation": 1
+    },
+    {
+      "step": "long-counter-sample",
+      "at": "2026-11-17T01:39:07.833Z",
+      "observedAtMs": 49595.671324999996,
+      "counters": {
+        "evictedCaptures": 788924,
+        "agedSamples": 0,
+        "rejectedEvents": 0,
+        "disconnects": 0,
+        "sourceGaps": 0
+      },
+      "dropped": 0,
+      "samples": 195,
+      "captures": 132,
+      "batch": 2,
+      "generation": 1
+    },
+    {
+      "step": "long-counter-sample",
+      "at": "2026-11-17T01:39:23.051Z",
+      "observedAtMs": 64814.364693,
+      "counters": {
+        "evictedCaptures": 1038394,
+        "agedSamples": 0,
+        "rejectedEvents": 0,
+        "disconnects": 0,
+        "sourceGaps": 0
+      },
+      "dropped": 0,
+      "samples": 255,
+      "captures": 132,
+      "batch": 2,
+      "generation": 1
+    },
+    {
+      "step": "long-counter-sample",
+      "at": "2026-11-17T01:39:38.299Z",
+      "observedAtMs": 80062.412176,
+      "counters": {
+        "evictedCaptures": 1289204,
+        "agedSamples": 0,
+        "rejectedEvents": 0,
+        "disconnects": 0,
+        "sourceGaps": 0
+      },
+      "dropped": 0,
+      "samples": 315,
+      "captures": 132,
+      "batch": 2,
+      "generation": 1
+    },
+    {
+      "step": "long-counter-sample",
+      "at": "2026-11-17T01:39:53.302Z",
+      "observedAtMs": 95064.61004700001,
+      "counters": {
+        "evictedCaptures": 1535257,
+        "agedSamples": 0,
+        "rejectedEvents": 0,
+        "disconnects": 0,
+        "sourceGaps": 0
+      },
+      "dropped": 0,
+      "samples": 374,
+      "captures": 132,
+      "batch": 2,
+      "generation": 1
+    },
+    {
+      "step": "long-counter-sample",
+      "at": "2026-11-17T01:40:08.340Z",
+      "observedAtMs": 110098.465709,
+      "counters": {
+        "evictedCaptures": 1782220,
+        "agedSamples": 0,
+        "rejectedEvents": 0,
+        "disconnects": 0,
+        "sourceGaps": 0
+      },
+      "dropped": 0,
+      "samples": 434,
+      "captures": 132,
+      "batch": 2,
+      "generation": 1
+    },
+    {
+      "step": "long-counter-sample",
+      "at": "2026-11-17T01:40:23.407Z",
+      "observedAtMs": 125169.035268,
+      "counters": {
+        "evictedCaptures": 2029243,
+        "agedSamples": 0,
+        "rejectedEvents": 0,
+        "disconnects": 0,
+        "sourceGaps": 0
+      },
+      "dropped": 0,
+      "samples": 493,
+      "captures": 132,
+      "batch": 2,
+      "generation": 1
+    },
+    {
+      "step": "long-counter-sample",
+      "at": "2026-11-17T01:40:38.503Z",
+      "observedAtMs": 140263.72127900002,
+      "counters": {
+        "evictedCaptures": 2279138,
+        "agedSamples": 0,
+        "rejectedEvents": 0,
+        "disconnects": 0,
+        "sourceGaps": 0
+      },
+      "dropped": 0,
+      "samples": 552,
+      "captures": 132,
+      "batch": 2,
+      "generation": 1
+    },
+    {
+      "step": "long-counter-sample",
+      "at": "2026-11-17T01:40:53.599Z",
+      "observedAtMs": 155360.614079,
+      "counters": {
+        "evictedCaptures": 2527446,
+        "agedSamples": 0,
+        "rejectedEvents": 0,
+        "disconnects": 0,
+        "sourceGaps": 0
+      },
+      "dropped": 0,
+      "samples": 611,
+      "captures": 132,
+      "batch": 2,
+      "generation": 1
+    },
+    {
+      "step": "long-counter-sample",
+      "at": "2026-11-17T01:41:08.750Z",
+      "observedAtMs": 170510.82079899998,
+      "counters": {
+        "evictedCaptures": 2772491,
+        "agedSamples": 0,
+        "rejectedEvents": 0,
+        "disconnects": 0,
+        "sourceGaps": 0
+      },
+      "dropped": 0,
+      "samples": 671,
+      "captures": 132,
+      "batch": 2,
+      "generation": 1
+    },
+    {
+      "step": "long-counter-sample",
+      "at": "2026-11-17T01:41:23.915Z",
+      "observedAtMs": 185675.528961,
+      "counters": {
+        "evictedCaptures": 3019240,
+        "agedSamples": 0,
+        "rejectedEvents": 0,
+        "disconnects": 0,
+        "sourceGaps": 0
+      },
+      "dropped": 0,
+      "samples": 730,
+      "captures": 132,
+      "batch": 2,
+      "generation": 1
+    },
+    {
+      "step": "long-counter-sample",
+      "at": "2026-11-17T01:41:39.103Z",
+      "observedAtMs": 200862.684423,
+      "counters": {
+        "evictedCaptures": 3268434,
+        "agedSamples": 0,
+        "rejectedEvents": 0,
+        "disconnects": 0,
+        "sourceGaps": 0
+      },
+      "dropped": 0,
+      "samples": 790,
+      "captures": 132,
+      "batch": 2,
+      "generation": 1
+    },
+    {
+      "step": "long-counter-sample",
+      "at": "2026-11-17T01:41:54.302Z",
+      "observedAtMs": 216062.13802900002,
+      "counters": {
+        "evictedCaptures": 3518460,
+        "agedSamples": 0,
+        "rejectedEvents": 0,
+        "disconnects": 0,
+        "sourceGaps": 0
+      },
+      "dropped": 0,
+      "samples": 849,
+      "captures": 132,
+      "batch": 2,
+      "generation": 1
+    },
+    {
+      "step": "long-counter-sample",
+      "at": "2026-11-17T01:42:09.519Z",
+      "observedAtMs": 231277.775309,
+      "counters": {
+        "evictedCaptures": 3769334,
+        "agedSamples": 0,
+        "rejectedEvents": 0,
+        "disconnects": 0,
+        "sourceGaps": 0
+      },
+      "dropped": 0,
+      "samples": 909,
+      "captures": 132,
+      "batch": 2,
+      "generation": 1
+    },
+    {
+      "step": "long-counter-sample",
+      "at": "2026-11-17T01:42:24.745Z",
+      "observedAtMs": 246502.774201,
+      "counters": {
+        "evictedCaptures": 4018965,
+        "agedSamples": 0,
+        "rejectedEvents": 0,
+        "disconnects": 0,
+        "sourceGaps": 0
+      },
+      "dropped": 0,
+      "samples": 968,
+      "captures": 132,
+      "batch": 2,
+      "generation": 1
+    },
+    {
+      "step": "long-counter-sample",
+      "at": "2026-11-17T01:42:39.745Z",
+      "observedAtMs": 261504.029817,
+      "counters": {
+        "evictedCaptures": 4265635,
+        "agedSamples": 0,
+        "rejectedEvents": 0,
+        "disconnects": 0,
+        "sourceGaps": 0
+      },
+      "dropped": 0,
+      "samples": 1027,
+      "captures": 132,
+      "batch": 2,
+      "generation": 1
+    },
+    {
+      "step": "long-counter-sample",
+      "at": "2026-11-17T01:42:54.768Z",
+      "observedAtMs": 276526.147628,
+      "counters": {
+        "evictedCaptures": 4510709,
+        "agedSamples": 0,
+        "rejectedEvents": 0,
+        "disconnects": 0,
+        "sourceGaps": 0
+      },
+      "dropped": 0,
+      "samples": 1085,
+      "captures": 132,
+      "batch": 2,
+      "generation": 1
+    },
+    {
+      "step": "long-counter-sample",
+      "at": "2026-11-17T01:43:09.823Z",
+      "observedAtMs": 291580.40306,
+      "counters": {
+        "evictedCaptures": 4755304,
+        "agedSamples": 0,
+        "rejectedEvents": 0,
+        "disconnects": 0,
+        "sourceGaps": 0
+      },
+      "dropped": 0,
+      "samples": 1144,
+      "captures": 132,
+      "batch": 2,
+      "generation": 1
+    },
+    {
+      "step": "long-counter-sample",
+      "at": "2026-11-17T01:43:24.894Z",
+      "observedAtMs": 306652.264914,
+      "counters": {
+        "evictedCaptures": 5001105,
+        "agedSamples": 0,
+        "rejectedEvents": 0,
+        "disconnects": 0,
+        "sourceGaps": 0
+      },
+      "dropped": 0,
+      "samples": 1203,
+      "captures": 132,
+      "batch": 2,
+      "generation": 1
+    },
+    {
+      "step": "long-counter-sample",
+      "at": "2026-11-17T01:43:39.988Z",
+      "observedAtMs": 321745.781912,
+      "counters": {
+        "evictedCaptures": 5247843,
+        "agedSamples": 0,
+        "rejectedEvents": 0,
+        "disconnects": 0,
+        "sourceGaps": 0
+      },
+      "dropped": 0,
+      "samples": 1262,
+      "captures": 132,
+      "batch": 2,
+      "generation": 1
+    },
+    {
+      "step": "long-counter-sample",
+      "at": "2026-11-17T01:43:55.107Z",
+      "observedAtMs": 336862.071748,
+      "counters": {
+        "evictedCaptures": 5495630,
+        "agedSamples": 0,
+        "rejectedEvents": 0,
+        "disconnects": 0,
+        "sourceGaps": 0
+      },
+      "dropped": 0,
+      "samples": 1321,
+      "captures": 132,
+      "batch": 2,
+      "generation": 1
+    },
+    {
+      "step": "long-counter-sample",
+      "at": "2026-11-17T01:44:10.233Z",
+      "observedAtMs": 351988.446089,
+      "counters": {
+        "evictedCaptures": 5744071,
+        "agedSamples": 0,
+        "rejectedEvents": 0,
+        "disconnects": 0,
+        "sourceGaps": 0
+      },
+      "dropped": 0,
+      "samples": 1379,
+      "captures": 132,
+      "batch": 2,
+      "generation": 1
+    },
+    {
+      "step": "long-counter-sample",
+      "at": "2026-11-17T01:44:25.391Z",
+      "observedAtMs": 367147.327941,
+      "counters": {
+        "evictedCaptures": 5991681,
+        "agedSamples": 0,
+        "rejectedEvents": 0,
+        "disconnects": 0,
+        "sourceGaps": 0
+      },
+      "dropped": 0,
+      "samples": 1438,
+      "captures": 132,
+      "batch": 2,
+      "generation": 1
+    },
+    {
+      "step": "long-counter-sample",
+      "at": "2026-11-17T01:44:40.609Z",
+      "observedAtMs": 382364.024328,
+      "counters": {
+        "evictedCaptures": 6236670,
+        "agedSamples": 0,
+        "rejectedEvents": 0,
+        "disconnects": 0,
+        "sourceGaps": 0
+      },
+      "dropped": 0,
+      "samples": 1498,
+      "captures": 132,
+      "batch": 2,
+      "generation": 1
+    },
+    {
+      "step": "long-counter-sample",
+      "at": "2026-11-17T01:44:55.817Z",
+      "observedAtMs": 397571.873028,
+      "counters": {
+        "evictedCaptures": 6485676,
+        "agedSamples": 0,
+        "rejectedEvents": 0,
+        "disconnects": 0,
+        "sourceGaps": 0
+      },
+      "dropped": 0,
+      "samples": 1557,
+      "captures": 132,
+      "batch": 2,
+      "generation": 1
+    },
+    {
+      "step": "long-counter-sample",
+      "at": "2026-11-17T01:45:11.049Z",
+      "observedAtMs": 412803.44594899996,
+      "counters": {
+        "evictedCaptures": 6734681,
+        "agedSamples": 0,
+        "rejectedEvents": 0,
+        "disconnects": 0,
+        "sourceGaps": 0
+      },
+      "dropped": 0,
+      "samples": 1616,
+      "captures": 132,
+      "batch": 2,
+      "generation": 1
+    },
+    {
+      "step": "long-counter-sample",
+      "at": "2026-11-17T01:45:26.052Z",
+      "observedAtMs": 427806.980406,
+      "counters": {
+        "evictedCaptures": 6977052,
+        "agedSamples": 0,
+        "rejectedEvents": 0,
+        "disconnects": 0,
+        "sourceGaps": 0
+      },
+      "dropped": 0,
+      "samples": 1674,
+      "captures": 132,
+      "batch": 2,
+      "generation": 1
+    },
+    {
+      "step": "long-counter-sample",
+      "at": "2026-11-17T01:45:41.071Z",
+      "observedAtMs": 442822.945068,
+      "counters": {
+        "evictedCaptures": 7222754,
+        "agedSamples": 0,
+        "rejectedEvents": 0,
+        "disconnects": 0,
+        "sourceGaps": 0
+      },
+      "dropped": 0,
+      "samples": 1732,
+      "captures": 132,
+      "batch": 2,
+      "generation": 1
+    },
+    {
+      "step": "long-counter-sample",
+      "at": "2026-11-17T01:45:56.118Z",
+      "observedAtMs": 457869.744862,
+      "counters": {
+        "evictedCaptures": 7464926,
+        "agedSamples": 0,
+        "rejectedEvents": 0,
+        "disconnects": 0,
+        "sourceGaps": 0
+      },
+      "dropped": 0,
+      "samples": 1790,
+      "captures": 132,
+      "batch": 2,
+      "generation": 1
+    },
+    {
+      "step": "long-counter-sample",
+      "at": "2026-11-17T01:46:11.165Z",
+      "observedAtMs": 472916.87633999996,
+      "counters": {
+        "evictedCaptures": 7709902,
+        "agedSamples": 0,
+        "rejectedEvents": 0,
+        "disconnects": 0,
+        "sourceGaps": 0
+      },
+      "dropped": 0,
+      "samples": 1849,
+      "captures": 132,
+      "batch": 2,
+      "generation": 1
+    },
+    {
+      "step": "long-counter-sample",
+      "at": "2026-11-17T01:46:26.228Z",
+      "observedAtMs": 487981.340027,
+      "counters": {
+        "evictedCaptures": 7958578,
+        "agedSamples": 0,
+        "rejectedEvents": 0,
+        "disconnects": 0,
+        "sourceGaps": 0
+      },
+      "dropped": 0,
+      "samples": 1907,
+      "captures": 132,
+      "batch": 2,
+      "generation": 1
+    },
+    {
+      "step": "long-counter-sample",
+      "at": "2026-11-17T01:46:41.301Z",
+      "observedAtMs": 503053.871577,
+      "counters": {
+        "evictedCaptures": 8206431,
+        "agedSamples": 0,
+        "rejectedEvents": 0,
+        "disconnects": 0,
+        "sourceGaps": 0
+      },
+      "dropped": 0,
+      "samples": 1965,
+      "captures": 132,
+      "batch": 2,
+      "generation": 1
+    },
+    {
+      "step": "long-counter-sample",
+      "at": "2026-11-17T01:46:56.419Z",
+      "observedAtMs": 518169.60266900004,
+      "counters": {
+        "evictedCaptures": 8452167,
+        "agedSamples": 0,
+        "rejectedEvents": 0,
+        "disconnects": 0,
+        "sourceGaps": 0
+      },
+      "dropped": 0,
+      "samples": 2024,
+      "captures": 132,
+      "batch": 2,
+      "generation": 1
+    },
+    {
+      "step": "long-counter-sample",
+      "at": "2026-11-17T01:47:11.526Z",
+      "observedAtMs": 533276.436305,
+      "counters": {
+        "evictedCaptures": 8698872,
+        "agedSamples": 0,
+        "rejectedEvents": 0,
+        "disconnects": 0,
+        "sourceGaps": 0
+      },
+      "dropped": 0,
+      "samples": 2082,
+      "captures": 132,
+      "batch": 2,
+      "generation": 1
+    },
+    {
+      "step": "long-counter-sample",
+      "at": "2026-11-17T01:47:26.650Z",
+      "observedAtMs": 548401.1594669999,
+      "counters": {
+        "evictedCaptures": 8947043,
+        "agedSamples": 0,
+        "rejectedEvents": 0,
+        "disconnects": 0,
+        "sourceGaps": 0
+      },
+      "dropped": 0,
+      "samples": 2140,
+      "captures": 132,
+      "batch": 2,
+      "generation": 1
+    },
+    {
+      "step": "long-counter-sample",
+      "at": "2026-11-17T01:47:41.830Z",
+      "observedAtMs": 563580.5125780001,
+      "counters": {
+        "evictedCaptures": 9194520,
+        "agedSamples": 0,
+        "rejectedEvents": 0,
+        "disconnects": 0,
+        "sourceGaps": 0
+      },
+      "dropped": 0,
+      "samples": 2199,
+      "captures": 132,
+      "batch": 2,
+      "generation": 1
+    },
+    {
+      "step": "long-counter-sample",
+      "at": "2026-11-17T01:47:57.008Z",
+      "observedAtMs": 578760.285015,
+      "counters": {
+        "evictedCaptures": 9441988,
+        "agedSamples": 0,
+        "rejectedEvents": 0,
+        "disconnects": 0,
+        "sourceGaps": 0
+      },
+      "dropped": 0,
+      "samples": 2257,
+      "captures": 132,
+      "batch": 2,
+      "generation": 1
+    },
+    {
+      "step": "long-counter-sample",
+      "at": "2026-11-17T01:48:12.272Z",
+      "observedAtMs": 594021.435005,
+      "counters": {
+        "evictedCaptures": 9681564,
+        "agedSamples": 0,
+        "rejectedEvents": 0,
+        "disconnects": 0,
+        "sourceGaps": 0
+      },
+      "dropped": 0,
+      "samples": 2316,
+      "captures": 132,
+      "batch": 2,
+      "generation": 1
+    },
+    {
+      "step": "long-counter-sample",
+      "at": "2026-11-17T01:48:27.331Z",
+      "observedAtMs": 609079.641883,
+      "counters": {
+        "evictedCaptures": 9912700,
+        "agedSamples": 0,
+        "rejectedEvents": 0,
+        "disconnects": 0,
+        "sourceGaps": 0
+      },
+      "dropped": 0,
+      "samples": 2374,
+      "captures": 132,
+      "batch": 2,
+      "generation": 1
+    },
+    {
+      "step": "long-rolling-history",
+      "at": "2026-11-17T01:48:34.360Z",
+      "unity": {
+        "pid": 9446,
+        "playing": true,
+        "changing": false,
+        "nativeLiveBytes": 0,
+        "frames": 10018232,
+        "overlayDraws": 0,
+        "lastCommand": 5,
+        "menuExecuted": true,
+        "error": ""
+      },
+      "renderedFooter": "\u25c6 Gold connected\nRolling history",
+      "profile": {
+        "id": "9446-3511570-1794879498226176033",
+        "active": true,
+        "observedAtMs": 616064.229339,
+        "counters": {
+          "evictedCaptures": 10018806,
+          "agedSamples": 1,
+          "rejectedEvents": 0,
+          "disconnects": 0,
+          "sourceGaps": 0
+        },
+        "dropped": 0,
+        "batch": 2,
+        "playGeneration": 1,
+        "reason": ""
+      },
+      "sampleCount": 2400,
+      "captureCount": 132
+    },
+    {
+      "step": "post-rollover-snapshot-record-again-free",
+      "at": "2026-11-17T01:48:35.247Z",
+      "snapshotId": "662f3cde-d614-4852-aa26-539b4d82cce9",
+      "profile": {
+        "id": "9446-3511570-1794879498226176033",
+        "active": true,
+        "observedAtMs": 616894.644191,
+        "counters": {
+          "evictedCaptures": 10031288,
+          "agedSamples": 4,
+          "rejectedEvents": 0,
+          "disconnects": 0,
+          "sourceGaps": 0
+        },
+        "dropped": 0,
+        "batch": 3,
+        "playGeneration": 1,
+        "reason": ""
+      },
+      "sampleCount": 2400,
+      "captureCount": 134
+    },
+    {
+      "step": "final-profile",
+      "at": "2026-11-17T01:48:41.855Z",
+      "profile": {
+        "id": "9446-3511570-1794879498226176033",
+        "active": false,
+        "observedAtMs": 618143.923146,
+        "counters": {
+          "evictedCaptures": 10036263,
+          "agedSamples": 9,
+          "rejectedEvents": 0,
+          "disconnects": 0,
+          "sourceGaps": 0
+        },
+        "dropped": 0,
+        "batch": 4,
+        "playGeneration": 2,
+        "reason": "Profiling stopped; target left running"
+      },
+      "sampleCount": 2400,
+      "captureCount": 135
+    }
+  ],
+  "allRecordedSteps": [
+    "frontend-ready",
+    "environment",
+    "first-play",
+    "retained-memory",
+    "cleared-memory",
+    "hit-inspection-trace",
+    "hit-evicted-before-inspection",
+    "inspected-hit",
+    "record-again",
+    "uncapped-sustained",
+    "long-counter-sample",
+    "long-counter-sample",
+    "long-counter-sample",
+    "long-counter-sample",
+    "long-counter-sample",
+    "long-counter-sample",
+    "long-counter-sample",
+    "long-counter-sample",
+    "long-counter-sample",
+    "long-counter-sample",
+    "long-counter-sample",
+    "long-counter-sample",
+    "long-counter-sample",
+    "long-counter-sample",
+    "long-counter-sample",
+    "long-counter-sample",
+    "long-counter-sample",
+    "long-counter-sample",
+    "long-counter-sample",
+    "long-counter-sample",
+    "long-counter-sample",
+    "long-counter-sample",
+    "long-counter-sample",
+    "long-counter-sample",
+    "long-counter-sample",
+    "long-counter-sample",
+    "long-counter-sample",
+    "long-counter-sample",
+    "long-counter-sample",
+    "long-counter-sample",
+    "long-counter-sample",
+    "long-counter-sample",
+    "long-counter-sample",
+    "long-counter-sample",
+    "long-counter-sample",
+    "long-counter-sample",
+    "long-counter-sample",
+    "long-counter-sample",
+    "long-counter-sample",
+    "long-counter-sample",
+    "long-counter-sample",
+    "long-rolling-history",
+    "post-rollover-snapshot-record-again-free",
+    "second-play",
+    "final-profile"
+  ]
+}
