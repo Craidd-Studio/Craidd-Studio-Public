@@ -444,7 +444,32 @@ Settled by the user on 9 October 2026.
 - Desktop shell behaviour (top bar, dock, shelf) is observed by the user and
   recorded here.
 
+## Public Release Alpha: closing the last solution
+
+**Open UX requirement, 16 November 2026.** During the IntelliSense human
+checklist, the user reported that File → Exit → This Solution closed all
+three linked solution windows without showing Getting Started. The user
+identified this as a UX flaw: closing a solution should leave a useful IDE
+entry point; quitting the IDE is the separate This Application action.
+
+Required behaviour:
+
+- [ ] After File → Exit → This Solution successfully closes the last open
+  solution, show or focus a single Getting Started window. Complete any
+  save/cancel flow first; cancelling closure must preserve the solution.
+- [ ] If another solution is open, preserve it without opening a redundant
+  starter window.
+- [ ] File → Exit → This Application still exits the IDE and must not
+  reopen Getting Started.
+- [ ] Verify the last-solution case with multiple linked windows: close all
+  windows belonging to that solution, clean up its servers, and show one
+  starter window.
+
+This is an Alpha requirement, not an implemented or accepted fix. LSP
+checklist 6.1 verified server cleanup separately; that functional pass does
+not close this UX issue.
+
 ---
 
-*Last updated: Phase 3.x, 9 October 2026. Author(s): ShinkuKira21.*
+*Last updated: Phase 3.x / Public Release Alpha, 16 November 2026. Author(s): ShinkuKira21.*
 *This document is a design.*
