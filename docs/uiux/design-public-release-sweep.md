@@ -390,6 +390,105 @@ recorded here so the D9 behaviour can be revisited when it exists.
 **Not done:** 7.4. Replacing `alert()` across the app is a separate pass, and
 needs a shared notice/toast component designed first.
 
+## 8. Test round 1 (user, 9 October 2026)
+
+Run on GNOME Wayland against `uiux/exit-and-profiler`.
+
+| Area | Result | Follow-up |
+| --- | --- | --- |
+| Shortcuts (§5) | Work | none |
+| Context menus (§4) | All items work | **R3** |
+| Side window (§4, slice F) | Works | none |
+| Watch and variables (§2) | Work for native (Rust/C/C++) and C# | none |
+| Profiler layout (§3) | Accepted as the base for Phase 3.5 work | none |
+| Exit (§6) | Exited from Get Started, hidden and open windows, and during Gold Run. The crash reproduction was not reproduced this round. | **R4** |
+| Titles (§1) | Format looks right, but titles **do not update** | **R2** |
+| Hover in the editor | No value is shown on hover, for native or C# | **R1** |
+
+**R1. Hover evaluation.** This is §2 item 3, which was not started. While a
+session is paused, hovering an identifier evaluates it (`context: "hover"`)
+against the displayed top frame through `debug_inspect`. Monaco shows the
+value and type, with an expandable child list when the value has members.
+It must not evaluate while running, and it must not send a request for
+every mouse move: debounce at 300 ms and cache the result per stop.
+
+**R2. Titles do not update.** Windows keep the opening title
+`Craidd Studio - {Solution}`. In the screenshot this is true for CS2 and CS4
+alike, so the canonical title is never applied. The cause is not yet known:
+`update_linked_window` does call `window_title::set_canonical`. One candidate
+is that `set_canonical` records the canonical title before applying it, so
+if the first apply fails, every later identical title is skipped. Diagnose
+this at runtime with the UI harness's first scenario (see the
+[UI test harness design](design-ui-test-harness.md)), then fix it. A Rust
+test should cover the failure that the diagnosis finds.
+
+**R3. Context menus leave the window.** Menus open at the click point with
+`position: fixed` and are not kept inside the viewport, so near the bottom
+or right edge they are clipped unless the window is maximised. Fix: one
+shared `useMenuPlacement` that measures the menu after render and flips it
+up or left to stay inside the viewport. Apply it to the File Discovery,
+Solution Explorer (tree, project and background), editor breakpoint and
+window tray menus.
+
+**R4. "Debugger transport failed: Broken pipe" on exit.** During Exit with a
+Gold run active, the adapter is killed while its writer thread is still
+sending `disconnect`. The exit itself succeeded. The message is noise from
+an expected race. Fix: the transport stays silent once its session is
+stopping, and it still reports broken pipes at any other time.
+
+**Delivered (round 2):**
+
+- **R1:** `src/lib/debugHover.ts` registers one Monaco hover provider for
+  every language, in the main and side editors.
+  - While paused, it evaluates the identifier and its member chain (`a.b`,
+    `a->b`, `a::b`; see `hoverExpression.ts`) with `context: "hover"` against
+    the displayed top frame.
+  - It shows the value, type, and the first 20 members.
+  - Results are cached per stop. Monaco's own 300 ms hover delay does the
+    debouncing.
+  - Adapter errors show no hover rather than an error.
+  - Change from the design above: members are a plain list, not expandable,
+    because Monaco hovers are Markdown. Watch remains the place to expand.
+- **R3:** `placeMenu` and `useMenuPlacement` flip and clamp click-positioned
+  menus. They re-place on resize, so items that load late (Open in VS Code)
+  can't push the menu off-screen. Applied to the File Discovery, Solution
+  Explorer (tree, project and background) and breakpoint menus.
+- **R4:** a session marks its transport quiet when its stop is scheduled. A
+  broken pipe after that is not printed or emitted. Any other broken pipe is
+  still reported.
+- **R2 (partial):**
+  - A failed title apply is now reported on stderr and retried on the next
+    update, instead of being skipped as unchanged.
+  - `CRAIDD_TRACE_TITLES=1` traces every canonical title and apply.
+  - **Harness result:** with this branch, titles reach the canonical form at
+    registration, on duplicate and after hide/show. Both the window API and
+    the trace confirm it. The round 1 build lacked the retry, so the most
+    likely cause was a first apply that failed and was never retried. That
+    is not proven.
+  - **Test round 2 (user, GNOME 51 Wayland):** the visible title bars still
+    show `Craidd Studio - {Solution}`.
+  - **Harness evidence, same day:** on both `71ffff5` (the user's build) and
+    this branch, in both embedded and dev (`devUrl`) builds, GTK's own window
+    title (`gtk_window_get_title`, read through `plugin:window|title`) becomes
+    the canonical title. Under XWayland, the window manager's
+    `_NET_WM_NAME` (read with `xprop`) becomes the canonical title too.
+  - **User check:** Alt+Tab and the overview show the full title. A
+    resize doesn't refresh the title bar. With `GDK_BACKEND=x11` the title
+    bar updates. So the problem is specific to Wayland.
+  - **Root cause:** on Wayland, the locked tao (0.35.3,
+    `platform_impl/linux/wayland/header.rs`) installs its own `HeaderBar`
+    inside an `EventBox` title bar, built once with the creation title.
+    `set_title` updates the window title, which the shell shows, but never
+    that header, which is what is drawn. tao 0.37 removes `WlHeader`.
+  - **Fix:** `window_title::sync_wayland_header` also sets the header's title
+    on the GTK main thread. That happens on every canonical change and on
+    every badge change. It is a workaround, to be removed once Tauri is
+    upgraded to a tao without `WlHeader`.
+  - **Verified by the harness:** with `CRAIDD_TRACE_TITLES`, the
+    drawn header reports the canonical title for CS1, CS2 and after
+    hide/show. `tests/ui/titles.test.mjs` now asserts this on Wayland.
+    Still to confirm by eye.
+
 ---
 
 ## Delivery slices

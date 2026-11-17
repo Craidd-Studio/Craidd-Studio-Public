@@ -63,3 +63,6 @@ workspaces/profiling-symbol-locations/__pycache__/
 workspaces/profiling-embedded-mono/__pycache__/
 
 workspaces/profiling-perf-backend/__pycache__/
+
+# UI harness evidence (tests/ui)
+test-results/

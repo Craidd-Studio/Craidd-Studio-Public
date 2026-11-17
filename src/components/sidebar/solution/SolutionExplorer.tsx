@@ -17,6 +17,7 @@ import ToolchainConfigurationDialog from "../../dialogs/ToolchainConfigurationDi
 import { useBuild } from "../../../store/buildStore";
 import { useLinkedWindows } from "../../../store/linkedWindowsStore";
 import PathActions from "../PathActions";
+import { useMenuPlacement } from "../../../hooks/useMenuPlacement";
 import { openInSideGroup } from "../../../store/splitStore";
 
 export default function SolutionExplorer() {
@@ -53,6 +54,8 @@ export default function SolutionExplorer() {
     basePath: string;
     source: "solution-lang" | "solution-config";
   } | null>(null);
+  const ctxPlacement = useMenuPlacement(ctxMenu?.x ?? 0, ctxMenu?.y ?? 0, ctxMenu);
+  const treePlacement = useMenuPlacement(treeCtxMenu?.x ?? 0, treeCtxMenu?.y ?? 0, treeCtxMenu);
   const [deleteTarget, setDeleteTarget] = useState<{ node: FileNode; basePath: string } | null>(null);
   const [deleteProjectTarget, setDeleteProjectTarget] = useState<{ id: string; name: string; folder: string } | null>(null);
   const [fineTuneTarget, setFineTuneTarget] = useState<{ projectId: string; mode: "fine-tune" | "recalibrate" } | null>(null);
@@ -372,8 +375,8 @@ export default function SolutionExplorer() {
         <>
           <div className="fixed inset-0 z-40" onClick={() => setTreeCtxMenu(null)} />
           <div
-            style={{ left: treeCtxMenu.x, top: treeCtxMenu.y }}
-            className="fixed z-50 min-w-[220px] bg-zinc-900 border border-zinc-700 rounded shadow-2xl py-1 text-xs"
+            ref={treePlacement.ref} style={treePlacement.style}
+            className="fixed z-50 min-w-[220px] w-max max-w-[20rem] bg-zinc-900 border border-zinc-700 rounded shadow-2xl py-1 text-xs"
           >
             <PathActions path={buildAbsFromNode(treeCtxMenu.basePath, treeCtxMenu.node)} isFile={treeCtxMenu.node.kind !== "folder"}
               onDone={() => setTreeCtxMenu(null)}
@@ -427,8 +430,8 @@ export default function SolutionExplorer() {
       {ctxMenu && (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setCtxMenu(null)} />
-          <div style={{ left: ctxMenu.x, top: ctxMenu.y }}
-               className="fixed z-50 min-w-[240px] bg-zinc-900 border border-zinc-700 rounded shadow-2xl py-1 text-xs">
+          <div ref={ctxPlacement.ref} style={ctxPlacement.style}
+               className="fixed z-50 min-w-[240px] w-max max-w-[20rem] bg-zinc-900 border border-zinc-700 rounded shadow-2xl py-1 text-xs">
             {ctxMenu.projectId && ctxMenu.projectMissing ? (
               // ── Stale project (not declared) ──
               <>

@@ -8,6 +8,7 @@ import { usePreferences } from "../../store/preferencesStore";
 import { useBreakpoints } from "../../store/breakpointStore";
 import { getActiveEditor, setActiveEditor } from "../../lib/activeEditor";
 import { useSplit } from "../../store/splitStore";
+import { registerDebugHover } from "../../lib/debugHover";
 import { useLinkedWindows } from "../../store/linkedWindowsStore";
 import type { Breakpoint } from "../../store/breakpointStore";
 import { useDebug } from "../../store/debugStore";
@@ -304,6 +305,7 @@ function CodeView({ onReady }: { onReady?: (instance: editor.IStandaloneCodeEdit
           instance.onDidFocusEditorText(() => { useSplit.getState().setSideFocused(false); setActiveEditor(instance, mainFile); });
           instance.onDidDispose(() => { if (getActiveEditor() === instance) setActiveEditor(null); });
           monacoRef.current = monaco;
+          registerDebugHover(monaco);
           decorationsRef.current = instance.createDecorationsCollection();
           goldDecorationsRef.current = instance.createDecorationsCollection();
           refreshGold();

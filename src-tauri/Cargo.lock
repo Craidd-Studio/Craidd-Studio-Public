@@ -554,6 +554,7 @@ name = "craidd-studio"
 version = "0.1.0"
 dependencies = [
  "glib",
+ "gtk",
  "libc",
  "regex",
  "serde",
