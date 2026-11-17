@@ -605,7 +605,7 @@ select {
 /* Metric editor: bounded panes, readable plots, and original-row inspection. */
 .metric-workbench { --metric-border:#303a46; --metric-muted:#9baabc; }
 .metric-workbench .metric-workspace { position:relative; }
-.metric-workbench .metric-analysis { overflow:hidden; background:#151c24; }
+.metric-workbench .metric-analysis { overflow-x:hidden; overflow-y:auto; background:#151c24; }
 .metric-workbench .metric-sources { width:226px; padding:14px 10px 10px; background:#171e26; }
 .metric-workbench .metric-sources header { flex-shrink:0; margin:0 4px 12px; }
 .metric-workbench .metric-sources header small { color:var(--metric-muted); }
@@ -737,7 +737,11 @@ select {
 .metric-workbench .metric-summary small { font-size:9px; }
 .metric-workbench .metric-inspector p { font-size:10px; }
 .metric-workbench .metric-row-dock footer { font-size:10px; }
-.metric-workbench .metric-analysis.is-compact .metric-row-dock:not(.is-full),.metric-workbench .metric-analysis.is-compact .metric-dock-resize { display:none; }
+/* Preserve access to both views when IDE chrome reduces editor height.
+   Compact secondary chart chrome first; let the analysis scroll instead of
+   silently removing the table or forcing the user to maximize the window. */
+.metric-workbench .metric-analysis.is-compact .metric-axis-caption { flex-direction:row; justify-content:center; flex-wrap:wrap; padding:4px 12px; gap:3px 10px; }
+.metric-workbench .metric-analysis.is-compact .metric-overview svg { height:24px; }
 @container (max-width:1190px) { .metric-workbench .metric-inspector.is-explicit { position:absolute; right:0; top:0; bottom:0; width:290px; box-shadow:-12px 0 35px #0009; z-index:4; } }
 .perf-symbol-settings { margin:12px 0 3px; color:#b9cce1; font-size:11px; }
 .perf-symbol-settings p { max-width:800px; color:#a5b9d0; }

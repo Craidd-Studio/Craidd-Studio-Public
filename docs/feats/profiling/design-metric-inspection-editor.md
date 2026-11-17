@@ -46,9 +46,16 @@ normal sidebar behaviour; returning to Profiling restores inspection state.
 
 At wide editor widths, show source pane, chart and inspector together. At
 narrower widths, collapse the inspector into a labelled drawer and allow the
-source pane to collapse; retain a usable chart before adding more axes. At low
-editor heights, let the table become a switchable view or collapsed dock. Do not
-force chart plus table plus inspector into tiny unreadable regions. Initial
+source pane to collapse; retain a usable chart before adding more axes.
+
+**Human acceptance clarification, 24 October 2026:** the user could see the table
+only after enlarging the window. Ordinary windowed use must keep the inline
+table available; do not silently remove it at a height breakpoint. Compact
+secondary chart chrome first and allow the analysis area to scroll when the
+minimum readable chart and table sizes cannot fit. Keep an explicitly labelled
+**Table** view available for inspecting rows with more space, without requiring
+full-screen or Focus analysis. Do not force chart plus table plus inspector
+into tiny unreadable regions. Initial
 proposed verification sizes are ordinary 1280×800 and 1920×1080 IDE windows,
 the existing 900-pixel minimum window width, and 125%/150% text scaling. These
 are layout tests, not approved fixed pane dimensions.

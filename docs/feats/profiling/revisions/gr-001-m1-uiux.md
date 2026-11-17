@@ -1,12 +1,36 @@
 # GR-001 M1 public-release usability review
 
 **Roadmap track:** Phase 3.5 profiling.
-**Status:** Scoped M1 implementation and automated review, 20 October 2026. Human release acceptance remains open.
+**Status:** Human usability acceptance FAIL, 21 October 2026. Earlier scoped automated checks remain valid within their recorded boundaries.
 
 The user requested public-release UI/UX quality before sign-off. This pass
 follows the existing [workspace contract](../design-profiler-workspace-modes.md)
 and [public-release sweep](../../../uiux/design-public-release-sweep.md), without
 commissioning M2/M3 or redesigning the surrounding IDE.
+
+## Human review, 21 October 2026
+
+The user reports that the imported view is confusing and visually unsuitable
+for public release, supported by five screenshots from the copied test files.
+This is failed human usability acceptance, not a regression in measured parser
+correctness or latency. The existing automated checks proved their scoped
+conditions; they did not establish readable analysis or discoverable workflows.
+
+Observed problems: import/path forms dominate the working area; the timeline
+and row inspection are pushed below the fold; values are separated from their
+labels across excessive width; chart marks are tiny and lack a useful y-axis;
+manual row-number entry substitutes for direct chart/table selection; provenance
+and parser terminology interrupt the analysis workflow. Initial series selection
+also chooses the elapsed column as a plotted metric. The helper opening the
+path disclosure made the first-use experience worse, but closing it does not
+resolve the structural problems.
+
+Required direction for the next review: a chart-first Profiling editor workspace,
+compact source/series navigation, legible axes and marks, linked chart/table/row
+inspection, and focused settings/issues views. Explicit clocks, unknown window
+durations, declared joins and immutable snapshots must remain honest. This is a
+proposed M1 usability correction; no replacement UI has yet been implemented.
+Do not push/merge or describe the current UI as public-release ready.
 
 ## Audit findings and scoped changes
 
@@ -72,5 +96,5 @@ remains unrun; native OS picker and human judgement are still separate gates.
 
 ---
 
-*Last updated: 20 October 2026. Author(s): ShinkuKira21.*
+*Last updated: 21 October 2026. Author(s): ShinkuKira21.*
 *This document is a record.*

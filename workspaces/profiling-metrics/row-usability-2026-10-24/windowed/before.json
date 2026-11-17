@@ -1,0 +1,15 @@
+{
+  "machine": "sk27",
+  "kernel": "7.2.11-arch1-1",
+  "binary": {
+    "path": "/tmp/craidd-profiler-review-a90753fc3efc/release/craidd-studio",
+    "sha256": "a90753fc3efca8e0d47125dd45cc1f578336c01bc8fbb5d52b3c24e3aca9369c"
+  },
+  "gate": "FAIL",
+  "normalWindow": {
+    "focusAnalysis": "",
+    "viewportHeight": 1000,
+    "dockDisplay": "none",
+    "visibleDataPixels": 0
+  }
+}

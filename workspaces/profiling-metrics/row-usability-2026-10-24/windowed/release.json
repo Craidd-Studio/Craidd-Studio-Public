@@ -1,0 +1,72 @@
+{
+  "machine": "sk27",
+  "kernel": "7.2.11-arch1-1",
+  "binary": {
+    "path": "/tmp/craidd-profiler-review-277ad78f6be0/release/craidd-studio",
+    "sha256": "277ad78f6be0bc2a19d7da967f09de1e4af2aa999a5b42d3539d43c7ff000d6c"
+  },
+  "gate": "PASS",
+  "normalWindow": {
+    "focusAnalysis": false,
+    "viewportHeight": 1000,
+    "dockDisplay": "flex",
+    "visibleDataPixels": 132
+  },
+  "shortWindows": [
+    {
+      "width": 1280,
+      "height": 800,
+      "split": {
+        "scrollHeight": 594,
+        "display": "flex",
+        "overflow": "auto",
+        "height": 391
+      },
+      "table": {
+        "viewportHeight": 800,
+        "height": 281,
+        "bottom": 548,
+        "full": true
+      }
+    },
+    {
+      "width": 900,
+      "height": 700,
+      "split": {
+        "scrollHeight": 586,
+        "display": "flex",
+        "overflow": "auto",
+        "height": 258
+      },
+      "table": {
+        "viewportHeight": 700,
+        "height": 101.5,
+        "bottom": 439,
+        "full": true
+      }
+    }
+  ],
+  "nativeTextSelection": {
+    "pointerDefaultPrevented": true,
+    "collapsed": true,
+    "text": ""
+  },
+  "rows": {
+    "buttonWidth": 57.53125,
+    "cellWidth": 112,
+    "jump": "",
+    "footer": "In view: original rows 13751–16250 (2500) · On screen: 13751–13755|‹‹››|Select a row for all values",
+    "first": "Row 1375113756.2979.29712.29716.2972.9342.0979150100steady",
+    "last": 6,
+    "fullRowLabel": true,
+    "lastLabel": "Row 13755"
+  },
+  "checks": {
+    "resizeDoesNotSelectText": true,
+    "resizeCancelsNativeSelection": true,
+    "rowIdentityFits": true,
+    "jumpStartsEmpty": true,
+    "rangeExplicit": true,
+    "visibleLastRowIncluded": true
+  }
+}

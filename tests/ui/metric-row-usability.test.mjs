@@ -14,8 +14,26 @@ test('Human metric findings: complete row identities, clear scope, honest jump f
  const dir=await mkdtemp(join(tmpdir(),'craidd-metric-row-ux-'));execFileSync('python3',[join(ROOT,'workspaces/profiling-metrics/editor-fixture.py'),dir]);const solution=join(dir,'Rows.cln');await writeFile(solution,'[solution]\nname="Row usability findings"\nversion="1.0"\nprojects=[]\n');
  const app=await launch('metric-row-usability');let evidence={machine:hostname(),kernel:release(),binary:{path:APP,sha256:createHash('sha256').update(await readFile(APP)).digest('hex')},gate:'FAIL'};
  t.after(async()=>{await app.screenshot('final-state').catch(()=>{});await writeFile(join(app.dir,'row-usability.json'),JSON.stringify(evidence,null,2)+'\n');await app.close();});
- const owner=await openSolution(app,solution);await app.invoke('focus_linked_window',{targetLabel:owner});await showProfiler(app);await button(app,'Open metric imports');await app.wd.command('POST','/window/rect',{width:1600,height:1050});
+ const owner=await openSolution(app,solution);await app.invoke('focus_linked_window',{targetLabel:owner});await showProfiler(app);await button(app,'Open metric imports');await app.wd.command('POST','/window/rect',{width:1600,height:1000});
  await app.wd.execute('document.querySelector(".metric-paths").open=true');await value(app,'Metric import paths',join(dir,'server-metrics.csv'));await button(app,'Import paths');await app.waitFor('loaded graph',async()=>({done:await app.wd.execute('return !!document.querySelector(".metric-plot svg")')}));
+ evidence.normalWindow=await app.wd.execute(`const main=document.querySelector('.metric-analysis').getBoundingClientRect(),dock=document.querySelector('.metric-row-dock'),viewport=dock.querySelector('.metric-table-scroll').getBoundingClientRect();return {focusAnalysis:[...document.querySelectorAll('.analysis-toolbar button')].find(b=>b.textContent==='Focus analysis')?.getAttribute('aria-pressed')==='true',dockDisplay:getComputedStyle(dock).display,visibleDataPixels:Math.max(0,Math.min(viewport.bottom,main.bottom)-Math.max(viewport.top+38,main.top)),viewportHeight:innerHeight};`);
+ await app.screenshot('normal-window');
+ assert.equal(evidence.normalWindow.focusAnalysis,false);
+ assert.notEqual(evidence.normalWindow.dockDisplay,'none','table must not disappear in an ordinary window');
+ assert.ok(evidence.normalWindow.visibleDataPixels>=29,'ordinary editor must show table data without Focus analysis or resizing Output');
+ // Test ordinary small windows before any drag can enlarge the editor.
+ evidence.shortWindows=[];
+ for(const [width,height] of [[1280,800],[900,700]]){
+  await app.wd.command('POST','/window/rect',{width,height});
+  await app.waitFor('short editor layout settled',async()=>({done:await app.wd.execute('return !!document.querySelector(".metric-analysis.is-compact")')}));
+  const split=await app.wd.execute(`const main=document.querySelector('.metric-analysis'),dock=document.querySelector('.metric-row-dock');return {display:getComputedStyle(dock).display,overflow:getComputedStyle(main).overflowY,scrollHeight:main.scrollHeight,height:main.clientHeight};`);
+  assert.notEqual(split.display,'none');assert.ok(['auto','scroll'].includes(split.overflow));
+  await button(app,'Table');
+  const table=await app.wd.execute(`const host=document.querySelector('.metric-table-scroll'),r=host.getBoundingClientRect();return {height:r.height,bottom:r.bottom,viewportHeight:innerHeight,full:document.querySelector('.metric-row-dock').classList.contains('is-full')};`);
+  assert.ok(table.full&&table.height>=96&&table.bottom<=table.viewportHeight);evidence.shortWindows.push({width,height,split,table});
+  await app.screenshot('table-'+width);await button(app,'Time series');
+ }
+ await app.wd.command('POST','/window/rect',{width:1600,height:1000});
  // Match the human's viewed slice through public zoom/pan controls.
  for(let n=0;n<3;n++)await app.wd.click(await app.wd.find('//button[@aria-label="Zoom in"]'));
  for(let n=0;n<4;n++)await app.wd.click(await app.wd.find('//button[@aria-label="Pan right"]'));

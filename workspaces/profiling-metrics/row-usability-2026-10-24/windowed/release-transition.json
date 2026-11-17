@@ -1,0 +1,10 @@
+{
+  "machine": "sk27",
+  "kernel": "7.2.11-arch1-1",
+  "binary": {
+    "path": "/tmp/craidd-profiler-review-277ad78f6be0/release/craidd-studio",
+    "sha256": "277ad78f6be0bc2a19d7da967f09de1e4af2aa999a5b42d3539d43c7ff000d6c"
+  },
+  "gate": "PASS",
+  "dom": "File\nEdit\nView\nProject\nRun\nHelp\n🔨\nAdd configuration…\n▶\n⏹\n🐛\nWhite · idle\nProfiling\n×\nProcess / Gold\nCPU sampling\nImported metrics\nmain.csv\n2 rows · complete\nOpen CSV…\nOpen snapshot…\nSave snapshot…\nExit focus\nSources\n‹\nmain.csv\n2 rows · 2 columns\ncomplete\nColumns\n1/8 shown\ns\nelapsed_ss *\nms\nloop_ms_p99ms *\n* Suggested interpretation\nManage columns…\nTime series\nLargest values\nTable\nImport issues\nColumns…\nFile details\nInspector\nView\nFull\n←\n→\n+\n−\nY axes\nDraw\nClear selection\nms *\nloop_ms_p99\n73.5\n55.1\n36.8\n18.4\n0\n1\n1\n2\n2\n2\nRetained row ordinal · not time\nWindow duration unknown · File clock only\nOverview · loop_ms_p99\nms · full file\n\nDrag to select · Shift-drag to zoom · Click for original row · Lines guide the eye between original values; gaps stay open. No percentile aggregation.\n\nRows\nColumn meanings\nVisible range\nOriginal row\nInspect row\nRow\nelapsed_s\ns *\nloop_ms_p99\nms *\nRow 1\n0\n10\nRow 2\n1\n70\nIn view: original rows 1–2 (2) · On screen: 1–2\n|‹\n‹\n›\n›|\nSelect a row for all values\nInspector\n×\nOverview\nFile\nmain.csv\nRows\n2\nColumns\n2\nClock\nRow ordinal (not time)\nTime column\nNot declared\nUnits\n* denotes a suggestion\nCoverage\ncomplete\nVisible range\nStart\n1\nEnd\n2\nRows\n2\nWindow\nUnknown\nEdit range by row\nStatistics · visible range\n\nDescriptive values of each retained column. Per-window percentiles stay per-window values.\n\nColumn\tMedian\tQ1–Q3\tMax\nloop_ms_p99\n2 values · 0 empty · ms\n40\t25–55\t70\nOriginal row\n\nClick a chart value or table row to inspect its original cells and declared companions.\n\nMetric source transitions\n|\n—\n|\n—\n|\n13px\n✓ 0\n⚠ 0\n✕ 0"
+}

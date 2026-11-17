@@ -1,0 +1,9 @@
+{
+  "binary": "/tmp/craidd-profiler-review-277ad78f6be0/release/craidd-studio",
+  "sha256": "277ad78f6be0bc2a19d7da967f09de1e4af2aa999a5b42d3539d43c7ff000d6c",
+  "sourceBase": "48e9c4d",
+  "sources": {
+    "src/assets/styles/index.css": "d43aaf2e85e40d2a59fe69924e9debe9732ca702eede5021a0abd2f6fc40d118",
+    "src/components/panels/MetricImportPanel.tsx": "57c475927cbe8c6e37f3c2bac89f535920a52b74d8a7ac7bcf33ca140ca053c3"
+  }
+}

@@ -24,7 +24,22 @@ The video captures the original 1600×1000 owned-window region. Later window gro
 3. Start the original-row lookup empty with a row-number prompt, and disable inspection until a destination is entered. Keep its draft separate from current inspected-row state in the bounded view cache. Clicking/inspecting a row fills its original identity.
 4. Cancel native selection on divider pointer-down and mark the handle nonselectable. Apply this to the shared Output divider and the metric row divider. Keep ordinary cell text copyable.
 
-These changes do not change parsing, ranking, companion joining or the meaning of existing snapshots. No clock is silently assigned. A more discoverable time-axis suggestion is **proposed**, not implemented by this fix. The video also shows the row dock appearing when shrinking Output makes the analysis area cross the compact-height threshold. Making the Rows-tab/inline-table transition clearer is another **proposed** follow-up; this fix does not redesign that responsive behaviour.
+These changes do not change parsing, ranking, companion joining or the meaning of existing snapshots. No clock is silently assigned. A more discoverable time-axis suggestion is **proposed**, not implemented by this fix. The video also shows the row dock appearing when shrinking Output makes the analysis area cross the compact-height threshold. The user then clarified that the principal obstacle was seeing the table only after going full screen. That is the primary finding; the prior row-label corrections did not fix it. The responsive availability correction below now addresses it.
+
+## Primary clarification: table hidden in ordinary windows
+
+The old compact-height rule set the inline table and its divider to `display:none`
+below a 650 px analysis height. Ordinary IDE chrome and Output reduced the
+available editor height enough to trigger it even in a 1600×1000 window. The
+regression now checks the first view **before** moving Output or enabling Focus
+analysis; the preceding test setup inadvertently enlarged the editor before
+checking table usability.
+
+The new layout removes that automatic hiding rule, keeps the analysis vertically
+scrollable, and compacts the axis caption, overview and helper text first. It
+labels the dedicated row view **Table**. Ordinary split use retains visible data;
+at shorter sizes the table remains reachable by scrolling or the Table tab.
+The human retry remains NOT TESTED. The strengthened regression keeps Focus analysis off, checks visible table data immediately at 1600×1000, and tests the dedicated Table view before any Output resizing or row inspection at 1280×800 and 900×700. An intermediate check ran after a resize-restoration gesture that did not restore Output consistently on the ordinary desktop; the final check is ordered before any divider gesture, so its evidence does not rely on that setup. Automated qualification is recorded separately below.
 
 ## Gates
 

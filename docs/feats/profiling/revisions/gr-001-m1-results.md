@@ -1,7 +1,7 @@
 # GR-001 M1 implementation and evidence
 
 **Roadmap track:** Phase 3.5 profiling.
-**Status:** M1 automated acceptance PASS; human acceptance NOT TESTED, 20 October 2026. Local feature-branch commit authorized; push/merge wait for human acceptance.
+**Status:** M1 automated acceptance PASS (20 October); human usability acceptance FAIL (21 October 2026). M1 is locally committed; push/merge remain blocked pending the usability correction and human review.
 **Baseline:** `8bac01edf9bf1f0a0b84b55441b5638bc1233a29` plus the M1 feature-branch changes. No M2/M3 work started.
 
 The [accepted decisions](implementation-decisions.md) and
@@ -81,12 +81,13 @@ Generated CSVs, binaries and complete logs remain local, not Git payloads.
 | Native regressions | PASS | 184 passed, 6 existing ignored; socket-dependent cases required ordinary desktop/local-socket access outside the sandbox |
 | Editor-only CSV / standard both-host UX | PASS, scoped | Native release layouts, keyboard entry, code/source navigation, retained range/series/row, snapshot scope and error retry; [usability record](gr-001-m1-uiux.md) |
 | Symbol resolution | NOT TESTED / not an M1 capability | CSV import supplies program values; see separate perf qualification |
-| Human desktop acceptance | NOT TESTED | No human acceptance inferred from harness runs or screenshots |
+| Human desktop acceptance | FAIL | User review on 21 October reports confusing layout and inadequate charts; [usability findings](gr-001-m1-uiux.md#human-review-21-october-2026). Other unrun human cases remain untested |
 
 The user accepted the incremental-memory and release-p95 gate revisions. M1's
 automated gates now pass; the earlier debug 199 ms event is retained historically
 and does not gate release acceptance. [Human acceptance](gr-001-m1-human-acceptance.md)
-remains NOT TESTED. Do not push/merge until that review. No M2/M3 or in-IDE perf
+now records failed usability review on 21 October. The view needs a structural
+M1 usability correction before another human review. Do not push/merge. No M2/M3 or in-IDE perf
 implementation has started.
 
 ## Release review: distributions and recovery
@@ -270,5 +271,5 @@ for the local checkpoint hash.
 
 ---
 
-*Last updated: 20 October 2026. Author(s): ShinkuKira21.*
+*Last updated: 21 October 2026. Author(s): ShinkuKira21.*
 *This document is a record.*
